@@ -1,0 +1,67 @@
+{
+  "name": "sourcedeck",
+  "productName": "SourceDeck",
+  "version": "1.0.0",
+  "description": "AI-powered lead generation and pipeline management desktop application",
+  "author": "Ariel's River Contracting Group LLC",
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron .",
+    "start": "electron .",
+    "pack:mac": "electron-builder --mac --dir",
+    "build:mac": "electron-builder --mac",
+    "build:win": "electron-builder --win",
+    "build:all": "electron-builder --mac --win",
+    "release": "electron-builder --mac --win --publish always"
+  },
+  "dependencies": {
+    "electron-store": "^8.2.0",
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "electron": "^29.4.6",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "app.sourcedeck.lcc",
+    "productName": "SourceDeck",
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "sourcedeck.html"
+    ],
+    "mac": {
+      "icon": "build/icon.icns",
+      "category": "public.app-category.business",
+      "target": [
+        { "target": "dmg", "arch": ["x64", "arm64"] },
+        { "target": "zip", "arch": ["x64", "arm64"] }
+      ]
+    },
+    "dmg": {
+      "artifactName": "SourceDeck-${version}-${arch}.${ext}"
+    },
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        { "target": "nsis", "arch": ["x64"] }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "artifactName": "SourceDeck-Setup-${version}.${ext}"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "thekidd2227",
+        "repo": "sourcedeck-releases"
+      }
+    ]
+  }
+}
