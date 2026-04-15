@@ -43,7 +43,7 @@
       ]
     },
     "dmg": {
-      "artifactName": "SourceDeck-${version}-${arch}.${ext}"
+      "artifactName": "SourceDeck-macOS-${arch}.${ext}"
     },
     "win": {
       "icon": "build/icon.ico",
@@ -54,7 +54,7 @@
     "nsis": {
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
-      "artifactName": "SourceDeck-Setup-${version}.${ext}"
+      "artifactName": "SourceDeck-Windows-Setup.${ext}"
     },
     "publish": [
       {
