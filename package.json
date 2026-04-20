@@ -13,7 +13,8 @@
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
     "build:all": "electron-builder --mac --win",
-    "release": "electron-builder --mac --win --publish always"
+    "release": "electron-builder --mac --win --publish always",
+    "release:check": "node scripts/release-check.js"
   },
   "dependencies": {
     "electron-store": "^8.2.0",
@@ -39,6 +40,11 @@
     "mac": {
       "icon": "build/icon.icns",
       "category": "public.app-category.business",
+      "hardenedRuntime": true,
+      "gatekeeperAssess": false,
+      "entitlements": "build/entitlements.mac.plist",
+      "entitlementsInherit": "build/entitlements.mac.plist",
+      "notarize": false,
       "target": [
         { "target": "dmg", "arch": ["x64", "arm64"] },
         { "target": "zip", "arch": ["x64", "arm64"] }

@@ -47,6 +47,25 @@
     return x !== null && typeof x === 'object' && !Array.isArray(x);
   }
 
+  // ── Schema versions we are written against ─────────────────────────────
+  // ChartNav publishes a stable `schema_version` on each public payload
+  // (capability_manifest/v1, deployment_overview/v1, deployment_manifest/v1).
+  // We treat MISSING schema_version as "older ChartNav, still backwards-
+  // compatible" and accept the body. We treat a PRESENT but UNEXPECTED
+  // value as a soft warning surfaced through state.{manifest,telemetry}
+  // .schema_warning — never as a hard reject — because rejecting would
+  // break the consumer the moment ChartNav publishes v2 and an operator
+  // hasn't updated SourceDeck yet. Hard rejection is reserved for actual
+  // shape drift (missing/wrong-typed load-bearing fields).
+  var EXPECTED_MANIFEST_SCHEMA = 'capability_manifest/v1';
+  var EXPECTED_TELEMETRY_SCHEMA = 'deployment_overview/v1';
+
+  function _schemaWarning(body, expected) {
+    if (!body || typeof body.schema_version !== 'string') return null;
+    if (body.schema_version === expected) return null;
+    return { observed: body.schema_version, expected: expected };
+  }
+
   // Manifest shape comes from capability_manifest.py::card_to_dict.
   // Validate the load-bearing keys + fail loud on shape drift.
   function _validateManifest(body) {
@@ -56,6 +75,11 @@
     if (!Array.isArray(body.setup_inputs)) return 'invalid_manifest_shape';
     if (!Array.isArray(body.prerequisites)) return 'invalid_manifest_shape';
     if (!Array.isArray(body.implementation_modes)) return 'invalid_manifest_shape';
+    // schema_version, when present, must be a string. A non-string value
+    // is real shape drift (someone shipped {schema_version: 1} or null).
+    if (typeof body.schema_version !== 'undefined' && typeof body.schema_version !== 'string') {
+      return 'invalid_manifest_shape';
+    }
     return null;
   }
 
@@ -66,6 +90,9 @@
     if (!_isObj(body.release)) return 'invalid_telemetry_shape';
     if (!_isObj(body.inputs)) return 'invalid_telemetry_shape';
     if (typeof body.health !== 'string') return 'invalid_telemetry_shape';
+    if (typeof body.schema_version !== 'undefined' && typeof body.schema_version !== 'string') {
+      return 'invalid_telemetry_shape';
+    }
     return null;
   }
 
@@ -77,8 +104,8 @@
     var _conn = { base_url: '', admin_token: '' };
     var _state = {
       connection: 'disconnected', // 'disconnected' | 'connecting' | 'connected'
-      manifest: { state: 'idle', data: null, error: null, fetched_at: null },
-      telemetry: { state: 'idle', data: null, error: null, fetched_at: null }
+      manifest: { state: 'idle', data: null, error: null, fetched_at: null, schema_version: null, schema_warning: null },
+      telemetry: { state: 'idle', data: null, error: null, fetched_at: null, schema_version: null, schema_warning: null }
     };
 
     function _fetch() {
@@ -195,8 +222,8 @@
     // no point hammering /admin if the deployment isn't ChartNav.
     function connect() {
       _state.connection = 'connecting';
-      _state.manifest = { state: 'loading', data: null, error: null, fetched_at: null };
-      _state.telemetry = { state: 'idle', data: null, error: null, fetched_at: null };
+      _state.manifest = { state: 'loading', data: null, error: null, fetched_at: null, schema_version: null, schema_warning: null };
+      _state.telemetry = { state: 'idle', data: null, error: null, fetched_at: null, schema_version: null, schema_warning: null };
       return fetchManifest().then(function (m) {
         _state.manifest.fetched_at = Date.now();
         if (!m.ok) {
@@ -208,6 +235,8 @@
         _state.connection = 'connected';
         _state.manifest.state = 'live';
         _state.manifest.data = m.data;
+        _state.manifest.schema_version = (m.data && typeof m.data.schema_version === 'string') ? m.data.schema_version : null;
+        _state.manifest.schema_warning = _schemaWarning(m.data, EXPECTED_MANIFEST_SCHEMA);
         if (!_conn.admin_token) {
           _state.telemetry.state = 'unavailable';
           _state.telemetry.error = 'no_admin_token';
@@ -220,6 +249,8 @@
           if (t.ok) {
             _state.telemetry.state = 'live';
             _state.telemetry.data = t.data;
+            _state.telemetry.schema_version = (t.data && typeof t.data.schema_version === 'string') ? t.data.schema_version : null;
+            _state.telemetry.schema_warning = _schemaWarning(t.data, EXPECTED_TELEMETRY_SCHEMA);
           } else {
             _state.telemetry.state = 'failed';
             _state.telemetry.error = t.error_code;

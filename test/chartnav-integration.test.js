@@ -55,6 +55,7 @@ function fakeResponse(status, body, opts) {
 
 // Manifest payload mirrors capability_manifest.py::card_to_dict
 const FAKE_MANIFEST = {
+  schema_version: 'capability_manifest/v1',
   key: 'chartnav',
   version: '1.0.0',
   name: 'ChartNav',
@@ -78,6 +79,7 @@ const FAKE_MANIFEST = {
 
 // Telemetry payload mirrors deployment_telemetry.py::deployment_overview
 const FAKE_TELEMETRY = {
+  schema_version: 'deployment_overview/v1',
   deployment_id: 1,
   window_hours: 24,
   generated_at: '2026-04-20T01:00:00+00:00',
@@ -420,6 +422,60 @@ test('sourcedeck.html exposes ChartNav connection card with required fields', fu
   assert.ok(html.indexOf('id="cn-base-url"') >= 0, 'connection card must have a base-url input');
   assert.ok(html.indexOf('id="cn-admin-token"') >= 0, 'connection card must have an admin-token input');
   assert.ok(html.indexOf('id="cn-connection-status"') >= 0, 'connection card must have a status badge');
+});
+
+// ── Schema-version handling ────────────────────────────────────────────
+
+test('connect: surfaces schema_version when ChartNav publishes a known one', function () {
+  const integ = ChartNav.createIntegration({
+    fetch: function (url) {
+      if (url.indexOf('/admin/deployment/overview') >= 0) return Promise.resolve(fakeResponse(200, FAKE_TELEMETRY));
+      return Promise.resolve(fakeResponse(200, FAKE_MANIFEST));
+    }
+  });
+  integ.setConnection({ base_url: 'https://chartnav.test', admin_token: 't' });
+  return integ.connect().then(function (s) {
+    assert.strictEqual(s.manifest.schema_version, 'capability_manifest/v1');
+    assert.strictEqual(s.manifest.schema_warning, null);
+    assert.strictEqual(s.telemetry.schema_version, 'deployment_overview/v1');
+    assert.strictEqual(s.telemetry.schema_warning, null);
+  });
+});
+
+test('connect: missing schema_version is accepted (older ChartNav, backwards-compat)', function () {
+  const noSchema = Object.assign({}, FAKE_MANIFEST); delete noSchema.schema_version;
+  const integ = ChartNav.createIntegration({
+    fetch: function () { return Promise.resolve(fakeResponse(200, noSchema)); }
+  });
+  integ.setConnection({ base_url: 'https://chartnav.test' });
+  return integ.connect().then(function (s) {
+    assert.strictEqual(integ.summaryState(), 'manifest_only');
+    assert.strictEqual(s.manifest.schema_version, null);
+    assert.strictEqual(s.manifest.schema_warning, null);
+  });
+});
+
+test('connect: unexpected schema_version surfaces a non-blocking warning', function () {
+  const futureManifest = Object.assign({}, FAKE_MANIFEST, { schema_version: 'capability_manifest/v2' });
+  const futureTelemetry = Object.assign({}, FAKE_TELEMETRY, { schema_version: 'deployment_overview/v9' });
+  const integ = ChartNav.createIntegration({
+    fetch: function (url) {
+      if (url.indexOf('/admin/deployment/overview') >= 0) return Promise.resolve(fakeResponse(200, futureTelemetry));
+      return Promise.resolve(fakeResponse(200, futureManifest));
+    }
+  });
+  integ.setConnection({ base_url: 'https://chartnav.test', admin_token: 't' });
+  return integ.connect().then(function (s) {
+    // Still fully_connected — schema mismatch is a soft signal, not a reject.
+    assert.strictEqual(integ.summaryState(), 'fully_connected');
+    assert.deepStrictEqual(s.manifest.schema_warning, { observed: 'capability_manifest/v2', expected: 'capability_manifest/v1' });
+    assert.deepStrictEqual(s.telemetry.schema_warning, { observed: 'deployment_overview/v9', expected: 'deployment_overview/v1' });
+  });
+});
+
+test('_validateManifest rejects a non-string schema_version (real shape drift)', function () {
+  const bad = Object.assign({}, FAKE_MANIFEST, { schema_version: 1 });
+  assert.strictEqual(ChartNav._validateManifest(bad), 'invalid_manifest_shape');
 });
 
 test('admin token persistence routes through safeStorage (storeKey/getKey), not the plain store', function () {
