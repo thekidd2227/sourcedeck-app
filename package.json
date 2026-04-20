@@ -6,6 +6,7 @@
   "author": "Ariel's River Contracting Group LLC",
   "main": "main.js",
   "scripts": {
+    "test": "node test/clinical-capability.test.js",
     "dev": "electron .",
     "start": "electron .",
     "pack:mac": "electron-builder --mac --dir",

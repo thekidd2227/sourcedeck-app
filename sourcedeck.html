@@ -547,6 +547,13 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
       <button class="nav-btn" data-tab="execution"><span class="nav-icon">🚀</span>Execution</button>
       <button class="nav-btn" data-tab="proof"><span class="nav-icon">📊</span>Reports</button>
     </div>
+    <!-- ── CAPABILITIES — Optional product modes. Hidden by default;
+         shown when a capability is enabled via the capability card or
+         operator provisioning. Clinical/EHR mode is the first capability. -->
+    <div class="nav-section" id="nav-capabilities" style="display:none">
+      <div class="nav-label">Capabilities</div>
+      <button class="nav-btn" data-tab="clinical"><span class="nav-icon">🏥</span>Clinical / EHR</button>
+    </div>
   </div>
 
   <div class="main-content">
@@ -1777,6 +1784,193 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
           </div>
         </div>
         <div class="card" style="margin-top:16px"><div class="sl">Generated Report</div><div id="proof-output" style="min-height:200px;color:var(--muted);padding:20px;text-align:center">Select a report type above to generate</div></div>
+      </div>
+    </div>
+
+    <!-- ═══════ CLINICAL CAPABILITY / EHR MODE ═══════
+         Optional product mode — not visible in sidebar until explicitly
+         enabled via the capability card on this pane or operator provisioning.
+         When disabled, SourceDeck behaves as standard SourceDeck. When
+         enabled, a sidebar nav button appears under "Capabilities" and this
+         pane becomes the clinical configuration + readiness surface.
+
+         Persistence: uses window.sd.storeGet/storeSet (electron-store) under
+         the `clinical` namespace — same pattern as Settings + pipeline data.
+
+         ChartNav manifest model: this pane is designed against the capability-
+         manifest shape from ChartNav (ce6c72e) — capability_id, setup_inputs,
+         prerequisites, implementation_modes (self_implementation / done_for_you).
+         No live network call is made; the manifest is consumed structurally so
+         the pane is ready to receive real data when the control-plane is wired.
+    -->
+    <div class="tab-pane" id="tab-clinical">
+      <div class="pane-hdr">
+        <div>
+          <div class="pane-title">Clinical Capability / EHR Mode</div>
+          <div class="pane-sub">Optional deployment mode — configure, implement, and monitor clinical workflow readiness</div>
+        </div>
+        <div class="pane-actions">
+          <button class="btn btn-ghost" onclick="clinicalRefresh()">↻ Refresh</button>
+        </div>
+      </div>
+      <div class="pane-body" style="padding:20px 26px;overflow-y:auto;gap:20px;display:flex;flex-direction:column">
+
+        <!-- ── Capability card (enable / disable) ──────────────── -->
+        <div class="card" id="cl-capability-card" style="border-left:3px solid var(--gold)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap">
+            <div style="flex:1;min-width:280px">
+              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Optional Capability</div>
+              <h3 style="font-size:20px;font-weight:700;margin:0 0 6px;letter-spacing:-0.01em">Clinical Capability / EHR Mode</h3>
+              <p style="font-size:13px;color:var(--sub);line-height:1.65;margin:0 0 10px;max-width:560px">
+                When enabled, SourceDeck gains encounter documentation, dictation/transcription, review/approval, and multi-location office deployment workflows — packaged as ChartNav-style medical capability. Your standard SourceDeck features remain fully available.
+              </p>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;font-size:11px">
+                <span style="padding:3px 10px;border-radius:6px;background:var(--goldl);color:var(--gold2);font-weight:600">encounter workflow</span>
+                <span style="padding:3px 10px;border-radius:6px;background:var(--bluel);color:var(--blue2);font-weight:600">dictation / transcription</span>
+                <span style="padding:3px 10px;border-radius:6px;background:var(--greenl);color:var(--green);font-weight:600">review / approval</span>
+                <span style="padding:3px 10px;border-radius:6px;background:var(--purplel);color:var(--purple);font-weight:600">office deployment</span>
+              </div>
+            </div>
+            <div style="display:flex;flex-direction:column;align-items:flex-end;gap:8px">
+              <div id="cl-status-badge" style="font:600 10px/1.2 'Azeret Mono',monospace;padding:4px 12px;border-radius:6px;background:var(--redl);color:var(--red);letter-spacing:0.08em">DISABLED</div>
+              <button class="btn btn-gold" id="cl-toggle-btn" onclick="clinicalToggle()" style="white-space:nowrap;min-width:120px">Enable Clinical Mode</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Implementation mode ──────────────────────────────── -->
+        <div class="card" id="cl-impl-card" style="display:none">
+          <div class="sl">Implementation Mode</div>
+          <p style="font-size:12px;color:var(--muted);margin:4px 0 14px;line-height:1.55">Choose how you want this capability deployed. Your choice can be changed before go-live.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px" id="cl-impl-modes">
+            <label class="card" style="cursor:pointer;border-color:var(--border);transition:var(--t);position:relative;padding:18px" id="cl-mode-self">
+              <input type="radio" name="cl-impl-mode" value="self_implementation" style="position:absolute;opacity:0;width:0;height:0" onchange="clinicalSetMode(this.value)">
+              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--blue2);margin-bottom:8px">Self-Implementation</div>
+              <div style="font-size:14px;font-weight:700;margin-bottom:6px">You deploy it</div>
+              <p style="font-size:12px;color:var(--muted);line-height:1.55;margin:0">
+                SourceDeck provides the capability package, setup documentation, configuration guides, and credential-entry instructions. Your team completes the deployment.
+              </p>
+              <ul style="margin:10px 0 0;padding-left:16px;font-size:11.5px;color:var(--sub);line-height:1.55">
+                <li>Licensed capability package</li>
+                <li>Standard install guide + video walkthroughs</li>
+                <li>API key entry instructions</li>
+                <li>Standard prompt library</li>
+                <li>One delivery for one clinical use case</li>
+              </ul>
+            </label>
+            <label class="card" style="cursor:pointer;border-color:var(--border);transition:var(--t);position:relative;padding:18px" id="cl-mode-dfy">
+              <input type="radio" name="cl-impl-mode" value="done_for_you" style="position:absolute;opacity:0;width:0;height:0" onchange="clinicalSetMode(this.value)">
+              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Done-For-You by ARCG</div>
+              <div style="font-size:14px;font-weight:700;margin-bottom:6px">We deploy it</div>
+              <p style="font-size:12px;color:var(--muted);line-height:1.55;margin:0">
+                ARCG Systems implements the clinical capability, connects approved tools, configures core workflows, tests the deployment, and hands off a working environment.
+              </p>
+              <ul style="margin:10px 0 0;padding-left:16px;font-size:11.5px;color:var(--sub);line-height:1.55">
+                <li>Full implementation by ARCG</li>
+                <li>Up to 5 approved tool connections</li>
+                <li>Core workflow configuration + QA</li>
+                <li>Training and handoff session</li>
+                <li>14-day post-delivery support</li>
+              </ul>
+            </label>
+          </div>
+        </div>
+
+        <!-- ── Configuration / implementation shell ─────────────── -->
+        <div class="card" id="cl-config-card" style="display:none">
+          <div class="sl">Configuration &amp; Setup</div>
+          <p style="font-size:12px;color:var(--muted);margin:4px 0 14px;line-height:1.55">Enter your organization details. These are persisted locally and used for deployment scoping. No data leaves your machine until you explicitly connect a control plane.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+            <div>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Organization / Clinic Name</label>
+              <input class="input" id="cl-org-name" placeholder="e.g. Riverdale Medical Associates" oninput="clinicalConfigChanged()">
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Provider Count</label>
+              <input class="input" id="cl-provider-count" type="number" min="1" value="1" placeholder="# of providers" oninput="clinicalConfigChanged()">
+            </div>
+            <div style="grid-column:1/-1">
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Locations / Offices</label>
+              <textarea class="input" id="cl-locations" rows="3" placeholder="One location per line — e.g.&#10;Main Office — 123 Main St, Bronx, NY&#10;Satellite — 456 Oak Ave, Yonkers, NY" oninput="clinicalConfigChanged()" style="resize:vertical;font-family:'Instrument Sans',sans-serif;font-size:12px;line-height:1.5"></textarea>
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Transcription Provider</label>
+              <select class="select" id="cl-transcription" onchange="clinicalConfigChanged()">
+                <option value="">Select…</option>
+                <option value="whisper_openai">Whisper (OpenAI)</option>
+                <option value="deepgram">Deepgram</option>
+                <option value="aws_transcribe">AWS Transcribe Medical</option>
+                <option value="google_speech">Google Speech-to-Text (Medical)</option>
+                <option value="nuance_dax">Nuance DAX</option>
+                <option value="other">Other / Custom</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">EHR / EMR System</label>
+              <select class="select" id="cl-ehr-system" onchange="clinicalConfigChanged()">
+                <option value="">Select…</option>
+                <option value="epic">Epic</option>
+                <option value="cerner">Oracle Health (Cerner)</option>
+                <option value="athena">athenahealth</option>
+                <option value="eclinicalworks">eClinicalWorks</option>
+                <option value="nextgen">NextGen</option>
+                <option value="allscripts">Veradigm (Allscripts)</option>
+                <option value="drchrono">DrChrono</option>
+                <option value="practice_fusion">Practice Fusion</option>
+                <option value="custom_fhir">Custom (FHIR-compatible)</option>
+                <option value="none">None / Paper-based</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Storage / Runtime</label>
+              <select class="select" id="cl-storage" onchange="clinicalConfigChanged()">
+                <option value="">Select…</option>
+                <option value="local_only">Local only (this machine)</option>
+                <option value="hipaa_cloud">HIPAA-compliant cloud</option>
+                <option value="on_prem_server">On-premise server</option>
+                <option value="hybrid">Hybrid (local + cloud)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Auth / Session</label>
+              <select class="select" id="cl-auth" onchange="clinicalConfigChanged()">
+                <option value="">Select…</option>
+                <option value="local_pin">Local PIN per provider</option>
+                <option value="sso_ad">SSO / Active Directory</option>
+                <option value="oauth_ehr">OAuth via EHR</option>
+                <option value="manual">Manual sign-in</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <!-- ── Readiness / status panel ─────────────────────────── -->
+        <div class="card" id="cl-readiness-card" style="display:none">
+          <div class="sl">Deployment Readiness</div>
+          <p style="font-size:12px;color:var(--muted);margin:4px 0 14px;line-height:1.55">
+            Readiness checks are evaluated locally against your configuration. Once all prerequisites pass, the go-live gate turns green.
+          </p>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px" id="cl-readiness-kpis">
+            <div class="kpi"><div class="kpi-label">Mode</div><div class="kpi-val" id="cl-r-mode" style="font-size:13px;color:var(--muted)">—</div></div>
+            <div class="kpi"><div class="kpi-label">Locations</div><div class="kpi-val" id="cl-r-locations">0</div></div>
+            <div class="kpi"><div class="kpi-label">Providers</div><div class="kpi-val" id="cl-r-providers">0</div></div>
+            <div class="kpi"><div class="kpi-label">Go-Live</div><div class="kpi-val" id="cl-r-golive" style="color:var(--red)">NOT READY</div></div>
+          </div>
+          <div id="cl-readiness-checks" style="display:flex;flex-direction:column;gap:6px"></div>
+          <div style="margin-top:14px;padding:10px 14px;background:var(--goldl);border:0.5px solid var(--goldb);border-radius:8px;font-size:11.5px;color:var(--sub);line-height:1.55" id="cl-readiness-note">
+            <strong style="color:var(--gold2)">Note:</strong> Readiness checks are evaluated locally. No data is transmitted to any external service until you explicitly connect a control-plane endpoint. SourceDeck remains a local-first system in standard and clinical modes.
+          </div>
+        </div>
+
+        <!-- ── Capability manifest summary ──────────────────────── -->
+        <div class="card" id="cl-manifest-card" style="display:none">
+          <div class="sl">ChartNav Capability Manifest</div>
+          <p style="font-size:12px;color:var(--muted);margin:4px 0 10px;line-height:1.55">
+            When a ChartNav control-plane endpoint is connected, the manifest below is populated with live capability data. Currently showing the structural contract this pane is designed against.
+          </p>
+          <pre id="cl-manifest-json" style="background:var(--panel3);border:0.5px solid var(--border);border-radius:8px;padding:14px;font-family:'Azeret Mono',monospace;font-size:10.5px;color:var(--sub);white-space:pre-wrap;max-height:280px;overflow-y:auto;line-height:1.6"></pre>
+        </div>
+
       </div>
     </div>
 
@@ -3624,6 +3818,7 @@ function openTab(t){
   if(t==='dailyops'&&typeof renderDailyOps==='function')renderDailyOps();
   if(t==='delivery'&&typeof fetchDeliveryFromAirtable==='function'){if(!_delLoaded)fetchDeliveryFromAirtable().then(()=>renderDelivery());else renderDelivery();}
   if(t==='govcon'&&typeof fetchGovconFromAirtable==='function'){if(!gcLoaded)fetchGovconFromAirtable();else renderGovcon();}
+  if(t==='clinical'&&typeof clinicalRefresh==='function')clinicalRefresh();
   return false;
 }
 
@@ -7894,6 +8089,261 @@ document.addEventListener('DOMContentLoaded',()=>{
     openSubTab(g,fb);
   });
 });
+</script>
+<!-- ═══════════════════════════════════════════════════════════════════
+     CLINICAL CAPABILITY / EHR MODE — JS MODULE
+     ─────────────────────────────────────────────────────────────────
+     Isolated optional capability. Persists all state under the
+     `clinical.*` keyspace in electron-store via window.sd.storeGet /
+     window.sd.storeSet. When `clinical.enabled` is false or absent,
+     the sidebar "Capabilities" section is hidden and the tab pane is
+     not reachable — standard SourceDeck behavior is unaffected.
+
+     Designed against the ChartNav capability-manifest shape (ce6c72e):
+       capability_id, display_name, description, setup_inputs[],
+       prerequisites[], implementation_modes[]
+
+     No live network call is made. All state is local-first. The
+     manifest summary is static until a control-plane endpoint is
+     connected in a later phase.
+     ═══════════════════════════════════════════════════════════════════ -->
+<script>
+(function(){
+  'use strict';
+
+  // ── CHARTNAV MANIFEST SHAPE (structural, not live-fetched) ──────
+  // This is the contract this module is designed against. When the
+  // control-plane integration is wired, this gets replaced by a real
+  // fetch from the ChartNav API endpoint.
+  const CHARTNAV_MANIFEST = {
+    capability_id:   'clinical_ehr_mode',
+    display_name:    'Clinical Capability / EHR Mode',
+    description:     'Encounter documentation, dictation/transcription, review/approval, and multi-location office deployment workflows — packaged as ChartNav-style medical capability inside SourceDeck.',
+    version:         '1.0.0',
+    provider:        'ARCG Systems',
+    prerequisites: [
+      { key: 'org_name',          label: 'Organization / clinic name',     type: 'string',  required: true  },
+      { key: 'provider_count',    label: 'Provider count',                 type: 'number',  required: true, min: 1 },
+      { key: 'locations',         label: 'At least one location',          type: 'string',  required: true  },
+      { key: 'transcription',     label: 'Transcription provider selected',type: 'select',  required: true  },
+      { key: 'ehr_system',        label: 'EHR/EMR system selected',        type: 'select',  required: true  },
+      { key: 'storage',           label: 'Storage / runtime configured',   type: 'select',  required: true  },
+      { key: 'auth',              label: 'Auth / session method selected', type: 'select',  required: true  },
+      { key: 'impl_mode',         label: 'Implementation mode chosen',     type: 'select',  required: true  }
+    ],
+    setup_inputs: [
+      'org_name', 'provider_count', 'locations',
+      'transcription', 'ehr_system', 'storage', 'auth'
+    ],
+    implementation_modes: [
+      { key: 'self_implementation', label: 'Self-Implementation',  description: 'Client deploys using SourceDeck-provided package + documentation.' },
+      { key: 'done_for_you',       label: 'Done-For-You by ARCG', description: 'ARCG implements, connects, tests, and hands off a working deployment.' }
+    ],
+    capabilities: [
+      'encounter_documentation',
+      'dictation_transcription',
+      'review_approval',
+      'office_deployment',
+      'implementation_readiness',
+      'control_plane_monitoring'
+    ]
+  };
+
+  // ── STATE ──────────────────────────────────────────────────────
+  let _state = {
+    enabled: false,
+    impl_mode: '',       // 'self_implementation' | 'done_for_you' | ''
+    org_name: '',
+    provider_count: 1,
+    locations: '',
+    transcription: '',
+    ehr_system: '',
+    storage: '',
+    auth: ''
+  };
+
+  // ── PERSISTENCE (electron-store via preload bridge) ────────────
+  async function loadState() {
+    if (!window.sd || !window.sd.storeGet) return;
+    const saved = await window.sd.storeGet('clinical');
+    if (saved && typeof saved === 'object') {
+      Object.assign(_state, saved);
+    }
+  }
+  async function saveState() {
+    if (!window.sd || !window.sd.storeSet) return;
+    await window.sd.storeSet('clinical', Object.assign({}, _state));
+  }
+
+  // ── DOM HELPERS ────────────────────────────────────────────────
+  const $ = id => document.getElementById(id);
+  const setText = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+
+  // ── SIDEBAR VISIBILITY ────────────────────────────────────────
+  function updateNavVisibility() {
+    const nav = $('nav-capabilities');
+    if (nav) nav.style.display = _state.enabled ? '' : 'none';
+  }
+
+  // ── TOGGLE ENABLE/DISABLE ─────────────────────────────────────
+  window.clinicalToggle = async function() {
+    _state.enabled = !_state.enabled;
+    await saveState();
+    renderClinicalUI();
+    updateNavVisibility();
+  };
+
+  // ── IMPLEMENTATION MODE ───────────────────────────────────────
+  window.clinicalSetMode = async function(mode) {
+    _state.impl_mode = mode;
+    await saveState();
+    renderClinicalUI();
+  };
+
+  // ── CONFIG CHANGED ────────────────────────────────────────────
+  let _configDebounce = null;
+  window.clinicalConfigChanged = function() {
+    // Read DOM → state
+    _state.org_name       = ($('cl-org-name')       || {}).value || '';
+    _state.provider_count = parseInt(($('cl-provider-count') || {}).value, 10) || 0;
+    _state.locations      = ($('cl-locations')      || {}).value || '';
+    _state.transcription  = ($('cl-transcription')  || {}).value || '';
+    _state.ehr_system     = ($('cl-ehr-system')     || {}).value || '';
+    _state.storage        = ($('cl-storage')        || {}).value || '';
+    _state.auth           = ($('cl-auth')           || {}).value || '';
+    // Debounce save (250ms)
+    clearTimeout(_configDebounce);
+    _configDebounce = setTimeout(async () => {
+      await saveState();
+      renderReadiness();
+    }, 250);
+  };
+
+  // ── REFRESH ───────────────────────────────────────────────────
+  window.clinicalRefresh = function() {
+    renderClinicalUI();
+  };
+
+  // ── RENDER: full UI ───────────────────────────────────────────
+  function renderClinicalUI() {
+    const enabled = _state.enabled;
+
+    // Toggle button + badge
+    const btn = $('cl-toggle-btn');
+    const badge = $('cl-status-badge');
+    if (btn) {
+      btn.textContent = enabled ? 'Disable Clinical Mode' : 'Enable Clinical Mode';
+      btn.className   = enabled ? 'btn btn-red'  : 'btn btn-gold';
+    }
+    if (badge) {
+      badge.textContent = enabled ? 'ENABLED' : 'DISABLED';
+      badge.style.background = enabled ? 'var(--greenl)' : 'var(--redl)';
+      badge.style.color      = enabled ? 'var(--green)'  : 'var(--red)';
+    }
+
+    // Capability card border
+    const card = $('cl-capability-card');
+    if (card) card.style.borderLeftColor = enabled ? 'var(--green)' : 'var(--gold)';
+
+    // Show/hide sections
+    ['cl-impl-card','cl-config-card','cl-readiness-card','cl-manifest-card'].forEach(id => {
+      const el = $(id);
+      if (el) el.style.display = enabled ? '' : 'none';
+    });
+
+    if (!enabled) return;
+
+    // Populate config fields from state
+    const fields = {
+      'cl-org-name':       _state.org_name,
+      'cl-provider-count': _state.provider_count || 1,
+      'cl-locations':      _state.locations,
+      'cl-transcription':  _state.transcription,
+      'cl-ehr-system':     _state.ehr_system,
+      'cl-storage':        _state.storage,
+      'cl-auth':           _state.auth
+    };
+    for (const [id, val] of Object.entries(fields)) {
+      const el = $(id);
+      if (el && el.value !== String(val)) el.value = val;
+    }
+
+    // Impl mode radio state
+    document.querySelectorAll('input[name="cl-impl-mode"]').forEach(r => {
+      r.checked = r.value === _state.impl_mode;
+    });
+    // Visual selection highlight
+    const selfCard = $('cl-mode-self');
+    const dfyCard  = $('cl-mode-dfy');
+    if (selfCard) selfCard.style.borderColor = _state.impl_mode === 'self_implementation' ? 'var(--blue2)' : 'var(--border)';
+    if (dfyCard)  dfyCard.style.borderColor  = _state.impl_mode === 'done_for_you'       ? 'var(--gold)'  : 'var(--border)';
+
+    // Manifest JSON
+    const manifest = $('cl-manifest-json');
+    if (manifest) manifest.textContent = JSON.stringify(CHARTNAV_MANIFEST, null, 2);
+
+    renderReadiness();
+  }
+
+  // ── RENDER: readiness checks ──────────────────────────────────
+  function renderReadiness() {
+    const checks = CHARTNAV_MANIFEST.prerequisites.map(p => {
+      let val = '';
+      switch (p.key) {
+        case 'org_name':       val = _state.org_name;                    break;
+        case 'provider_count': val = _state.provider_count > 0 ? String(_state.provider_count) : ''; break;
+        case 'locations':      val = _state.locations.trim();            break;
+        case 'transcription':  val = _state.transcription;               break;
+        case 'ehr_system':     val = _state.ehr_system;                  break;
+        case 'storage':        val = _state.storage;                     break;
+        case 'auth':           val = _state.auth;                        break;
+        case 'impl_mode':      val = _state.impl_mode;                   break;
+      }
+      const pass = !!val;
+      return { label: p.label, pass, val: val || '—' };
+    });
+
+    const allPass = checks.every(c => c.pass);
+    const locationCount = _state.locations.trim() ? _state.locations.trim().split('\n').filter(l => l.trim()).length : 0;
+
+    // KPIs
+    const modeLabel = _state.impl_mode === 'self_implementation' ? 'Self' :
+                      _state.impl_mode === 'done_for_you'       ? 'DFY by ARCG' : '—';
+    setText('cl-r-mode',      modeLabel);
+    setText('cl-r-locations',  locationCount);
+    setText('cl-r-providers',  _state.provider_count || 0);
+    const goEl = $('cl-r-golive');
+    if (goEl) {
+      goEl.textContent = allPass ? 'READY' : 'NOT READY';
+      goEl.style.color = allPass ? 'var(--green)' : 'var(--red)';
+    }
+
+    // Checks list
+    const container = $('cl-readiness-checks');
+    if (container) {
+      container.innerHTML = checks.map(c => {
+        const icon  = c.pass ? '✅' : '⬜';
+        const color = c.pass ? 'var(--green)' : 'var(--muted)';
+        return `<div style="display:flex;align-items:center;gap:10px;padding:6px 10px;background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.04);border-radius:8px">
+          <span style="font-size:14px">${icon}</span>
+          <span style="flex:1;font-size:12px;color:${color}">${c.label}</span>
+          <span style="font:500 10.5px/1 'Azeret Mono',monospace;color:var(--muted)">${c.val === '—' ? '—' : '✓'}</span>
+        </div>`;
+      }).join('');
+    }
+  }
+
+  // ── INIT ──────────────────────────────────────────────────────
+  // Run on DOMContentLoaded: load persisted state, render, show/hide nav.
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadState();
+    updateNavVisibility();
+    // If the user navigated directly to the clinical tab (persisted),
+    // render immediately.
+    renderClinicalUI();
+  });
+
+})();
 </script>
 </body>
 </html>
