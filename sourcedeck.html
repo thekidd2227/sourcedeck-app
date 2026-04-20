@@ -1962,13 +1962,98 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
           </div>
         </div>
 
+        <!-- ── ChartNav LIVE connection (phase 38) ──────────────── -->
+        <!-- This card is the connection control plane for the live
+             ChartNav contracts. Without a base URL set + a successful
+             Connect, the panes below render their static / locally-
+             computed fallback. With a successful Connect, the manifest
+             pane swaps to live data and the live telemetry block fills
+             in. See chartnav-integration.js for the full state machine. -->
+        <div class="card" id="cl-connection-card" style="display:none">
+          <div class="sl">ChartNav Connection</div>
+          <p style="font-size:12px;color:var(--muted);margin:4px 0 14px;line-height:1.55">
+            Wire SourceDeck to a live ChartNav deployment. Base URL fetches the public
+            <code>/capability/manifest</code>. Admin token (optional) unlocks live deployment
+            telemetry via <code>/admin/deployment/overview</code>. When disconnected, the
+            panes below stay safe and truthful — no fake live data.
+          </p>
+          <div style="display:grid;grid-template-columns:2fr 1fr;gap:14px;margin-bottom:12px">
+            <div>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">ChartNav base URL</label>
+              <input class="input" id="cn-base-url" placeholder="https://chartnav.your-host.com" oninput="chartnavConnSettingsChanged()">
+            </div>
+            <div>
+              <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Admin token (optional)</label>
+              <input class="input" id="cn-admin-token" type="password" placeholder="bearer token or admin email" oninput="chartnavConnSettingsChanged()">
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
+            <button class="btn btn-blue" onclick="chartnavConnect()" id="cn-connect-btn">Connect</button>
+            <button class="btn btn-ghost" onclick="chartnavRefresh()" id="cn-refresh-btn" disabled>Refresh</button>
+            <span id="cn-connection-status" style="font:600 10px/1.2 'Azeret Mono',monospace;padding:4px 10px;border-radius:6px;background:var(--redl);color:var(--red);letter-spacing:0.08em">DISCONNECTED</span>
+            <span style="flex:1"></span>
+            <span id="cn-summary-state" style="font:500 10.5px/1 'Azeret Mono',monospace;color:var(--muted)">no integration attempted yet</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div class="kpi"><div class="kpi-label">Manifest</div><div class="kpi-val" id="cn-manifest-status" style="font-size:13px;color:var(--muted)">idle</div></div>
+            <div class="kpi"><div class="kpi-label">Telemetry</div><div class="kpi-val" id="cn-telemetry-status" style="font-size:13px;color:var(--muted)">idle</div></div>
+          </div>
+        </div>
+
         <!-- ── Capability manifest summary ──────────────────────── -->
         <div class="card" id="cl-manifest-card" style="display:none">
           <div class="sl">ChartNav Capability Manifest</div>
-          <p style="font-size:12px;color:var(--muted);margin:4px 0 10px;line-height:1.55">
+          <p style="font-size:12px;color:var(--muted);margin:4px 0 10px;line-height:1.55" id="cl-manifest-source-note">
             When a ChartNav control-plane endpoint is connected, the manifest below is populated with live capability data. Currently showing the structural contract this pane is designed against.
           </p>
+          <!-- Live-data summary (rendered when integration.summaryState() != disconnected/manifest_failed) -->
+          <div id="cl-manifest-live" style="display:none;margin-bottom:12px">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div class="kpi"><div class="kpi-label">Capability</div><div class="kpi-val" id="cl-live-name" style="font-size:13px">—</div></div>
+              <div class="kpi"><div class="kpi-label">Version</div><div class="kpi-val" id="cl-live-version" style="font-size:13px">—</div></div>
+            </div>
+            <div id="cl-live-pitch" style="font-size:12px;color:var(--sub);line-height:1.55;margin-bottom:10px"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px">
+              <div>
+                <div class="sl" style="margin-bottom:6px">Implementation modes</div>
+                <ul id="cl-live-modes" style="margin:0;padding-left:16px;font-size:11.5px;color:var(--sub);line-height:1.55"></ul>
+              </div>
+              <div>
+                <div class="sl" style="margin-bottom:6px">Prerequisites</div>
+                <ul id="cl-live-prereqs" style="margin:0;padding-left:16px;font-size:11.5px;color:var(--sub);line-height:1.55"></ul>
+              </div>
+            </div>
+            <div>
+              <div class="sl" style="margin-bottom:6px">Setup inputs</div>
+              <ul id="cl-live-inputs" style="margin:0;padding-left:16px;font-size:11.5px;color:var(--sub);line-height:1.55"></ul>
+            </div>
+          </div>
           <pre id="cl-manifest-json" style="background:var(--panel3);border:0.5px solid var(--border);border-radius:8px;padding:14px;font-family:'Azeret Mono',monospace;font-size:10.5px;color:var(--sub);white-space:pre-wrap;max-height:280px;overflow-y:auto;line-height:1.6"></pre>
+        </div>
+
+        <!-- ── Live deployment telemetry (phase 38) ──────────────── -->
+        <div class="card" id="cl-telemetry-card" style="display:none">
+          <div class="sl">Live Deployment Telemetry</div>
+          <p style="font-size:12px;color:var(--muted);margin:4px 0 14px;line-height:1.55" id="cl-telemetry-note">
+            Live counts from <code>/admin/deployment/overview</code> on the connected
+            ChartNav deployment. PHI-minimising — counts only.
+          </p>
+          <div id="cl-telemetry-body" style="display:none">
+            <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:12px">
+              <div class="kpi"><div class="kpi-label">Health</div><div class="kpi-val" id="cl-tel-health" style="font-size:13px;color:var(--muted)">—</div></div>
+              <div class="kpi"><div class="kpi-label">Queued</div><div class="kpi-val" id="cl-tel-queued">—</div></div>
+              <div class="kpi"><div class="kpi-label">Failed (24h)</div><div class="kpi-val" id="cl-tel-failed">—</div></div>
+              <div class="kpi"><div class="kpi-label">Locations</div><div class="kpi-val" id="cl-tel-locations">—</div></div>
+            </div>
+            <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px">
+              <div class="kpi"><div class="kpi-label">Build</div><div class="kpi-val" id="cl-tel-release" style="font-size:12px;color:var(--muted)">—</div></div>
+              <div class="kpi"><div class="kpi-label">STT provider</div><div class="kpi-val" id="cl-tel-stt" style="font-size:12px;color:var(--muted)">—</div></div>
+              <div class="kpi"><div class="kpi-label">Ingest mode</div><div class="kpi-val" id="cl-tel-mode" style="font-size:12px;color:var(--muted)">—</div></div>
+            </div>
+          </div>
+          <div id="cl-telemetry-empty" style="padding:14px;border:1px dashed var(--border);border-radius:8px;background:var(--panel3);font-size:12px;color:var(--muted);line-height:1.55">
+            No live telemetry. Set an admin token in the ChartNav Connection card and click <strong>Connect</strong>.
+          </div>
         </div>
 
       </div>
@@ -8245,8 +8330,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     const card = $('cl-capability-card');
     if (card) card.style.borderLeftColor = enabled ? 'var(--green)' : 'var(--gold)';
 
-    // Show/hide sections
-    ['cl-impl-card','cl-config-card','cl-readiness-card','cl-manifest-card'].forEach(id => {
+    // Show/hide sections (phase-38 added cl-connection-card + cl-telemetry-card)
+    ['cl-impl-card','cl-config-card','cl-readiness-card','cl-connection-card','cl-manifest-card','cl-telemetry-card'].forEach(id => {
       const el = $(id);
       if (el) el.style.display = enabled ? '' : 'none';
     });
@@ -8342,6 +8427,270 @@ document.addEventListener('DOMContentLoaded',()=>{
     // render immediately.
     renderClinicalUI();
   });
+
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════
+     CHARTNAV LIVE INTEGRATION — PHASE 38
+     ─────────────────────────────────────────────────────────────────
+     Loads the pure UMD module first, then wires its API into the
+     renderer. Connection settings persist under the `chartnav.*`
+     keyspace in electron-store (separate from `clinical.*` so they
+     survive a clinical-mode disable). Live manifest + telemetry
+     render swaps the static fallback panes when a connection is up.
+     ═══════════════════════════════════════════════════════════════════ -->
+<script src="./chartnav-integration.js"></script>
+<script>
+(function(){
+  'use strict';
+
+  // ── Singleton integration instance ───────────────────────────
+  // Constructed once per renderer load. Uses globalThis.fetch so a
+  // real ChartNav deployment is one Connect-click away.
+  if (!window.ChartNavIntegration || !window.ChartNavIntegration.createIntegration) {
+    console.warn('[chartnav] integration module not loaded — live integration disabled');
+    return;
+  }
+  const integ = window.ChartNavIntegration.createIntegration();
+  // Expose for ad-hoc renderer access.
+  window.__chartnavInteg = integ;
+
+  const $ = id => document.getElementById(id);
+
+  // ── PERSISTENCE (chartnav.* namespace, NOT clinical.*) ───────
+  async function loadConn() {
+    if (!window.sd || !window.sd.storeGet) return;
+    const saved = await window.sd.storeGet('chartnav');
+    if (saved && typeof saved === 'object') {
+      integ.setConnection({
+        base_url: typeof saved.base_url === 'string' ? saved.base_url : '',
+        admin_token: typeof saved.admin_token === 'string' ? saved.admin_token : ''
+      });
+      const baseEl = $('cn-base-url');
+      const tokEl = $('cn-admin-token');
+      if (baseEl) baseEl.value = saved.base_url || '';
+      if (tokEl)  tokEl.value  = saved.admin_token || '';
+    }
+  }
+  async function saveConn() {
+    if (!window.sd || !window.sd.storeSet) return;
+    // Pull raw values from the inputs (not from getConnection() — that masks).
+    const baseEl = $('cn-base-url');
+    const tokEl = $('cn-admin-token');
+    await window.sd.storeSet('chartnav', {
+      base_url: baseEl ? baseEl.value : '',
+      admin_token: tokEl ? tokEl.value : ''
+    });
+  }
+
+  // ── INPUT CHANGE: persist + push into integration ────────────
+  let _connDebounce = null;
+  window.chartnavConnSettingsChanged = function() {
+    const baseEl = $('cn-base-url');
+    const tokEl = $('cn-admin-token');
+    integ.setConnection({
+      base_url: baseEl ? baseEl.value : '',
+      admin_token: tokEl ? tokEl.value : ''
+    });
+    clearTimeout(_connDebounce);
+    _connDebounce = setTimeout(saveConn, 250);
+  };
+
+  // ── CONNECT / REFRESH ────────────────────────────────────────
+  async function runConnect() {
+    renderConnection(); // immediately reflect "connecting"
+    await saveConn();    // ensure latest settings persist before fetch
+    await integ.connect();
+    renderConnection();
+    renderManifest();
+    renderTelemetry();
+  }
+  window.chartnavConnect = function() { runConnect(); };
+  window.chartnavRefresh = function() { runConnect(); };
+
+  // ── RENDER: connection card ──────────────────────────────────
+  function renderConnection() {
+    const s = integ.getState();
+    const summary = integ.summaryState();
+
+    // Connection badge
+    const badge = $('cn-connection-status');
+    const refreshBtn = $('cn-refresh-btn');
+    if (badge) {
+      const labels = {
+        disconnected: { txt: 'DISCONNECTED', bg: 'var(--redl)',   fg: 'var(--red)'   },
+        connecting:   { txt: 'CONNECTING…',   bg: 'var(--bluel)',  fg: 'var(--blue2)' },
+        connected:    { txt: 'CONNECTED',     bg: 'var(--greenl)', fg: 'var(--green)' }
+      };
+      const l = labels[s.connection] || labels.disconnected;
+      badge.textContent = l.txt;
+      badge.style.background = l.bg;
+      badge.style.color = l.fg;
+    }
+    if (refreshBtn) refreshBtn.disabled = s.connection !== 'connected';
+
+    // Summary state line (the load-bearing label tests + ops both pin to)
+    const sumEl = $('cn-summary-state');
+    if (sumEl) {
+      const summaryCopy = {
+        disconnected:                     'no integration attempted yet',
+        connecting:                       'fetching manifest…',
+        manifest_failed:                  'manifest fetch failed — check base URL',
+        manifest_only:                    'manifest live · no admin token (telemetry skipped)',
+        manifest_only_telemetry_loading:  'manifest live · telemetry loading',
+        manifest_only_telemetry_failed:   'manifest live · telemetry failed (admin token rejected?)',
+        fully_connected:                  'manifest + telemetry live'
+      };
+      sumEl.textContent = summaryCopy[summary] || summary;
+    }
+
+    // Per-pane status badges
+    const mEl = $('cn-manifest-status');
+    if (mEl) {
+      mEl.textContent = s.manifest.state + (s.manifest.error ? ' (' + s.manifest.error + ')' : '');
+      mEl.style.color = s.manifest.state === 'live' ? 'var(--green)' :
+                        s.manifest.state === 'failed' ? 'var(--red)' :
+                        s.manifest.state === 'loading' ? 'var(--blue2)' : 'var(--muted)';
+    }
+    const tEl = $('cn-telemetry-status');
+    if (tEl) {
+      tEl.textContent = s.telemetry.state + (s.telemetry.error ? ' (' + s.telemetry.error + ')' : '');
+      tEl.style.color = s.telemetry.state === 'live' ? 'var(--green)' :
+                        s.telemetry.state === 'failed' ? 'var(--red)' :
+                        s.telemetry.state === 'loading' ? 'var(--blue2)' :
+                        s.telemetry.state === 'unavailable' ? 'var(--gold)' : 'var(--muted)';
+    }
+  }
+
+  // ── RENDER: manifest pane (live OR static fallback) ──────────
+  function renderManifest() {
+    const s = integ.getState();
+    const live = $('cl-manifest-live');
+    const json = $('cl-manifest-json');
+    const note = $('cl-manifest-source-note');
+
+    if (s.manifest.state === 'live' && s.manifest.data) {
+      const m = s.manifest.data;
+      if (live) live.style.display = '';
+      if (json) json.textContent = JSON.stringify(m, null, 2);
+      if (note) note.textContent = 'LIVE — fetched from ' + integ.getConnection().base_url + '/capability/manifest';
+
+      const setText = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+      setText('cl-live-name', m.name || m.key || '—');
+      setText('cl-live-version', m.version || '—');
+      const pitch = $('cl-live-pitch');
+      if (pitch) pitch.textContent = m.longer_pitch || m.one_liner || '';
+
+      const modes = $('cl-live-modes');
+      if (modes) {
+        modes.innerHTML = (m.implementation_modes || []).map(im =>
+          '<li><strong>' + (im.name || im.key) + '</strong>' +
+          (im.pricing_model ? ' — <span style="color:var(--muted)">' + im.pricing_model + '</span>' : '') +
+          '</li>'
+        ).join('');
+      }
+      const prereqs = $('cl-live-prereqs');
+      if (prereqs) {
+        prereqs.innerHTML = (m.prerequisites || []).map(p =>
+          '<li>' + (p.label || p.key) + '</li>'
+        ).join('');
+      }
+      const inputs = $('cl-live-inputs');
+      if (inputs) {
+        inputs.innerHTML = (m.setup_inputs || []).map(i => {
+          const reqMark = i.required ? ' <span style="color:var(--red)">*</span>' : '';
+          const kind = i.kind ? ' <span style="color:var(--muted);font-family:Azeret Mono,monospace;font-size:10px">[' + i.kind + ']</span>' : '';
+          return '<li><strong>' + (i.label || i.key) + '</strong>' + reqMark + kind + '</li>';
+        }).join('');
+      }
+    } else {
+      if (live) live.style.display = 'none';
+      if (json) {
+        // Fallback to the static contract sample so the pane never reads as broken.
+        json.textContent = JSON.stringify({
+          _note: 'OFFLINE — static contract sample. Connect a ChartNav deployment above to load live data.',
+          key: 'chartnav',
+          implementation_modes: [
+            { key: 'self_implementation', name: 'Self-implementation' },
+            { key: 'done_for_you', name: 'Done-for-you implementation' }
+          ]
+        }, null, 2);
+      }
+      if (note) {
+        if (s.manifest.state === 'failed') {
+          note.innerHTML = '<strong style="color:var(--red)">DISCONNECTED</strong> — manifest fetch failed: <code>' + (s.manifest.error || 'unknown') + '</code>. Showing static fallback.';
+        } else {
+          note.textContent = 'OFFLINE — connect a ChartNav deployment in the ChartNav Connection card to load the live manifest.';
+        }
+      }
+    }
+  }
+
+  // ── RENDER: telemetry pane ───────────────────────────────────
+  function renderTelemetry() {
+    const s = integ.getState();
+    const body = $('cl-telemetry-body');
+    const empty = $('cl-telemetry-empty');
+    const note = $('cl-telemetry-note');
+
+    if (s.telemetry.state === 'live' && s.telemetry.data) {
+      const t = s.telemetry.data;
+      if (body)  body.style.display = '';
+      if (empty) empty.style.display = 'none';
+      if (note)  note.textContent = 'LIVE — overview window: ' + (t.window_hours || 24) + 'h · generated_at ' + (t.generated_at || '—');
+
+      const setText = (id, v) => { const el = $(id); if (el) el.textContent = v; };
+      setText('cl-tel-health', (t.health || '—').toUpperCase());
+      const healthEl = $('cl-tel-health');
+      if (healthEl) {
+        healthEl.style.color = t.health === 'green' ? 'var(--green)' :
+                                t.health === 'amber' ? 'var(--gold)'  :
+                                t.health === 'red'   ? 'var(--red)'   : 'var(--muted)';
+      }
+      setText('cl-tel-queued',    (t.inputs && t.inputs.queued) || 0);
+      setText('cl-tel-failed',    (t.inputs && t.inputs.failed_window) || 0);
+      setText('cl-tel-locations', Array.isArray(t.locations) ? t.locations.length : 0);
+      const r = t.release || {};
+      setText('cl-tel-release', (r.release_version || '—') + ' / api ' + (r.api_version || '—'));
+      setText('cl-tel-stt',     r.stt_provider || '—');
+      setText('cl-tel-mode',    r.audio_ingest_mode || '—');
+    } else {
+      if (body)  body.style.display = 'none';
+      if (empty) {
+        empty.style.display = '';
+        const reason = s.telemetry.error;
+        if (reason === 'no_admin_token') {
+          empty.innerHTML = 'No admin token set. Telemetry is optional — paste an admin bearer token (or admin email in dev/header mode) into the ChartNav Connection card to enable.';
+        } else if (s.telemetry.state === 'failed') {
+          empty.innerHTML = '<strong style="color:var(--red)">FAILED</strong> — telemetry fetch returned <code>' + (reason || 'unknown') + '</code>. Manifest is still live; this only blocks the deployment-overview view.';
+        } else if (s.telemetry.state === 'loading') {
+          empty.innerHTML = 'Loading telemetry…';
+        } else {
+          empty.innerHTML = 'No live telemetry. Set an admin token in the ChartNav Connection card and click <strong>Connect</strong>.';
+        }
+      }
+      if (note) note.textContent = 'Live counts from /admin/deployment/overview. Currently offline.';
+    }
+  }
+
+  // ── INIT ─────────────────────────────────────────────────────
+  // Hook into the existing clinical renderer so the connection card
+  // refreshes whenever the clinical pane re-renders. We call our own
+  // init on DOMContentLoaded so persisted settings populate the form.
+  document.addEventListener('DOMContentLoaded', async () => {
+    await loadConn();
+    renderConnection();
+    renderManifest();
+    renderTelemetry();
+  });
+
+  // Expose render* so ops/dev can re-render after manual state poking.
+  window.chartnavRender = function() {
+    renderConnection();
+    renderManifest();
+    renderTelemetry();
+  };
 
 })();
 </script>
