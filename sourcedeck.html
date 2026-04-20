@@ -1985,6 +1985,9 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
             <div>
               <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Admin token (optional)</label>
               <input class="input" id="cn-admin-token" type="password" placeholder="bearer token or admin email" oninput="chartnavConnSettingsChanged()">
+              <div style="font-size:10.5px;color:var(--muted);margin-top:4px">
+                Stored in the OS keystore (macOS Keychain / Windows DPAPI / libsecret) via Electron <code>safeStorage</code>; plaintext fallback only when the OS keystore is unavailable.
+              </div>
             </div>
           </div>
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px">
@@ -8459,29 +8462,55 @@ document.addEventListener('DOMContentLoaded',()=>{
   const $ = id => document.getElementById(id);
 
   // ── PERSISTENCE (chartnav.* namespace, NOT clinical.*) ───────
+  // base_url    → window.sd.storeSet('chartnav', { base_url })   (plaintext, non-secret)
+  // admin_token → window.sd.storeKey('chartnav_admin_token', t)  (safeStorage-encrypted
+  //               on macOS Keychain / Windows DPAPI / Linux libsecret when available;
+  //               plaintext fallback only when the OS keystore is unavailable, with
+  //               the same caveat that the rest of this app accepts for API keys).
+  // We legacy-migrate any pre-hardening plaintext token under chartnav.admin_token
+  // into the secure store on first load, then null it out of the plain store.
   async function loadConn() {
     if (!window.sd || !window.sd.storeGet) return;
     const saved = await window.sd.storeGet('chartnav');
+    let base_url = '';
+    let admin_token = '';
     if (saved && typeof saved === 'object') {
-      integ.setConnection({
-        base_url: typeof saved.base_url === 'string' ? saved.base_url : '',
-        admin_token: typeof saved.admin_token === 'string' ? saved.admin_token : ''
-      });
-      const baseEl = $('cn-base-url');
-      const tokEl = $('cn-admin-token');
-      if (baseEl) baseEl.value = saved.base_url || '';
-      if (tokEl)  tokEl.value  = saved.admin_token || '';
+      base_url = typeof saved.base_url === 'string' ? saved.base_url : '';
+      // Legacy: pull a plaintext token out, write it into the secure
+      // store, and erase it from the plain store on next save.
+      if (typeof saved.admin_token === 'string' && saved.admin_token) {
+        admin_token = saved.admin_token;
+        if (window.sd.storeKey) {
+          await window.sd.storeKey('chartnav_admin_token', admin_token);
+        }
+        await window.sd.storeSet('chartnav', { base_url });
+      }
     }
+    if (window.sd.getKey) {
+      const secured = await window.sd.getKey('chartnav_admin_token');
+      if (typeof secured === 'string' && secured) admin_token = secured;
+    }
+    integ.setConnection({ base_url, admin_token });
+    const baseEl = $('cn-base-url');
+    const tokEl = $('cn-admin-token');
+    if (baseEl) baseEl.value = base_url;
+    if (tokEl)  tokEl.value  = admin_token;
   }
   async function saveConn() {
     if (!window.sd || !window.sd.storeSet) return;
     // Pull raw values from the inputs (not from getConnection() — that masks).
     const baseEl = $('cn-base-url');
     const tokEl = $('cn-admin-token');
-    await window.sd.storeSet('chartnav', {
-      base_url: baseEl ? baseEl.value : '',
-      admin_token: tokEl ? tokEl.value : ''
-    });
+    const base_url = baseEl ? baseEl.value : '';
+    const admin_token = tokEl ? tokEl.value : '';
+    // Plain store holds only the non-secret base URL.
+    await window.sd.storeSet('chartnav', { base_url });
+    // Secret goes through safeStorage. Empty string → delete.
+    if (admin_token) {
+      if (window.sd.storeKey) await window.sd.storeKey('chartnav_admin_token', admin_token);
+    } else if (window.sd.deleteKey) {
+      await window.sd.deleteKey('chartnav_admin_token');
+    }
   }
 
   // ── INPUT CHANGE: persist + push into integration ────────────

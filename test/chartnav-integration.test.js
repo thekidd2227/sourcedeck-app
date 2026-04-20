@@ -422,6 +422,42 @@ test('sourcedeck.html exposes ChartNav connection card with required fields', fu
   assert.ok(html.indexOf('id="cn-connection-status"') >= 0, 'connection card must have a status badge');
 });
 
+test('admin token persistence routes through safeStorage (storeKey/getKey), not the plain store', function () {
+  const fs = require('fs');
+  const path = require('path');
+  const html = fs.readFileSync(path.join(__dirname, '..', 'sourcedeck.html'), 'utf-8');
+  // Save path: token must go through storeKey('chartnav_admin_token', ...)
+  assert.ok(
+    /storeKey\(\s*['\"]chartnav_admin_token['\"]/.test(html),
+    'admin token must be persisted via window.sd.storeKey (safeStorage-backed)'
+  );
+  // Load path: token must be read back through getKey('chartnav_admin_token')
+  assert.ok(
+    /getKey\(\s*['\"]chartnav_admin_token['\"]/.test(html),
+    'admin token must be loaded via window.sd.getKey (safeStorage-backed)'
+  );
+  // Empty token must clear via deleteKey, not by leaving stale state
+  assert.ok(
+    /deleteKey\(\s*['\"]chartnav_admin_token['\"]/.test(html),
+    'clearing the admin token must call window.sd.deleteKey'
+  );
+  // The plain-store payload under "chartnav" must NOT contain admin_token
+  // on the save path. Look for `storeSet('chartnav', { ... admin_token`.
+  const badSavePattern = /storeSet\(\s*['\"]chartnav['\"]\s*,\s*\{[^}]*admin_token/;
+  assert.ok(!badSavePattern.test(html),
+    'save path must not write admin_token into the plain electron-store payload');
+});
+
+test('main.js wires safeStorage-backed key IPC the renderer relies on', function () {
+  const fs = require('fs');
+  const path = require('path');
+  const main = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf-8');
+  assert.ok(/safeStorage/.test(main), 'main.js must import safeStorage');
+  assert.ok(/ipcMain\.handle\(['\"]store-key['\"]/.test(main), 'store-key handler required');
+  assert.ok(/ipcMain\.handle\(['\"]get-key['\"]/.test(main), 'get-key handler required');
+  assert.ok(/ipcMain\.handle\(['\"]delete-key['\"]/.test(main), 'delete-key handler required');
+});
+
 test('package.json includes chartnav-integration.js in build.files', function () {
   const fs = require('fs');
   const path = require('path');

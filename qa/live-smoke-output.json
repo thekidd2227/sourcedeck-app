@@ -1,0 +1,137 @@
+{
+  "base_url": "http://127.0.0.1:8765",
+  "admin_token_user": "admin@chartnav.local",
+  "started_at": "2026-04-20T07:27:04.248Z",
+  "scenarios": [
+    {
+      "label": "A. disconnected (no settings)",
+      "summary_state": "disconnected",
+      "connection": "disconnected",
+      "manifest": {
+        "state": "idle",
+        "error": null,
+        "key": null,
+        "name": null,
+        "version": null,
+        "modes": [],
+        "setup_input_count": null,
+        "prereq_count": null
+      },
+      "telemetry": {
+        "state": "idle",
+        "error": null,
+        "health": null,
+        "release_version": null,
+        "queued": null,
+        "failed": null,
+        "locations": null
+      }
+    },
+    {
+      "label": "B. manifest-only (no admin token)",
+      "summary_state": "manifest_only",
+      "connection": "connected",
+      "manifest": {
+        "state": "live",
+        "error": null,
+        "key": "chartnav",
+        "name": "ChartNav",
+        "version": "1.0.0",
+        "modes": [
+          "self_implementation",
+          "done_for_you"
+        ],
+        "setup_input_count": 12,
+        "prereq_count": 5
+      },
+      "telemetry": {
+        "state": "unavailable",
+        "error": "no_admin_token",
+        "health": null,
+        "release_version": null,
+        "queued": null,
+        "failed": null,
+        "locations": null
+      }
+    },
+    {
+      "label": "C. fully connected (admin token)",
+      "summary_state": "fully_connected",
+      "connection": "connected",
+      "manifest": {
+        "state": "live",
+        "error": null,
+        "key": "chartnav",
+        "name": "ChartNav",
+        "version": "1.0.0",
+        "modes": [
+          "self_implementation",
+          "done_for_you"
+        ],
+        "setup_input_count": 12,
+        "prereq_count": 5
+      },
+      "telemetry": {
+        "state": "live",
+        "error": null,
+        "health": "green",
+        "release_version": "0.1.0",
+        "queued": 0,
+        "failed": 0,
+        "locations": 1
+      }
+    },
+    {
+      "label": "D. telemetry failed (bad token)",
+      "summary_state": "manifest_only_telemetry_failed",
+      "connection": "connected",
+      "manifest": {
+        "state": "live",
+        "error": null,
+        "key": "chartnav",
+        "name": "ChartNav",
+        "version": "1.0.0",
+        "modes": [
+          "self_implementation",
+          "done_for_you"
+        ],
+        "setup_input_count": 12,
+        "prereq_count": 5
+      },
+      "telemetry": {
+        "state": "failed",
+        "error": "http_401",
+        "health": null,
+        "release_version": null,
+        "queued": null,
+        "failed": null,
+        "locations": null
+      }
+    },
+    {
+      "label": "E. manifest failed (unreachable)",
+      "summary_state": "manifest_failed",
+      "connection": "disconnected",
+      "manifest": {
+        "state": "failed",
+        "error": "network_error",
+        "key": null,
+        "name": null,
+        "version": null,
+        "modes": [],
+        "setup_input_count": null,
+        "prereq_count": null
+      },
+      "telemetry": {
+        "state": "idle",
+        "error": null,
+        "health": null,
+        "release_version": null,
+        "queued": null,
+        "failed": null,
+        "locations": null
+      }
+    }
+  ],
+  "finished_at": "2026-04-20T07:27:04.523Z"
+}
