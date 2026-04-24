@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
-<title>ARCG Systems — Lead Command Center v6</title>
+<title>SourceDeck</title>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&family=Azeret+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
@@ -476,10 +476,10 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
 
 <div class="topbar">
   <div class="logo-block">
-    <div class="logo-mark"><img src="arcg-systems-logo.png" alt="ARCG Systems" onerror="this.parentElement.textContent='A'"></div>
+    <div class="logo-mark"><img src="sourcedeck-logo.png" alt="SourceDeck" onerror="this.parentElement.textContent='S'"></div>
     <div>
-      <div class="brand-name">ARCG Systems</div>
-      <div class="brand-ver">Lead Command Center · v6</div>
+      <div class="brand-name" id="brand-name-el">SourceDeck</div>
+      <div class="brand-ver">Lead Command Center</div>
     </div>
   </div>
   <div class="topbar-sep"></div>
@@ -913,7 +913,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
             <div class="card mb-14">
               <div class="sl">Input</div>
               <div style="display:flex;flex-direction:column;gap:12px">
-                <div class="form-group"><label class="label">Company Name</label><input class="input" id="ra-co" placeholder="e.g. Maxwell-Kates Inc"></div>
+                <div class="form-group"><label class="label">Company Name</label><input class="input" id="ra-co" placeholder="Company that sent the reply"></div>
                 <div class="form-group"><label class="label">Airtable Record ID (optional — enables writeback)</label><input class="input" id="ra-rid" placeholder="recXXXXXXXXXXXXXX"></div>
                 <div class="form-group"><label class="label">Their Reply *</label><textarea class="textarea" id="ra-reply" placeholder="Paste the full reply here..." style="min-height:100px"></textarea></div>
                 <div class="form-group"><label class="label">Context</label><textarea class="textarea" id="ra-ctx" placeholder="Cold email context, offer discussed..." style="min-height:55px"></textarea></div>
@@ -951,7 +951,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <!-- ═══════ AD ENGINE ═══════ -->
     <div class="tab-pane" id="tab-content">
       <div class="pane-hdr">
-        <div><div class="pane-title">Faceless Ad Engine</div><div class="pane-sub">Image · Video · Combo — ARCG brand content production</div></div>
+        <div><div class="pane-title">Faceless Ad Engine</div><div class="pane-sub">Image · Video · Combo — brand content production</div></div>
       </div>
       <div class="pane-body">
         <div class="mode-toggle">
@@ -1087,7 +1087,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
                 <button class="sub-tab" data-g="cc" data-s="cc-visual">Visual Prompt</button>
                 <button class="sub-tab" data-g="cc" data-s="cc-video">Video Prompt</button>
                 <button class="sub-tab" data-g="cc" data-s="cc-ttags">Topic Tags</button>
-                <button class="sub-tab" data-g="cc" data-s="cc-atags">ARCG Tags</button>
+                <button class="sub-tab" data-g="cc" data-s="cc-atags">Brand Tags</button>
               </div>
               <div class="sub-pane active" id="sp-cc-hook"><div class="result-box" id="cc-hook-out">Select a topic and click Generate.</div></div>
               <div class="sub-pane" id="sp-cc-copy"><div class="result-box" id="cc-copy-out">Copy will appear after generation.</div></div>
@@ -1095,7 +1095,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
               <div class="sub-pane" id="sp-cc-video"><div class="result-box" id="cc-video-out">Video prompt will appear here (Video/Combo mode).</div></div>
               <div class="sub-pane" id="sp-cc-carousel"><div style="font-size:10px;color:var(--gold2);font-family:'Azeret Mono',monospace;text-transform:uppercase;letter-spacing:0.08em;margin-bottom:8px">Carousel — 7 Slides</div><div id="cc-carousel-out" style="font-size:11px;color:var(--sub);line-height:2"></div></div>
               <div class="sub-pane" id="sp-cc-ttags"><div class="result-box" id="cc-ttags-out">Topic hashtags will appear here.</div></div>
-              <div class="sub-pane" id="sp-cc-atags"><div class="result-box" id="cc-atags-out">#ARCGSystems #AIAutomation #OperationalSystems #SDVOSBCertified #HUBZone #PropertyManagement #GovCon #BusinessAutomation #WorkflowAutomation #FacelessAds #LeadGeneration #B2BMarketing</div></div>
+              <div class="sub-pane" id="sp-cc-atags"><div class="result-box" id="cc-atags-out">Configure your brand hashtags in Settings → Brand.</div></div>
             </div>
             <div id="combo-extras" style="display:none;margin-top:14px">
               <div class="card"><div class="sl">Combo Additional Image Prompts</div><div id="combo-img-list" style="display:flex;flex-direction:column;gap:8px"></div></div>
@@ -1152,17 +1152,17 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
 
     <!-- ═══════ SOCIALS ═══════ -->
     <div class="tab-pane" id="tab-socials">
-      <div class="pane-hdr"><div><div class="pane-title">Social Access Points</div><div class="pane-sub">ARCG brand channels · one-click access</div></div></div>
+      <div class="pane-hdr"><div><div class="pane-title">Social Access Points</div><div class="pane-sub">Configure your brand channels in Settings → Brand</div></div></div>
       <div class="pane-body">
-        <div class="grid-auto">
-          <div class="card"><div class="card-title">📸 Instagram</div><div class="kv"><span class="k">Handle</span><span class="v">@arcg.ai</span></div><button class="btn btn-blue" style="width:100%;justify-content:center;margin-top:12px" onclick="window.open('https://www.instagram.com/arcg.ai/','_blank')">Open Instagram</button></div>
-          <div class="card"><div class="card-title">💼 LinkedIn</div><div class="kv"><span class="k">Profile</span><span class="v">jeanmaxc</span></div><button class="btn btn-blue" style="width:100%;justify-content:center;margin-top:12px" onclick="window.open('https://www.linkedin.com/in/jeanmaxc','_blank')">Open LinkedIn</button></div>
-          <div class="card"><div class="card-title">📘 Facebook</div><div class="kv"><span class="k">Page</span><span class="v">ARCG Business</span></div><button class="btn btn-blue" style="width:100%;justify-content:center;margin-top:12px" onclick="window.open('https://www.facebook.com/profile.php?id=100066907957468','_blank')">Open Facebook</button></div>
-          <div class="card"><div class="card-title">💬 WhatsApp</div><div class="kv"><span class="k">Number</span><span class="v">+1 555-906-3676</span></div><button class="btn btn-green" style="width:100%;justify-content:center;margin-top:12px" onclick="window.open('https://wa.me/15559063676','_blank')">Open WhatsApp</button></div>
-          <div class="card"><div class="card-title">🌐 ARCG Website</div><div class="kv"><span class="k">URL</span><span class="v">arcgsystems.com</span></div><button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:12px" onclick="window.open('https://arcgsystems.com','_blank')">Open Site</button></div>
-          <div class="card"><div class="card-title">📋 Assessment Form</div><div class="kv"><span class="k">URL</span><span class="v">arcgsystems.com/assessment</span></div><button class="btn btn-gold" style="width:100%;justify-content:center;margin-top:12px" onclick="window.open('https://arcgsystems.com/assessment','_blank')">Open Form</button></div>
-          <div class="card"><div class="card-title">🎨 Canva AI</div><div class="kv"><span class="k">Platform</span><span class="v">canva.com</span></div><button class="btn btn-blue" style="width:100%;justify-content:center;margin-top:12px" onclick="window.open('https://www.canva.com/','_blank')">Open Canva AI</button></div>
-          <div class="card"><div class="card-title">🎬 Leonardo AI</div><div class="kv"><span class="k">Model</span><span class="v">motion 2.0-fast</span></div><button class="btn btn-red" style="width:100%;justify-content:center;margin-top:12px" onclick="window.open('https://app.leonardo.ai/generate?model=motion_2.0-fast','_blank')">Open Leonardo AI</button></div>
+        <div id="socials-empty" class="empty-state" style="padding:40px 20px;text-align:center;color:var(--muted)">
+          <div style="font-size:28px;margin-bottom:12px">🔗</div>
+          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:18px;color:var(--text);margin-bottom:6px">No social channels configured</div>
+          <div style="font-size:12px;max-width:420px;margin:0 auto 16px">Add your Instagram, LinkedIn, Facebook, Website, and any third-party tools in Settings. Configured channels will appear here as one-click access cards.</div>
+          <button class="btn btn-blue" onclick="openTab('settings')">Open Settings</button>
+        </div>
+        <div class="grid-auto" id="socials-grid" style="display:none">
+          <!-- Cards are rendered dynamically from user-configured brand channels.
+               See renderSocials() in the app script; no owner defaults. -->
         </div>
       </div>
     </div>
@@ -1257,7 +1257,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
                 </div>
                 <div class="form-group"><label class="label">Deal Value ($)</label>
                   <input class="input" id="cl-deal" type="number" placeholder="e.g. 24000"></div>
-                <div class="form-group"><label class="label">ARCG Best Services</label>
+                <div class="form-group"><label class="label">Recommended Services</label>
                   <textarea class="textarea" id="cl-services" placeholder="e.g. Workflow Automation, Compliance Reporting..." style="min-height:60px"></textarea>
                 </div>
                 <div class="form-group"><label class="label">Priority Rationale</label>
@@ -1829,7 +1829,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
           <div style="font-size:28px;margin-bottom:10px">🔒</div>
           <div style="color:var(--gold2);font-weight:600;margin-bottom:6px">Operator / Federal Tier</div>
           <div style="color:var(--muted);font-size:12px;max-width:400px;margin:0 auto">Subcontractor matching, execution timelines, and readiness assessment. Includes cost estimation, margin impact analysis, and milestone tracking.</div>
-          <button class="btn btn-gold" style="margin-top:16px" onclick="toast('Contact sales@arcgsystems.com for Operator tier access','info')">Unlock Execution Suite →</button>
+          <button class="btn btn-gold" style="margin-top:16px" onclick="toast('Upgrade to Operator tier in Settings → Subscription','info')">Unlock Execution Suite →</button>
         </div>
         <div id="exec-content" style="display:none">
           <div class="grid-2">
@@ -1939,13 +1939,13 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
             </label>
             <label class="card" style="cursor:pointer;border-color:var(--border);transition:var(--t);position:relative;padding:18px" id="cl-mode-dfy">
               <input type="radio" name="cl-impl-mode" value="done_for_you" style="position:absolute;opacity:0;width:0;height:0" onchange="clinicalSetMode(this.value)">
-              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Done-For-You by ARCG</div>
+              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold);margin-bottom:8px">Done-For-You deployment</div>
               <div style="font-size:14px;font-weight:700;margin-bottom:6px">We deploy it</div>
               <p style="font-size:12px;color:var(--muted);line-height:1.55;margin:0">
-                ARCG Systems implements the clinical capability, connects approved tools, configures core workflows, tests the deployment, and hands off a working environment.
+                A deployment team implements the clinical capability, connects approved tools, configures core workflows, tests the deployment, and hands off a working environment.
               </p>
               <ul style="margin:10px 0 0;padding-left:16px;font-size:11.5px;color:var(--sub);line-height:1.55">
-                <li>Full implementation by ARCG</li>
+                <li>Full implementation included</li>
                 <li>Up to 5 approved tool connections</li>
                 <li>Core workflow configuration + QA</li>
                 <li>Training and handoff session</li>
@@ -2157,14 +2157,14 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <div class="sp-body">
       <div class="sl">Lead Profile</div>
       <div id="sp-details" style="margin-bottom:14px"></div>
-      <div class="sl">How ARCG Can Help</div>
+      <div class="sl">How We Can Help</div>
       <div id="sp-arcg-help" style="margin-bottom:14px;background:var(--panel3);border-radius:var(--r2);padding:12px;border-left:3px solid var(--gold);font-size:11px;line-height:1.7;color:var(--sub)"></div>
       <div id="sp-gen-sections" style="display:none">
         <div class="sl">Why This Target</div>
         <div id="sp-why-target" style="margin-bottom:14px;background:var(--panel3);border-radius:var(--r2);padding:12px;border-left:3px solid var(--red);font-size:11px;line-height:1.7;color:var(--sub)"></div>
         <div class="sl">Operational Gaps</div>
         <div id="sp-ops-gaps" style="margin-bottom:14px;background:var(--panel3);border-radius:var(--r2);padding:12px;border-left:3px solid var(--warn);font-size:11px;line-height:1.7;color:var(--sub);white-space:pre-wrap"></div>
-        <div class="sl">ARCG Solution</div>
+        <div class="sl">Suggested Solution</div>
         <div id="sp-arcg-solution" style="margin-bottom:14px;background:var(--panel3);border-radius:var(--r2);padding:12px;border-left:3px solid var(--green);font-size:11px;line-height:1.7;color:var(--sub)"></div>
         <div class="sl">Ready-to-Send Outreach</div>
         <div id="sp-outreach-msg" style="margin-bottom:14px;background:var(--panel2);border:1px solid rgba(201,148,26,0.3);border-radius:var(--r2);padding:12px;font-size:11px;line-height:1.7;color:var(--sub);white-space:pre-wrap;font-family:'Instrument Sans',sans-serif"></div>
@@ -2533,7 +2533,7 @@ ACT AS:
 Senior B2B Lead Generation Strategist + Operational Systems Consultant + Conversion-Focused Copywriter
 
 MISSION:
-Identify only real, verifiable businesses ARCG Systems can legitimately target.
+Identify only real, verifiable businesses the user can legitimately target.
 Do not generate, infer, estimate, or invent any business, contact, email, social profile, website, or operational issue.
 If a lead cannot be verified with evidence, exclude it.
 
@@ -2856,7 +2856,7 @@ Allowed examples:
 - no clear vendor onboarding path
 - no visible automation/self-service layer
 
-STEP 4 — ARCG SOLUTION MATCH
+STEP 4 — SOLUTION MATCH
 Assign ONE primary service only:
 - Workflow & AI Automation
 - Vendor / Operations Coordination
@@ -2864,7 +2864,7 @@ Assign ONE primary service only:
 - Government Contracting / Compliance
 
 Then define:
-- what ARCG would realistically build/fix
+- what the user would realistically build/fix
 This must match the observed problem.
 Do not force a service if the fit is weak.
 
@@ -2920,7 +2920,7 @@ CORRECT — Generic Inbox Fallback with alternate path:
 CORRECT — No Verified Email (Lane B):
   verified_contact_name: "Sarah Saltzberg"
   verified_email: ""
-  verified_phone: "(212) 663-6215"
+  verified_phone: ""
   linkedin_url: "https://www.linkedin.com/in/sarah-saltzberg/"
   contact_quality: "No Verified Email"
   generic_inbox_fallback: false
@@ -3267,7 +3267,7 @@ function viewGeneratedLead(idx){
     'Current Stage': 'New',
     'Days in Stage': 0,
     'Lead Source': 'AI Generated',
-    'ARCG Best Services': l.services||'',
+    'Recommended Services': l.services||'',
     'Priority Rationale': l.rationale||'',
     '_likely_problems': l.likely_problems||'',
     '_arcg_help': l.arcg_help||'',
@@ -3779,21 +3779,27 @@ async function generateIntroEmail(){
   const biz = f['Business Name']||'their business';
   const contact = f['Contact Name']?.split(' ')[0] || 'there';
   const loc = f['Location']||'';
-  const problems = f['_likely_problems'] || f['Priority Rationale'] || f['ARCG Best Services'] || '';
-  const arcgHelp = f['_arcg_help'] || f['ARCG Best Services'] || '';
+  const problems = f['_likely_problems'] || f['Priority Rationale'] || f['Recommended Services'] || f['ARCG Best Services'] || '';
+  const diagnoseFirst = f['_suggested_services'] || f['_arcg_help'] || f['Recommended Services'] || f['ARCG Best Services'] || '';
 
-  const prompt = `Write a concise, direct B2B cold intro email from ARCG Systems to ${biz}${loc?' in '+loc:''}.
+  // Brand pulled from user-configured brand (Settings → Brand). Blank until user sets it.
+  const _b = (typeof ARCG_OS !== 'undefined' && ARCG_OS.brand) ? ARCG_OS.brand : {};
+  const brandName = (_b.name || '').trim();
+  const brandWebsite = (_b.website || '').trim();
+  const senderName = (_b.senderName || '').trim();
+  const signatureLine = [senderName, brandName, brandWebsite].filter(Boolean).join(' | ') || '[Your name] | [Your company] | [Your website]';
+  const fromLine = brandName ? `from ${brandName} ` : '';
 
-ARCG is a diagnosis-first operational intelligence firm. ARCG does NOT sell automation. ARCG does NOT pitch software. ARCG diagnoses where an operation is leaking time, money, visibility, or accountability — then blueprints only what should actually be fixed. We do not automate broken logic.
+  const prompt = `Write a concise, direct B2B cold intro email ${fromLine}to ${biz}${loc?' in '+loc:''}.
 
 Contact first name: ${contact}
 The specific operational breakdown you observed: ${problems}
-What ARCG would diagnose first: ${arcgHelp}
+What you would diagnose first: ${diagnoseFirst}
 
 Rules:
 - 3 short paragraphs only. No bullets. No headers. No emoji.
 - Para 1: name the specific operational breakdown you actually observed (intake, handoffs, reporting, accountability, revenue leakage). Be specific. No generic "you're probably losing leads" phrasing.
-- Para 2: what ARCG would diagnose — not "build", not "automate". Frame it as mapping the leak and quantifying it before any implementation. Use the language of clarity, diagnosis, blueprint, phased execution.
+- Para 2: what you would diagnose — not "build", not "automate". Frame it as mapping the leak and quantifying it before any implementation. Use the language of clarity, diagnosis, blueprint, phased execution.
 - Para 3: low-friction CTA from this approved list — vary naturally, never combine:
     • "Worth a quick 10-minute triage call?"
     • "Want me to map the breakdown I'm seeing?"
@@ -3802,13 +3808,13 @@ Rules:
 - Tone: direct, confident, peer-to-peer B2B. Premium consulting voice. Never salesy. Never "I noticed your website" fluff.
 - BANNED phrases: "automate your business", "AI solution", "revolutionary", "game-changing", "scale your business", "unlock", "supercharge", "cutting-edge", "leverage", "synergy", "take your business to the next level", "we help companies like yours", "quick win", "low-hanging fruit"
 - BANNED claims: do NOT promise specific dollar savings, percentages, ROI figures, or timeframes. Do NOT mention pricing. Do NOT mention "fixed-fee".
-- Sign: Jean-Max Charles | ARCG Systems | arcgsystems.com
+- Sign: ${signatureLine}
 - Subject line at top: Subject: [6-10 words, specific to the breakdown observed, no clickbait]
 
 Output ONLY the email — subject line first, then body. No preamble. No explanation.`;
 
   try{
-    const result = await callAI('You are a senior B2B cold email writer for ARCG Systems — a diagnosis-first operational intelligence firm. You write like a premium consultant talking peer-to-peer with a decision-maker. You never sell automation. You diagnose operational waste and invite a triage conversation. Before returning, self-critique the draft 7 times against the banned-phrase list and the diagnosis-first positioning, then refine 7 times for specificity and tone, then stress-test 5 times by asking: would a skeptical CFO forward this to their team or delete it? Only return the final version.', prompt, 600);
+    const result = await callAI('You are a senior B2B cold email writer. You write like a premium consultant talking peer-to-peer with a decision-maker. You never sell automation. You diagnose operational waste and invite a triage conversation. Before returning, self-critique the draft 7 times against the banned-phrase list, then refine 7 times for specificity and tone, then stress-test 5 times by asking: would a skeptical CFO forward this to their team or delete it? Only return the final version.', prompt, 600);
     const d = {content:[{text:result.text}]};
     if(!r.ok) throw new Error(d.error?.message||'API '+r.status);
     currentIntroEmail = (d.content?.[0]?.text||'').trim();
@@ -3817,7 +3823,7 @@ Output ONLY the email — subject line first, then body. No preamble. No explana
     toast('Intro email generated','ok');
     logActivity('✉','var(--blue)','Intro email: '+biz);
   } catch(e){
-    const fallback = `Subject: Where ${biz} is likely leaking operationally\n\nHi ${contact},\n\nI've been looking at ${biz} and the pattern I keep seeing is ${problems||'manual handoffs and no real source of truth across your operation'}. That kind of breakdown usually costs more than anyone tracks — not just time, but accountability and customer trust.\n\nARCG is a diagnosis-first operational intelligence firm. Before we recommend a single fix, we map where the waste actually is and rank it by impact. ${arcgHelp||'The first deliverable is clarity, not software.'}\n\nWorth a quick 10-minute triage call? No pitch — I'll show you exactly how ARCG would diagnose the breakdown.\n\nJean-Max Charles | ARCG Systems | arcgsystems.com`;
+    const fallback = `Subject: Where ${biz} is likely leaking operationally\n\nHi ${contact},\n\nI've been looking at ${biz} and the pattern I keep seeing is ${problems||'manual handoffs and no real source of truth across your operation'}. That kind of breakdown usually costs more than anyone tracks — not just time, but accountability and customer trust.\n\nBefore recommending a single fix, we'd map where the waste actually is and rank it by impact. ${diagnoseFirst||'The first deliverable is clarity, not software.'}\n\nWorth a quick 10-minute triage call? No pitch — I'll show you exactly how we'd diagnose the breakdown.\n\n${signatureLine}`;
     currentIntroEmail = fallback;
     if(box){ box.textContent=fallback; box.style.display='block'; }
     if(acts) acts.style.display='flex';
@@ -3925,19 +3931,12 @@ function pickVariant(topic,type,variants){
 let selLead=null;
 let raCache={intent:'',summary:'',response:'',next:''};
 
-// ─── MOCK LEADS (replace with Airtable fetch when AT_PAT is set) ───
-const MOCK_LEADS=[
-  {id:'rec001',fields:{'Business Name':'Robert E. Hill Inc — Riverdale Bronx','Contact Name':'K. Hackett','Email':'khackett@robertehill.com','Status':'Contacted','Priority':'High','Location':'Bronx, NY','ARCG Best Services':'AI Automation, Compliance Reporting, Facilities Support','Priority Rationale':'Est. 1919, 31 co-ops/condos. Heavy compliance exposure.','Fit Score':88,'Urgency Score':74,'Revenue Score':82,'Deal Value':24000,'Close Probability':40,'Current Stage':'Outreach Sent','Days in Stage':5,'Next Action':'Follow-up Day 5'}},
-  {id:'rec002',fields:{'Business Name':'Maxwell-Kates Inc (Associa)','Contact Name':'Andy Marks','Email':'amarks@maxwellkates.com','Status':'Contacted','Priority':'High','Location':'NYC Metro','ARCG Best Services':'Workflow Automation, Compliance Reporting','Priority Rationale':'14K units NYC. Top-tier firm.','Fit Score':92,'Urgency Score':65,'Revenue Score':90,'Deal Value':48000,'Close Probability':30,'Current Stage':'Outreach Sent','Days in Stage':3,'Next Action':'Day 5 follow-up April 3'}},
-  {id:'rec003',fields:{'Business Name':'HPM Property Management','Contact Name':'Robb Pair','Email':'askai@harlempm.com','Status':'Replied','Priority':'High','Location':'Harlem, NY','ARCG Best Services':'Workflow Automation, Tenant Systems','Priority Rationale':'70 buildings Harlem. Replied with interest.','Fit Score':85,'Urgency Score':92,'Revenue Score':80,'Deal Value':36000,'Close Probability':55,'Current Stage':'Replied','Days in Stage':2,'Next Action':'🔥 BOOK NOW — replied with interest'}},
-  {id:'rec004',fields:{'Business Name':'Alma Realty Corp','Contact Name':'F. Villalta','Email':'fvillalta@almarealty.com','Status':'Contacted','Priority':'High','Location':'Queens, NY','ARCG Best Services':'AI Automation, Facilities Coordination','Priority Rationale':'Large affordable housing portfolio.','Fit Score':80,'Urgency Score':62,'Revenue Score':78,'Deal Value':30000,'Close Probability':35,'Current Stage':'Outreach Sent','Days in Stage':6,'Next Action':'Follow-up before Day 7'}},
-  {id:'rec005',fields:{'Business Name':'Premier Placements — Staffing','Contact Name':'Shelby Weidler','Email':'info@apartmentstaffing.com','Status':'Contacted','Priority':'High','Location':'Atlanta, GA','ARCG Best Services':'Staffing Workflow Automation','Priority Rationale':'65 markets. National.','Fit Score':75,'Urgency Score':55,'Revenue Score':72,'Deal Value':42000,'Close Probability':25,'Current Stage':'Outreach Sent','Days in Stage':8,'Next Action':'⚠ OVERDUE — follow up now'}},
-  {id:'rec006',fields:{'Business Name':'Century Management','Contact Name':'A.J. Rexhepi','Email':'info@centuryny.com','Status':'Contacted','Priority':'High','Location':'Manhattan, NY','ARCG Best Services':'Workflow, Reporting Systems','Priority Rationale':'15K units.','Fit Score':87,'Urgency Score':60,'Revenue Score':85,'Deal Value':54000,'Close Probability':28,'Current Stage':'Outreach Sent','Days in Stage':4,'Next Action':'Watch for reply — Day 5 tomorrow'}},
-  {id:'rec007',fields:{'Business Name':'ELH Mgmt LLC','Contact Name':'Denise DiPalo','Email':'denise@elhmgmt.com','Status':'Contacted','Priority':'High','Location':'Bronx/Brooklyn','ARCG Best Services':'AI Automation, Affordable Housing','Priority Rationale':'Bronx/Brooklyn portfolio.','Fit Score':78,'Urgency Score':58,'Revenue Score':75,'Deal Value':28000,'Close Probability':30,'Current Stage':'Outreach Sent','Days in Stage':7,'Next Action':'⚠ OVERDUE — hit Day 7'}},
-  {id:'rec008',fields:{'Business Name':'Riverbay Corporation (Co-op City)','Contact Name':'Management Office','Email':'','Status':'New','Priority':'High','Location':'Co-op City, Bronx','ARCG Best Services':'Compliance Automation, Facility Systems','Priority Rationale':'STAR: 15,372 units. Needs vendor reg call (718) 320-3300. GET EMAIL.','Fit Score':95,'Urgency Score':50,'Revenue Score':95,'Deal Value':120000,'Close Probability':15,'Current Stage':'New','Days in Stage':14,'Next Action':'📞 Call (718) 320-3300 for vendor registration'}},
-  {id:'rec009',fields:{'Business Name':'Blue Hill Realty','Contact Name':'Management Team','Email':'office@bluehillrealty.com','Status':'Contacted','Priority':'Medium','Location':'Staten Island / Brooklyn','ARCG Best Services':'Workflow Automation','Priority Rationale':'Multi-borough.','Fit Score':68,'Urgency Score':48,'Revenue Score':65,'Deal Value':18000,'Close Probability':30,'Current Stage':'Outreach Sent','Days in Stage':5,'Next Action':'Watch for reply'}},
-  {id:'rec010',fields:{'Business Name':'Henderson Properties','Contact Name':'Phil Henderson','Email':'info@hendersonproperties.com','Status':'Contacted','Priority':'Medium','Location':'Charlotte, NC','ARCG Best Services':'Workflow, Reporting','Priority Rationale':'Southeast regional PM.','Fit Score':62,'Urgency Score':45,'Revenue Score':60,'Deal Value':15000,'Close Probability':25,'Current Stage':'Outreach Sent','Days in Stage':9,'Next Action':'⚠ OVERDUE 9 days'}},
-];
+// ─── LEAD BOOTSTRAP (privacy-safe: blank by default) ───
+// The shipping app ships with zero leads. Airtable fetch (when AT_PAT is set)
+// or explicit demo mode (Settings → Load Demo Data) is the only path that
+// populates lead data. See scripts/release-check.js for the guard that
+// fails the build if this array contains any lead entries.
+const MOCK_LEADS=[];
 
 let allLeads=[...MOCK_LEADS];
 
@@ -3945,7 +3944,7 @@ let allLeads=[...MOCK_LEADS];
 async function loadAirtableLeads(){
   if(!AT_PAT)return; // Use mock if no PAT
   try{
-    const fields=['Business Name','Status','Priority','Email','Contact Name','Location','ARCG Best Services','Priority Rationale','LinkedIn','Phone / WhatsApp','Deal Value','Close Probability','Current Stage','Next Action','Days in Stage','Follow-Up Required','Overdue Flag','Reply Intent','AI Next Move','Fit Score','Urgency Score','Revenue Score','Lead Source','Assigned Offer'].map(f=>'fields[]='+encodeURIComponent(f)).join('&');
+    const fields=['Business Name','Status','Priority','Email','Contact Name','Location','Recommended Services','Priority Rationale','LinkedIn','Phone / WhatsApp','Deal Value','Close Probability','Current Stage','Next Action','Days in Stage','Follow-Up Required','Overdue Flag','Reply Intent','AI Next Move','Fit Score','Urgency Score','Revenue Score','Lead Source','Assigned Offer'].map(f=>'fields[]='+encodeURIComponent(f)).join('&');
     const r=await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?maxRecords=100&filterByFormula=NOT({Status}='')&${fields}`,{headers:{'Authorization':'Bearer '+AT_PAT}});
     if(!r.ok)return;
     const d=await r.json();
@@ -4601,7 +4600,7 @@ ACT AS:
 Senior B2B Lead Generation Strategist + Operational Systems Consultant + Conversion-Focused Copywriter
 
 MISSION:
-Identify only real, verifiable businesses ARCG Systems can legitimately target.
+Identify only real, verifiable businesses the user can legitimately target.
 Do not generate, infer, estimate, or invent any business, contact, email, social profile, website, or operational issue.
 If a lead cannot be verified with evidence, exclude it.
 
@@ -4924,7 +4923,7 @@ Allowed examples:
 - no clear vendor onboarding path
 - no visible automation/self-service layer
 
-STEP 4 — ARCG SOLUTION MATCH
+STEP 4 — SOLUTION MATCH
 Assign ONE primary service only:
 - Workflow & AI Automation
 - Vendor / Operations Coordination
@@ -4932,7 +4931,7 @@ Assign ONE primary service only:
 - Government Contracting / Compliance
 
 Then define:
-- what ARCG would realistically build/fix
+- what the user would realistically build/fix
 This must match the observed problem.
 Do not force a service if the fit is weak.
 
@@ -4988,7 +4987,7 @@ CORRECT — Generic Inbox Fallback with alternate path:
 CORRECT — No Verified Email (Lane B):
   verified_contact_name: "Sarah Saltzberg"
   verified_email: ""
-  verified_phone: "(212) 663-6215"
+  verified_phone: ""
   linkedin_url: "https://www.linkedin.com/in/sarah-saltzberg/"
   contact_quality: "No Verified Email"
   generic_inbox_fallback: false
@@ -5096,7 +5095,7 @@ Only real, evidence-backed opportunities.${excludeStr}`;
           'Deal Value':l.deal_value||0,'Fit Score':Math.floor(60+Math.random()*30),'Urgency Score':Math.floor(50+Math.random()*40),
           'Revenue Score':Math.floor(40+Math.random()*50),'Current Stage':'New Lead',
           'Next Action':reachMethod==='Email'?'Review & approve for outreach':'Reach via social media',
-          'ARCG Best Services':l.services||'','Priority Rationale':l.rationale||'',
+          'Recommended Services':l.services||'','Priority Rationale':l.rationale||'',
           'LinkedIn':l.linkedin||'','Facebook / Social':l.facebook||'',
           '_why_target':l.why_target||'','_operational_gaps':l.operational_gaps||'','_arcg_solution':l.arcg_solution||'',
           '_outreach_message':l.outreach_message||'','_likely_problems':l.likely_problems||'','_arcg_help':l.arcg_help||'',
@@ -5436,7 +5435,7 @@ async function bookLead(id){
   const f=l.fields;const r=document.getElementById('sp-result');
   if(!f['Email']){toast('No email on file','err');return;}
   if(r)r.innerHTML='<span class="wh wh-load">⏳ Sending...</span>';
-  const payload={email:f['Email'],first_name:(f['Contact Name']||'').split(' ')[0]||'Team',meeting_type:'Discovery Call',booking_link:'https://calendar.google.com/calendar/appointments/ARCG',reply_summary:f['Priority Rationale']||''};
+  const payload={email:f['Email'],first_name:(f['Contact Name']||'').split(' ')[0]||'Team',meeting_type:'Discovery Call',booking_link:((typeof ARCG_OS!=='undefined'&&ARCG_OS.brand&&ARCG_OS.brand.bookingLink)||''),reply_summary:f['Priority Rationale']||''};
   try{
     const res=await fetch(BOOK_WH,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)});
     if(r)r.innerHTML=res.ok?`<span class="wh wh-ok">✓ Sent to ${f['Email']}</span>`:`<span class="wh wh-err">✗ Error ${res.status}</span>`;
@@ -5564,7 +5563,7 @@ function renderRevenue(){
 
 // ─── EMAIL TRACKER — AIRTABLE EMAIL EVENTS LEDGER (source-of-truth) ───
 // The tracker ALWAYS reads from the Email Events Airtable table.
-// The Email Events table is populated by /Desktop/ARCG-LCC-Mobile/email-events-sync.js
+// The Email Events table is populated by the user's configured email-events sync (see Settings → Integrations).
 // (cron: every 15 min) which pulls from Instantly API server-side.
 // NO direct browser calls to Instantly. NO CORS issues. NO fake math.
 const AT_EVENTS_TBL='tblC4jVD9Amnhha5j';
@@ -5752,7 +5751,7 @@ async function analyzeReply(){
   if(btn)btn.disabled=true;if(st)st.innerHTML='<span class="wh wh-load">⏳ Analyzing...</span>';
   ['ra-sum-out','ra-int-out','ra-res-out','ra-next-out'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Analyzing...';});
 
-  const prompt=`ARCG Systems AI Sales Analyst. Analyze this reply from ${co}.
+  const prompt=`AI Sales Analyst. Analyze this reply from ${co}.
 Reply: "${reply}"
 ${ctx?'Context: '+ctx:''}
 
@@ -5762,7 +5761,7 @@ Output EXACTLY:
 ---INTENT---
 ONE of: Interested / Maybe Later / Not Interested / Needs Clarification / Out of Office / Wrong Contact. Then one sentence why.
 ---RESPONSE---
-3-5 sentences professional reply pushing toward discovery call. ARCG tone: direct, confident, no fluff. End with booking CTA.
+3-5 sentences professional reply pushing toward discovery call. Tone: direct, confident, no fluff. End with booking CTA.
 ---NEXT---
 Single action sentence. Specific.`;
 
@@ -5820,499 +5819,15 @@ function setMode(m){
 }
 
 // ═══════ 12-TOPIC PROMPT LIBRARY — LAYER B (Direct Generation) ═══════
-// Layer A (Creative Briefs) → ARCG_Content_Prompt_Library.html (Desktop)
+// Layer A (Creative Briefs) → external brief templates (user-supplied)
 // Visual prompts: AI-generated when OPENAI_KEY present; library fallback otherwise.
 // imgB/vidB: diverse scene families — NO dark desk default.
-const PROMPT_LIBRARY={
-"Broken Operations":{
-  hook:"Your business is running — just barely. Here is what broken looks like.",
-  caption:"Most operations that look fine from the outside are quietly leaking money.\n\nMissed handoffs. No intake system. Manual reporting. Everyone reacting.\n\nThis is not a staffing problem. It is a systems problem.\n\narcgsystems.com/assessment or DM \"AUDIT\"",
-  carousel:["Your Operations Are Broken. Most businesses don\'t know until it costs them.","Requests arrive with no home. No intake system = no accountability.","Every missed handoff is a missed deliverable.","Manual status updates mean leadership is always the last to know.","The fix is not hiring more people. It is building systems."],
-  imgB:[
-    "Aerial editorial view of a fractured operational flowchart on a white strategy table: broken handoff arrows highlighted in red, ownership fields empty, process map incomplete. Premium business photography, text-safe left zone. ARCG Systems mark lower-right.",
-    "Bird\'s-eye editorial of an open-plan operations floor: work requests queued on left side, completion board empty on right, the handoff gap physically visible as empty space between two active areas. Muted color palette, professional environment.",
-    "Close-up editorial: a fragmented intake board with color-coded task markers and no owners assigned, deadline fields blank, priority sorting absent. Shallow depth of field, premium light, credible business context.",
-    "Split-frame composition: left panel shows 47 unread email threads with no routing structure; right panel shows the fractured backend routing diagram behind it. Minimal, premium, no desk centerpiece.",
-    "Wide environmental shot of a coordinator\'s empty station positioned between two active, busy departments — the gap in the handoff chain made architecturally and physically visible. Editorial corporate photography."
-  ],
-  vidB:[
-    "Slow cinematic push across a broken process flowchart on a strategy table — each routing node shows a red disconnect marker, paths incomplete, no central controller. Premium editorial motion. No dark desk.",
-    "Overhead time-lapse: intake requests arriving and stacking with no routing logic applied — accumulating, unassigned, unresolved. Editorial pacing, operational reality.",
-    "Cinematic pan from a busy intake queue to an empty operations board — the handoff gap traversed as a physical journey through an operations environment."
-  ]
-},
-"Cost of Manual Process":{
-  hook:"One manual process costs your business 572 hours a year. Do the math.",
-  caption:"Add up every spreadsheet your team updates manually. Every email used as an approval system. Every report compiled by hand.\n\nNow multiply by 52 weeks.\n\nThat is the real cost of manual operations.\n\narcgsystems.com/assessment or DM \"AUDIT\"",
-  carousel:["1 Manual Process. 572 Hours a Year. That\'s the math.","Every manual approval is billable time disappearing into email.","Every spreadsheet update is a decision that should already be made.","The cost is not the task. It is the compounding.","What would your team do with 572 hours back?"],
-  imgB:[
-    "Macro editorial: a hand entering the same data field into three different forms on three clipboards simultaneously — repetition made physical, precise, and costly. Premium light, credible business detail.",
-    "Split-screen time comparison: left panel shows a 42-step manual approval chain with email threads; right panel shows the same outcome in 2 automated steps. Clean, infographic-quality, no desk centerpiece.",
-    "Overhead editorial: a week\'s worth of paper approvals stacked in an inbox tray, each requiring a different signature, none processed. Clean surface, premium light, the administrative burden visible.",
-    "Dramatic data-visualization editorial: a running labor cost counter ticking upward next to a growing list of completed manual tasks. Motion-graphic aesthetic, business-credible, premium treatment.",
-    "Close-up: a hand writing the same task note for the sixth time — a small counter in frame reads \'6 of 6 this week\'. The cost of non-automation made specific and human."
-  ],
-  vidB:[
-    "Time-lapse: the same data entry task performed across five different platforms — same field, same information, different screen every time. Labor cost counter overlaid. No desk default.",
-    "Clock visualization in motion: 11 hours blocked on a work week calendar, each block consumed by a labeled manual task. Editorial pacing, operational precision.",
-    "Repetitive motion sequence: form filled, form filed, same form requested again — the avoidable loop made cinematic and visible."
-  ]
-},
-"What ARCG Builds":{
-  hook:"Not software. Not an app. The operating system your business never had.",
-  caption:"A lot of businesses add tools. Subscribe to another dashboard. And the problems stay the same.\n\nARCG Systems does not sell software. We install operational infrastructure.\n\nEvery request gets a home, an owner, and a deadline. Reports generate automatically. Exceptions alert themselves.\n\narcgsystems.com/assessment or DM \"AUDIT\"",
-  carousel:["ARCG Does Not Sell Software. We install operational infrastructure.","Every request gets a home, an owner, and a deadline.","Reports generate automatically. Exceptions alert themselves.","Your team stops reacting and starts executing.","This is not a tool. It is infrastructure."],
-  imgB:[
-    "Operations command center: three screens showing unified intake routing, automated reporting panels, and workflow status boards — all connected, all current. Premium corporate environment, no dark desk default.",
-    "Clean architectural visualization of an operations infrastructure layer: intake funnel routing into automation layer, reporting populating downstream. Structural diagram aesthetic, business-credible.",
-    "Wide operations environment: structured workflow boards with clear ownership markers, automated alert routing visible on a central display, organized execution visible throughout the space.",
-    "Editorial close-up of a centralized operations dashboard: every request tracked, every status visible, automated reports generating. Premium, operational, forward-facing, no clutter.",
-    "Schematic-style editorial visualization: ARCG operational infrastructure layer — intake, routing, automation, reporting — the architecture of a functioning backend made visible."
-  ],
-  vidB:[
-    "Cinematic reveal: operations command center activating — intake request arrives, routes automatically, status updates cascade across connected boards. No dark desk. Premium editorial motion.",
-    "Slow build sequence: empty operations infrastructure → intake flows in → system routes and assigns → reporting populates → operations stabilize. The backend made visible.",
-    "Time-lapse of a structured operations environment running without bottlenecks: requests routed, reports generated, no human bottleneck visible — automation in motion."
-  ]
-},
-"GovCon Backend Failure":{
-  hook:"Government contracts are not lost at the bid. They are lost at the backend.",
-  caption:"Winning the bid is only the beginning.\n\nContractors lose awards mid-performance not because of bad execution — but because they have no backend infrastructure to manage compliance, subcontractors, or reporting.\n\nThe contract was won. The backend was not ready.\n\narcgsystems.com/assessment or DM \"AUDIT\"",
-  carousel:["GovCon Companies Don\'t Lose Contracts at the Bid. They lose them at the backend.","You won the award. Do you have subcontractor tracking? Compliance reporting? Invoice workflows?","Most GovCon failures are backend failures.","Federal clients do not wait for systems to catch up.","The proposal was perfect. The execution infrastructure was not."],
-  imgB:[
-    "Federal contract execution strategy table: proposal binders organized on one side, compliance deadline board and subcontractor tracking matrix on the other — gaps visible, backend incomplete. Premium editorial light.",
-    "Overhead editorial of a procurement readiness table: left side shows bid credentials in order; right side shows backend execution infrastructure — incomplete, disorganized, unprepared.",
-    "Close-up of a compliance audit trail with critical documentation absent — empty certification fields, missing deliverable evidence, deadline markers passing. Federal procurement context, editorial treatment.",
-    "Wide govcon operations environment: solicitation board with awarded contracts visible, compliance tracking boards empty, subcontractor coordination architecture missing. The backend gap made environmental.",
-    "Split composition: federal solicitation requirements checklist on left, backend execution capability assessment on right — the mismatch mapped as a visual gap chart."
-  ],
-  vidB:[
-    "Cinematic sequence through a federal contract execution environment: proposal credentials organized, compliance tracking absent, subcontractor data missing, deadline board unmarked — the gap accumulating.",
-    "Slow reveal of a procurement readiness environment: before state (scattered, incomplete) transitioning to after state (structured, trackers populated, execution ready). Editorial motion.",
-    "Sequential editorial: contract award arrives → backend execution begins → missing infrastructure becomes visible → compliance risk accumulating. Precise, credible, no dark desk."
-  ]
-},
-"Property Manager Compliance Gap":{
-  hook:"NYC Local Law violations: $250 to $1,000 per day. Most PMs track compliance in a spreadsheet.",
-  caption:"Every building in your portfolio has a compliance clock running.\n\nLocal Law deadlines. Inspection certifications. Maintenance windows. Tracked in a spreadsheet — or not tracked at all.\n\nOne missed deadline is not a paperwork issue. It is a liability event.\n\narcgsystems.com/assessment or DM \"AUDIT\"",
-  carousel:["Property Managers Are One Inspection Away from a Fine They Didn\'t See Coming.","Local Law 11. Local Law 152. Local Law 97. Automated tracking across your full portfolio.","One spreadsheet is not a compliance system.","Vendors need reminders. Certifications expire. Deadlines do not care.","The fine does not come with a warning. The system should."],
-  imgB:[
-    "Multi-property compliance operations board: 12 building status columns, inspection markers in multiple states — several flagged overdue, unresolved, at risk. Operations context, no desk default. Premium editorial.",
-    "Editorial overhead of a vendor documentation review surface: certificates of insurance laid across a conference table, several visibly expired, compliance gap physically present.",
-    "Property portfolio compliance dashboard visualization: building icons with inspection status overlays — missed deadlines flagged, automated alerts absent, risk accumulating across the portfolio.",
-    "Close-up of a Local Law compliance calendar: multiple critical deadline windows, manual tracking evident, automated alert layer missing. Premium editorial treatment, credible property management context.",
-    "Wide shot of a property management operations board: unit inspection status by building, vendor compliance tracker columns, maintenance cycle visibility — all manual, all at risk."
-  ],
-  vidB:[
-    "Slow pan across a property portfolio compliance board: building status markers updating — missed deadlines flagging in sequence, no automated response triggered. Editorial motion.",
-    "Cinematic compliance gap sequence: vendor certificate expires → system has no alert → inspector arrives → violation issued. The gap made precise and cinematic.",
-    "Time-lapse compliance calendar: deadlines passing with no automated action, manual tracking falling behind, violation risk accumulating across multiple properties."
-  ]
-},
-"11-Hour Weekly Waste":{
-  hook:"Your team loses 11 hours a week to work that should not be human.",
-  caption:"You cannot see the 11 hours. That is the problem.\n\nNot one meeting. Not one task. The compounding cost of every manual report, every approval chase, every update sent because a system did not send it automatically.\n\narcgsystems.com/assessment or DM \"AUDIT\"",
-  carousel:["11 Hours Per Week. That Is What Manual Operations Cost Your Team.","3 hours compiling reports that should be automated.","2 hours chasing approvals that should route themselves.","2.5 hours on data re-entry that should never happen.","11 hours. Every week. Every team member. Every year."],
-  imgB:[
-    "Dramatic editorial visualization: a weekly calendar with 11 hours precisely blocked and labeled — \'Report Compilation: 3h\', \'Approval Chasing: 2h\', \'Data Re-entry: 2.5h\', \'Status Updates: 1.5h\', \'Manual Scheduling: 2h\'. Clean, premium, business-credible.",
-    "Split composition: left shows what 11 wasted admin hours looks like as a task list; right shows what those same hours produce when automated. Premium business visual, infographic aesthetic.",
-    "Time-cost editorial visualization: a running cost counter tracking the weekly price of manual admin overhead for a 10-person team. Motion-graphic quality, editorial treatment.",
-    "Overhead editorial: a task list with every recurring administrative item highlighted in gold — the repeating, avoidable, automatable tasks made visible as a pattern.",
-    "Clock face visualization: 11 segments of the working week blocked and labeled with specific avoidable tasks. The full visual weight of weekly administrative waste made precise."
-  ],
-  vidB:[
-    "Time-lapse compression of a full admin week: report compiled manually three times, approvals chased by email, same data entered across four systems. Running cost counter overlaid. No desk default.",
-    "Clock visualization in motion: 11 hours ticking down, each segment consumed by a labeled manual task. Editorial pacing, operational precision.",
-    "Comparative motion sequence: standard admin week compressed vs automated equivalent — the difference in time, cost, and capacity made cinematic."
-  ]
-},
-"Chaos vs Control":{
-  hook:"Every business operates in one of two modes. Chaos or control. Most do not choose.",
-  caption:"Most businesses do not choose chaos. It chooses them — when they grow without building systems to support that growth.\n\nEvery reactive decision. Every missed handoff. Every fire drill. That is chaos operating as a system.\n\narcgsystems.com/assessment or DM \"AUDIT\"",
-  carousel:["Two Operating Modes. Chaos. Or Control. Most businesses never choose.","Chaos: Your team reacts. Decisions lag. Deadlines slip.","Control: Intake is routed. Reports are automatic. Exceptions alert themselves.","Chaos is not a problem. It is the absence of a system.","Control does not happen by accident. It is installed."],
-  imgB:[
-    "Dramatic aerial split-frame: left half shows operational chaos — misaligned boards, unclaimed requests, fragmented workflow; right half shows structured control — routed intake, clear ownership, live reporting. Same building, two operating modes.",
-    "Two-route visualization: left path winds chaotically through multiple redundant handoffs; right path flows direct from intake to outcome. Premium editorial infographic treatment, business-credible.",
-    "Same strategy room, two states: left half of frame shows cluttered workflow boards and unresolved requests; right half shows same space with centralized operations infrastructure. Dramatic split-frame composition.",
-    "Operations war room contrast: one side of a large strategy table shows scattered materials, competing priorities; the other shows organized routing boards, clear ownership markers. Wide editorial shot.",
-    "Overhead business visualization of two operating modes: random request routing with unpredictable paths vs systematic routing pipeline with clear flow. Strategic, premium, no dark desk default."
-  ],
-  vidB:[
-    "Cinematic split-screen evolution: chaotic operations environment on left transforms frame-by-frame into structured control environment on right. Same business, same space, two modes.",
-    "Motion visualization: random, fractured process paths consolidating into a direct routing pipeline — chaos to control made cinematic and precise.",
-    "Overhead time-lapse: operational environment in chaos mode → systems installed → structured control emerges. Premium editorial pacing, no desk default."
-  ]
-},
-"Staffing Firm Intake Bottleneck":{
-  hook:"Your staffing firm\'s intake process is why placements are delayed. Here is what it looks like from inside.",
-  caption:"Staffing firms do not lose placements because of bad recruiters. They lose placements because of bad intake systems.\n\nCandidate enters through email. Falls into a thread. No owner. No routing. No timeline.\n\nThe recruiter finds out the role was filled when the client stops responding.\n\narcgsystems.com/assessment or DM \"AUDIT\"",
-  carousel:["Your Staffing Firm Is Losing Placements at Intake. Not at the search stage.","Candidate comes in. Falls into an email thread. No owner. No routing.","The best recruiters cannot fix a broken intake system.","Every unrouted requisition is a placement your competitor is making.","Intake is the system. Intake is broken. That is the problem."],
-  imgB:[
-    "Staffing pipeline visualization: candidate flow entering wide on the left, passing through a visible single-point bottleneck in the center, emerging narrow on the right. Editorial business infographic, premium treatment.",
-    "Operations board editorial: client requisitions stacked on left, candidate intake queue on right, routing layer visibly absent in the middle — the bottleneck made physical and precise.",
-    "Overhead editorial of a staffing operations table: open requisitions, unrouted candidate profiles, no active assignment system visible — the intake friction exposed as an environmental reality.",
-    "Split-frame: external view of candidate volume arriving vs internal view of intake processing capacity — the mismatch visualized, the gap credible and specific.",
-    "Candidate funnel with a visible constriction point labeled \'Unrouted Intake\' — placements stalling, client timelines at risk, recruiter capacity wasted at the bottleneck."
-  ],
-  vidB:[
-    "Cinematic pipeline visualization: candidate requests flow into the intake bottleneck and stall — routing layer missing, placements delayed, client timeline running. Editorial motion.",
-    "Motion sequence: staffing intake pipeline built layer by layer — intake → routing → assignment → placement. Each layer adds velocity; the bottleneck moment is made precise.",
-    "Time-lapse of a requisition board: new requests arriving, intake unrouted, board unchanged → system installed → routing begins → placements accelerate."
-  ]
-},
-"Before/After Operational Transformation":{
-  hook:"Same business. Twelve weeks apart. Here is the difference a system makes.",
-  caption:"The operations did not change overnight. But within 12 weeks, the business ran differently.\n\nBefore: manual intake, reactive reporting, compliance tracked in a spreadsheet.\n\nAfter: automated intake, real-time reporting, compliance monitored systemically.\n\narcgsystems.com/assessment or DM \"AUDIT\"",
-  carousel:["Before ARCG. After ARCG. The gap is not small.","Before: Requests arrived with no system. After: Every request has an intake, owner, and deadline.","Before: Reports were compiled manually. After: Reports generate automatically.","Before: Compliance was a spreadsheet. After: Compliance is monitored in real time.","12 weeks. The same business. A different operating system."],
-  imgB:[
-    "Dramatic split-frame editorial: left half shows the operations environment before — scattered materials, reactive workflow visible; right half shows after — structured routing boards, organized execution. Same space, two states.",
-    "12-week transformation timeline visualization: labeled operational milestones from manual to systematic, each stage marked with a specific infrastructure addition. Premium editorial treatment.",
-    "Property management operations board: before state (manual, scattered, reactive markers visible) vs after state (automated routing, organized tracking, compliance visible). Same environment, two states.",
-    "Aerial split-frame of a business operations floor: disorder and fragmentation on one side, structured backend infrastructure on the other — the transformation boundary made visible.",
-    "Organizational transformation diagram: fragmented, reactive team structure on left; connected, systematic operational infrastructure on right. Business-credible, editorial, premium."
-  ],
-  vidB:[
-    "Cinematic 12-week transformation sequence: operations environment evolves from scattered manual state to structured systematic state — same physical space, different infrastructure visible throughout.",
-    "Split-screen reveal: before (manual, reactive, chaotic) gradually transforms into after (automated, proactive, structured). The operational transformation made cinematic.",
-    "Time-lapse transformation sequence: business operations environment shifting from disorder to structure — same assets, new routing logic becoming visible in the space."
-  ]
-},
-"AI Automation for Property Management":{
-  hook:"Property management does not need more staff. It needs better systems. AI changes what is possible.",
-  caption:"The property management firms that will separate from the competition are not the ones with more staff.\n\nThey are the ones with better systems.\n\nAI routes maintenance automatically. Vendors are assigned without coordinator bottleneck. Compliance deadlines trigger alerts before they are missed.\n\narcgsystems.com/assessment or DM \"AUDIT\"",
-  carousel:["AI Automation for Property Management Is Not a Trend. It Is a Competitive Advantage.","Right now, a coordinator is manually routing that maintenance request.","AI does not replace the coordinator. It routes the work before the coordinator sees it.","Compliance deadlines trigger alerts before they are missed. Not after.","Your competitors are automating. The question is when you will."],
-  imgB:[
-    "Property management command center: multi-building portfolio status board, automated maintenance routing visible on central display, vendor assignments updating in real time. No dark desk. Premium corporate environment.",
-    "Close-up editorial of an automated maintenance triage interface: work order arrives, AI categorizes and routes, vendor auto-assigned, compliance status updated — the routing logic visible.",
-    "Wide operations environment: property portfolio board showing automated alert routing, compliance status tracked by building, vendor response times monitored systemically. Clean, organized, credible.",
-    "Structural visualization of an AI routing layer for property management: maintenance request → AI triage → vendor match → assignment → tracking → compliance update. Editorial diagram treatment.",
-    "Automated property compliance dashboard editorial: local law deadline tracking visible, inspection cycles monitored, vendor certification expiry alerts active — the automation layer made visible."
-  ],
-  vidB:[
-    "Cinematic property management automation sequence: maintenance request arrives → AI routes to vendor → compliance status updates → no human bottleneck visible. Premium editorial motion.",
-    "Motion visualization of AI routing logic in action: work orders flowing through automated triage, categorized, vendor-assigned, tracked in real time across the portfolio.",
-    "Time-lapse of a property portfolio compliance dashboard: AI alerts triggering, vendor assignments routing, deadlines tracked across multiple buildings — automation made visible."
-  ]
-},
-"SDVOSB Federal Advantage":{
-  hook:"The SDVOSB certification is not a badge. It is a procurement advantage — if you have the backend to use it.",
-  caption:"The SDVOSB certification is a procurement advantage that most veteran-owned firms underuse.\n\nNot because the opportunity is not there. But because the backend is not ready when the opportunity opens.\n\nSet-aside contracts require more than credentials. They require execution infrastructure.\n\narcgsystems.com/assessment or DM \"AUDIT\"",
-  carousel:["Your SDVOSB Certification Opens Doors. Your backend has to be ready when they open.","Set-aside contracts exist. Do you have a system to find, track, and execute them?","The certification is the advantage. The backend is the activation.","Most SDVOSB firms lose contracts they should have won. Backend infrastructure is why.","Procurement advantage + execution infrastructure = competitive positioning."],
-  imgB:[
-    "Federal procurement readiness table: SDVOSB certification documentation organized, contract vehicles listed, compliance structure visible, competitive positioning evident in the environment. Premium editorial.",
-    "Set-aside bid environment: competitive solicitation board showing SDVOSB designation prominently, set-aside qualification markers organized, backend execution readiness visible.",
-    "Wide federal acquisition strategy environment: certified contractor credentials organized, compliance framework visible, contract vehicle catalog and bid-to-performance pipeline structured and ready.",
-    "Procurement advantage visualization: SDVOSB certification alongside organized contract vehicle catalog, compliance documentation framework, and award pipeline — all structured, all ready.",
-    "Editorial overhead of a govcon operations readiness table: SDVOSB credentials organized, past performance documentation visible, subcontractor matrix populated, compliance structure in place."
-  ],
-  vidB:[
-    "Cinematic federal procurement sequence: SDVOSB certification opens set-aside opportunity → backend infrastructure activates → proposal assembled systematically → competitive positioning confirmed.",
-    "Motion visualization of SDVOSB procurement advantage: certification document + compliance structure + backend readiness = competitive positioning made visible and precise.",
-    "Slow reveal of a federal readiness environment: credentials organized, contract vehicles identified, backend infrastructure confirmed — the SDVOSB advantage ready to deploy."
-  ]
-},
-"Why Scaling Without Backend Breaks":{
-  hook:"Growth without infrastructure does not scale. It breaks.",
-  caption:"The manual system that runs a 5-client operation does not run a 30-client operation.\n\nNot without breaking.\n\nMost businesses find out their backend cannot support growth only after growth reveals it. That is the wrong time to find out.\n\narcgsystems.com/assessment or DM \"AUDIT\"",
-  carousel:["You Are Growing. Your Backend Is Not. This Is How That Ends.","At 5 clients, manual works. At 15 clients, it strains. At 30 clients, it collapses.","Growth does not break businesses. Unscaled backends break businesses.","Every manual system has a break point. Most businesses find it the hard way.","Build the backend before growth forces you to."],
-  imgB:[
-    "Scaling pressure visualization: a business growth curve overlaid with a backend capacity indicator flatlined — growth accelerating, infrastructure unchanged. The gap made visual and precise.",
-    "Operational pipeline under load: volume input accelerating on the left, the same narrow backend processing it on the right — congestion visible, break point marked. Editorial infographic treatment.",
-    "Split editorial: left shows a 5-client operational workflow (clean, manageable, organized); right shows same workflow at 30 clients (strained, congested, breaking). Same backend, different scale.",
-    "Organizational scaling crack visualization: as client volume grows on one side of the frame, backend structure shows visible fracture indicators — growth vs capacity mismatch made physical.",
-    "Volume-velocity mismatch diagram: intake requests accelerating in, backend processing rate constant — overflow point marked with precision. Business strategy infographic aesthetic, premium treatment."
-  ],
-  vidB:[
-    "Cinematic scaling pressure sequence: intake volume rising, backend capacity fixed — congestion becoming visible, breakpoints accumulating, operational strain made cinematic. No dark desk.",
-    "Motion visualization: 5-client operation running cleanly → client volume doubles → backend strain begins → 30-client operation approaching failure. Editorial pacing, operational precision.",
-    "Time-lapse of scaling without systems: business growth accelerating, backend operational capacity constant — the break point approached, crossed, and made visible."
-  ]
-},
-
-// ═══════════════════════════════════════════════════════════════
-// 20 DIAGNOSIS-FIRST FAMILIES (added 2026-04-07)
-// ═══════════════════════════════════════════════════════════════
-"Operational Waste Exposé":{
-  hook:"Your operation is leaking — and nobody is tracking it.",
-  caption:"Revenue, time, accountability, and customer trust bleed out of invisible gaps every day. Manual handoffs. Reports built by hand. Firefighting as a culture. You cannot fix what you cannot see.\n\nWorth a quick 10-minute triage call?",
-  carousel:["Most businesses are leaking and don't know it.","Manual handoffs are failure points — not features.","If no one owns it, no one fixes it.","Every reactive day is a day the system is running you.","Clarity before software. Always."],
-  imgB:[
-    "Overhead editorial: a dimly-lit command center table, blueprint paper with red 'LEAK' markers pinpointing operational gaps, gold ARCG mark lower-right, premium consulting aesthetic, faceless operator hand annotating.",
-    "Dark-luxury split-frame: left side chaotic sticky-notes and firefighting, right side clean diagnostic dashboard — the moment of clarity captured in editorial photography.",
-    "Macro of a premium paper diagnostic report with highlighted 'revenue leakage' line items, engraved gold border, deep navy background, consulting-grade artifact."
-  ],
-  vidB:[
-    "10-sec cinematic: camera glides across a diagnostic command center, red leak markers light up one by one on a blueprint, final reveal of gold ARCG seal. No dark desk. Premium.",
-    "Chaos-to-control transition: scattered paperwork coalesces into a single diagnostic map under a spotlight, gold accents igniting."
-  ]
-},
-"Anti-Automation Manifesto":{
-  hook:"We do not automate broken logic. Ever.",
-  caption:"The worst thing you can do to a broken process is automate it. You get the same bad outcome — faster and less accountable. ARCG diagnoses what should actually be fixed before a single workflow is built.\n\nWant me to map the breakdown I'm seeing?",
-  carousel:["Automation on broken logic is the worst anti-pattern we fix.","Speed without structure is just louder chaos.","Diagnose first. Blueprint second. Build last.","A dashboard on top of a broken process is still a broken process.","The first deliverable is clarity — not software."],
-  imgB:[
-    "Editorial still-life: a chrome gear stamped 'AUTOMATION' grinding over a cracked blueprint — the cracks glow red, gold ARCG mark lower-right, dark luxury palette.",
-    "Dark command room: a large red X projected over a complex automation flowchart, faceless executive observing, premium cinematic lighting.",
-    "Macro of a 'STOP' seal being pressed onto an automation proposal, deep navy background, editorial business-credible treatment."
-  ],
-  vidB:[
-    "10-sec: automation gears spinning faster and faster until the base blueprint cracks visibly — then a steady hand places a gold diagnostic seal on top.",
-    "Slow push-in on a blueprint marked 'BROKEN LOGIC — DO NOT AUTOMATE' in gold consulting stamp."
-  ]
-},
-"Diagnostic Stories":{
-  hook:"A story: the operation looked fine. Then we mapped it.",
-  caption:"Every operation looks fine from the outside. Then you map the intake, the handoffs, the reporting, the accountability — and you find the leak. Diagnostic stories are how operators recognize themselves.\n\nOpen to a quick diagnostic conversation?",
-  carousel:["Every diagnosis starts with 'it looked fine'.","We map what your team actually does — not what the SOP claims.","The leak is almost never where leadership thinks it is.","Once you see the gap, you cannot unsee it.","Clarity travels faster than change."],
-  imgB:[
-    "Editorial wide shot: anonymous operator tracing a red thread across a wall-sized operational map, gold ARCG diagnostic seal in corner, dark luxury consulting aesthetic.",
-    "Close-up of a leather-bound diagnostic briefing book open on a desk, gold-embossed ARCG insignia, redacted case study visible, premium consulting artifact.",
-    "Faceless executive POV: hands holding a diagnostic map with gold-highlighted bottlenecks circled, command-center background out of focus."
-  ],
-  vidB:[
-    "10-sec: the camera traces a red line across an operational map, zooming into each bottleneck, final frame a gold ARCG diagnostic seal.",
-    "Cinematic page-turn on a diagnostic report, each page revealing a new operational leak in gold highlighter."
-  ]
-},
-"Blueprint Before Build":{
-  hook:"Blueprint before build. Clarity before software. Always.",
-  caption:"ARCG does not build anything until there is a ranked blueprint. What to fix first. What to fix later. What to leave alone entirely. The blueprint is the first deliverable — and it is the one that saves you the most money.\n\nWant me to show you where the waste likely is?",
-  carousel:["Blueprint before build. No exceptions.","A blueprint is not a pretty deck — it is a ranked list of what to fix.","Most operators skip the blueprint. That is why most builds fail.","The blueprint is the cheapest, highest-leverage deliverable we produce.","Clarity compounds."],
-  imgB:[
-    "Architectural blueprint paper on a premium consulting table, gold compass and ruler precisely placed, ARCG seal lower-right, dark luxury editorial.",
-    "Macro of a blueprint detail showing ranked priorities in gold hand-lettering, premium paper texture, cinematic shallow depth of field.",
-    "Faceless operator unrolling a large operational blueprint across a command-center table, gold accent lighting."
-  ],
-  vidB:[
-    "10-sec: a blueprint unrolls across a premium table in slow motion, gold-highlighted priorities revealing in sequence, final frame shows ARCG seal.",
-    "Overhead reveal of a blueprint being marked with gold priority numbers 1-2-3 — editorial precision."
-  ]
-},
-"Manual Handoff Autopsies":{
-  hook:"Every handoff is a failure point. Most are never mapped.",
-  caption:"Between people. Between tools. Between teams. Every handoff in your operation is a place where something can drop — and in most operations, nobody has ever mapped them end-to-end.\n\nWorth a quick 10-minute triage call?",
-  carousel:["Every handoff is a failure point.","The handoff is where ownership dies.","If no one owns the handoff, no one owns the outcome.","The autopsy reveals the leak.","Map the handoffs — or keep paying for the drops."],
-  imgB:[
-    "Editorial forensic scene: a dim room with a process map pinned to a backlit board, red chalk lines connecting broken handoffs, gold ARCG seal, dark luxury consulting tone.",
-    "Close-up of a 'HANDOFF FAILURE' annotation on a premium operational diagram, gold pen in frame, deep navy background.",
-    "Split composition: left side chaotic paperwork exchange, right side a clean handoff with a gold timestamp — the before/after of diagnosed handoffs."
-  ],
-  vidB:[
-    "10-sec: camera follows a paper request being passed hand-to-hand until it drops and dissolves — then a second take shows the same request with a gold routing seal making it to its destination.",
-    "Macro motion sequence: a red handoff failure marker slowly pulsing on a process map."
-  ]
-},
-"Revenue Leakage Math":{
-  hook:"The leaks nobody tracks are the ones quietly draining your margin.",
-  caption:"Late responses. Missed follow-ups. Dropped intakes. Invoicing gaps. These do not show up in any P&L line item — but they silently burn margin every week. Diagnosis makes the invisible visible.\n\nWant me to map the breakdown I'm seeing?",
-  carousel:["Revenue leakage is never one big hole — it is a dozen small ones.","If it is not tracked, it is not fixable.","The leak is always bigger than the line item shows.","Diagnosis is the first time leadership sees the real number.","You cannot recover what you cannot see."],
-  imgB:[
-    "Editorial still-life: a premium P&L document with red underlines marking hidden leaks, gold magnifying glass, dark luxury consulting desk scene, faceless.",
-    "Macro of a coin sliding through a crack in a marble operational surface — gold light catching the crack, dramatic premium lighting.",
-    "Dark command-room wall with a projected revenue leakage diagram, gold ARCG seal in corner."
-  ],
-  vidB:[
-    "10-sec: a gold coin rolls across a polished surface, disappears into an invisible crack, camera pulls back to reveal a diagnostic map of all the cracks.",
-    "Time-lapse of a revenue counter ticking down next to a list of untracked operational leaks."
-  ]
-},
-"No Source of Truth":{
-  hook:"Three dashboards, five spreadsheets, and a group chat is not visibility.",
-  caption:"It is operational fog with a decision-maker inside it. Every operator we diagnose has the same symptom — no single place that tells the truth. We find the truth, then build the one place it lives.\n\nOpen to a quick diagnostic conversation?",
-  carousel:["Three dashboards is not visibility — it is fog.","If the truth lives in five places, it lives nowhere.","Every 'quick Slack question' is a missing source of truth.","One source of truth, or none.","Visibility is installed — not hoped for."],
-  imgB:[
-    "Editorial split-frame: left side chaotic array of spreadsheets and Slack windows, right side a single clean command-center dashboard with a gold ARCG seal.",
-    "Dark luxury command-room wall: one large unified operational dashboard glowing, gold accents, faceless operator observing.",
-    "Macro of a 'SINGLE SOURCE OF TRUTH' engraved brass plate mounted on a premium console."
-  ],
-  vidB:[
-    "10-sec: multiple floating dashboards drift in chaos across the frame, then merge into one glowing central dashboard bearing the ARCG gold seal.",
-    "Slow reveal of a fog-covered operational environment clearing to show one illuminated source of truth."
-  ]
-},
-"Accountability Gap Series":{
-  hook:"If no one owns it, no one fixes it.",
-  caption:"Accountability is not a personality trait — it is a system property. When the map is unclear, ownership evaporates. We diagnose where ownership is missing before we recommend a single workflow.\n\nWant me to show you where the waste likely is?",
-  carousel:["Accountability is a system property — not a personality.","'Someone should handle this' means nobody will.","Ownership dies in the gaps between roles.","Map ownership or accept drift.","Every unowned task is a future failure."],
-  imgB:[
-    "Editorial: a responsibility matrix on premium paper with several cells marked 'UNOWNED' in red, gold pen annotating, dark luxury consulting aesthetic.",
-    "Close-up of an empty nameplate on a premium desk placard — 'ACCOUNTABLE PARTY: ___', gold engraving, deep navy background.",
-    "Faceless executive hand placing a gold accountability marker onto a specific cell in an ownership matrix."
-  ],
-  vidB:[
-    "10-sec: a responsibility matrix grid fills in with names in gold — except for three cells that stay empty and pulse red.",
-    "Macro shot of a gold 'OWNER' seal being pressed onto a process step."
-  ]
-},
-"Firefighting vs Systems Thinking":{
-  hook:"Firefighting is not a culture. It is the absence of a system.",
-  caption:"Most operators wear firefighting as a badge of honor. It is not a badge — it is a symptom. Every fire is a system failure that was predictable. Systems thinking is what replaces the fires.\n\nWorth a quick 10-minute triage call?",
-  carousel:["Firefighting is a symptom, not a strategy.","Every predictable fire is a system that was never built.","Heroes are expensive. Systems are not.","Exhaustion is not a KPI.","Stop celebrating the fire. Diagnose the fuel."],
-  imgB:[
-    "Dramatic editorial: a premium office with a subtle fire glow reflected on glass — but the foreground shows a clean, methodical diagnostic map, gold ARCG seal in corner.",
-    "Split composition: left side chaotic fire-fighting posture, right side calm operator reviewing a systems blueprint under gold lamp light.",
-    "Close-up of a fire-safety seal replaced by a gold diagnostic seal on an operational manual."
-  ],
-  vidB:[
-    "10-sec: chaotic red fire-glow fills the frame, slowly replaced by the cool blue of a command center and a gold diagnostic dashboard.",
-    "Cinematic: a fire extinguisher lowered onto a desk, replaced by an ARCG diagnostic report."
-  ]
-},
-"The Cost of Clarity":{
-  hook:"Clarity is the cheapest thing you will ever buy.",
-  caption:"Every operator we diagnose is shocked by the same thing — how little clarity actually costs, and how much confusion was costing them. Clarity is always the highest-leverage purchase.\n\nWant me to map the breakdown I'm seeing?",
-  carousel:["Clarity is the cheapest high-leverage purchase in operations.","Confusion is the most expensive thing you are not tracking.","A diagnostic is a decision you no longer have to guess at.","The cost of clarity is always less than the cost of drift.","Clarity is a one-time cost. Drift is a monthly one."],
-  imgB:[
-    "Editorial still-life: a single premium diagnostic document on a polished table under a gold spotlight, everything around it in dark shadow.",
-    "Macro of a gold 'CLARITY' seal being pressed onto a diagnostic cover page.",
-    "Faceless executive sliding a clean diagnostic folder across a premium consulting table toward the camera."
-  ],
-  vidB:[
-    "10-sec: camera pulls back from a single illuminated diagnostic document to reveal an entire dark command center focused on that one page.",
-    "Slow push-in on a gold-embossed 'CLARITY' seal."
-  ]
-},
-"Operator POV":{
-  hook:"From the inside: this is what the leak actually looks like.",
-  caption:"Operator POV content is written from inside real operations — the messy, undocumented, actually-happening version. Not the SOP version. This is where recognition happens.\n\nOpen to a quick diagnostic conversation?",
-  carousel:["The SOP is what leadership hopes happens.","Operator POV is what actually happens.","Recognition is the first step of diagnosis.","The real operation lives in the gap between the SOP and the reality.","If this sounds familiar, it is."],
-  imgB:[
-    "First-person POV: hands on a messy operational dashboard, highlighting bottlenecks with a gold pen — the view of an operator mid-diagnosis.",
-    "Over-the-shoulder editorial of a faceless operator at a command station, monitors reflecting the real state of operations.",
-    "Close-up of hands annotating an operational map with specific, small, tactical notes — the granular reality of operator work."
-  ],
-  vidB:[
-    "10-sec first-person POV: hands move across a live operations console, gold annotations appearing as problems are identified.",
-    "Over-the-shoulder: an operator drawing a red circle around one specific bottleneck on a wall map."
-  ]
-},
-"Diagnosis in the Wild":{
-  hook:"Public signals of operational waste — if you know what to look for.",
-  caption:"Hiring posts that reveal manual workflows. Review patterns that reveal handoff failures. Job titles that reveal no source of truth. We read public signals and diagnose before we ever take the first call.\n\nWant me to show you where the waste likely is?",
-  carousel:["Every hiring post is a public operational confession.","Review patterns reveal handoff failures.","Job titles reveal the missing system.","The signal is in the public record.","We diagnose from the outside before the first call."],
-  imgB:[
-    "Editorial composition: a premium desk with a tablet showing public job postings, a gold pen circling specific phrases, dark luxury consulting tone.",
-    "Close-up of a review page with a gold highlighter tracing a pattern of complaints, premium paper annotation aesthetic.",
-    "Faceless executive analyst reviewing multiple public signals on a command-center screen, gold ARCG diagnostic seal in frame."
-  ],
-  vidB:[
-    "10-sec: multiple public pages scroll past, gold pen circles key phrases that reveal operational gaps.",
-    "Cinematic: a wall of public signals lighting up in sequence with gold annotations."
-  ]
-},
-"Phased Execution":{
-  hook:"Big-bang rebuilds fail. Phased execution is why operations survive the fix.",
-  caption:"We implement in sequence — stabilizing each layer before the next. No stacked automation on broken logic. No big-bang rebuilds. Phased execution is not slower — it is the only approach that actually lands.\n\nWorth a quick 10-minute triage call?",
-  carousel:["Big-bang rebuilds fail. Always.","Phased execution stabilizes before it scales.","Each phase has to land before the next begins.","Sequence is a strategic asset.","Speed kills operations that are not stable."],
-  imgB:[
-    "Editorial: a phased implementation timeline on premium paper, each phase marked with a gold milestone seal, dark luxury consulting environment.",
-    "Architectural rendering of an operations backend being built layer by layer, gold accent lighting each stable layer as it lands.",
-    "Close-up of a gold 'PHASE 1 STABLE' seal being pressed onto a project plan."
-  ],
-  vidB:[
-    "10-sec: a blueprint builds layer by layer, each layer locking into place with a gold seal before the next appears.",
-    "Cinematic overhead: a project timeline fills in gold milestone by milestone."
-  ]
-},
-"Property Management Diagnostic":{
-  hook:"PM-specific leaks: maintenance routing, vendor confirmation, compliance drift.",
-  caption:"Property management operations share the same diagnosed leaks: maintenance routing by text message, vendor confirmations lost in email, compliance drift nobody tracks until the fine arrives. We map it specifically for PM operators.\n\nWant me to map the breakdown I'm seeing?",
-  carousel:["PM leaks are the same everywhere — and almost never mapped.","Maintenance routing by text is not a system.","Vendor no-shows become client complaints because nobody is watching.","Local Law deadlines do not wait for your spreadsheet.","The diagnosis is specific — the fix is sequenced."],
-  imgB:[
-    "Editorial wide: a property portfolio board with red 'LEAK' markers on specific buildings, gold ARCG seal in corner, dark luxury command-center aesthetic.",
-    "Close-up of a vendor compliance document with gold highlights showing expired certifications across a portfolio.",
-    "Faceless executive reviewing a PM operational map with gold-circled bottlenecks at intake, dispatch, and reporting."
-  ],
-  vidB:[
-    "10-sec: camera sweeps across a property portfolio board, each building glowing gold as diagnostic markers appear.",
-    "Macro: a gold diagnostic seal being placed on a PM compliance tracker."
-  ]
-},
-"Service Business Diagnostic":{
-  hook:"HVAC, cleaning, staffing: the leak is always at intake.",
-  caption:"Service businesses lose more revenue at intake than anywhere else — not at the sale, not at delivery. Speed to lead, dispatch routing, and follow-up are the three most commonly diagnosed leaks.\n\nOpen to a quick diagnostic conversation?",
-  carousel:["Service businesses lose money at intake — not at delivery.","Speed to lead is a diagnosed metric, not a slogan.","Dispatch by group text is not dispatch.","Follow-up is the biggest invisible leak.","Diagnosis is specific to the service vertical."],
-  imgB:[
-    "Editorial: a service business dispatch board with red 'LEAK' markers at intake, gold ARCG seal, dark luxury consulting tone.",
-    "Macro of a clipboard with intake forms and a gold-highlighted 'RESPONSE TIME' field.",
-    "Faceless operator at a dispatch console, gold accents lighting the intake column specifically."
-  ],
-  vidB:[
-    "10-sec: an intake form fills itself with a gold timestamp, then time passes and the timestamp turns red — the leak revealed.",
-    "Cinematic: a service truck dispatched — with a gold routing seal confirming speed to lead."
-  ]
-},
-"Government Contractor Diagnostic":{
-  hook:"GovCon: the backend is where awards die. Not the bid.",
-  caption:"Compliance drift, subcontractor tracking gaps, reporting failures under FAR mandates — the diagnosis for GovCon operators is almost never about the bid. It is always about the execution backend.\n\nWorth a quick 10-minute triage call?",
-  carousel:["GovCon awards die at the backend — not the bid.","FAR compliance is a systems problem, not a paperwork problem.","Subcontractor tracking in a spreadsheet is an audit risk.","Past performance failures are almost always backend failures.","Diagnose before the award — not after."],
-  imgB:[
-    "Editorial: a premium federal contract dossier with gold compliance seals, red 'GAP' markers on specific execution items, dark luxury consulting aesthetic.",
-    "Close-up of SAM.gov UEI and CAGE code documentation with gold ARCG seal in frame.",
-    "Faceless GovCon executive reviewing a compliance tracker with gold-circled deficiencies."
-  ],
-  vidB:[
-    "10-sec: a federal contract cover page with gold SDVOSB/HUBZone seals, then a hand flips to reveal gaps in the execution backend.",
-    "Macro: a gold compliance seal being pressed onto a subcontractor plan."
-  ]
-},
-"Caribbean & LatAm Operator Diagnostic":{
-  hook:"Island operations: the leak is the handoff between local and remote.",
-  caption:"Resort, property management, staffing, and facilities operators in the Dominican Republic, Puerto Rico, and across the Caribbean and LatAm share a specific diagnosis: the handoff between local execution and remote oversight is almost always broken.\n\nWant me to show you where the waste likely is?",
-  carousel:["Caribbean & LatAm operators share a specific diagnosis.","The remote-to-local handoff is the most common leak.","Guest services, vendor coordination, staffing — same gap.","Language and time zone are not the problem. The system is.","Diagnosis travels across borders — the fix is localized."],
-  imgB:[
-    "Editorial wide: an operations command center with a large map of the Caribbean and LatAm, gold ARCG seal, dark luxury consulting tone.",
-    "Macro of a resort compliance document with gold annotations, premium paper texture, deep navy background.",
-    "Faceless operator reviewing a remote-to-local handoff diagram with gold-circled bottlenecks."
-  ],
-  vidB:[
-    "10-sec: camera sweeps across a Caribbean operations map, each location glowing gold as diagnostic markers appear.",
-    "Cinematic: a gold thread connecting remote oversight to local execution, landing with an ARCG seal."
-  ]
-},
-"Founder/Owner Trap Series":{
-  hook:"If you are the system, you are the bottleneck.",
-  caption:"Most founders we diagnose discover the same thing — they have become the operating system. Every decision, every handoff, every escalation routes through them. The trap is not time — it is that the business cannot scale past the founder.\n\nOpen to a quick diagnostic conversation?",
-  carousel:["If you are the system, you are the ceiling.","Founders become the OS by accident.","Every 'just ask me' is a future scaling failure.","The trap is not time — it is structural.","Install the system. Get your calendar back."],
-  imgB:[
-    "Editorial: a single executive chair at a command center console with every connection routing through it — gold ARCG seal, dark luxury aesthetic.",
-    "Close-up of a calendar blocked out entirely by 'Founder Decisions', gold pen annotating.",
-    "Faceless founder in a premium chair with floating decision icons all converging on them, cinematic lighting."
-  ],
-  vidB:[
-    "10-sec: a founder silhouette at a console with every line in the operation converging on them — then the lines redirect to a new system, freeing the center.",
-    "Macro: a gold 'BOTTLENECK' label being replaced with 'OUT OF THE LOOP' on a founder's chair."
-  ]
-},
-"Certifications in Context":{
-  hook:"SDVOSB. HUBZone. MBE. DBE. SBE. The credibility is operational — not the badge.",
-  caption:"ARCG holds five active federal certifications. We do not lead with them — we use them as operational credibility. The certifications are the admission ticket. The diagnosis and execution are what actually win.\n\nWorth a quick 10-minute triage call?",
-  carousel:["Certifications are the admission ticket — not the advantage.","SDVOSB + HUBZone + MBE + DBE + SBE = five simultaneous eligibilities.","Active on SAM.gov. UEI KPHJM83ZJLJ4. CAGE 8FJ78.","Credibility is operational — not ceremonial.","The certifications open doors. Diagnosis wins rooms."],
-  imgB:[
-    "Editorial: five federal certification seals arranged in a single row on a premium consulting table, gold ARCG seal lower-right, dark luxury tone.",
-    "Close-up of a SAM.gov active registration document with gold highlighting, cinematic shallow depth of field.",
-    "Faceless executive holding a leather-bound certifications binder with gold embossing, command-center background."
-  ],
-  vidB:[
-    "10-sec: five certification seals illuminate one by one with gold light, then the ARCG logo assembles from them.",
-    "Macro: a gold SAM.gov active seal being stamped onto a proposal."
-  ]
-},
-"Triage Call Invitations":{
-  hook:"Worth a quick 10-minute triage call?",
-  caption:"Low-friction diagnostic conversation. No pitch. No obligation. I will show you where your operation is likely leaking and how ARCG would diagnose, blueprint, and fix it.\n\narcgsystems.com/assessment or DM 'TRIAGE'",
-  carousel:["Worth a quick 10-minute triage call?","No pitch. No obligation. Just a diagnostic conversation.","I will show you where the waste likely is.","If the diagnosis is not useful, you owe nothing.","If it is, we talk about what the blueprint looks like."],
-  imgB:[
-    "Editorial: a premium consulting calendar on a dark desk with one time-slot circled in gold, ARCG seal, cinematic spotlight.",
-    "Close-up of a gold-embossed 'TRIAGE CALL' card on premium paper, deep navy background.",
-    "Faceless operator extending a hand across a command-center table — the invitation made visible."
-  ],
-  vidB:[
-    "10-sec: a calendar slot illuminates in gold with the word 'TRIAGE' appearing in premium type — clean, minimal, premium consulting invitation.",
-    "Cinematic push-in on a gold-embossed triage invitation card."
-  ]
-}
-};
+// ─── PROMPT LIBRARY (privacy-safe: empty by default) ───
+// The shipping app ships with zero pre-written content. Users who want
+// sample prompts can enable demo mode from Settings → Demo Mode, which
+// loads fixtures from demo/fixtures.json. Never ship owner-authored
+// content in this literal. See scripts/release-check.js for the guard.
+const PROMPT_LIBRARY={};
 
 
 function copyToClipboard(text){
@@ -6337,7 +5852,7 @@ function fallbackCopy(text){
 
 
 // ═══════ MEDPILOT VERTICAL ══════════════════════════════════════
-// MedPilot = ARCG Systems medical/ophthalmology automation vertical.
+// MedPilot = medical/ophthalmology workflow automation vertical.
 // Marketed through SourceDeck. Competitor reference: Nextech.
 // Strict visual rule: NO stock healthcare/office scenes. Every image
 // must visualize the hidden business problem as a tangible physical
@@ -6373,7 +5888,7 @@ Use cinematic lighting with strong contrast. Favor cool blue-white light to repr
 
 Maintain a realistic, polished, ad-quality look. No faces unless explicitly required. No cheesy symbolism. No illegible text. No generic office props. Ultra-detailed, crisp, high-resolution, visually striking, commercially finished.
 
-Leave clean negative space in the upper left for ad copy. Place the ARCG Systems wordmark subtly in the bottom-right corner.
+Leave clean negative space in the upper left for ad copy. If the user has configured a brand wordmark, place it subtly in the bottom-right corner.
 
 Also: avoid repeating common visual compositions from prior business ads. Generate a fresh conceptual structure for the topic each time while preserving the same premium, cinematic, photorealistic commercial style.`;
 
@@ -6389,7 +5904,7 @@ function buildMedPilotVisualPrompt(topic, mode, recent){
 - Describe at least one concrete cause-and-effect detail (what fails, where, and how it's visible).
 - No stock healthcare imagery, no offices, no desks, no conference rooms, no smiling people, no faces.
 - Leave clean negative space in the upper-left quadrant for ad copy.
-- Place the ARCG Systems wordmark subtly in the lower-right at roughly 8% of frame width.`;
+- If the user has configured a brand wordmark, place it subtly in the lower-right at roughly 8% of frame width.`;
   return `${topic}\n\n${MEDPILOT_VISUAL_SYSTEM}${motion}${hardRules}${antiRepeat}\n\nReturn ONLY the final ${isVid?'video':'image'} prompt text. Start with the topic as a standalone first line. No preamble. 120–180 words.`;
 }
 
@@ -6494,15 +6009,15 @@ function medpilotOfflineVisual(topic, mode){
   const m = MEDPILOT_MECHANISMS[topic];
   if(!m){
     // Generic-but-committed fallback for unknown topic
-    return `${topic}\n\nPhotorealistic conceptual ${isVid?'10–15 second ad sequence':'editorial ad still'}. Scene: a single committed physical system — a glass diagnostic rig whose internal mechanics expose the specific failure mode of "${topic}" through visible pressure, flow, fracture, or misalignment. Render crisp, legible topic-relevant labels inside the mechanism (names, counters, percentages). Cool blue-white cinematic key light; restrained amber/gold accents mark retained value. Dark minimal background. No faces, no desks, no conference rooms, no stock healthcare imagery. ${isVid?'Over 10–15s the failure escalates, then a controlled MedPilot intervention clarifies the system and the counters improve. ':''}Clean negative space upper-left for ad copy. Subtle ARCG Systems wordmark in the lower-right corner.`;
+    return `${topic}\n\nPhotorealistic conceptual ${isVid?'10–15 second ad sequence':'editorial ad still'}. Scene: a single committed physical system — a glass diagnostic rig whose internal mechanics expose the specific failure mode of "${topic}" through visible pressure, flow, fracture, or misalignment. Render crisp, legible topic-relevant labels inside the mechanism (names, counters, percentages). Cool blue-white cinematic key light; restrained amber/gold accents mark retained value. Dark minimal background. No faces, no desks, no conference rooms, no stock healthcare imagery. ${isVid?'Over 10–15s the failure escalates, then a controlled MedPilot intervention clarifies the system and the counters improve. ':''}Clean negative space upper-left for ad copy. If the user has configured a brand wordmark, place it subtly in the lower-right corner (otherwise omit).`;
   }
-  return `${topic}\n\nPhotorealistic conceptual ${isVid?'10–15 second ad sequence':'editorial ad still'}. Scene: ${m.still}. ${m.labels}. Every label must be crisp, legible, and rendered as part of the mechanism itself — not floating UI. Cool blue-white cinematic key light; restrained amber/gold accents mark retained value. Dark minimal background, shallow depth of field, forensic clarity. No faces, no desks, no conference rooms, no stock healthcare imagery, no cartoon symbolism. ${isVid?`Motion: ${m.motion}. `:''}Leave clean negative space in the upper-left quadrant for ad copy. Place the ARCG Systems wordmark subtly in the lower-right corner at roughly 8% of frame width.`;
+  return `${topic}\n\nPhotorealistic conceptual ${isVid?'10–15 second ad sequence':'editorial ad still'}. Scene: ${m.still}. ${m.labels}. Every label must be crisp, legible, and rendered as part of the mechanism itself — not floating UI. Cool blue-white cinematic key light; restrained amber/gold accents mark retained value. Dark minimal background, shallow depth of field, forensic clarity. No faces, no desks, no conference rooms, no stock healthcare imagery, no cartoon symbolism. ${isVid?`Motion: ${m.motion}. `:''}Leave clean negative space in the upper-left quadrant for ad copy. If the user has configured a brand wordmark, place it subtly in the lower-right corner at roughly 8% of frame width (otherwise omit).`;
 }
 
 function medpilotHashtags(topic){
   // Brand anchors always first (2), then 6 topic-specific, then 2 broad ophthalmology/RCM context.
   // Order: topic-specific must dominate — that's the whole point of per-topic hashtags.
-  const brand=['#MedPilot','#ARCGSystems'];
+  const brand=['#MedPilot'];
   const byTopic={
     'Claim Denial Drift':['#ClaimDenials','#DenialManagement','#PayerPolicy','#CleanClaims','#RevenueIntegrity','#DenialPrevention'],
     'Prior-Auth Bottleneck':['#PriorAuth','#PriorAuthorization','#UtilizationReview','#PayerWorkflow','#AuthAutomation','#SurgicalScheduling'],
@@ -6533,7 +6048,7 @@ function medpilotHashtags(topic){
 }
 
 // ═══════ SOURCEDECK VERTICAL ════════════════════════════════════
-// SourceDeck = ARCG Systems GovCon opportunity-intelligence platform.
+// SourceDeck = GovCon opportunity-intelligence platform.
 // Ad engine targets BD/capture leaders, proposal managers, SDVOSB/8(a)
 // owners, and small federal primes. Visual rules are identical to
 // MedPilot's strict forensic-metaphor standard (shared MEDPILOT_VISUAL_SYSTEM).
@@ -6645,9 +6160,9 @@ function sourcedeckOfflineVisual(topic, mode){
   const isVid = mode==='video';
   const m = SOURCEDECK_MECHANISMS[topic];
   if(!m){
-    return `${topic}\n\nPhotorealistic conceptual ${isVid?'10–15 second ad sequence':'editorial ad still'}. Scene: a single committed physical system — a forensic diagnostic rig whose internal mechanics expose the specific failure mode of "${topic}" in a GovCon capture/pipeline context through visible pressure, flow, fracture, or misalignment. Render crisp, legible topic-relevant labels inside the mechanism (pipeline counters, bid-cost figures, win-rate percentages, NAICS/set-aside stubs). Cool blue-white cinematic key light; restrained amber/gold accents mark retained value. Dark minimal background. No faces, no desks, no conference rooms, no stock-photo business imagery. ${isVid?'Over 10–15s the failure escalates, then a controlled SourceDeck intervention clarifies the system and the counters improve. ':''}Clean negative space upper-left for ad copy. Subtle ARCG Systems wordmark in the lower-right corner.`;
+    return `${topic}\n\nPhotorealistic conceptual ${isVid?'10–15 second ad sequence':'editorial ad still'}. Scene: a single committed physical system — a forensic diagnostic rig whose internal mechanics expose the specific failure mode of "${topic}" in a GovCon capture/pipeline context through visible pressure, flow, fracture, or misalignment. Render crisp, legible topic-relevant labels inside the mechanism (pipeline counters, bid-cost figures, win-rate percentages, NAICS/set-aside stubs). Cool blue-white cinematic key light; restrained amber/gold accents mark retained value. Dark minimal background. No faces, no desks, no conference rooms, no stock-photo business imagery. ${isVid?'Over 10–15s the failure escalates, then a controlled SourceDeck intervention clarifies the system and the counters improve. ':''}Clean negative space upper-left for ad copy. If the user has configured a brand wordmark, place it subtly in the lower-right corner (otherwise omit).`;
   }
-  return `${topic}\n\nPhotorealistic conceptual ${isVid?'10–15 second ad sequence':'editorial ad still'}. Scene: ${m.still}. ${m.labels}. Every label must be crisp, legible, and rendered as part of the mechanism itself — not floating UI. Cool blue-white cinematic key light; restrained amber/gold accents mark retained value. Dark minimal background, shallow depth of field, forensic clarity. No faces, no desks, no conference rooms, no stock-photo business imagery, no cartoon symbolism. ${isVid?`Motion: ${m.motion}. `:''}Leave clean negative space in the upper-left quadrant for ad copy. Place the ARCG Systems wordmark subtly in the lower-right corner at roughly 8% of frame width.`;
+  return `${topic}\n\nPhotorealistic conceptual ${isVid?'10–15 second ad sequence':'editorial ad still'}. Scene: ${m.still}. ${m.labels}. Every label must be crisp, legible, and rendered as part of the mechanism itself — not floating UI. Cool blue-white cinematic key light; restrained amber/gold accents mark retained value. Dark minimal background, shallow depth of field, forensic clarity. No faces, no desks, no conference rooms, no stock-photo business imagery, no cartoon symbolism. ${isVid?`Motion: ${m.motion}. `:''}Leave clean negative space in the upper-left quadrant for ad copy. If the user has configured a brand wordmark, place it subtly in the lower-right corner at roughly 8% of frame width (otherwise omit).`;
 }
 
 function buildSourceDeckVisualPrompt(topic, mode, recent){
@@ -6662,12 +6177,12 @@ function buildSourceDeckVisualPrompt(topic, mode, recent){
 - Describe at least one concrete cause-and-effect detail (what fails, where, and how it's visible).
 - No stock business imagery, no offices, no desks, no conference rooms, no handshakes, no smiling people, no faces.
 - Leave clean negative space in the upper-left quadrant for ad copy.
-- Place the ARCG Systems wordmark subtly in the lower-right at roughly 8% of frame width.`;
+- If the user has configured a brand wordmark, place it subtly in the lower-right at roughly 8% of frame width.`;
   return `${topic}\n\n${MEDPILOT_VISUAL_SYSTEM}${motion}${hardRules}${antiRepeat}\n\nReturn ONLY the final ${isVid?'video':'image'} prompt text. Start with the topic as a standalone first line. No preamble. 120–180 words.`;
 }
 
 function sourcedeckHashtags(topic){
-  const brand=['#SourceDeck','#ARCGSystems'];
+  const brand=['#SourceDeck'];
   const byTopic={
     'Bad-Fit Opportunity Chase':['#BidNoBid','#OpportunityQualification','#CaptureManagement','#GovConStrategy','#WinRate','#BDPipeline'],
     'RFP Deadline Slip':['#RFPResponse','#ProposalManagement','#CaptureToProposal','#BidCompliance','#ProposalStrategy','#SectionL'],
@@ -6718,7 +6233,7 @@ async function generateVisualPromptAI(topic, mode, ind) {
         body: JSON.stringify({
           model: 'gpt-4o-mini',
           messages: [
-            {role: 'system', content: 'You are an elite commercial art director for SourceDeck (ARCG Systems), a GovCon opportunity-intelligence and capture-discipline platform for small primes, SDVOSB/WOSB/8(a)/HUBZone operators, and federal BD teams. You produce premium conceptual ad visuals that expose pipeline, capture, and proposal failure modes through physical metaphors — never stock business or office scenes.'},
+            {role: 'system', content: 'You are an elite commercial art director for SourceDeck, a GovCon opportunity-intelligence and capture-discipline platform for small primes, SDVOSB/WOSB/8(a)/HUBZone operators, and federal BD teams. You produce premium conceptual ad visuals that expose pipeline, capture, and proposal failure modes through physical metaphors — never stock business or office scenes.'},
             {role: 'user', content: userMsg}
           ],
           temperature: 0.95,
@@ -6745,7 +6260,7 @@ async function generateVisualPromptAI(topic, mode, ind) {
         body: JSON.stringify({
           model: 'gpt-4o-mini',
           messages: [
-            {role: 'system', content: 'You are an elite commercial art director for MedPilot (ARCG Systems), an ophthalmology workflow automation and revenue-integrity platform. You produce premium conceptual ad visuals that expose hidden business problems through physical metaphors — never stock healthcare or office scenes.'},
+            {role: 'system', content: 'You are an elite commercial art director for MedPilot, an ophthalmology workflow automation and revenue-integrity platform. You produce premium conceptual ad visuals that expose hidden business problems through physical metaphors — never stock healthcare or office scenes.'},
             {role: 'user', content: userMsg}
           ],
           temperature: 0.95,
@@ -6763,7 +6278,7 @@ async function generateVisualPromptAI(topic, mode, ind) {
   }
 
   const isVideo = mode === 'video';
-  const systemPrompt = `You are an elite commercial ${isVideo ? 'video' : 'photography'} art director for ARCG Systems — a premium AI operations and automation company serving property managers, staffing firms, and GovCon contractors.
+  const systemPrompt = `You are an elite commercial ${isVideo ? 'video' : 'photography'} art director producing premium conceptual ad visuals for B2B operations software. Tailor the art direction to the user's configured brand (if any) and the topic provided.
 
 Generate ONE specific, production-ready ${isVideo ? '10-15 second short video' : 'still editorial image'} prompt for a social media ad.
 
@@ -6781,7 +6296,7 @@ MANDATORY VISUAL RULES — NO EXCEPTIONS:
 ✅ YES: premium, editorial, business-documentary aesthetic
 ✅ YES: faceless composition where possible
 ✅ YES: text-safe zone clearly specified (ad copy must be legible over image)
-✅ YES: ARCG Systems wordmark bottom-right, small, professional
+✅ YES: user's configured brand wordmark bottom-right, small, professional (only when configured)
 ✅ YES: specify shot angle, lighting quality, composition, subject arrangement precisely
 
 SCENE APPROACH: Think like a premium business documentary director. Show the operational reality of the topic through environment, spatial relationships, objects, and composition — not through faces or generic office imagery. Each prompt should feel like it could direct a real photoshoot or video production.
@@ -6833,7 +6348,7 @@ function generateContent(){
   if(btn)btn.disabled=true;
   if(st)st.innerHTML='<span class="wh wh-load">⏳ Generating ad content...</span>';
 
-  const logoInstr='IMPORTANT: Place the ARCG Systems logo in the lower-right corner only. Keep it small (max 12% of frame width), professional, white or transparent version on dark background. Never center the logo.';
+  const logoInstr='IMPORTANT: If the user has configured a brand logo, place it in the lower-right corner only. Keep it small (max 12% of frame width), professional, white or transparent version on dark background. Never center the logo.';
   const MP = isMedPilot(topic);
   const SD = isSourceDeck(topic);
   const VERT = MP || SD;
@@ -6847,7 +6362,7 @@ function generateContent(){
   const libCarousel=lib?lib.carousel:[];
 
   // ───── MedPilot copy prompt (ophthalmology / revenue-integrity voice) ─────
-  const medpilotPrompt = MP ? `You are the MedPilot content director. MedPilot is the ARCG Systems medical automation vertical — an automated clinical workflow and revenue-integrity layer for ophthalmology and adjacent specialties. MedPilot is NOT an EHR clone and NOT a generic AI scribe. MedPilot diagnoses where a practice is leaking revenue, documentation integrity, coding accuracy, prior-auth time, referral continuity, and audit defensibility — then installs the automation that removes the leak. Competitor market context: Nextech. Do not copy competitor language.
+  const medpilotPrompt = MP ? `You are the MedPilot content director. MedPilot is an automated clinical workflow and revenue-integrity layer for ophthalmology and adjacent specialties. MedPilot is NOT an EHR clone and NOT a generic AI scribe. MedPilot diagnoses where a practice is leaking revenue, documentation integrity, coding accuracy, prior-auth time, referral continuity, and audit defensibility — then installs the automation that removes the leak. Competitor market context: Nextech. Do not copy competitor language.
 Voice: premium, clinical-operator peer-to-peer, defensible, revenue-aware. Speaks to ophthalmologists, practice administrators, RCM leads, and multi-site specialty operators.
 
 Generate ${plat} ${mode} content for MedPilot topic: "${topic}" targeting ${ind==='All Industries'?'ophthalmology practices and adjacent specialty groups':ind}.${notes?' Context: '+notes+'.':''}
@@ -6864,7 +6379,7 @@ Single scroll-stopping line (8-15 words max). Clinical-operator framing. Expose 
 - "Want the blueprint for closing this leak?"
 
 ---TOPIC_HASHTAGS---
-Exactly 10 hashtags, one line, space-separated. No duplicates. Topic-specific. Medical-workflow / ophthalmology / RCM relevant. Include #MedPilot and #ARCGSystems. No #AIAutomation or generic spam tags.
+Exactly 10 hashtags, one line, space-separated. No duplicates. Topic-specific. Medical-workflow / ophthalmology / RCM relevant. Include #MedPilot. No #AIAutomation or generic spam tags.
 
 BANNED PHRASES: "revolutionary","game-changing","unlock","supercharge","cutting-edge","leverage","synergy","take your practice to the next level","we help practices like yours","disrupt","transform","AI-powered magic".
 BANNED CLAIMS: specific dollar amounts, specific denial-rate percentages, specific ROI figures, specific timeframes, pricing. Keep claims defensible and directional.
@@ -6872,7 +6387,7 @@ BANNED CLAIMS: specific dollar amounts, specific denial-rate percentages, specif
 QUALITY MANDATE: self-critique 3 times against banned phrases and defensibility; return only the refined version.` : null;
 
   // ───── SourceDeck copy prompt (GovCon capture / pipeline / proposal voice) ─────
-  const sourcedeckPrompt = SD ? `You are the SourceDeck content director. SourceDeck is the ARCG Systems GovCon opportunity-intelligence and capture-discipline platform — it pre-qualifies opportunities, tightens pipeline hygiene, closes proof gaps, calibrates price-to-win, and protects post-award margin. SourceDeck is NOT a generic CRM and NOT a SAM.gov search wrapper. SourceDeck diagnoses where a federal BD shop is burning bid cost, ghost-pipelining deals, slipping deadlines, mis-teaming, under-pricing wins, and missing recompetes — then installs the discipline that closes the leak.
+  const sourcedeckPrompt = SD ? `You are the SourceDeck content director. SourceDeck is a GovCon opportunity-intelligence and capture-discipline platform — it pre-qualifies opportunities, tightens pipeline hygiene, closes proof gaps, calibrates price-to-win, and protects post-award margin. SourceDeck is NOT a generic CRM and NOT a SAM.gov search wrapper. SourceDeck diagnoses where a federal BD shop is burning bid cost, ghost-pipelining deals, slipping deadlines, mis-teaming, under-pricing wins, and missing recompetes — then installs the discipline that closes the leak.
 Voice: premium, operator-to-operator, defensible, capture-aware, margin-aware. Speaks to SDVOSB/WOSB/8(a)/HUBZone owners, BD directors, capture managers, proposal managers, and small-prime CEOs.
 
 Generate ${plat} ${mode} content for SourceDeck topic: "${topic}" targeting ${ind==='All Industries'?'federal small primes and GovCon capture teams':ind}.${notes?' Context: '+notes+'.':''}
@@ -6889,7 +6404,7 @@ Single scroll-stopping line (8-15 words max). Capture-operator framing. Expose t
 - "Want the blueprint for tightening your capture ROI?"
 
 ---TOPIC_HASHTAGS---
-Exactly 10 hashtags, one line, space-separated. No duplicates. Topic-specific. GovCon / capture / proposal / federal-BD relevant. Include #SourceDeck and #ARCGSystems. No #AIAutomation or generic spam tags.
+Exactly 10 hashtags, one line, space-separated. No duplicates. Topic-specific. GovCon / capture / proposal / federal-BD relevant. Include #SourceDeck. No #AIAutomation or generic spam tags.
 
 BANNED PHRASES: "revolutionary","game-changing","unlock","supercharge","cutting-edge","leverage","synergy","take your BD to the next level","we help primes like yours","disrupt","transform","AI-powered magic".
 BANNED CLAIMS: specific dollar amounts, specific win-rate percentages, specific ROI figures, specific timeframes, pricing. Keep claims defensible and directional.
@@ -6898,7 +6413,7 @@ QUALITY MANDATE: self-critique 3 times against banned phrases and defensibility;
 
   // Build AI prompt for Hook + Copy only (visuals come from library)
   // Diagnosis-first positioning + banned phrases + 7+7+5 quality mandate
-  const aiPrompt=SD?sourcedeckPrompt:MP?medpilotPrompt:`You are the ARCG Systems content director for a diagnosis-first operational intelligence firm. ARCG does NOT sell automation. ARCG does NOT pitch software. ARCG diagnoses where an operation is leaking time, money, visibility, and accountability — then blueprints only what should actually be fixed. We do not automate broken logic. Sequence: Diagnose → Prioritize → Design → Build → Test → Launch → Stabilize → Expand. Clarity before software. Blueprint before build.
+  const aiPrompt=SD?sourcedeckPrompt:MP?medpilotPrompt:`You are the content director for a diagnosis-first operational intelligence firm. Position matters: the firm does NOT sell automation. The firm does NOT pitch software. It diagnoses where an operation is leaking time, money, visibility, and accountability — then blueprints only what should actually be fixed. It does not automate broken logic. Sequence: Diagnose → Prioritize → Design → Build → Test → Launch → Stabilize → Expand. Clarity before software. Blueprint before build.
 
 Generate ${plat} ${mode} content for topic family: "${topic}" targeting ${ind}.${notes?' Context: '+notes+'.':''}
 
@@ -6947,7 +6462,7 @@ Only return the final post-refinement version. Never return the first draft.`;
           const mpCopy=`${topic} isn't a people problem — it's a workflow mechanic problem. Each handoff, chart gap, or coding mismatch quietly drains revenue and weakens audit defensibility. MedPilot installs the automation that closes the specific mechanic failing in your practice, without replacing your EHR. The result is tighter documentation, cleaner claims, and fewer denial retries — measured, not promised. Worth a 15-minute workflow diagnostic?`;
           text=`---HOOK---\n${mpHook}\n\n---COPY---\n${mpCopy}\n\n---TOPIC_HASHTAGS---\n${medpilotHashtags(topic)}`;
         } else {
-          text=`---HOOK---\n${libHook}\n\n---COPY---\n${libCaption}\n\n---TOPIC_HASHTAGS---\n#OperationsManagement #WorkflowAutomation #AIAutomation #ProcessAutomation #${ind.replace(/ /g,'')} #OperationalExcellence #BusinessSystems #ARCGSystems`;
+          text=`---HOOK---\n${libHook}\n\n---COPY---\n${libCaption}\n\n---TOPIC_HASHTAGS---\n#OperationsManagement #WorkflowAutomation #AIAutomation #ProcessAutomation #${ind.replace(/ /g,'')} #OperationalExcellence #BusinessSystems`;
         }
       }
 
@@ -6964,10 +6479,10 @@ Only return the final post-refinement version. Never return the first draft.`;
           generateVisualPromptAI(topic,'image',ind),
           (mode==='video'||mode==='combo')?generateVisualPromptAI(topic,'video',ind):Promise.resolve('')
         ]);
-        lastVisualPrompt = aiImgPrompt || (SD?sourcedeckOfflineVisual(topic,'image'):MP?medpilotOfflineVisual(topic,'image'):(imgPrompts?pickVariant(topic,'img',imgPrompts):`Editorial image: ${topic} operational environment — premium, faceless, text-safe. ARCG Systems mark lower-right.`));
+        lastVisualPrompt = aiImgPrompt || (SD?sourcedeckOfflineVisual(topic,'image'):MP?medpilotOfflineVisual(topic,'image'):(imgPrompts?pickVariant(topic,'img',imgPrompts):`Editorial image: ${topic} operational environment — premium, faceless, text-safe.`));
         lastVideoPrompt = (mode==='video'||mode==='combo')?(aiVidPrompt||(SD?sourcedeckOfflineVisual(topic,'video'):MP?medpilotOfflineVisual(topic,'video'):(vidPrompts?pickVariant(topic,'vid',vidPrompts):`10-second cinematic: ${topic} — premium editorial, operational reality, no dark desk.`))):'(Select Video or Combo mode for video prompt)';
       } else {
-        lastVisualPrompt = SD?sourcedeckOfflineVisual(topic,'image'):MP?medpilotOfflineVisual(topic,'image'):(imgPrompts?pickVariant(topic,'img',imgPrompts):`Editorial image: ${topic} operational environment — premium, faceless, text-safe. ARCG Systems mark lower-right.`);
+        lastVisualPrompt = SD?sourcedeckOfflineVisual(topic,'image'):MP?medpilotOfflineVisual(topic,'image'):(imgPrompts?pickVariant(topic,'img',imgPrompts):`Editorial image: ${topic} operational environment — premium, faceless, text-safe.`);
         lastVideoPrompt = (mode==='video'||mode==='combo')?(SD?sourcedeckOfflineVisual(topic,'video'):MP?medpilotOfflineVisual(topic,'video'):(vidPrompts?pickVariant(topic,'vid',vidPrompts):`10-second cinematic: ${topic} — premium editorial, operational reality.`)):'(Select Video or Combo mode for video prompt)';
       }
       document.getElementById('cc-visual-out').textContent=lastVisualPrompt;
@@ -7107,7 +6622,7 @@ const DAILY_CHECKLISTS={
     {t:'Draft or update proposal for top deal in pipeline',tag:'Revenue'},
     {t:'Check Discovery Booked leads — prep pre-call brief',tag:'Revenue'},
     {t:'Trigger PROD-05 for any ready-to-book leads',tag:'System'},
-    {t:'Research email for top no-email leads (start with Riverbay)',tag:'Leads'},
+    {t:'Research email for top no-email leads',tag:'Leads'},
     {t:'Check LinkedIn for any InMail replies or profile views',tag:'Leads'},
     {t:'Update Notion pipeline stages for any moved deals',tag:'System'},
   ],
@@ -7151,11 +6666,11 @@ function clearChecks(){checkState={};renderDailyOps();toast('Checklist reset','o
 // ─── SYSTEM FLOW ───
 function renderFlow(){
   const steps=[
-    {n:1,t:'Assessment Form',d:'arcgsystems.com/assessment → PROD-01 webhook → Airtable New + Gmail alert'},
+    {n:1,t:'Assessment Form',d:'[your assessment URL] → inbound webhook → Airtable New + Gmail alert'},
     {n:2,t:'Qualification',d:'Operator reviews → Status=Qualified in Airtable'},
     {n:3,t:'Notion Sync (Auto)',d:'PROD-02 15min → M3 writeback → Synced to Notion → Notion record created (dedup)'},
     {n:4,t:'Instantly Insert (Auto)',d:'PROD-03 4595758 15min → Campaign insert (ID set in Settings) → Status=Contacted or Duplicate - Instantly'},
-    {n:5,t:'Outreach Delivered',d:'charlie@digiarcgsystems.com → Day 0 / Day 5 / Day 12 sequence'},
+    {n:5,t:'Outreach Delivered',d:'[your sender inbox] → Day 0 / Day 5 / Day 12 sequence'},
     {n:6,t:'Reply Analysis (Auto)',d:'PROD-04 15min → GPT-4o → Airtable AI fields + Gmail alert'},
     {n:7,t:'Booking Triggered',d:'PROD-05 webhook → pre-call brief → booking link emailed to prospect'},
     {n:8,t:'Discovery Call',d:'30-min Google Meet → Notion outcome → proposal or nurture'},
@@ -7182,7 +6697,7 @@ let gcLoaded=false;
 // live bid.
 //
 // Notice type is not a first-class Airtable field on the GovCon table today —
-// it lives embedded inside `ARCG Fit Summary` and sometimes in `Title` or
+// it lives embedded inside `Fit Summary` and sometimes in `Title` or
 // `Notice ID`. This helper scans every text-bearing field for banned phrases
 // first (hard reject), then requires at least one allowed phrase to accept.
 // Default-reject when notice type cannot be determined — this is the strict
@@ -7196,7 +6711,7 @@ function isSolicitationOpportunity(opp){
   if(typeof days === 'number' && days < 0) return false;
 
   const signals = [
-    opp['ARCG Fit Summary']||'',
+    opp['Fit Summary']||'',
     opp.Title||'',
     opp['Notice Type']||'',
     opp.Type||'',
@@ -7334,10 +6849,17 @@ async function analyzeGovcon(recId){
     return;
   }
   toast('Starting deep analysis for: '+(opp.Title||''),'info');
-  const prompt=`GOVCON OPPORTUNITY ANALYSIS\n\nAnalyze this federal contract opportunity for ARCG (Ariel's River Contracting Group):\n\nTitle: ${opp.Title||''}\nSolicitation: ${opp['Solicitation Number']||opp['Notice ID']||''}\nAgency: ${opp.Agency||''}\nNAICS: ${opp.NAICS||''}\nSet-Aside: ${opp['Set-Aside Code']||'Full & Open'}\nPlace of Performance: ${opp['Place of Performance']||''}\nDeadline: ${opp['Response Deadline']||''}\nDays Remaining: ${opp['Days Until Due']||'?'}\n\nARCG CONTEXT:\n- SDVOSB, HUBZone, DBE, MBE, SBE certified\n- Prime contractor with subcontract execution model\n- Remote management from Maryland\n- Target margin: 20-30%\n- Past performance: 5-year VA Medical Center contract (Spokane WA)\n\nProvide:\n1. Win probability assessment\n2. ARCG fit analysis\n3. Pricing strategy recommendations\n4. Subcontractor sourcing plan\n5. COR/PM outreach strategy\n6. Go/No-Go recommendation\n7. Immediate action items`;
+  // Pull user-configured company context (blank by default — user fills in Settings → Brand → GovCon Profile).
+  const _gcBrand = (typeof ARCG_OS!=='undefined' && ARCG_OS.brand) ? ARCG_OS.brand : {};
+  const _gcCompany = (_gcBrand.name || '[your company]').trim();
+  const _gcCerts = (_gcBrand.certifications || '').trim() || '[your socioeconomic certifications]';
+  const _gcModel = (_gcBrand.executionModel || '').trim() || '[your delivery model]';
+  const _gcPastPerf = (_gcBrand.pastPerformance || '').trim() || '[your past performance]';
+  const _gcMargin = (_gcBrand.marginTarget || '').toString().trim() || '[your target margin]';
+  const prompt=`GOVCON OPPORTUNITY ANALYSIS\n\nAnalyze this federal contract opportunity for ${_gcCompany}:\n\nTitle: ${opp.Title||''}\nSolicitation: ${opp['Solicitation Number']||opp['Notice ID']||''}\nAgency: ${opp.Agency||''}\nNAICS: ${opp.NAICS||''}\nSet-Aside: ${opp['Set-Aside Code']||'Full & Open'}\nPlace of Performance: ${opp['Place of Performance']||''}\nDeadline: ${opp['Response Deadline']||''}\nDays Remaining: ${opp['Days Until Due']||'?'}\n\nCOMPANY CONTEXT:\n- Certifications: ${_gcCerts}\n- Execution model: ${_gcModel}\n- Target margin: ${_gcMargin}\n- Past performance: ${_gcPastPerf}\n\nProvide:\n1. Win probability assessment\n2. Fit analysis for this company\n3. Pricing strategy recommendations\n4. Subcontractor sourcing plan\n5. COR/PM outreach strategy\n6. Go/No-Go recommendation\n7. Immediate action items`;
 
   try{
-    const result=await callAI('You are a federal procurement strategist for ARCG Systems, an SDVOSB certified contractor.',prompt,4000);
+    const result=await callAI('You are a federal procurement strategist.',prompt,4000);
     // Save analysis to Airtable
     await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+GC_TBL+'/'+recId,{
       method:'PATCH',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},
@@ -7459,7 +6981,7 @@ function _syncViaProxy(opts){
 function _renderSAMTable(data,container){
   const opps=data.opportunities||[];
   if(!opps.length){
-    container.innerHTML='<p style="padding:10px;color:var(--muted)">No active solicitations in last 90 days for ARCG NAICS codes.</p>';
+    container.innerHTML='<p style="padding:10px;color:var(--muted)">No active solicitations in the last 90 days for your configured NAICS codes.</p>';
     return;
   }
   const naicsCounts={};
@@ -7486,7 +7008,7 @@ function _pushOppToAirtable(opp){
     body:JSON.stringify({records:[{fields:{
       'Title':opp.title||'','Notice ID':opp.noticeId||'','NAICS':opp.naicsCode||'',
       'Agency':opp.agency||'',
-      'ARCG Fit Summary':(opp.setAside?opp.setAside+' | ':'')+(opp.naicsCode||'')+(opp.responseDate?' | Due: '+opp.responseDate:''),
+      'Fit Summary':(opp.setAside?opp.setAside+' | ':'')+(opp.naicsCode||'')+(opp.responseDate?' | Due: '+opp.responseDate:''),
       'Days Until Due':typeof opp.daysLeft==='number'?opp.daysLeft:null,
       'Category':'New',
     }}],typecast:true})
@@ -7649,7 +7171,7 @@ async function newDiagnostic(){
   const name=prompt('Client name for new diagnostic:');
   if(!name||!name.trim())return;
   try{
-    const r=await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_TBL,{method:'POST',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},body:JSON.stringify({fields:{[DEL_F.name]:name.trim(),[DEL_F.stage]:'Diagnose',[DEL_F.health]:'On Track',[DEL_F.owner]:'Jean-Max Charles',[DEL_F.lastUpdate]:new Date().toISOString().split('T')[0],[DEL_F.risk]:'Low'},typecast:true})});
+    const r=await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_TBL,{method:'POST',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},body:JSON.stringify({fields:{[DEL_F.name]:name.trim(),[DEL_F.stage]:'Diagnose',[DEL_F.health]:'On Track',[DEL_F.owner]:((typeof ARCG_OS!=='undefined'&&ARCG_OS.brand&&ARCG_OS.brand.senderName)||''),[DEL_F.lastUpdate]:new Date().toISOString().split('T')[0],[DEL_F.risk]:'Low'},typecast:true})});
     const d=await r.json();
     if(!r.ok)throw new Error(d.error?.message||'Create failed');
     const newId=d.id;
@@ -7658,7 +7180,7 @@ async function newDiagnostic(){
     // Create initial task pack
     const tasks=['Run initial diagnostic assessment','Document client systems inventory','Score operational maturity'];
     for(const t of tasks){
-      await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_TASK_TBL,{method:'POST',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},body:JSON.stringify({fields:{'fldCZykh2Vy6DbYgq':t,'fld8AvWDs2IkSSgWm':'Diagnose','fldPVCrf5YxgYgl7D':'Pending','fldP75nDNp4jHhh9X':'Jean-Max Charles','flduuCkwLXg1qzVVN':[newId]},typecast:true})});
+      await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_TASK_TBL,{method:'POST',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},body:JSON.stringify({fields:{'fldCZykh2Vy6DbYgq':t,'fld8AvWDs2IkSSgWm':'Diagnose','fldPVCrf5YxgYgl7D':'Pending','fldP75nDNp4jHhh9X':((typeof ARCG_OS!=='undefined'&&ARCG_OS.brand&&ARCG_OS.brand.senderName)||''),'flduuCkwLXg1qzVVN':[newId]},typecast:true})});
     }
     // Create findings shell
     await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_FIND_TBL,{method:'POST',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},body:JSON.stringify({fields:{'fld6dipykn7zmZ3R9':'Initial assessment pending','fldMFnoSbY4j7nIcr':'Medium','fldKc3xvpBDrBRNIW':'Open','fldbS1SNIx59jpGoP':'Awaiting diagnostic completion','fldqF7wmFYvqz4oBm':[newId]},typecast:true})});
@@ -7686,7 +7208,7 @@ function toast(msg,type='info'){
 // targets. Invoke via: window.corOutreachAnalysis('Jane Doe','GSA','FAS PMO','notes')
 async function corOutreachAnalysis(officerName, agency, programOrOffice, notes){
   if(!officerName || !agency){ if(typeof toast==='function') toast('Officer name and agency required','err'); return null; }
-  const sysPrompt = `You are an ARCG Systems GovCon relationship intelligence analyst.
+  const sysPrompt = `You are a GovCon relationship intelligence analyst.
 
 MISSION
 Produce a deep, publicly-sourced, procurement-safe outreach intelligence brief on a contracting official. Every factual claim must be backed by a public source URL. If a detail is not publicly verified, write "not publicly verified" — never invent, never infer private data.
@@ -7712,7 +7234,7 @@ Skills:
 Groups:
 Recent Public Activity: (public posts, comments, reposts — last 90 days if visible)
 Publicly Visible Recommendations:
-Connection/Context Clues: (public context suggesting how ARCG could legitimately reach out — e.g. shared industry events, public speaking, published articles)
+Connection/Context Clues: (public context suggesting how the user's firm could legitimately reach out — e.g. shared industry events, public speaking, published articles)
 
 ---SOCIAL_MEDIA---
 Facebook: (public page/profile URL or "not publicly verified")
@@ -7738,7 +7260,7 @@ Shared Agencies/Programs/Events/Associations: (public membership, attendance, sp
 
 ---PERSONALIZED_EMAIL_DRAFT---
 Subject: (short, specific, non-salesy)
-Body: (3-4 paragraphs, ready to send, references a publicly-sourced detail, opens with respect for their work, offers a specific ARCG capability tied to a real public challenge at their agency, closes with a low-commitment ask)
+Body: (3-4 paragraphs, ready to send, references a publicly-sourced detail, opens with respect for their work, offers a specific capability tied to a real public challenge at their agency, closes with a low-commitment ask)
 
 ---LINKEDIN_CONNECTION_REQUEST---
 (max 300 characters, personalized, references a public detail, ready to send)
@@ -7773,10 +7295,10 @@ Ongoing — Staying Top Of Mind:
 ---COMPETITIVE_INTELLIGENCE---
 Likely Other Vendors Engaging Them: (from public award history, SAM.gov, USAspending.gov)
 Incumbent Dynamics: (current incumbent, contract end dates — public only)
-ARCG Differentiation: (how to position ARCG against what's already there)
+Our Differentiation: (how to position the user's firm against what's already there)
 
 ---RED_FLAGS_AND_ETHICAL_BOUNDARIES---
-(anything ARCG should NOT do — blackout periods, conflicts of interest, agency-specific rules)
+(anything the user should NOT do — blackout periods, conflicts of interest, agency-specific rules)
 
 ---SUCCESS_METRICS_AND_STAGE---
 Current Relationship Stage: (Cold / Aware / Engaged / Active Dialogue / Proposal / Awarded)
@@ -7827,14 +7349,14 @@ Produce the full brief per the REQUIRED OUTPUT format above. No private data, no
 window.corOutreachAnalysis = corOutreachAnalysis;
 
 // ═══════════════════════════════════════════════════════════════════════
-// ARCG OPERATING SYSTEM — unified decision-and-execution engine
+// OPERATING SYSTEM — unified decision-and-execution engine (internal)
 // DISCOVER → EVALUATE → DECIDE → ACT → MONITOR → PROVE
 // ═══════════════════════════════════════════════════════════════════════
 
 // ── SHARED DATA MODEL ──
 const ARCG_OS = {
   deals: JSON.parse(localStorage.getItem('arcg_deals')||'[]'),
-  brand: JSON.parse(localStorage.getItem('arcg_brand')||'{"name":"ARCG Systems","accent":"#C9941A","logo":""}'),
+  brand: JSON.parse(localStorage.getItem('arcg_brand')||'{"name":"","accent":"#1A6FA8","logo":"","website":"","senderName":""}'),
   config: { marginTarget: 25, followUpDays: 3 },
   TIERS: { CORE:0, PRO:1, OPERATOR:2 },
   currentTier: 0, // 0=CORE (free), 1=PRO, 2=OPERATOR
@@ -8359,7 +7881,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     display_name:    'Clinical Capability / EHR Mode',
     description:     'Encounter documentation, dictation/transcription, review/approval, and multi-location office deployment workflows — packaged as ChartNav-style medical capability inside SourceDeck.',
     version:         '1.0.0',
-    provider:        'ARCG Systems',
+    provider:        'SourceDeck',
     prerequisites: [
       { key: 'org_name',          label: 'Organization / clinic name',     type: 'string',  required: true  },
       { key: 'provider_count',    label: 'Provider count',                 type: 'number',  required: true, min: 1 },
@@ -8376,7 +7898,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     ],
     implementation_modes: [
       { key: 'self_implementation', label: 'Self-Implementation',  description: 'Client deploys using SourceDeck-provided package + documentation.' },
-      { key: 'done_for_you',       label: 'Done-For-You by ARCG', description: 'ARCG implements, connects, tests, and hands off a working deployment.' }
+      { key: 'done_for_you',       label: 'Done-For-You deployment', description: 'A deployment team implements, connects, tests, and hands off a working deployment.' }
     ],
     capabilities: [
       'encounter_documentation',
@@ -8547,7 +8069,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     // KPIs
     const modeLabel = _state.impl_mode === 'self_implementation' ? 'Self' :
-                      _state.impl_mode === 'done_for_you'       ? 'DFY by ARCG' : '—';
+                      _state.impl_mode === 'done_for_you'       ? 'DFY' : '—';
     setText('cl-r-mode',      modeLabel);
     setText('cl-r-locations',  locationCount);
     setText('cl-r-providers',  _state.provider_count || 0);

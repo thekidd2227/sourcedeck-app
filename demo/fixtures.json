@@ -1,0 +1,92 @@
+{
+  "_meta": {
+    "purpose": "Sanitized demo fixtures for optional demo mode (Settings → Demo Mode → Load Sample Data).",
+    "ship_status": "NOT bundled into the packaged app by default — excluded from build.files in package.json.",
+    "sanitization_rules": [
+      "All emails use RFC 6761 .example domains (reserved, non-routable).",
+      "All phone numbers use NANP 555-01xx block (reserved for fictional use).",
+      "All company names are hand-written fakes; none match any real entity.",
+      "All agency names are labelled '(demo)'; no real government body is implied.",
+      "NAICS codes restricted to 541611 and 561210 for sample GovCon flows."
+    ]
+  },
+  "leads": [
+    {
+      "id": "demo_ld_0001",
+      "fields": {
+        "Business Name": "Northwind Civic Partners",
+        "Contact Name": "A. Marlowe",
+        "Email": "a.marlowe@northwindcivic.example",
+        "Phone / WhatsApp": "+1-202-555-0142",
+        "Location": "Arlington, VA",
+        "Priority": "High",
+        "Status": "Contacted",
+        "Recommended Services": "Workflow diagnostics, capability-statement refresh",
+        "Deal Value": 145000,
+        "Fit Score": 88,
+        "Current Stage": "Outreach Sent",
+        "Days in Stage": 3,
+        "Next Action": "Follow-up Day 3",
+        "Priority Rationale": "Responded to capability statement; asking for past performance on recompetes."
+      }
+    },
+    {
+      "id": "demo_ld_0002",
+      "fields": {
+        "Business Name": "Harbor & Linde LLC",
+        "Contact Name": "R. Okafor",
+        "Email": "r.okafor@harborlinde.example",
+        "Phone / WhatsApp": "+1-415-555-0117",
+        "Location": "Oakland, CA",
+        "Priority": "Medium",
+        "Status": "Contacted",
+        "Recommended Services": "Intake diagnostics, reporting cadence",
+        "Deal Value": 62500,
+        "Fit Score": 72,
+        "Current Stage": "Outreach Sent",
+        "Days in Stage": 5,
+        "Next Action": "Send pricing sheet",
+        "Priority Rationale": "Requested pricing on janitorial sub-contract scope."
+      }
+    },
+    {
+      "id": "demo_ld_0003",
+      "fields": {
+        "Business Name": "Meridian Route Advisors",
+        "Contact Name": "S. Tanaka",
+        "Email": "s.tanaka@meridianroute.example",
+        "Phone / WhatsApp": "+1-503-555-0199",
+        "Location": "Portland, OR",
+        "Priority": "High",
+        "Status": "Contacted",
+        "Recommended Services": "Strategic planning diagnostics",
+        "Deal Value": 210000,
+        "Fit Score": 91,
+        "Current Stage": "Replied",
+        "Days in Stage": 1,
+        "Next Action": "Book discovery",
+        "Priority Rationale": "Scoping a re-compete task order; decision by end of week."
+      }
+    }
+  ],
+  "opportunities": [
+    {
+      "id": "demo_opp_541611_001",
+      "title": "Management Advisory Services — Regional Planning Office",
+      "naics": "541611",
+      "agency": "Dept. of Regional Modernization (demo)",
+      "setAside": "Total Small Business",
+      "responseDue": "2026-05-12",
+      "estimatedValue": 1250000
+    },
+    {
+      "id": "demo_opp_561210_001",
+      "title": "Facilities Support Services — Federal Campus",
+      "naics": "561210",
+      "agency": "General Facilities Directorate (demo)",
+      "setAside": "SDVOSB",
+      "responseDue": "2026-05-08",
+      "estimatedValue": 2100000
+    }
+  ]
+}

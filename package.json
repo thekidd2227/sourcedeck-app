@@ -1,12 +1,13 @@
 {
   "name": "sourcedeck",
   "productName": "SourceDeck",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "AI-powered lead generation and pipeline management desktop application",
-  "author": "Ariel's River Contracting Group LLC",
+  "author": "SourceDeck",
   "main": "main.js",
   "scripts": {
-    "test": "node test/clinical-capability.test.js && node test/chartnav-integration.test.js",
+    "test": "node test/clinical-capability.test.js && node test/chartnav-integration.test.js && node test/first-run-safety.test.js",
+    "prerelease": "node scripts/release-check.js",
     "dev": "electron .",
     "start": "electron .",
     "pack:mac": "electron-builder --mac --dir",

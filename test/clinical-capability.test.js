@@ -51,8 +51,8 @@ test('manifest has display_name', () => {
   assert.strictEqual(manifest.display_name, 'Clinical Capability / EHR Mode');
 });
 
-test('manifest has provider ARCG Systems', () => {
-  assert.strictEqual(manifest.provider, 'ARCG Systems');
+test('manifest has provider SourceDeck', () => {
+  assert.strictEqual(manifest.provider, 'SourceDeck');
 });
 
 test('manifest has exactly 2 implementation_modes', () => {

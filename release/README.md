@@ -14,7 +14,7 @@ release/
 ## Local build
 
 ```bash
-cd "~/Desktop/ARCG/ARCG Systems/Projects/sourcedeck-app"
+cd path/to/sourcedeck-app
 npm run build:mac     # produces mac artifacts in dist/ → move to release/mac/
 npm run build:win     # requires Windows (or Wine+Mono) — prefer CI
 ```
