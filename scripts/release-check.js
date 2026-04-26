@@ -66,6 +66,10 @@ const PRIVACY_BLOCKLIST = [
   { pattern: /Century\s+Management/g,      reason: 'Leaked real company' },
   { pattern: /Robert\s+E\.\s+Hill/g,       reason: 'Leaked real company' },
   { pattern: /\/Desktop\/ARCG/gi,          reason: 'Developer desktop path' },
+  { pattern: /ti5tlit9s9ir0sr1vha7vqjyemcuvlnq/g, reason: 'Owner Make.com webhook token (PROD-05 Booking)' },
+  { pattern: /jpu2xjxufd8x7yt3qnsk9ntxd0ns77jk/g, reason: 'Owner Make.com webhook token (LCC Booking)' },
+  { pattern: /\b8125092\b/g,               reason: 'Owner Gmail Connection ID' },
+  { pattern: /\b4595758\b/g,               reason: 'Owner Instantly campaign ID' },
 ];
 
 const PRIVACY_ALLOWLIST = [

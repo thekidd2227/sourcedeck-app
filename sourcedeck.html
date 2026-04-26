@@ -721,12 +721,12 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
           </div>
           <div class="card">
             <div class="sl">Automation Status</div>
-            <div class="kv"><span class="k">PROD-01 Assessment</span><span class="badge bgn">ACTIVE</span></div>
-            <div class="kv"><span class="k">PROD-02 Notion Sync</span><span class="badge bgn">ACTIVE</span></div>
-            <div class="kv"><span class="k">PROD-03 Instantly (4595758)</span><span class="badge bgn">ACTIVE</span></div>
-            <div class="kv"><span class="k">PROD-04 Reply Intel</span><span class="badge bgn">ACTIVE</span></div>
-            <div class="kv"><span class="k">PROD-05 Booking Brief</span><span class="badge bgn">ACTIVE</span></div>
-            <div class="kv"><span class="k">Warmup Score</span><span class="badge bgn">100/100</span></div>
+            <div class="kv"><span class="k">PROD-01 Assessment</span><span class="v" style="color:var(--muted);font-size:9px">Not configured</span></div>
+            <div class="kv"><span class="k">PROD-02 Notion Sync</span><span class="v" style="color:var(--muted);font-size:9px">Not configured</span></div>
+            <div class="kv"><span class="k">PROD-03 Instantly</span><span class="v" style="color:var(--muted);font-size:9px">Not configured</span></div>
+            <div class="kv"><span class="k">PROD-04 Reply Intel</span><span class="v" style="color:var(--muted);font-size:9px">Not configured</span></div>
+            <div class="kv"><span class="k">PROD-05 Booking Brief</span><span class="v" style="color:var(--muted);font-size:9px">Not configured</span></div>
+            <div class="kv"><span class="k">Warmup Score</span><span class="v" style="color:var(--muted);font-size:9px">—</span></div>
           </div>
         </div>
       </div>
@@ -1177,15 +1177,15 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
         </div>
         <div class="grid-3">
           <div class="card"><div class="sl">Active Webhooks</div>
-            <div class="kv"><span class="k">PROD-01 Assessment</span><span class="v" style="font-size:9px"></span></div>
-            <div class="kv"><span class="k">PROD-05 Booking</span><span class="v" style="font-size:9px">ti5tlit9s9ir0sr1vha7vqjyemcuvlnq</span></div>
-            <div class="kv"><span class="k">LCC Booking</span><span class="v" style="font-size:9px">jpu2xjxufd8x7yt3qnsk9ntxd0ns77jk</span></div>
+            <div class="kv"><span class="k">PROD-01 Assessment</span><span class="v" style="font-size:9px;color:var(--muted)">Not configured</span></div>
+            <div class="kv"><span class="k">PROD-05 Booking</span><span class="v" style="font-size:9px;color:var(--muted)">Not configured</span></div>
+            <div class="kv"><span class="k">LCC Booking</span><span class="v" style="font-size:9px;color:var(--muted)">Not configured</span></div>
           </div>
           <div class="card"><div class="sl">Infrastructure</div>
             <div class="kv"><span class="k">Airtable Base</span><span class="v">appXXXXXXXXXXXXXXX</span></div>
             <div class="kv"><span class="k">Notion Leads DB</span><span class="v" style="font-size:9px;color:var(--muted)">Not connected</span></div>
             <div class="kv"><span class="k">Instantly Campaign</span><span class="v" style="font-size:9px;color:var(--muted)">Not configured</span></div>
-            <div class="kv"><span class="k">Gmail Connection</span><span class="v">8125092</span></div>
+            <div class="kv"><span class="k">Gmail Connection</span><span class="v" style="color:var(--muted);font-size:9px">Not connected</span></div>
           </div>
           <div class="card"><div class="sl">HTTP Standards</div>
             <div class="kv"><span class="k">bodyType</span><span class="badge bgn">raw</span></div>
@@ -1541,7 +1541,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
               <div class="kv"><span class="k">Leads Table</span><span class="v" style="color:var(--muted)">Set via Settings</span></div>
               <div class="kv"><span class="k">Audit Intake Table</span><span class="v" style="color:var(--muted)">Set via Settings</span></div>
               <div class="kv"><span class="k">Notion Leads DB</span><span class="v" style="font-size:9px;color:var(--muted)">Not connected</span></div>
-              <div class="kv"><span class="k">Gmail Connection</span><span class="v">8125092</span></div>
+              <div class="kv"><span class="k">Gmail Connection</span><span class="v" style="color:var(--muted);font-size:9px">Not connected</span></div>
             </div>
             <div class="card mb-14">
               <div class="sl">Automation Path Confirmed</div>
@@ -1554,7 +1554,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
             </div>
             <div class="card">
               <div class="sl">Save Status</div>
-              <div id="settings-result" style="font-size:11px;color:var(--muted)">Settings are stored in sessionStorage only.</div>
+              <div id="settings-result" style="font-size:11px;color:var(--muted)">Settings are stored in this browser's localStorage only.</div>
             </div>
           </div>
         </div>
@@ -1829,7 +1829,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
           <div style="font-size:28px;margin-bottom:10px">🔒</div>
           <div style="color:var(--gold2);font-weight:600;margin-bottom:6px">Operator / Federal Tier</div>
           <div style="color:var(--muted);font-size:12px;max-width:400px;margin:0 auto">Subcontractor matching, execution timelines, and readiness assessment. Includes cost estimation, margin impact analysis, and milestone tracking.</div>
-          <button class="btn btn-gold" style="margin-top:16px" onclick="toast('Upgrade to Operator tier in Settings → Subscription','info')">Unlock Execution Suite →</button>
+          <button class="btn btn-gold" style="margin-top:16px" onclick="toast('Operator tier upgrade is not yet available in-app — contact sales to enable','info')">Unlock Execution Suite →</button>
         </div>
         <div id="exec-content" style="display:none">
           <div class="grid-2">
@@ -2259,7 +2259,7 @@ function saveSettings(){
   if(keys.OPENAI_KEY) window.OPENAI_KEY = keys.OPENAI_KEY;
   if(keys.APOLLO_KEY) window.APOLLO_KEY = keys.APOLLO_KEY;
   const r = document.getElementById('settings-result');
-  if(r) r.innerHTML = '<span class="wh wh-ok">✓ Settings saved to sessionStorage</span>';
+  if(r) r.innerHTML = '<span class="wh wh-ok">✓ Settings saved (browser localStorage)</span>';
   toast('Settings saved','ok');
 }
 function loadSettings(){
@@ -6669,7 +6669,7 @@ function renderFlow(){
     {n:1,t:'Assessment Form',d:'[your assessment URL] → inbound webhook → Airtable New + Gmail alert'},
     {n:2,t:'Qualification',d:'Operator reviews → Status=Qualified in Airtable'},
     {n:3,t:'Notion Sync (Auto)',d:'PROD-02 15min → M3 writeback → Synced to Notion → Notion record created (dedup)'},
-    {n:4,t:'Instantly Insert (Auto)',d:'PROD-03 4595758 15min → Campaign insert (ID set in Settings) → Status=Contacted or Duplicate - Instantly'},
+    {n:4,t:'Instantly Insert (Auto)',d:'PROD-03 15min → Campaign insert (ID set in Settings) → Status=Contacted or Duplicate - Instantly'},
     {n:5,t:'Outreach Delivered',d:'[your sender inbox] → Day 0 / Day 5 / Day 12 sequence'},
     {n:6,t:'Reply Analysis (Auto)',d:'PROD-04 15min → GPT-4o → Airtable AI fields + Gmail alert'},
     {n:7,t:'Booking Triggered',d:'PROD-05 webhook → pre-call brief → booking link emailed to prospect'},
