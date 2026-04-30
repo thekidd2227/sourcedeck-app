@@ -3,7 +3,22 @@ const path = require('path');
 const Store = require('electron-store');
 const { autoUpdater } = require('electron-updater');
 
+// ── IBM-readiness service layer (main-process only) ─────────────────
+const { loadConfig }                                  = require('./services/config');
+const { createAiProvider, getAiProviderStatus }       = require('./services/ai/provider-factory');
+const { createStorage,    getStorageProviderStatus }  = require('./services/storage/storage-factory');
+const { createAuditLog, TYPES: AUDIT_TYPES }          = require('./services/audit/audit-log');
+const { createContext }                               = require('./services/context/context');
+const { validateUpload }                              = require('./services/security/upload-validation');
+
 const store = new Store({ name: 'sourcedeck-data' });
+
+// Boot the IBM-readiness services. They're additive: defaults are
+// local + offline so first-run is unchanged. They never reach the
+// renderer except through the explicit IPC handlers registered below.
+const cfg     = loadConfig();
+const audit   = createAuditLog(store);
+const context = createContext(store);
 
 // ─── First-run privacy scrub ──────────────────────────────────────────
 // Runs before the window is created. Makes a packaged build safe even if,
@@ -160,3 +175,90 @@ ipcMain.handle('store-set', (event, key, value) => {
   store.set(key, value);
   return { success: true };
 });
+
+// ─── IBM-readiness IPC ──────────────────────────────────────────────
+// Status surfaces never expose secret values — only configured/missing.
+
+ipcMain.handle('ai-provider-status', () => getAiProviderStatus(loadConfig()));
+ipcMain.handle('storage-provider-status', () => getStorageProviderStatus(loadConfig()));
+ipcMain.handle('context-get', () => context.get());
+
+ipcMain.handle('context-set', (_event, patch) => {
+  const next = context.set(patch || {});
+  audit.append({ type: AUDIT_TYPES.CONTEXT_SET, status: 'ok',
+                 metadata: { changedKeys: Object.keys(patch || {}) } });
+  return next;
+});
+
+ipcMain.handle('guard-sensitive-action', (_event, name, opts) => {
+  try {
+    const allowed = context.guardSensitiveAction(String(name || 'unknown'),
+                      Object.assign({}, opts || {}, { soft: true }));
+    if (!allowed) {
+      audit.append({ type: AUDIT_TYPES.SENSITIVE_ACTION_DENIED, status: 'denied',
+                     metadata: { action: name, role: context.get().role } });
+    }
+    return { allowed };
+  } catch (err) {
+    return { allowed: false, error: err.code || 'denied' };
+  }
+});
+
+ipcMain.handle('validate-upload', (_event, descriptor) => {
+  try { return validateUpload(descriptor || {}); }
+  catch (err) { return { ok: false, code: 'validation_threw', detail: err.message }; }
+});
+
+ipcMain.handle('ai-generate', async (_event, input) => {
+  const c = loadConfig();
+  const provider = createAiProvider(c);
+  audit.append({
+    type: AUDIT_TYPES.AI_PROVIDER_SELECTED,
+    provider: provider.name, modelId: provider.modelId,
+    status: 'ok', metadata: { aiProvider: c.aiProvider }
+  });
+  if (provider.configured === false) {
+    audit.append({ type: AUDIT_TYPES.AI_REQUEST_FAILED, provider: provider.name,
+                   status: 'denied', metadata: { reason: 'missing_config', missing: provider.missing } });
+    return { ok: false, provider: provider.name, error: 'missing_config', missing: provider.missing };
+  }
+  audit.append({ type: AUDIT_TYPES.AI_REQUEST_CREATED, provider: provider.name,
+                 modelId: provider.modelId, status: 'pending' });
+  const result = await provider.generate(input || {});
+  audit.append({
+    type: result.ok ? AUDIT_TYPES.AI_RESPONSE_RECEIVED : AUDIT_TYPES.AI_REQUEST_FAILED,
+    provider:  result.provider || provider.name,
+    modelId:   result.model_id || provider.modelId,
+    requestId: result.request_id || null,
+    status:    result.ok ? 'ok' : 'error',
+    metadata:  result.ok
+      ? { textLength: (result.text || '').length, usage: (result.raw && result.raw.usage) || null }
+      : { error: result.error || 'unknown', status: result.status || null }
+  });
+  return result;
+});
+
+ipcMain.handle('storage-test-put', async (_event, text) => {
+  const c       = loadConfig();
+  const adapter = createStorage(c, store);
+  audit.append({ type: AUDIT_TYPES.STORAGE_OPERATION_STARTED,
+                 provider: adapter.name, status: 'pending', metadata: { op: 'put' } });
+  if (adapter.configured === false) {
+    audit.append({ type: AUDIT_TYPES.STORAGE_OPERATION_FAILED, provider: adapter.name,
+                   status: 'denied', metadata: { reason: 'missing_config', missing: adapter.missing } });
+    return { ok: false, provider: adapter.name, error: 'missing_config', missing: adapter.missing };
+  }
+  const buffer = Buffer.from(String(text || `SourceDeck test object · ${new Date().toISOString()}`), 'utf8');
+  const result = await adapter.put({ buffer, contentType: 'text/plain', originalFilename: 'sourcedeck-test.txt' });
+  audit.append({
+    type:     result.ok ? AUDIT_TYPES.STORAGE_OPERATION_COMPLETED : AUDIT_TYPES.STORAGE_OPERATION_FAILED,
+    provider: result.provider || adapter.name,
+    status:   result.ok ? 'ok' : 'error',
+    metadata: result.ok
+      ? { op: 'put', key: result.key, size: result.size, hash: result.hash }
+      : { op: 'put', error: result.error || 'unknown', status: result.status || null }
+  });
+  return result;
+});
+
+ipcMain.handle('audit-summary', () => audit.summary());

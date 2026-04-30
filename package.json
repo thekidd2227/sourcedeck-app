@@ -6,7 +6,7 @@
   "author": "SourceDeck",
   "main": "main.js",
   "scripts": {
-    "test": "node test/clinical-capability.test.js && node test/chartnav-integration.test.js && node test/first-run-safety.test.js",
+    "test": "node test/clinical-capability.test.js && node test/chartnav-integration.test.js && node test/first-run-safety.test.js && node test/ibm-readiness.test.js",
     "prerelease": "node scripts/release-check.js",
     "dev": "electron .",
     "start": "electron .",
@@ -18,6 +18,7 @@
     "release:check": "node scripts/release-check.js"
   },
   "dependencies": {
+    "aws4": "^1.13.2",
     "electron-store": "^8.2.0",
     "electron-updater": "^6.3.9"
   },
@@ -36,7 +37,8 @@
       "main.js",
       "preload.js",
       "sourcedeck.html",
-      "chartnav-integration.js"
+      "chartnav-integration.js",
+      "services/**/*"
     ],
     "mac": {
       "icon": "build/icon.icns",
@@ -47,8 +49,20 @@
       "entitlementsInherit": "build/entitlements.mac.plist",
       "notarize": false,
       "target": [
-        { "target": "dmg", "arch": ["x64", "arm64"] },
-        { "target": "zip", "arch": ["x64", "arm64"] }
+        {
+          "target": "dmg",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        },
+        {
+          "target": "zip",
+          "arch": [
+            "x64",
+            "arm64"
+          ]
+        }
       ]
     },
     "dmg": {
@@ -57,7 +71,12 @@
     "win": {
       "icon": "build/icon.ico",
       "target": [
-        { "target": "nsis", "arch": ["x64"] }
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
       ]
     },
     "nsis": {
