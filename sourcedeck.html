@@ -1554,7 +1554,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
             </div>
             <div class="card">
               <div class="sl">Save Status</div>
-              <div id="settings-result" style="font-size:11px;color:var(--muted)">Settings are stored in sessionStorage only.</div>
+              <div id="settings-result" style="font-size:11px;color:var(--muted)">Settings are stored in this browser's localStorage (persists across launches).</div>
             </div>
           </div>
         </div>
@@ -2259,7 +2259,7 @@ function saveSettings(){
   if(keys.OPENAI_KEY) window.OPENAI_KEY = keys.OPENAI_KEY;
   if(keys.APOLLO_KEY) window.APOLLO_KEY = keys.APOLLO_KEY;
   const r = document.getElementById('settings-result');
-  if(r) r.innerHTML = '<span class="wh wh-ok">✓ Settings saved to sessionStorage</span>';
+  if(r) r.innerHTML = '<span class="wh wh-ok">✓ Settings saved to localStorage</span>';
   toast('Settings saved','ok');
 }
 function loadSettings(){
