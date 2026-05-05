@@ -1554,7 +1554,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
             </div>
             <div class="card">
               <div class="sl">Save Status</div>
-              <div id="settings-result" style="font-size:11px;color:var(--muted)">Settings are stored in sessionStorage only.</div>
+              <div id="settings-result" style="font-size:11px;color:var(--muted)">Settings persist in localStorage on this device.</div>
             </div>
           </div>
         </div>
@@ -2259,7 +2259,7 @@ function saveSettings(){
   if(keys.OPENAI_KEY) window.OPENAI_KEY = keys.OPENAI_KEY;
   if(keys.APOLLO_KEY) window.APOLLO_KEY = keys.APOLLO_KEY;
   const r = document.getElementById('settings-result');
-  if(r) r.innerHTML = '<span class="wh wh-ok">✓ Settings saved to sessionStorage</span>';
+  if(r) r.innerHTML = '<span class="wh wh-ok">✓ Settings saved to localStorage</span>';
   toast('Settings saved','ok');
 }
 function loadSettings(){
@@ -2269,6 +2269,8 @@ function loadSettings(){
       if(k==='CLAUDE_KEY'){ window.CLAUDE_KEY=v; const el=document.getElementById('s-claude');if(el)el.value=v; }
       if(k==='OPENAI_KEY'){ window.OPENAI_KEY=v; const el=document.getElementById('s-openai');if(el)el.value=v; }
       if(k==='APOLLO_KEY'){ window.APOLLO_KEY=v; const el=document.getElementById('s-apollo');if(el)el.value=v; }
+      if(k==='AT_PAT_OVERRIDE'){ const el=document.getElementById('s-atpat');if(el)el.value=v; }
+      if(k==='BOOK_WH_OVERRIDE'){ const el=document.getElementById('s-bookwh');if(el)el.value=v; }
     }
   });
 }
