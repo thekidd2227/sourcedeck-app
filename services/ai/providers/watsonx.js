@@ -8,6 +8,8 @@
 
 'use strict';
 
+const { redactString } = require('../../audit/audit-log');
+
 let _tokenCache = { token: null, expiresAt: 0 };
 
 async function getIamToken(apiKey, fetchImpl) {
@@ -108,6 +110,12 @@ function createWatsonxProvider(cfg, deps) {
 
     if (!r.ok) {
       // Read body but never persist or log it raw — return a normalized error.
+      // Run the body through the audit redactor before exposing it to the
+      // renderer so any cred-shaped string in IBM's response (Bearer tokens,
+      // sk_*/rk_*/AKIA*, JSON "api_key": "...", long base64 blobs) is
+      // stripped. Useful non-sensitive IBM fields — error code, status,
+      // human-readable message, trace id, no_associated_service_instance_error
+      // — survive the redaction unchanged.
       let bodyText = '';
       try { bodyText = (await r.text()).slice(0, 500); } catch (_) { /* ignore */ }
       return {
@@ -115,8 +123,7 @@ function createWatsonxProvider(cfg, deps) {
         provider:  'watsonx',
         error:     `watsonx_http_${r.status}`,
         status:    r.status,
-        // include body summary for diagnostics; the audit layer redacts further.
-        detail:    bodyText
+        detail:    redactString(bodyText)
       };
     }
 

@@ -12,6 +12,7 @@
 
 'use strict';
 const crypto = require('crypto');
+const { redactString } = require('../../audit/audit-log');
 
 let _aws4 = null;
 function loadAws4() {
@@ -89,7 +90,12 @@ function createIbmCosProvider(cfg, deps) {
     if (!r.ok) {
       let detail = '';
       try { detail = (await r.text()).slice(0, 500); } catch (_) { /* ignore */ }
-      return { ok: false, error: `ibm_cos_http_${r.status}`, status: r.status, detail };
+      // Defense-in-depth: route IBM response body through the audit
+      // redactor before exposing it to the renderer. AWS S3 / IBM COS
+      // error envelopes do not echo creds in practice, but this strips
+      // any cred-shaped string just in case while preserving the useful
+      // <Code>, <Message>, <RequestId>, <BucketName> XML fields.
+      return { ok: false, error: `ibm_cos_http_${r.status}`, status: r.status, detail: redactString(detail) };
     }
 
     return { ok: true, response: r };

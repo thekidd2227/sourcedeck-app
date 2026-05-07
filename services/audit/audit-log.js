@@ -152,4 +152,4 @@ function createAuditLog(store) {
   };
 }
 
-module.exports = { createAuditLog, TYPES, sanitizeMetadata, MAX_EVENTS, MAX_METADATA_BYTES };
+module.exports = { createAuditLog, TYPES, sanitizeMetadata, redactString, MAX_EVENTS, MAX_METADATA_BYTES };

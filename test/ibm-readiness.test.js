@@ -378,4 +378,81 @@ test('getStorageProviderStatus: never returns secret values, even when configure
   assert.strictEqual(JSON.stringify(s).includes('SAK-DO-NOT-LEAK'), false);
 });
 
+// ─── HTTP-error detail redaction (verification follow-up fix) ────────
+//
+// Verifies that when the third-party API returns a non-2xx response,
+// the body fragment exposed to the renderer through `result.detail` is
+// run through the audit redactor — so even if a cred-shaped string ever
+// appeared in the upstream body, it would be stripped on the way out.
+
+test('detail-redaction: watsonx HTTP error redacts Bearer-token-looking strings', async () => {
+  _resetTokenCache();
+  const leakyBody = '{"errors":[{"code":"server_error","message":"upstream said: Bearer eyJhbGciOiJIUzI1NiJ9.payload.sig"}]}';
+  async function fakeFetch(url) {
+    if (String(url).includes('iam.')) return { ok: true, status: 200, json: async () => ({ access_token: 't', expires_in: 3600 }) };
+    return { ok: false, status: 500, text: async () => leakyBody };
+  }
+  const p = createWatsonxProvider({ apiKey: 'k', projectId: 'p', url: 'https://x' }, { fetch: fakeFetch });
+  const r = await p.generate({ prompt: 'ping' });
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.error, 'watsonx_http_500');
+  assert.strictEqual(r.detail.includes('eyJhbGciOiJIUzI1NiJ9.payload.sig'), false);
+  assert.ok(r.detail.includes('Bearer [REDACTED]'), 'detail should contain Bearer [REDACTED] marker');
+});
+
+test('detail-redaction: watsonx HTTP error redacts api_key-looking strings', async () => {
+  _resetTokenCache();
+  const leakyBody = '{"errors":[{"code":"validation_failed","detail":"echoed: \\"api_key\\":\\"sk_live_LEAK1234567890\\""}]}';
+  async function fakeFetch(url) {
+    if (String(url).includes('iam.')) return { ok: true, json: async () => ({ access_token: 't', expires_in: 3600 }) };
+    return { ok: false, status: 400, text: async () => leakyBody };
+  }
+  const p = createWatsonxProvider({ apiKey: 'k', projectId: 'p', url: 'https://x' }, { fetch: fakeFetch });
+  const r = await p.generate({ prompt: 'ping' });
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.error, 'watsonx_http_400');
+  // Either the JSON pattern or the sk_ pattern (or both) must catch it.
+  assert.strictEqual(r.detail.includes('sk_live_LEAK1234567890'), false);
+});
+
+test('detail-redaction: IBM COS HTTP error redacts AWS access-key + Bearer + sk_ shapes', async () => {
+  const leakyBody = '<Error><Code>AccessDenied</Code><Message>upstream noise: AKIAIOSFODNN7EXAMPLE and Bearer eyJhbGciOiJIUzI1NiJ9.x.y</Message><RequestId>req-xyz</RequestId><BucketName>sd-test-bucket</BucketName></Error>';
+  async function fakeFetch() { return { ok: false, status: 403, text: async () => leakyBody }; }
+  const p = createIbmCosProvider({
+    endpoint: 'https://s3.us-south.cloud-object-storage.appdomain.cloud',
+    bucket:   'sd-test-bucket', region: 'us-south',
+    accessKeyId: 'A', secretAccessKey: 'S'
+  }, { fetch: fakeFetch });
+  const r = await p.put({ buffer: Buffer.from('hi') });
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.error, 'ibm_cos_http_403');
+  assert.strictEqual(r.detail.includes('AKIAIOSFODNN7EXAMPLE'), false);
+  assert.strictEqual(r.detail.includes('eyJhbGciOiJIUzI1NiJ9.x.y'), false);
+  assert.ok(r.detail.includes('[REDACTED_AWS_ACCESS_KEY]'), 'AWS access-key marker should appear');
+  assert.ok(r.detail.includes('Bearer [REDACTED]'), 'Bearer marker should appear');
+});
+
+test('detail-redaction: useful non-sensitive IBM error codes survive redaction', async () => {
+  _resetTokenCache();
+  // The exact 403 body shape we observed live — must remain debuggable.
+  const realBody = '{"errors":[{"code":"no_associated_service_instance_error","message":"project_id 6b51cbcb-3dd7-4316-9bec-6a555c8f19cd is not associated with a WML instance","more_info":"https://cloud.ibm.com/apidocs/watsonx-ai#text-generation"}],"trace":"1413b61981839b7112f55615f6c64513","status_code":403}';
+  async function fakeFetch(url) {
+    if (String(url).includes('iam.')) return { ok: true, json: async () => ({ access_token: 't', expires_in: 3600 }) };
+    return { ok: false, status: 403, text: async () => realBody };
+  }
+  const p = createWatsonxProvider({ apiKey: 'k', projectId: 'p', url: 'https://x' }, { fetch: fakeFetch });
+  const r = await p.generate({ prompt: 'ping' });
+  assert.strictEqual(r.ok, false);
+  assert.strictEqual(r.status, 403);
+  // Diagnostic fields the operator actually needs:
+  assert.ok(r.detail.includes('no_associated_service_instance_error'),
+    'IBM error code must survive redaction');
+  assert.ok(r.detail.includes('not associated with a WML instance'),
+    'IBM human-readable message must survive redaction');
+  assert.ok(r.detail.includes('"status_code":403'),
+    'status_code must survive redaction');
+  assert.ok(r.detail.includes('1413b61981839b7112f55615f6c64513'),
+    'trace id must survive redaction');
+});
+
 run();
