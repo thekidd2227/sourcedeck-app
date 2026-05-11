@@ -10,19 +10,25 @@ in a browser-based web app without leaking secrets.
 
 ---
 
-## 1. Current renderer-side credential risks
+## 1. Status by API (after Airtable migration)
 
-Counts as of this commit (run `grep -cE "'Bearer '\+" sourcedeck.html`
-to refresh):
-
-| Risk | Count | Location pattern |
+| API | Renderer status | Where the credential lives |
 |---|---|---|
-| `Authorization: 'Bearer ' + AT_PAT` (Airtable PAT) | ~14 | `https://api.airtable.com/v0/...` |
-| `'x-api-key': window.APOLLO_KEY` (Apollo) | 1 | `https://api.apollo.io/api/v1/...` |
-| `'Authorization': 'Bearer '+OPENAI_KEY` | 2 | `https://api.openai.com/v1/chat/completions` |
-| `'x-api-key': CLAUDE_KEY` (Anthropic) | 2 | `https://api.anthropic.com/v1/messages` |
-| Other Bearer header builds (e.g. proxy/internal) | ~12 | various |
-| Credentials in `localStorage` (`lcc_*`) | 4 keys, 18 read/write sites | `lcc_AT_PAT`, `lcc_APOLLO_KEY`, `lcc_OPENAI_KEY`, `lcc_CLAUDE_KEY` |
+| **Airtable PAT** | ✅ **Migrated** (commit pending). 0 direct fetches, 0 Bearer header builds. | `safeStorage` via `window.sd.credentials.set('airtable', ...)` |
+| Apollo key | ⏳ Not migrated. 1 direct `x-api-key` build. | `lcc_APOLLO_KEY` in localStorage |
+| OpenAI key | ⏳ Not migrated. 4 Bearer builds. | `lcc_OPENAI_KEY` in localStorage |
+| Anthropic / Claude key | ⏳ Not migrated. 2 `x-api-key` builds. | `lcc_CLAUDE_KEY` in localStorage |
+| SAM.gov key | ✅ Already migrated (commit 90cc04f). | `safeStorage` via `keys.sam-gov` |
+
+### Renderer surface counts (refresh with `grep -cE`)
+
+| Pattern | Pre-migration | Post-migration (this commit) |
+|---|---|---|
+| `fetch('https://api.airtable.com/...` direct calls | 27 | **0** |
+| `'Bearer '+AT_PAT` header builds | 14+ | **0** |
+| `lcc_AT_PAT_OVERRIDE` localStorage write sites in renderer | 1 | **0** (1-time-migration read still present in `loadSettings()`, then `removeItem()`) |
+| `lcc_APOLLO_KEY` / `lcc_OPENAI_KEY` / `lcc_CLAUDE_KEY` writes | 1 each | unchanged (next migration step) |
+| `sdAirtableFetch(` call sites | 0 | **33** |
 
 Summary: **31 renderer-side Bearer-header builds, 4 distinct
 localStorage credential keys, 18 read/write sites.**

@@ -2327,7 +2327,7 @@ function addToDenylist(name){
 window.CLAUDE_KEY = window.CLAUDE_KEY || '';
 
 // ── SETTINGS ────────────────────────────────────────────────────
-function saveSettings(){
+async function saveSettings(){
   const keys = {
     CLAUDE_KEY: document.getElementById('s-claude')?.value?.trim()||'',
     OPENAI_KEY: document.getElementById('s-openai')?.value?.trim()||'',
@@ -2335,16 +2335,46 @@ function saveSettings(){
     AT_PAT_OVERRIDE: document.getElementById('s-atpat')?.value?.trim()||'',
     BOOK_WH_OVERRIDE: document.getElementById('s-bookwh')?.value?.trim()||'',
   };
-  Object.entries(keys).forEach(([k,v])=>{ if(v) localStorage.setItem('lcc_'+k,v); });
+  // Airtable PAT migrates to the safe credential adapter
+  // (window.sd.credentials). It NEVER lands in localStorage.
+  // Other keys remain on the legacy localStorage path until they
+  // migrate in subsequent commits.
+  if (keys.AT_PAT_OVERRIDE && window.sd && window.sd.credentials) {
+    try {
+      const r = await window.sd.credentials.set('airtable', keys.AT_PAT_OVERRIDE);
+      if (r && r.ok) {
+        AT_PAT = '<airtable_credential_present>';
+        // Clear the input so the raw key isn't visible after save.
+        const el = document.getElementById('s-atpat'); if (el) el.value = '';
+      }
+    } catch (_) {}
+  }
+  // Legacy keys (Claude, OpenAI, Apollo, BookWh) still use localStorage
+  // until their renderer migrations land. lcc_AT_PAT_OVERRIDE is
+  // intentionally NOT written here -- migrated to safe credentials.
+  Object.entries(keys).forEach(([k,v])=>{
+    if (v && k !== 'AT_PAT_OVERRIDE') localStorage.setItem('lcc_'+k,v);
+  });
   if(keys.CLAUDE_KEY) window.CLAUDE_KEY = keys.CLAUDE_KEY;
   if(keys.OPENAI_KEY) window.OPENAI_KEY = keys.OPENAI_KEY;
   if(keys.APOLLO_KEY) window.APOLLO_KEY = keys.APOLLO_KEY;
   const r = document.getElementById('settings-result');
-  if(r) r.innerHTML = '<span class="wh wh-ok">✓ Settings saved to sessionStorage</span>';
+  if(r) r.innerHTML = '<span class="wh wh-ok">✓ Settings saved</span>';
   toast('Settings saved','ok');
 }
 function loadSettings(){
-  ['CLAUDE_KEY','OPENAI_KEY','APOLLO_KEY','AT_PAT_OVERRIDE','BOOK_WH_OVERRIDE'].forEach(k=>{
+  // Airtable PAT presence comes from the credential adapter, not localStorage.
+  if (window.sd && window.sd.credentials) {
+    window.sd.credentials.status().then(s => {
+      if (s && s.present && s.present.airtable) {
+        AT_PAT = '<airtable_credential_present>';
+        const el = document.getElementById('s-atpat');
+        if (el && !el.value) el.placeholder = 'Airtable PAT saved (write-only)';
+      }
+    }).catch(()=>{});
+  }
+  // Legacy localStorage keys (until their migration lands).
+  ['CLAUDE_KEY','OPENAI_KEY','APOLLO_KEY','BOOK_WH_OVERRIDE'].forEach(k=>{
     const v = localStorage.getItem('lcc_'+k);
     if(v){
       if(k==='CLAUDE_KEY'){ window.CLAUDE_KEY=v; const el=document.getElementById('s-claude');if(el)el.value=v; }
@@ -2352,6 +2382,17 @@ function loadSettings(){
       if(k==='APOLLO_KEY'){ window.APOLLO_KEY=v; const el=document.getElementById('s-apollo');if(el)el.value=v; }
     }
   });
+  // One-time migration: if a legacy lcc_AT_PAT_OVERRIDE exists, copy to
+  // safeStorage and remove from localStorage so the raw key is gone.
+  const legacyAt = localStorage.getItem('lcc_AT_PAT_OVERRIDE');
+  if (legacyAt && window.sd && window.sd.credentials) {
+    window.sd.credentials.set('airtable', legacyAt).then(r => {
+      if (r && r.ok) {
+        localStorage.removeItem('lcc_AT_PAT_OVERRIDE');
+        AT_PAT = '<airtable_credential_present>';
+      }
+    }).catch(()=>{});
+  }
 }
 
 // ── CREATE LEAD → AIRTABLE ──────────────────────────────────────
@@ -2384,9 +2425,8 @@ async function createLeadAirtable(){
   fields['flduXC5gSMmGY8Byv'] = new Date().toISOString().split('T')[0];
 
   try{
-    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}`,{
+    const r = await sdAirtableFetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}`,{
       method:'POST',
-      headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},
       body: JSON.stringify({fields, typecast:true})
     });
     const d = await r.json();
@@ -3461,9 +3501,8 @@ async function softDeleteLeadWithTombstone(leadRecord, opts){
       };
       // Also stamp the fingerprint on the lead row if we have one
       if(fp) patchBody.fields['fldU74UtvdhcmpRlt'] = fp;
-      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}/${leadRecord.id}`,{
+      const r = await sdAirtableFetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}/${leadRecord.id}`,{
         method:'PATCH',
-        headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},
         body: JSON.stringify(patchBody)
       });
       if(r.ok){
@@ -3734,9 +3773,8 @@ async function pushSingleGeneratedLead(idx){
   fields['fld3LRKpzA0VrAubo'] = 'AI Generated';
   fields['flduXC5gSMmGY8Byv'] = new Date().toISOString().split('T')[0];
   try{
-    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}`,{
+    const r = await sdAirtableFetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}`,{
       method:'POST',
-      headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},
       body: JSON.stringify({fields, typecast:true})
     });
     const d = await r.json();
@@ -3990,7 +4028,174 @@ async function callAI(systemPrompt, userMessage, maxTokens){
 // Airtable — set PAT for live data mode
 const AT_BASE='appXXXXXXXXXXXXXXX';
 const AT_TABLE='tblXXXXXXXXXXXXXXX';
-const AT_PAT=''; // Set via Settings → Airtable PAT; never hardcode in source.
+// AT_PAT kept as legacy *presence flag*. The renderer no longer needs
+// the actual key value -- every Airtable fetch in this file routes
+// through window.sd.airtable.* (see sdAirtableFetch below) and the
+// real PAT lives in safeStorage on the main process side. We keep the
+// AT_PAT identifier so the existing `if (!AT_PAT)` guards scattered
+// through this file keep working without rewrites; the boot-time hook
+// below flips it to a placeholder string when a credential is present.
+let AT_PAT=''; // never holds the real PAT; flipped to a placeholder when present.
+
+// Boot-time presence sync. Reads the credential adapter (presence-only,
+// never the value) so legacy guards like `if (!AT_PAT) return null` reflect
+// the actual state of the safeStorage credential store.
+(async () => {
+  try {
+    if (!window.sd || !window.sd.credentials || typeof window.sd.credentials.status !== 'function') return;
+    const s = await window.sd.credentials.status();
+    if (s && s.present && s.present.airtable) {
+      AT_PAT = '<airtable_credential_present>'; // truthy presence marker only
+    }
+  } catch (_) { /* leave AT_PAT empty */ }
+})();
+
+// ── Renderer-safe Airtable adapter ─────────────────────────────────
+// Drop-in replacement for fetch() against api.airtable.com. Parses the
+// URL + method + body the legacy renderer was building, then dispatches
+// to the safe IPC at window.sd.airtable.* (created in commit b2765c8).
+//
+// Returns a fetch-Response-shaped object: { ok, status, json() }
+// so existing call sites that do `if(!r.ok)`, `await r.json()`, and
+// `d.records` keep working unchanged.
+//
+// The renderer never builds an Authorization header. The Airtable PAT
+// is read from safeStorage by the main process at IPC time and never
+// returned to the renderer.
+function _sdAirtableQueryFromUrl(u) {
+  const out = {};
+  const sortItems = {};
+  for (const [k, v] of u.searchParams.entries()) {
+    if (k === 'fields[]') {
+      out.fields = out.fields || []; out.fields.push(v);
+    } else if (/^sort\[(\d+)\]\[(field|direction)\]$/.test(k)) {
+      const m = k.match(/^sort\[(\d+)\]\[(field|direction)\]$/);
+      const idx = +m[1]; sortItems[idx] = sortItems[idx] || {};
+      sortItems[idx][m[2]] = v;
+    } else {
+      out[k] = v;
+    }
+  }
+  const sortIdxs = Object.keys(sortItems).map(Number).sort((a,b)=>a-b);
+  if (sortIdxs.length) out.sort = sortIdxs.map(i => sortItems[i]);
+  return out;
+}
+
+function _sdAirtableFakeResponse(payload, status) {
+  const ok = status >= 200 && status < 300;
+  return {
+    ok,
+    status,
+    _safeAdapter: true,
+    json: async () => payload,
+    text: async () => JSON.stringify(payload || {})
+  };
+}
+
+async function sdAirtableFetch(url, opts) {
+  opts = opts || {};
+  if (!window.sd || !window.sd.airtable) {
+    return _sdAirtableFakeResponse({ error: { type: 'safe_airtable_unavailable',
+      message: 'window.sd.airtable not available -- run inside the Electron shell.' } }, 0);
+  }
+  let parsed;
+  try { parsed = new URL(url); } catch (_) {
+    return _sdAirtableFakeResponse({ error: { type: 'invalid_url', message: String(url) } }, 0);
+  }
+  if (parsed.host !== 'api.airtable.com') {
+    return _sdAirtableFakeResponse({ error: { type: 'wrong_host', message: parsed.host } }, 0);
+  }
+  // /v0/{baseId}/{tableRef}[/{recordId}]
+  const segs = parsed.pathname.split('/').filter(Boolean);
+  if (segs.length < 3 || segs[0] !== 'v0') {
+    return _sdAirtableFakeResponse({ error: { type: 'invalid_path', message: parsed.pathname } }, 0);
+  }
+  const baseId   = segs[1];
+  const tableRef = decodeURIComponent(segs[2]);
+  const recordId = segs[3] ? decodeURIComponent(segs[3]) : null;
+  const method   = (opts.method || 'GET').toUpperCase();
+
+  // Body parsing for create/update.
+  let body = null;
+  if (opts.body) {
+    try { body = typeof opts.body === 'string' ? JSON.parse(opts.body) : opts.body; }
+    catch (_) { body = null; }
+  }
+
+  let r;
+  try {
+    if (method === 'GET') {
+      const query = _sdAirtableQueryFromUrl(parsed);
+      r = await window.sd.airtable.listRecords({ baseId, tableRef, query });
+    } else if (method === 'POST') {
+      // Two shapes: {records:[{fields}], typecast} or {fields, typecast}
+      let fields, typecast;
+      if (body && Array.isArray(body.records) && body.records[0]) {
+        fields   = body.records[0].fields || {};
+        typecast = !!body.typecast;
+      } else if (body && body.fields) {
+        fields   = body.fields;
+        typecast = !!body.typecast;
+      } else {
+        fields   = body || {};
+        typecast = false;
+      }
+      r = await window.sd.airtable.createRecord({ baseId, tableRef, fields, typecast });
+    } else if (method === 'PATCH' || method === 'PUT') {
+      if (!recordId) {
+        return _sdAirtableFakeResponse({ error: { type: 'patch_without_recordId' } }, 0);
+      }
+      const fields   = (body && body.fields) || {};
+      const typecast = !!(body && body.typecast);
+      r = await window.sd.airtable.updateRecord({ baseId, tableRef, recordId, fields, typecast });
+    } else if (method === 'DELETE') {
+      if (!recordId) {
+        return _sdAirtableFakeResponse({ error: { type: 'delete_without_recordId' } }, 0);
+      }
+      r = await window.sd.airtable.deleteRecord({ baseId, tableRef, recordId });
+    } else {
+      return _sdAirtableFakeResponse({ error: { type: 'method_not_supported', message: method } }, 0);
+    }
+  } catch (e) {
+    return _sdAirtableFakeResponse({ error: { type: 'ipc_threw', message: e && e.message } }, 0);
+  }
+
+  if (r && r.ok) {
+    // For create with the {records:[{fields}]} shape, Airtable returns
+    // { records: [...] }. Our service returns the upstream body verbatim.
+    return _sdAirtableFakeResponse(r.body || {}, r.status || 200);
+  }
+  // Translate adapter error codes into a body that legacy code that
+  // does `await r.json()` then `d.error.message` will tolerate.
+  const errCode = (r && r.error) || 'unknown';
+  const detail  = (r && r.detail) || null;
+  return _sdAirtableFakeResponse({
+    error: {
+      type: errCode,
+      message: typeof detail === 'string' ? detail : (detail && detail.message) || errCode
+    }
+  }, errCode === 'no_credential' ? 0 : 502);
+}
+
+// Convenience wrappers for new code that prefers a typed call.
+async function sdAirtableList(table, query)        { return sdAirtableFetch(`https://api.airtable.com/v0/${AT_BASE}/${table}` + _sdQs(query)); }
+async function sdAirtableCreate(table, fields, opts) { return sdAirtableFetch(`https://api.airtable.com/v0/${AT_BASE}/${table}`, { method:'POST', body: JSON.stringify({ records:[{ fields }], typecast: !!(opts && opts.typecast) }) }); }
+async function sdAirtableUpdate(table, id, fields, opts) { return sdAirtableFetch(`https://api.airtable.com/v0/${AT_BASE}/${table}/${id}`, { method:'PATCH', body: JSON.stringify({ fields, typecast: !!(opts && opts.typecast) }) }); }
+async function sdAirtableDelete(table, id)         { return sdAirtableFetch(`https://api.airtable.com/v0/${AT_BASE}/${table}/${id}`, { method:'DELETE' }); }
+function _sdQs(q) {
+  if (!q || typeof q !== 'object') return '';
+  const u = new URLSearchParams();
+  for (const [k, v] of Object.entries(q)) {
+    if (Array.isArray(v) && k === 'fields') { v.forEach(x => u.append('fields[]', x)); }
+    else if (k === 'sort' && Array.isArray(v)) {
+      v.forEach((s, i) => { if (s.field) u.set(`sort[${i}][field]`, s.field); if (s.direction) u.set(`sort[${i}][direction]`, s.direction); });
+    } else if (v !== undefined && v !== null) {
+      u.set(k, String(v));
+    }
+  }
+  const s = u.toString();
+  return s ? '?' + s : '';
+}
 
 let currentMode='image',lastVisualPrompt='',lastVideoPrompt='';
 let actLog=[],checkState={};
@@ -4026,7 +4231,7 @@ async function loadAirtableLeads(){
   if(!AT_PAT)return; // Use mock if no PAT
   try{
     const fields=['Business Name','Status','Priority','Email','Contact Name','Location','Recommended Services','Priority Rationale','LinkedIn','Phone / WhatsApp','Deal Value','Close Probability','Current Stage','Next Action','Days in Stage','Follow-Up Required','Overdue Flag','Reply Intent','AI Next Move','Fit Score','Urgency Score','Revenue Score','Lead Source','Assigned Offer'].map(f=>'fields[]='+encodeURIComponent(f)).join('&');
-    const r=await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?maxRecords=100&filterByFormula=NOT({Status}='')&${fields}`,{headers:{'Authorization':'Bearer '+AT_PAT}});
+    const r=await sdAirtableFetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}?maxRecords=100&filterByFormula=NOT({Status}='')&${fields}`,{});
     if(!r.ok)return;
     const d=await r.json();
     if(d.records&&d.records.length>0){
@@ -4263,7 +4468,7 @@ async function lookupLeadFingerprint(fp){
   try{
     const url = `https://api.airtable.com/v0/${AT_BASE}/${FP_TABLE_ID}?filterByFormula=`+
       encodeURIComponent(`{Fingerprint}='${fp.replace(/'/g,"\\'")}'`)+'&maxRecords=1';
-    const r = await fetch(url, { headers: { 'Authorization': 'Bearer '+AT_PAT } });
+    const r = await sdAirtableFetch(url, {});
     if(!r.ok) return null;
     const d = await r.json();
     if(!d.records || d.records.length === 0) return null;
@@ -4297,9 +4502,8 @@ async function writeLeadFingerprint({fp, business, domain, email, status, source
       }
       if(reason) upd.fields[FP_FIELDS.reason] = reason;
       if(sourceRecordId) upd.fields[FP_FIELDS.source_rec] = sourceRecordId;
-      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${FP_TABLE_ID}/${existing.recordId}`,{
+      const r = await sdAirtableFetch(`https://api.airtable.com/v0/${AT_BASE}/${FP_TABLE_ID}/${existing.recordId}`,{
         method:'PATCH',
-        headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},
         body: JSON.stringify({...upd, typecast:true})
       });
       return r.ok ? {action:'updated', recordId:existing.recordId} : null;
@@ -4315,9 +4519,8 @@ async function writeLeadFingerprint({fp, business, domain, email, status, source
       fields[FP_FIELDS.first_seen] = ts;
       fields[FP_FIELDS.last_seen] = ts;
       if(reason) fields[FP_FIELDS.reason] = reason;
-      const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${FP_TABLE_ID}`,{
+      const r = await sdAirtableFetch(`https://api.airtable.com/v0/${AT_BASE}/${FP_TABLE_ID}`,{
         method:'POST',
-        headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},
         body: JSON.stringify({fields, typecast:true})
       });
       const d = await r.json();
@@ -4632,9 +4835,8 @@ async function validateGeneratedLeadsMX(leads){
 async function quarantineLeadById(recordId, reason){
   if(!recordId || !recordId.startsWith('rec') || typeof AT_PAT === 'undefined') return false;
   try{
-    const r = await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}/${recordId}`,{
+    const r = await sdAirtableFetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}/${recordId}`,{
       method:'PATCH',
-      headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},
       body: JSON.stringify({fields:{
         'fldrpWjehF3U0VAP3':'Unverified Generated Lead',  // Status
         'fld7qSL7jojUPHc09':'QUARANTINED — '+(reason||'failed validation') // Next Action
@@ -5366,21 +5568,21 @@ async function lgPushOne(l){
   try{
     // Check for existing record with same Business Name (upsert)
     const searchUrl='https://api.airtable.com/v0/'+AT_BASE+'/'+AT_TABLE+'?filterByFormula='+encodeURIComponent('{Business Name}="'+bizName.replace(/"/g,'\\"')+'"')+'&maxRecords=1';
-    const sr=await fetch(searchUrl,{headers:{'Authorization':'Bearer '+AT_PAT}});
+    const sr=await sdAirtableFetch(searchUrl,{});
     const sd=await sr.json();
     let r,d;
     if(sr.ok&&sd.records&&sd.records.length>0){
       // Update existing record
       const existingId=sd.records[0].id;
-      r=await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+AT_TABLE+'/'+existingId,{
-        method:'PATCH',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},
+      r=await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+AT_TABLE+'/'+existingId,{
+        method:'PATCH',
         body:JSON.stringify({fields,typecast:true})
       });
       d=await r.json();
     }else{
       // Create new record
-      r=await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+AT_TABLE,{
-        method:'POST',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},
+      r=await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+AT_TABLE,{
+        method:'POST',
         body:JSON.stringify({fields,typecast:true})
       });
       d=await r.json();
@@ -5538,7 +5740,7 @@ async function renderCmd(){
   let leads=[], sdEvents=[];
   try {
     if (typeof AT_PAT!=='undefined' && AT_PAT) {
-      const r = await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+AT_TABLE+'?fields%5B%5D=Status&fields%5B%5D=Lead+Source&fields%5B%5D=Next+Action&pageSize=100',{headers:{Authorization:'Bearer '+AT_PAT}});
+      const r = await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+AT_TABLE+'?fields%5B%5D=Status&fields%5B%5D=Lead+Source&fields%5B%5D=Next+Action&pageSize=100',{});
       if (r.ok){ const d=await r.json(); leads=d.records||[]; }
     }
   } catch(_){}
@@ -5656,7 +5858,7 @@ async function fetchEmailEvents(){
   try{
     // Read from Email Events ledger (Airtable — CORS-friendly)
     const url='https://api.airtable.com/v0/'+AT_BASE+'/'+AT_EVENTS_TBL+'?pageSize=100&sort%5B0%5D%5Bfield%5D=Sent+At&sort%5B0%5D%5Bdirection%5D=desc';
-    const r=await fetch(url,{headers:{'Authorization':'Bearer '+AT_PAT}});
+    const r=await sdAirtableFetch(url,{});
     if(!r.ok){
       _emailTrackerState.status='error';
       _emailTrackerState.error='Airtable Email Events ledger fetch failed: HTTP '+r.status;
@@ -5882,7 +6084,7 @@ async function saveRAtoAirtable(){
   // Real Airtable field IDs for writeback
   const payload={"fields":{"fldelKLBkrb1Q3ISH":intent||"Unknown","fldzJEYHA82VvZUU5":raCache.summary||"","fldaef4c2eRiXpZAU":raCache.response||"","fldurpHZZZwJFQw3w":raCache.next||"","fldVyalIDUuqmbcj2":true,"fldZ7fYLvNYj8uAUY":new Date().toISOString().split('T')[0]}};
   try{
-    const r=await fetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}/${rid}`,{method:'PATCH',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},body:JSON.stringify(payload)});
+    const r=await sdAirtableFetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}/${rid}`,{method:'PATCH',body:JSON.stringify(payload)});
     if(st)st.innerHTML=r.ok?'<span class="wh wh-ok">✓ Saved to Airtable</span>':'<span class="wh wh-err">✗ Error '+r.status+'</span>';
     toast(r.ok?'Airtable updated: '+rid:'Error saving to Airtable',r.ok?'ok':'err');
   }catch(e){if(st)st.innerHTML='<span class="wh wh-err">✗ Network error</span>';}
@@ -6826,7 +7028,7 @@ window.isSolicitationOpportunity = isSolicitationOpportunity;
 async function fetchGovconFromAirtable(){
   if(!AT_PAT)return;
   try{
-    const r=await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+GC_TBL+'?maxRecords=500&sort%5B0%5D%5Bfield%5D=Overall+Score&sort%5B0%5D%5Bdirection%5D=desc',{headers:{'Authorization':'Bearer '+AT_PAT}});
+    const r=await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+GC_TBL+'?maxRecords=500&sort%5B0%5D%5Bfield%5D=Overall+Score&sort%5B0%5D%5Bdirection%5D=desc',{});
     if(!r.ok)throw new Error('HTTP '+r.status);
     const d=await r.json();
     gcOpps=d.records.map(rec=>{const f=rec.fields||{};return{id:rec.id,...f};});
@@ -6909,8 +7111,8 @@ function renderGovcon(){
 
 async function archiveGovcon(recId){
   try{
-    await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+GC_TBL+'/'+recId,{
-      method:'PATCH',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},
+    await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+GC_TBL+'/'+recId,{
+      method:'PATCH',
       body:JSON.stringify({fields:{'Category':'Archived'},typecast:true})
     });
     const opp=gcOpps.find(o=>o.id===recId);
@@ -6942,8 +7144,8 @@ async function analyzeGovcon(recId){
   try{
     const result=await callAI('You are a federal procurement strategist.',prompt,4000);
     // Save analysis to Airtable
-    await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+GC_TBL+'/'+recId,{
-      method:'PATCH',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},
+    await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+GC_TBL+'/'+recId,{
+      method:'PATCH',
       body:JSON.stringify({fields:{'Full Analysis':result.text,'Category':'Analyzed','Analyzed Flag':true},typecast:true})
     });
     opp['Full Analysis']=result.text;
@@ -7081,11 +7283,12 @@ function _renderSAMTable(data,container){
 function _pushOppToAirtable(opp){
   const btn=event&&event.target;
   if(btn){btn.textContent='⏳';btn.disabled=true;}
-  const token=window.AT_PAT||localStorage.getItem('lcc_AT_PAT_OVERRIDE')||'';
-  if(!token){toast('Airtable token not set — check Settings','err');if(btn){btn.textContent='💾 Save';btn.disabled=false;}return;}
-  fetch('https://api.airtable.com/v0/appXXXXXXXXXXXXXXX/tblWWWWWWWWWWWWWWW',{
+  // Presence check now reads from the credential adapter (set by the
+  // boot-time hook). lcc_AT_PAT_OVERRIDE is no longer consulted -- the
+  // renderer never sees PAT values.
+  if(!AT_PAT){toast('Airtable key not configured — open Settings to set it','err');if(btn){btn.textContent='💾 Save';btn.disabled=false;}return;}
+  sdAirtableFetch('https://api.airtable.com/v0/appXXXXXXXXXXXXXXX/tblWWWWWWWWWWWWWWW',{
     method:'POST',
-    headers:{'Authorization':'Bearer '+token,'Content-Type':'application/json'},
     body:JSON.stringify({records:[{fields:{
       'Title':opp.title||'','Notice ID':opp.noticeId||'','NAICS':opp.naicsCode||'',
       'Agency':opp.agency||'',
@@ -7144,7 +7347,7 @@ async function fetchDeliveryFromAirtable(){
   if(!AT_PAT)return;
   try{
     const flds=Object.values(DEL_F).map(f=>'fields%5B%5D='+f).join('&');
-    const r=await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_TBL+'?'+flds,{headers:{'Authorization':'Bearer '+AT_PAT}});
+    const r=await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_TBL+'?'+flds,{});
     if(!r.ok)throw new Error('HTTP '+r.status);
     const d=await r.json();
     deliveryClients=d.records.map(rec=>{
@@ -7153,7 +7356,7 @@ async function fetchDeliveryFromAirtable(){
       return {id:rec.id,client:g('Client Name'),stage:g('Stage')||'Diagnose',health:g('Health')||'On Track',owner:g('Owner'),contact:g('Contact Name'),email:g('Contact Email'),lastUpdate:g('Last Update'),riskLevel:g('Risk Level')||'Low',notes:g('Notes'),findings:Array.isArray(f['Findings'])?f['Findings']:[]};
     });
     // Fetch history
-    const hr=await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_HIST_TBL+'?sort%5B0%5D%5Bfield%5D='+HIST_F.date+'&sort%5B0%5D%5Bdirection%5D=desc&maxRecords=30',{headers:{'Authorization':'Bearer '+AT_PAT}});
+    const hr=await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_HIST_TBL+'?sort%5B0%5D%5Bfield%5D='+HIST_F.date+'&sort%5B0%5D%5Bdirection%5D=desc&maxRecords=30',{});
     if(hr.ok){
       const hd=await hr.json();
       deliveryHistory=hd.records.map(rec=>{
@@ -7237,8 +7440,8 @@ async function advanceStage(clientId){
   const to=DELIVERY_STAGES[idx+1];
   // Write to Airtable
   try{
-    await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_TBL+'/'+clientId,{method:'PATCH',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},body:JSON.stringify({fields:{[DEL_F.stage]:to,[DEL_F.lastUpdate]:new Date().toISOString().split('T')[0]}})});
-    await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_HIST_TBL,{method:'POST',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},body:JSON.stringify({fields:{[HIST_F.trans]:c.client+' → '+to,[HIST_F.from]:from,[HIST_F.to]:to,[HIST_F.date]:new Date().toISOString(),[HIST_F.by]:'Operator',[HIST_F.client]:[clientId]},typecast:true})});
+    await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_TBL+'/'+clientId,{method:'PATCH',body:JSON.stringify({fields:{[DEL_F.stage]:to,[DEL_F.lastUpdate]:new Date().toISOString().split('T')[0]}})});
+    await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_HIST_TBL,{method:'POST',body:JSON.stringify({fields:{[HIST_F.trans]:c.client+' → '+to,[HIST_F.from]:from,[HIST_F.to]:to,[HIST_F.date]:new Date().toISOString(),[HIST_F.by]:'Operator',[HIST_F.client]:[clientId]},typecast:true})});
     c.stage=to;
     c.lastUpdate=new Date().toISOString().split('T')[0];
     deliveryHistory.unshift({client:c.client+' → '+to,from,to,date:new Date().toISOString(),by:'Operator'});
@@ -7252,21 +7455,21 @@ async function newDiagnostic(){
   const name=prompt('Client name for new diagnostic:');
   if(!name||!name.trim())return;
   try{
-    const r=await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_TBL,{method:'POST',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},body:JSON.stringify({fields:{[DEL_F.name]:name.trim(),[DEL_F.stage]:'Diagnose',[DEL_F.health]:'On Track',[DEL_F.owner]:((typeof ARCG_OS!=='undefined'&&ARCG_OS.brand&&ARCG_OS.brand.senderName)||''),[DEL_F.lastUpdate]:new Date().toISOString().split('T')[0],[DEL_F.risk]:'Low'},typecast:true})});
+    const r=await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_TBL,{method:'POST',body:JSON.stringify({fields:{[DEL_F.name]:name.trim(),[DEL_F.stage]:'Diagnose',[DEL_F.health]:'On Track',[DEL_F.owner]:((typeof ARCG_OS!=='undefined'&&ARCG_OS.brand&&ARCG_OS.brand.senderName)||''),[DEL_F.lastUpdate]:new Date().toISOString().split('T')[0],[DEL_F.risk]:'Low'},typecast:true})});
     const d=await r.json();
     if(!r.ok)throw new Error(d.error?.message||'Create failed');
     const newId=d.id;
     // Create stage history entry
-    await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_HIST_TBL,{method:'POST',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},body:JSON.stringify({fields:{[HIST_F.trans]:name.trim()+' → Diagnose',[HIST_F.from]:'—',[HIST_F.to]:'Diagnose',[HIST_F.date]:new Date().toISOString(),[HIST_F.by]:'Operator',[HIST_F.client]:[newId]},typecast:true})});
+    await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_HIST_TBL,{method:'POST',body:JSON.stringify({fields:{[HIST_F.trans]:name.trim()+' → Diagnose',[HIST_F.from]:'—',[HIST_F.to]:'Diagnose',[HIST_F.date]:new Date().toISOString(),[HIST_F.by]:'Operator',[HIST_F.client]:[newId]},typecast:true})});
     // Create initial task pack
     const tasks=['Run initial diagnostic assessment','Document client systems inventory','Score operational maturity'];
     for(const t of tasks){
-      await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_TASK_TBL,{method:'POST',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},body:JSON.stringify({fields:{'fldCZykh2Vy6DbYgq':t,'fld8AvWDs2IkSSgWm':'Diagnose','fldPVCrf5YxgYgl7D':'Pending','fldP75nDNp4jHhh9X':((typeof ARCG_OS!=='undefined'&&ARCG_OS.brand&&ARCG_OS.brand.senderName)||''),'flduuCkwLXg1qzVVN':[newId]},typecast:true})});
+      await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_TASK_TBL,{method:'POST',body:JSON.stringify({fields:{'fldCZykh2Vy6DbYgq':t,'fld8AvWDs2IkSSgWm':'Diagnose','fldPVCrf5YxgYgl7D':'Pending','fldP75nDNp4jHhh9X':((typeof ARCG_OS!=='undefined'&&ARCG_OS.brand&&ARCG_OS.brand.senderName)||''),'flduuCkwLXg1qzVVN':[newId]},typecast:true})});
     }
     // Create findings shell
-    await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_FIND_TBL,{method:'POST',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},body:JSON.stringify({fields:{'fld6dipykn7zmZ3R9':'Initial assessment pending','fldMFnoSbY4j7nIcr':'Medium','fldKc3xvpBDrBRNIW':'Open','fldbS1SNIx59jpGoP':'Awaiting diagnostic completion','fldqF7wmFYvqz4oBm':[newId]},typecast:true})});
+    await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_FIND_TBL,{method:'POST',body:JSON.stringify({fields:{'fld6dipykn7zmZ3R9':'Initial assessment pending','fldMFnoSbY4j7nIcr':'Medium','fldKc3xvpBDrBRNIW':'Open','fldbS1SNIx59jpGoP':'Awaiting diagnostic completion','fldqF7wmFYvqz4oBm':[newId]},typecast:true})});
     // Create blueprint shell
-    await fetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_BP_TBL,{method:'POST',headers:{'Authorization':'Bearer '+AT_PAT,'Content-Type':'application/json'},body:JSON.stringify({fields:{'fldVTpmgKGCI9XAsV':name.trim()+' Blueprint v1','fldwWqgFzgLMJh44v':'Draft','fld2tAzQOaHpm7HBo':'Pending diagnostic findings','fldOa8OOFUo72NjTM':new Date().toISOString().split('T')[0],'fldEPkDIpnGngvMFZ':[newId]},typecast:true})});
+    await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+DEL_BP_TBL,{method:'POST',body:JSON.stringify({fields:{'fldVTpmgKGCI9XAsV':name.trim()+' Blueprint v1','fldwWqgFzgLMJh44v':'Draft','fld2tAzQOaHpm7HBo':'Pending diagnostic findings','fldOa8OOFUo72NjTM':new Date().toISOString().split('T')[0],'fldEPkDIpnGngvMFZ':[newId]},typecast:true})});
     await fetchDeliveryFromAirtable();
     renderDelivery();
     toast('Diagnostic created for '+name.trim()+' ('+newId+') — saved to Airtable with tasks, findings shell, blueprint shell','ok');
