@@ -46,6 +46,10 @@ const compliance      = require('../services/compliance');
 const stakeholders    = require('../services/stakeholders');
 const capture         = require('../services/capture');
 const proposal        = require('../services/proposal');
+const airtable        = require('../services/airtable');
+const apollo          = require('../services/apollo');
+const openaiProvider  = require('../services/ai/providers/openai');
+const anthropicProvider = require('../services/ai/providers/anthropic');
 
 function createAppApi(opts) {
   opts = opts || {};
@@ -69,6 +73,10 @@ function createAppApi(opts) {
     getApiKey: async () => credentials.get('sam-gov'),
     now
   });
+  const airtableSvc     = airtable.createAirtableService({ credentials, fetchFn, audit });
+  const apolloSvc       = apollo.createApolloService({ credentials, fetchFn, audit });
+  const openaiSvc       = openaiProvider.createOpenaiProvider({ credentials, fetchFn, audit });
+  const anthropicSvc    = anthropicProvider.createAnthropicProvider({ credentials, fetchFn, audit });
 
   return Object.freeze({
     audit: {
@@ -112,6 +120,63 @@ function createAppApi(opts) {
       },
       proposal: {
         draftSections: (input) => Promise.resolve(proposal.draftSections(input || {}))
+      }
+    },
+
+    // External-API surfaces. Renderer/web client never holds the
+    // credential; the adapter pulls it from the credentials store.
+    airtable: {
+      listRecords:  (i) => airtableSvc.listRecords(i  || {}),
+      createRecord: (i) => airtableSvc.createRecord(i || {}),
+      updateRecord: (i) => airtableSvc.updateRecord(i || {}),
+      deleteRecord: (i) => airtableSvc.deleteRecord(i || {})
+    },
+    enrichment: {
+      enrichOrganization:  (i) => apolloSvc.enrichOrganization(i  || {}),
+      searchPeople:        (i) => apolloSvc.searchPeople(i        || {}),
+      searchOrganizations: (i) => apolloSvc.searchOrganizations(i || {}),
+      safetyNote: apolloSvc.SAFETY_NOTE
+    },
+    ai: {
+      // Generic generate. Caller picks provider; defaults to openai
+      // when an OpenAI key is present, else anthropic, else error.
+      async generate(input) {
+        input = input || {};
+        const requested = (input.provider || '').toLowerCase();
+        const tryOrder = requested
+          ? [requested]
+          : ['openai', 'anthropic'];
+        let lastErr = null;
+        for (const p of tryOrder) {
+          const svc = p === 'openai' ? openaiSvc
+                    : p === 'anthropic' ? anthropicSvc
+                    : null;
+          if (!svc) continue;
+          const r = await svc.generate(input);
+          if (r.ok) return r;
+          lastErr = r;
+          if (r.error !== 'no_credential') break; // real failure -> stop
+        }
+        return lastErr || { ok: false, error: 'no_provider_configured' };
+      },
+      async draftProposalSection(input) {
+        input = input || {};
+        const sys = 'You are SourceDeck, a GovCon proposal-drafting assistant. '
+                  + 'Return a concise, source-backed draft section. '
+                  + 'Always end with: "AI draft. Human review required."';
+        const user = `Section: ${String(input.section || 'Technical Approach')}\n\n`
+                   + `Opportunity context: ${JSON.stringify(input.opportunity || {}).slice(0, 4000)}\n\n`
+                   + (input.guidance ? 'Guidance: ' + String(input.guidance).slice(0, 2000) + '\n\n' : '')
+                   + 'Draft the section now.';
+        return this.generate({ ...input, systemPrompt: sys, userMessage: user, surface: 'proposal_draft' });
+      },
+      async summarizeOpportunity(input) {
+        input = input || {};
+        const sys = 'You are SourceDeck. Summarize the opportunity in 5 lines: scope, '
+                  + 'evaluation factors, set-aside, deadline, decision notes. '
+                  + 'Always end with: "AI draft. Human review required."';
+        const user = JSON.stringify(input.opportunity || {}).slice(0, 6000);
+        return this.generate({ ...input, systemPrompt: sys, userMessage: user, surface: 'opportunity_summary' });
       }
     }
   });

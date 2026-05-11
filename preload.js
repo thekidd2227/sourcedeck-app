@@ -42,6 +42,38 @@ contextBridge.exposeInMainWorld('sd', {
     stakeholders:        (payload)  => ipcRenderer.invoke('govcon:stakeholders-for-opp', payload)
   },
 
+  // ── Credential management (presence-only — never returns secrets) ─
+  // status() returns { adapter, encryptionAvailable, knownServices,
+  //                    present:{ <service>: bool } }
+  // set/remove return { ok:true|false, error? }
+  credentials: {
+    status: ()           => ipcRenderer.invoke('credentials:status'),
+    set:    (service, value) => ipcRenderer.invoke('credentials:set',    { service, value }),
+    remove: (service)        => ipcRenderer.invoke('credentials:remove', { service })
+  },
+
+  // ── Airtable (Authorization header is built outside renderer) ─────
+  airtable: {
+    listRecords:  (input) => ipcRenderer.invoke('airtable:list',   input),
+    createRecord: (input) => ipcRenderer.invoke('airtable:create', input),
+    updateRecord: (input) => ipcRenderer.invoke('airtable:update', input),
+    deleteRecord: (input) => ipcRenderer.invoke('airtable:delete', input)
+  },
+
+  // ── Contact enrichment (Apollo today; FAR-aware safety-noted) ─────
+  enrichment: {
+    enrichOrganization:  (input) => ipcRenderer.invoke('enrichment:enrich-org',    input),
+    searchPeople:        (input) => ipcRenderer.invoke('enrichment:search-people', input),
+    searchOrganizations: (input) => ipcRenderer.invoke('enrichment:search-orgs',   input)
+  },
+
+  // ── AI generation (OpenAI / Anthropic / watsonx via main process) ─
+  ai: {
+    generate:              (input) => ipcRenderer.invoke('ai:generate',                 input),
+    draftProposalSection:  (input) => ipcRenderer.invoke('ai:draft-proposal-section',   input),
+    summarizeOpportunity:  (input) => ipcRenderer.invoke('ai:summarize-opportunity',    input)
+  },
+
   version: '1.1.0',
   onUpdateReady: (callback) => ipcRenderer.on('update-ready', callback)
 });
