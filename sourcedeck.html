@@ -2337,8 +2337,6 @@ async function saveSettings(){
   };
   // Airtable PAT migrates to the safe credential adapter
   // (window.sd.credentials). It NEVER lands in localStorage.
-  // Other keys remain on the legacy localStorage path until they
-  // migrate in subsequent commits.
   if (keys.AT_PAT_OVERRIDE && window.sd && window.sd.credentials) {
     try {
       const r = await window.sd.credentials.set('airtable', keys.AT_PAT_OVERRIDE);
@@ -2349,21 +2347,34 @@ async function saveSettings(){
       }
     } catch (_) {}
   }
-  // Legacy keys (Claude, OpenAI, Apollo, BookWh) still use localStorage
-  // until their renderer migrations land. lcc_AT_PAT_OVERRIDE is
-  // intentionally NOT written here -- migrated to safe credentials.
+  // Apollo API key migrates to the safe credential adapter. Renderer
+  // no longer writes lcc_APOLLO_KEY to localStorage and no longer
+  // populates window.APOLLO_KEY with the raw value.
+  if (keys.APOLLO_KEY && window.sd && window.sd.credentials) {
+    try {
+      const r = await window.sd.credentials.set('apollo', keys.APOLLO_KEY);
+      if (r && r.ok) {
+        APOLLO_KEY = '<apollo_credential_present>';
+        const el = document.getElementById('s-apollo'); if (el) el.value = '';
+      }
+    } catch (_) {}
+  }
+  // Remaining keys (Claude, OpenAI, BookWh) still use localStorage
+  // until their renderer migrations land. AT_PAT_OVERRIDE and
+  // APOLLO_KEY are intentionally NOT written here -- both migrated
+  // to safe credentials.
   Object.entries(keys).forEach(([k,v])=>{
-    if (v && k !== 'AT_PAT_OVERRIDE') localStorage.setItem('lcc_'+k,v);
+    if (v && k !== 'AT_PAT_OVERRIDE' && k !== 'APOLLO_KEY') localStorage.setItem('lcc_'+k,v);
   });
   if(keys.CLAUDE_KEY) window.CLAUDE_KEY = keys.CLAUDE_KEY;
   if(keys.OPENAI_KEY) window.OPENAI_KEY = keys.OPENAI_KEY;
-  if(keys.APOLLO_KEY) window.APOLLO_KEY = keys.APOLLO_KEY;
   const r = document.getElementById('settings-result');
   if(r) r.innerHTML = '<span class="wh wh-ok">✓ Settings saved</span>';
   toast('Settings saved','ok');
 }
 function loadSettings(){
-  // Airtable PAT presence comes from the credential adapter, not localStorage.
+  // Airtable PAT + Apollo key presence come from the credential
+  // adapter, not localStorage.
   if (window.sd && window.sd.credentials) {
     window.sd.credentials.status().then(s => {
       if (s && s.present && s.present.airtable) {
@@ -2371,25 +2382,41 @@ function loadSettings(){
         const el = document.getElementById('s-atpat');
         if (el && !el.value) el.placeholder = 'Airtable PAT saved (write-only)';
       }
+      if (s && s.present && s.present.apollo) {
+        APOLLO_KEY = '<apollo_credential_present>';
+        const el = document.getElementById('s-apollo');
+        if (el && !el.value) el.placeholder = 'Apollo API key saved (write-only)';
+      }
     }).catch(()=>{});
   }
-  // Legacy localStorage keys (until their migration lands).
-  ['CLAUDE_KEY','OPENAI_KEY','APOLLO_KEY','BOOK_WH_OVERRIDE'].forEach(k=>{
+  // Remaining legacy localStorage keys (until their migration lands).
+  // APOLLO_KEY is intentionally NOT read from localStorage -- migrated
+  // to safe credentials above.
+  ['CLAUDE_KEY','OPENAI_KEY','BOOK_WH_OVERRIDE'].forEach(k=>{
     const v = localStorage.getItem('lcc_'+k);
     if(v){
       if(k==='CLAUDE_KEY'){ window.CLAUDE_KEY=v; const el=document.getElementById('s-claude');if(el)el.value=v; }
       if(k==='OPENAI_KEY'){ window.OPENAI_KEY=v; const el=document.getElementById('s-openai');if(el)el.value=v; }
-      if(k==='APOLLO_KEY'){ window.APOLLO_KEY=v; const el=document.getElementById('s-apollo');if(el)el.value=v; }
     }
   });
-  // One-time migration: if a legacy lcc_AT_PAT_OVERRIDE exists, copy to
-  // safeStorage and remove from localStorage so the raw key is gone.
+  // One-time migrations: copy legacy lcc_* credential values into
+  // safeStorage and then remove the localStorage entry so the raw
+  // value is gone. Idempotent -- if the lcc_* key isn't there, no-op.
   const legacyAt = localStorage.getItem('lcc_AT_PAT_OVERRIDE');
   if (legacyAt && window.sd && window.sd.credentials) {
     window.sd.credentials.set('airtable', legacyAt).then(r => {
       if (r && r.ok) {
         localStorage.removeItem('lcc_AT_PAT_OVERRIDE');
         AT_PAT = '<airtable_credential_present>';
+      }
+    }).catch(()=>{});
+  }
+  const legacyApollo = localStorage.getItem('lcc_APOLLO_KEY');
+  if (legacyApollo && window.sd && window.sd.credentials) {
+    window.sd.credentials.set('apollo', legacyApollo).then(r => {
+      if (r && r.ok) {
+        localStorage.removeItem('lcc_APOLLO_KEY');
+        APOLLO_KEY = '<apollo_credential_present>';
       }
     }).catch(()=>{});
   }
@@ -2473,38 +2500,43 @@ let selectedLeadIdxs = new Set();
 // People/contact search requires paid plan — so OpenAI enriches contacts
 // on Apollo-verified companies (no identity invention by the LLM).
 // ════════════════════════════════════════════════════════════════════════
-async function apolloFetch(endpoint, body){
-  const key = window.APOLLO_KEY || localStorage.getItem('lcc_APOLLO_KEY') || '';
-  if(!key) return { ok:false, error:'No Apollo API key — set it in Settings tab' };
-  try {
-    const r = await fetch('https://api.apollo.io/api/v1/' + endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type':'application/json', 'x-api-key': key },
-      body: JSON.stringify(body)
-    });
-    if(!r.ok){
-      const d = await r.json().catch(()=>({}));
-      return { ok:false, error: d.error || ('Apollo HTTP ' + r.status), status: r.status };
-    }
-    return { ok:true, data: await r.json() };
-  } catch(e){ return { ok:false, error: 'Network error: ' + e.message }; }
-}
-
+// Renderer-safe Apollo adapter. The Apollo API key never lives in
+// renderer code -- the safe IPC at window.sd.enrichment.* pulls it
+// from safeStorage at call time and never returns it. Keeps the
+// existing apolloSearchCompanies output shape so apolloOrgToLead and
+// generateLeadsApollo work unchanged.
+//
+// Returns: { ok, organizations:[...], total, safetyNote? }
+//   or:    { ok:false, error }
+//
+// FAR-aware: SourceDeck.app/data-sources/ posture applies. Org-level
+// public attributes only; personal contact PII stripped server-side.
 async function apolloSearchCompanies(opts){
-  const geo = opts.geo || 'New York, New York, United States';
+  if (!window.sd || !window.sd.enrichment || typeof window.sd.enrichment.searchCompanies !== 'function') {
+    return { ok:false, error:'Apollo enrichment is not available in this build (run inside the Electron shell).' };
+  }
+  if (!APOLLO_KEY) {
+    return { ok:false, error:'No Apollo API key — set it in Settings tab' };
+  }
+  const geo      = opts.geo      || 'New York, New York, United States';
   const keywords = opts.keywords || ['property management'];
-  const sizes = opts.sizes || ['11,50','51,200','201,500'];
-  const perPage = Math.min(opts.perPage || 10, 25);
-  return apolloFetch('organizations/search', {
-    per_page: perPage, page: opts.page || 1,
-    organization_locations: [geo],
-    q_organization_keyword_tags: keywords,
-    organization_num_employees_ranges: sizes
-  }).then(r => {
-    if(!r.ok) return r;
-    const orgs = r.data.organizations || r.data.accounts || [];
-    return { ok:true, organizations: orgs, total: r.data.pagination?.total_entries || 0 };
-  });
+  const sizes    = opts.sizes    || ['11,50','51,200','201,500'];
+  const perPage  = Math.min(opts.perPage || 10, 25);
+  try {
+    const r = await window.sd.enrichment.searchCompanies({
+      per_page: perPage,
+      page: opts.page || 1,
+      organization_locations: [geo],
+      q_organization_keyword_tags: keywords,
+      organization_num_employees_ranges: sizes
+    });
+    if (!r || !r.ok) {
+      return { ok:false, error: (r && (r.error || r.detail)) || 'Apollo request failed', status: r && r.status };
+    }
+    return { ok:true, organizations: r.organizations || [], total: r.total || 0, safetyNote: r.safetyNote };
+  } catch (e) {
+    return { ok:false, error: 'IPC error: ' + (e && e.message) };
+  }
 }
 
 function apolloOrgToLead(org){
@@ -4037,6 +4069,13 @@ const AT_TABLE='tblXXXXXXXXXXXXXXX';
 // below flips it to a placeholder string when a credential is present.
 let AT_PAT=''; // never holds the real PAT; flipped to a placeholder when present.
 
+// APOLLO_KEY is also a presence-only flag now. Renderer never holds the
+// real Apollo API key. window.sd.enrichment.* pulls it from safeStorage
+// on each call. Legacy code that checks `if (APOLLO_KEY)` keeps working
+// because the boot-time hook below flips it to a truthy placeholder
+// when a credential is present.
+let APOLLO_KEY = '';
+
 // Boot-time presence sync. Reads the credential adapter (presence-only,
 // never the value) so legacy guards like `if (!AT_PAT) return null` reflect
 // the actual state of the safeStorage credential store.
@@ -4047,7 +4086,10 @@ let AT_PAT=''; // never holds the real PAT; flipped to a placeholder when presen
     if (s && s.present && s.present.airtable) {
       AT_PAT = '<airtable_credential_present>'; // truthy presence marker only
     }
-  } catch (_) { /* leave AT_PAT empty */ }
+    if (s && s.present && s.present.apollo) {
+      APOLLO_KEY = '<apollo_credential_present>'; // truthy presence marker only
+    }
+  } catch (_) { /* leave flags empty */ }
 })();
 
 // ── Renderer-safe Airtable adapter ─────────────────────────────────

@@ -62,9 +62,10 @@ contextBridge.exposeInMainWorld('sd', {
 
   // ── Contact enrichment (Apollo today; FAR-aware safety-noted) ─────
   enrichment: {
-    enrichOrganization:  (input) => ipcRenderer.invoke('enrichment:enrich-org',    input),
-    searchPeople:        (input) => ipcRenderer.invoke('enrichment:search-people', input),
-    searchOrganizations: (input) => ipcRenderer.invoke('enrichment:search-orgs',   input)
+    enrichOrganization:  (input) => ipcRenderer.invoke('enrichment:enrich-org',      input),
+    searchPeople:        (input) => ipcRenderer.invoke('enrichment:search-people',   input),
+    searchOrganizations: (input) => ipcRenderer.invoke('enrichment:search-orgs',     input),
+    searchCompanies:     (input) => ipcRenderer.invoke('enrichment:search-companies', input)
   },
 
   // ── AI generation (OpenAI / Anthropic / watsonx via main process) ─

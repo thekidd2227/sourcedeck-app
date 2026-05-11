@@ -339,9 +339,10 @@ ipcMain.handle('airtable:update', (_e, input) => appApi.airtable.updateRecord(in
 ipcMain.handle('airtable:delete', (_e, input) => appApi.airtable.deleteRecord(input || {}));
 
 // ─── Apollo / contact-enrichment wrapper (FAR-aware safety-noted) ────
-ipcMain.handle('enrichment:enrich-org',     (_e, input) => appApi.enrichment.enrichOrganization(input  || {}));
-ipcMain.handle('enrichment:search-people',  (_e, input) => appApi.enrichment.searchPeople(input        || {}));
-ipcMain.handle('enrichment:search-orgs',    (_e, input) => appApi.enrichment.searchOrganizations(input || {}));
+ipcMain.handle('enrichment:enrich-org',         (_e, input) => appApi.enrichment.enrichOrganization(input  || {}));
+ipcMain.handle('enrichment:search-people',      (_e, input) => appApi.enrichment.searchPeople(input        || {}));
+ipcMain.handle('enrichment:search-orgs',        (_e, input) => appApi.enrichment.searchOrganizations(input || {}));
+ipcMain.handle('enrichment:search-companies',   (_e, input) => appApi.enrichment.searchCompanies(input     || {}));
 
 // ─── AI provider adapter (OpenAI / Anthropic via credential adapter) ─
 ipcMain.handle('ai:generate',              (_e, input) => appApi.ai.generate(input || {}));

@@ -103,7 +103,7 @@ asyncTest('apollo: rejects endpoints not on the allowlist', async () => {
   // Smoke: only documented surfaces exist.
   assert.deepStrictEqual(
     Object.keys(svc).sort(),
-    ['SAFETY_NOTE','enrichOrganization','searchOrganizations','searchPeople'].sort()
+    ['SAFETY_NOTE','enrichOrganization','searchCompanies','searchOrganizations','searchPeople'].sort()
   );
 });
 

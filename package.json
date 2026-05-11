@@ -6,7 +6,7 @@
   "author": "SourceDeck",
   "main": "main.js",
   "scripts": {
-    "test": "node test/clinical-capability.test.js && node test/chartnav-integration.test.js && node test/first-run-safety.test.js && node test/ibm-readiness.test.js && node test/govcon-core.test.js && node test/architecture-boundary.test.js && node test/credential-boundary.test.js && node test/renderer-airtable-migration.test.js",
+    "test": "node test/clinical-capability.test.js && node test/chartnav-integration.test.js && node test/first-run-safety.test.js && node test/ibm-readiness.test.js && node test/govcon-core.test.js && node test/architecture-boundary.test.js && node test/credential-boundary.test.js && node test/renderer-airtable-migration.test.js && node test/renderer-apollo-migration.test.js",
     "prerelease": "node scripts/release-check.js",
     "dev": "electron .",
     "start": "electron .",

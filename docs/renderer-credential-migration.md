@@ -10,25 +10,31 @@ in a browser-based web app without leaking secrets.
 
 ---
 
-## 1. Status by API (after Airtable migration)
+## 1. Status by API (after Apollo migration)
 
 | API | Renderer status | Where the credential lives |
 |---|---|---|
-| **Airtable PAT** | ✅ **Migrated** (commit pending). 0 direct fetches, 0 Bearer header builds. | `safeStorage` via `window.sd.credentials.set('airtable', ...)` |
-| Apollo key | ⏳ Not migrated. 1 direct `x-api-key` build. | `lcc_APOLLO_KEY` in localStorage |
+| **SAM.gov key** | ✅ Migrated (commit 90cc04f). | `safeStorage` via `keys.sam-gov` |
+| **Airtable PAT** | ✅ Migrated (commit f8f86c8). 0 direct fetches, 0 Bearer header builds. | `safeStorage` via `window.sd.credentials.set('airtable', ...)` |
+| **Apollo key** | ✅ **Migrated** (commit pending). 0 direct fetches, 0 `x-api-key` header builds, 0 `api.apollo.io` strings in renderer. | `safeStorage` via `window.sd.credentials.set('apollo', ...)` |
 | OpenAI key | ⏳ Not migrated. 4 Bearer builds. | `lcc_OPENAI_KEY` in localStorage |
 | Anthropic / Claude key | ⏳ Not migrated. 2 `x-api-key` builds. | `lcc_CLAUDE_KEY` in localStorage |
-| SAM.gov key | ✅ Already migrated (commit 90cc04f). | `safeStorage` via `keys.sam-gov` |
 
 ### Renderer surface counts (refresh with `grep -cE`)
 
-| Pattern | Pre-migration | Post-migration (this commit) |
-|---|---|---|
-| `fetch('https://api.airtable.com/...` direct calls | 27 | **0** |
-| `'Bearer '+AT_PAT` header builds | 14+ | **0** |
-| `lcc_AT_PAT_OVERRIDE` localStorage write sites in renderer | 1 | **0** (1-time-migration read still present in `loadSettings()`, then `removeItem()`) |
-| `lcc_APOLLO_KEY` / `lcc_OPENAI_KEY` / `lcc_CLAUDE_KEY` writes | 1 each | unchanged (next migration step) |
-| `sdAirtableFetch(` call sites | 0 | **33** |
+| Pattern | Pre-migration baseline | After Airtable | After Apollo (this commit) |
+|---|---|---|---|
+| `fetch('https://api.airtable.com/...` direct calls | 27 | **0** | 0 |
+| `'Bearer '+AT_PAT` header builds | 14+ | **0** | 0 |
+| `fetch('https://api.apollo.io/...` direct calls | 1 | 1 | **0** |
+| `api.apollo.io` URL strings (any) | 1 | 1 | **0** |
+| `'x-api-key':\s*APOLLO_KEY\|window.APOLLO_KEY` builds | 1 | 1 | **0** |
+| `lcc_AT_PAT_OVERRIDE` write sites | 1 | **0** | 0 |
+| `lcc_APOLLO_KEY` write sites | 1 | 1 | **0** |
+| `lcc_APOLLO_KEY` references in renderer (one-time-migration code) | 1 | 1 | 3 (1 comment, 1 read, 1 removeItem) |
+| `lcc_OPENAI_KEY` / `lcc_CLAUDE_KEY` writes | 1 each | 1 each | unchanged (next migration step) |
+| `sdAirtableFetch(` call sites | 0 | 33 | 33 |
+| `window.sd.enrichment.searchCompanies` call sites | 0 | 0 | **1** |
 
 Summary: **31 renderer-side Bearer-header builds, 4 distinct
 localStorage credential keys, 18 read/write sites.**

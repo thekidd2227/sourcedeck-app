@@ -135,6 +135,10 @@ function createAppApi(opts) {
       enrichOrganization:  (i) => apolloSvc.enrichOrganization(i  || {}),
       searchPeople:        (i) => apolloSvc.searchPeople(i        || {}),
       searchOrganizations: (i) => apolloSvc.searchOrganizations(i || {}),
+      // Richer business-only org search used by the renderer's
+      // company-discovery workflow. Returns org-level public
+      // attributes; personal contact PII is stripped.
+      searchCompanies:     (i) => apolloSvc.searchCompanies(i     || {}),
       safetyNote: apolloSvc.SAFETY_NOTE
     },
     ai: {

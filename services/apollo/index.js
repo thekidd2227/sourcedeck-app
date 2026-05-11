@@ -31,6 +31,7 @@ const SAFETY_NOTE = [
 // renderer-supplied input cannot route to an arbitrary Apollo path.
 const ALLOWED_ENDPOINTS = new Set([
   'organizations/enrich',
+  'organizations/search',  // legacy renderer path -- richer org records
   'people/match',
   'mixed_people/search',
   'mixed_companies/search'
@@ -45,7 +46,9 @@ const STR_FIELDS = new Set([
 const ARRAY_FIELDS = new Set([
   'organization_domains', 'organization_names',
   'titles', 'q_organization_naics_codes',
-  'organization_locations'
+  'organization_locations',
+  // legacy organizations/search params used by the renderer
+  'q_organization_keyword_tags', 'organization_num_employees_ranges'
 ]);
 const INT_FIELDS = new Set(['page', 'per_page']);
 
@@ -83,6 +86,32 @@ function _normalizeOrg(org) {
     country:      org.country || null,
     description:  org.short_description || null,
     _source:      'apollo'
+  };
+}
+
+// Richer org normalization for the renderer's company-search workflow.
+// Returns business-level public attributes only (org website, public
+// LinkedIn / Facebook URL, organization-level published phone).
+// Personal contact PII (employee emails, direct dials) stays stripped.
+function _normalizeOrgRich(org) {
+  if (!org || typeof org !== 'object') return null;
+  const domain = org.primary_domain || null;
+  return {
+    id:                  org.id || null,
+    name:                org.name || null,
+    primary_domain:      domain,
+    website_url:         org.website_url || (domain ? 'https://' + domain : null),
+    sanitized_phone:     org.sanitized_phone || org.phone || null, // org-level published number
+    linkedin_url:        org.linkedin_url || null,
+    facebook_url:        org.facebook_url || null,
+    naics_codes:         Array.isArray(org.naics_codes) ? org.naics_codes : [],
+    industry:            org.industry || null,
+    estimated_num_employees: org.estimated_num_employees || null,
+    city:                org.city || null,
+    state:               org.state || null,
+    country:             org.country || null,
+    short_description:   org.short_description || null,
+    _source:             'apollo'
   };
 }
 
@@ -186,6 +215,26 @@ function createApolloService(deps) {
       const orgs = (r.body && Array.isArray(r.body.organizations) ? r.body.organizations : []).map(_normalizeOrg).filter(Boolean);
       _audit('AI_RESPONSE_RECEIVED', 'ok', { op: 'apollo.search_orgs', count: orgs.length });
       return { ok: true, organizations: orgs, safetyNote: SAFETY_NOTE };
+    },
+
+    // Richer business-data search for the company-discovery workflow.
+    // Routes to the legacy Apollo `organizations/search` endpoint and
+    // returns org-level public attributes (website, LinkedIn URL,
+    // published phone, NAICS, employee band, location). Personal
+    // contact PII stays stripped.
+    async searchCompanies(input) {
+      const r = await _request('organizations/search', input);
+      if (!r.ok) {
+        _audit('AI_REQUEST_FAILED', 'error', { op: 'apollo.search_companies', error: r.error });
+        return r;
+      }
+      const rawOrgs = (r.body && (Array.isArray(r.body.organizations)
+        ? r.body.organizations
+        : Array.isArray(r.body.accounts) ? r.body.accounts : [])) || [];
+      const orgs = rawOrgs.map(_normalizeOrgRich).filter(Boolean);
+      const total = (r.body && r.body.pagination && r.body.pagination.total_entries) || orgs.length;
+      _audit('AI_RESPONSE_RECEIVED', 'ok', { op: 'apollo.search_companies', count: orgs.length, total });
+      return { ok: true, organizations: orgs, total, safetyNote: SAFETY_NOTE };
     }
   });
 }
@@ -193,5 +242,5 @@ function createApolloService(deps) {
 module.exports = {
   createApolloService,
   SAFETY_NOTE,
-  _internal: { ALLOWED_ENDPOINTS, _normalizeOrg, _normalizePerson, _sanitizeBody }
+  _internal: { ALLOWED_ENDPOINTS, _normalizeOrg, _normalizeOrgRich, _normalizePerson, _sanitizeBody }
 };
