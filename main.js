@@ -11,6 +11,16 @@ const { createAuditLog, TYPES: AUDIT_TYPES }          = require('./services/audi
 const { createContext }                               = require('./services/context/context');
 const { validateUpload }                              = require('./services/security/upload-validation');
 
+// ── GovCon core services (main-process only) ────────────────────────
+// All credentials live behind these IPC handlers; renderer never sees
+// raw API keys for SAM.gov, Airtable, Apollo, or any GovCon integration.
+const { createTargetingProfileService }   = require('./services/govcon/targeting-profile');
+const { createSamSearchService }          = require('./services/govcon/sam-search');
+const { generateComplianceMatrix }        = require('./services/govcon/compliance-matrix');
+const { evaluatePreRfp }                  = require('./services/govcon/pre-rfp');
+const { createPastPerformanceService }    = require('./services/govcon/past-performance');
+const { buildStakeholderGraph }           = require('./services/govcon/stakeholder-graph');
+
 const store = new Store({ name: 'sourcedeck-data' });
 
 // Boot the IBM-readiness services. They're additive: defaults are
@@ -19,6 +29,31 @@ const store = new Store({ name: 'sourcedeck-data' });
 const cfg     = loadConfig();
 const audit   = createAuditLog(store);
 const context = createContext(store);
+
+// GovCon core service instances (lazily created, but bound to store).
+const targeting       = createTargetingProfileService(store);
+const pastPerformance = createPastPerformanceService(store);
+
+// Helper: read a credential out of the safeStorage-wrapped keystore
+// without ever returning it to the renderer. Used by the SAM.gov
+// search service in-process only.
+function _readCredential(serviceName) {
+  try {
+    const val = store.get(`keys.${serviceName}`);
+    if (!val) return null;
+    if (safeStorage.isEncryptionAvailable()) {
+      return safeStorage.decryptString(Buffer.from(val, 'base64'));
+    }
+    return val;
+  } catch (_) { return null; }
+}
+
+// Build a SAM.gov search service that pulls its API key from main-process
+// secure storage at call time (never from renderer-supplied input).
+const samSearch = createSamSearchService({
+  fetch: typeof fetch === 'function' ? fetch : null,
+  getApiKey: async () => _readCredential('sam-gov') || process.env.SAM_API_KEY || null
+});
 
 // ─── First-run privacy scrub ──────────────────────────────────────────
 // Runs before the window is created. Makes a packaged build safe even if,
@@ -262,3 +297,110 @@ ipcMain.handle('storage-test-put', async (_event, text) => {
 });
 
 ipcMain.handle('audit-summary', () => audit.summary());
+
+// ─── GovCon IPC ──────────────────────────────────────────────────────
+// Renderer never builds Bearer headers for SAM.gov, never receives the
+// raw SAM_API_KEY, and never has to know whether the key is configured.
+
+ipcMain.handle('govcon:targeting-get', () => targeting.load());
+
+ipcMain.handle('govcon:targeting-set', (_event, patch) => {
+  const next = targeting.save(patch || {});
+  audit.append({
+    type: AUDIT_TYPES.CONTEXT_SET, status: 'ok',
+    metadata: { surface: 'govcon.targeting', changedKeys: Object.keys(patch || {}) }
+  });
+  return next;
+});
+
+ipcMain.handle('govcon:targeting-reset', () => {
+  const next = targeting.reset();
+  audit.append({
+    type: AUDIT_TYPES.CONTEXT_SET, status: 'ok',
+    metadata: { surface: 'govcon.targeting', op: 'reset' }
+  });
+  return next;
+});
+
+ipcMain.handle('govcon:sam-search', async (_event, filters) => {
+  const safeFilters = sanitizeSamFilters(filters);
+  audit.append({
+    type: AUDIT_TYPES.AI_REQUEST_CREATED, provider: 'sam.gov',
+    status: 'pending', metadata: { surface: 'govcon.sam.search',
+      naicsCount: (safeFilters.naics || []).length,
+      noticeTypes: safeFilters.noticeTypes || null }
+  });
+  const result = await samSearch.search(safeFilters);
+  audit.append({
+    type: result.ok ? AUDIT_TYPES.AI_RESPONSE_RECEIVED : AUDIT_TYPES.AI_REQUEST_FAILED,
+    provider: 'sam.gov',
+    status: result.ok ? 'ok' : 'error',
+    metadata: result.ok
+      ? { usedApi: !!result.usedApi, returned: result.returned || result.results.length, total: result.total }
+      : { reason: result.reason || 'unknown' }
+  });
+  return result;
+});
+
+ipcMain.handle('govcon:compliance-matrix', (_event, payload) => {
+  const text = payload && typeof payload.text === 'string' ? payload.text : '';
+  const result = generateComplianceMatrix(text, payload && payload.opts);
+  audit.append({
+    type: AUDIT_TYPES.AI_RESPONSE_RECEIVED, provider: 'govcon.compliance-matrix',
+    status: result.ok ? 'ok' : 'error',
+    metadata: result.ok
+      ? { rows: result.rows.length, high: result.counts.high, medium: result.counts.medium, low: result.counts.low }
+      : { reason: result.reason }
+  });
+  return result;
+});
+
+ipcMain.handle('govcon:pre-rfp-evaluate', (_event, payload) => {
+  const opp = payload && payload.opp ? payload.opp : null;
+  const profile = (payload && payload.profile) || targeting.load();
+  return evaluatePreRfp(opp, profile);
+});
+
+ipcMain.handle('govcon:past-performance-list',   () => pastPerformance.list());
+ipcMain.handle('govcon:past-performance-save',   (_e, p) => pastPerformance.save(p));
+ipcMain.handle('govcon:past-performance-remove', (_e, id) => pastPerformance.remove(id));
+ipcMain.handle('govcon:past-performance-match',  (_e, opp) => pastPerformance.match(opp));
+
+ipcMain.handle('govcon:stakeholders-for-opp', (_event, payload) => {
+  const opp = payload && payload.opp ? payload.opp : null;
+  const extras = (payload && payload.extras) || {};
+  return buildStakeholderGraph(opp, extras);
+});
+
+// Full audit-log list for the audit UI. Returns sanitized events
+// (the audit-log module already strips secrets / large payloads).
+ipcMain.handle('audit:list', (_event, opts) => {
+  opts = opts || {};
+  const limit = Math.min(typeof opts.limit === 'number' ? opts.limit : 200, 500);
+  const events = typeof audit.list === 'function' ? audit.list() : (store.get('audit.events') || []);
+  return events.slice(-limit).reverse();
+});
+
+// Whitelist filter shape so renderer can't pass stray fields straight
+// to a remote API. Mirrors the targeting-profile sanitizer.
+function sanitizeSamFilters(f) {
+  f = f || {};
+  return {
+    keyword: typeof f.keyword === 'string' ? f.keyword.trim().slice(0, 120) : '',
+    naics:   Array.isArray(f.naics) ? f.naics.filter(s => /^\d{2,6}$/.test(String(s))).slice(0, 40) : [],
+    psc:     Array.isArray(f.psc)   ? f.psc.filter(s => /^[A-Z0-9]{1,4}$/i.test(String(s))).map(s => String(s).toUpperCase()).slice(0, 40) : [],
+    noticeTypes: f.noticeTypes && typeof f.noticeTypes === 'object' ? {
+      active_solicitation: f.noticeTypes.active_solicitation !== false,
+      pre_rfp_intel:       f.noticeTypes.pre_rfp_intel       !== false,
+      awards:              !!f.noticeTypes.awards,
+      modifications:       !!f.noticeTypes.modifications
+    } : { active_solicitation: true, pre_rfp_intel: true, awards: false, modifications: false },
+    posted: { withinDays: typeof f.posted?.withinDays === 'number' ? Math.max(1, Math.min(365, f.posted.withinDays | 0)) : 90 },
+    limit: typeof f.limit === 'number' ? Math.max(1, Math.min(100, f.limit | 0)) : 25,
+    agencies: f.agencies && typeof f.agencies === 'object' ? {
+      include: Array.isArray(f.agencies.include) ? f.agencies.include.map(String).slice(0, 20) : [],
+      exclude: Array.isArray(f.agencies.exclude) ? f.agencies.exclude.map(String).slice(0, 20) : []
+    } : { include: [], exclude: [] },
+    setAsides: Array.isArray(f.setAsides) ? f.setAsides.map(s => String(s).toLowerCase()).slice(0, 10) : []
+  };
+}
