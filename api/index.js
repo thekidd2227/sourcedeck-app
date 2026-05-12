@@ -50,6 +50,7 @@ const airtable        = require('../services/airtable');
 const apollo          = require('../services/apollo');
 const openaiProvider  = require('../services/ai/providers/openai');
 const anthropicProvider = require('../services/ai/providers/anthropic');
+const workflowSvc    = require('../services/workflow');
 
 function createAppApi(opts) {
   opts = opts || {};
@@ -90,6 +91,14 @@ function createAppApi(opts) {
       // must use credentials.get() inside the trust boundary.
       set:    (s, v)       => credentials.set(s, v),
       remove: (s)          => credentials.remove(s)
+    },
+    workflow: {
+      classifyIntake:      (input) => Promise.resolve(workflowSvc.classifyIntake(input || {})),
+      createFromIntake:    (input) => Promise.resolve(workflowSvc.createWorkflowFromIntake(input || {})),
+      createTask:          (input) => Promise.resolve(workflowSvc.createTask(input || {})),
+      updateTask:          (task, patch) => Promise.resolve(workflowSvc.updateTask(task || {}, patch || {})),
+      createArtifactDraft: (input) => Promise.resolve(workflowSvc.createArtifactDraft(input || {})),
+      listTemplates:       () => Promise.resolve(workflowSvc.listTemplates())
     },
     govcon: {
       targeting: {
