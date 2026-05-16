@@ -468,6 +468,13 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
 .tb-kpi{background:rgba(255,255,255,0.03)!important;border:1px solid rgba(255,255,255,0.06)!important;box-shadow:0 1px 0 rgba(255,255,255,0.04) inset}
 .overlay{-webkit-backdrop-filter:blur(6px) saturate(140%);backdrop-filter:blur(6px) saturate(140%);background:rgba(0,0,0,0.6)!important}
 ::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(80,110,140,0.5),rgba(50,80,110,0.4));border-radius:10px}::-webkit-scrollbar-corner{background:transparent}
+
+/* ── LANGUAGE SWITCHER ── */
+#sd-lang-switcher{display:inline-flex;align-items:center;gap:0;padding:2px;border-radius:980px;background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.12);font:600 10px/1 'Azeret Mono',monospace;letter-spacing:0.04em;color:rgba(245,245,247,0.7);margin-left:12px}
+#sd-lang-switcher button{appearance:none;background:transparent;border:0;color:inherit;font:inherit;padding:5px 10px;border-radius:980px;cursor:pointer;transition:background 0.15s,color 0.15s}
+#sd-lang-switcher button:hover{color:#fff}
+#sd-lang-switcher button[aria-pressed="true"]{background:rgba(201,148,26,0.18);color:#fff}
+#sd-lang-switcher button:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
 </style>
 </head>
 <body>
@@ -499,6 +506,10 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
   </div>
   <div class="topbar-right">
     <div class="live-dot"><span class="pulse"></span>LIVE</div>
+    <div id="sd-lang-switcher" role="group" aria-label="Language">
+      <button type="button" data-lang="en" aria-pressed="true">EN</button>
+      <button type="button" data-lang="es" aria-pressed="false">ES</button>
+    </div>
   </div>
 </div>
 
@@ -8720,6 +8731,201 @@ document.addEventListener('DOMContentLoaded',()=>{
     renderTelemetry();
   };
 
+})();
+</script>
+
+<!-- ── Spanish / English i18n (inline; Electron has no asset server) ── -->
+<script>
+(function () {
+  'use strict';
+  // English -> Spanish dictionary for the LCC desktop shell. Translates the
+  // structural UI (sidebar, top-bar KPIs, common buttons, headings, modal
+  // titles, settings labels). Operational data rendered by JS (KPI numbers,
+  // table rows, lead names) is data-driven and not translated.
+  var SD_ES = {
+    // sidebar section labels
+    'Overview': 'Resumen', 'Action': 'Acción', 'Create': 'Crear', 'Pipeline': 'Pipeline',
+    'Delivery': 'Entrega', 'Federal': 'Federal', 'Operations': 'Operaciones', 'Capabilities': 'Capacidades',
+    // sidebar items
+    'Command Center': 'Centro de comando', 'Dashboard': 'Dashboard',
+    'Lead Generator': 'Generador de leads', 'Revenue': 'Ingresos',
+    'Email Tracker': 'Seguimiento de correo',
+    'Overdue': 'Vencidos', 'Reply Analyzer': 'Analizador de respuestas',
+    'Ad Engine': 'Motor de anuncios', 'Daily Ops': 'Operaciones diarias',
+    'Socials': 'Redes sociales', 'System Flow': 'Flujo del sistema',
+    'Create Lead': 'Crear lead', 'AI Generate': 'Generación con IA',
+    'Settings': 'Configuración', 'Client Delivery': 'Entrega al cliente',
+    'GovCon': 'GovCon', 'Command': 'Comando',
+    'Opportunities': 'Oportunidades', 'Deal Workspace': 'Espacio de trabajo del deal',
+    'Execution': 'Ejecución', 'Reports': 'Reportes',
+    'Clinical / EHR': 'Clínico / EHR',
+    // top-bar KPIs and tooltips
+    'Lead Command Center': 'Lead Command Center',
+    'Pipeline': 'Pipeline', 'Expected': 'Esperado', 'Leads': 'Leads',
+    'Total pipeline value': 'Valor total del pipeline',
+    'Weighted expected revenue': 'Ingreso esperado ponderado',
+    'Total leads': 'Total de leads',
+    'LIVE': 'EN VIVO',
+    // common buttons
+    'Save': 'Guardar', 'Cancel': 'Cancelar', 'Delete': 'Eliminar',
+    'Add': 'Agregar', 'Edit': 'Editar', 'New': 'Nuevo',
+    'Send': 'Enviar', 'Submit': 'Enviar', 'Reset': 'Restablecer',
+    'Apply': 'Aplicar', 'Configure': 'Configurar',
+    'Connect': 'Conectar', 'Disconnect': 'Desconectar',
+    'Enable': 'Habilitar', 'Disable': 'Deshabilitar',
+    'Refresh': 'Actualizar', 'Export': 'Exportar', 'Import': 'Importar',
+    'Search': 'Buscar', 'Filter': 'Filtrar', 'Sort': 'Ordenar',
+    'Analyze': 'Analizar', 'Analyzed': 'Analizado',
+    'Archive': 'Archivar', 'Active': 'Activo',
+    // common column / form labels
+    'Status': 'Estado', 'Type': 'Tipo', 'Name': 'Nombre',
+    'Date': 'Fecha', 'Time': 'Hora', 'User': 'Usuario',
+    'Owner': 'Responsable', 'Email': 'Correo', 'Phone': 'Teléfono',
+    'Company': 'Empresa', 'Title': 'Título', 'Notes': 'Notas',
+    'All Status': 'Todos los estados', 'All Industries': 'Todas las industrias',
+    'All NAICS': 'Todas las NAICS', 'All Opportunities': 'Todas las oportunidades',
+    'Action': 'Acción', 'Actions': 'Acciones',
+    // common section / panel titles
+    'Active Clients': 'Clientes activos',
+    'Active Deals': 'Deals activos',
+    'Active Deals — Revenue Map': 'Deals activos — mapa de ingresos',
+    'Active Webhooks': 'Webhooks activos',
+    'Settings & API Keys': 'Configuración y claves API',
+    'API Keys': 'Claves API',
+    'API key entry instructions': 'Instrucciones para ingresar claves API',
+    'API keys · Automation config · System identifiers':
+      'Claves API · configuración de automatización · identificadores del sistema',
+    'AI provider': 'Proveedor de IA',
+    'AI Analysis Output (→ Airtable writeback on save)':
+      'Salida de análisis de IA (→ escritura en Airtable al guardar)',
+    'AI Generated': 'Generado por IA',
+    'AI Intro Email': 'Correo de presentación con IA',
+    'AI Lead Generator': 'Generador de leads con IA',
+    'Aggregated from Airtable Leads + Email Events. Severity-ranked.':
+      'Agregado a partir de Airtable Leads + Email Events. Clasificado por severidad.',
+    'Additional Notes': 'Notas adicionales',
+    'Admin token (optional)': 'Token de admin (opcional)',
+    'Airtable Base': 'Base de Airtable',
+    'Airtable PAT': 'PAT de Airtable',
+    'Airtable Record ID (optional — enables writeback)':
+      'ID de registro de Airtable (opcional — habilita escritura inversa)',
+    'Alert — call or close': 'Alerta — llamar o cerrar',
+    'All leads have emails.': 'Todos los leads tienen correo.',
+    'Any / Mixed': 'Cualquiera / mixto',
+    'At Risk': 'En riesgo',
+    'Audit-Risk Documentation Gaps': 'Brechas de documentación con riesgo de auditoría',
+    'Audit Intake Table': 'Tabla de ingreso de auditoría',
+    'Auto runs': 'Ejecuciones automáticas',
+    'Automation Config': 'Configuración de automatización',
+    'Automation Status': 'Estado de automatización',
+    'AUTOMATION PATH CONFIRMED': 'RUTA DE AUTOMATIZACIÓN CONFIRMADA',
+    'Auth / Session': 'Auth / sesión',
+    'Apollo.io API Key': 'Clave API de Apollo.io'
+  };
+
+  var STORAGE_KEY = 'site.language';
+  var LEGACY_KEY  = 'sd_lang';
+  var SKIP_TAGS = { SCRIPT: 1, STYLE: 1, NOSCRIPT: 1, CODE: 1, PRE: 1, TEXTAREA: 1, TEMPLATE: 1 };
+  var TRANSLATABLE_ATTRS = ['placeholder', 'title', 'alt', 'aria-label'];
+  var TEXT_SNAPSHOT = new WeakMap();
+  var ATTR_SNAPSHOTS = new WeakMap();
+
+  function normalizeKey(s){
+    return s.replace(/[‘’]/g,"'").replace(/[“”]/g,'"').replace(/ /g,' ').replace(/\s+/g,' ').trim();
+  }
+  var DICT_NORM = (function(){ var o={}; for (var k in SD_ES) o[normalizeKey(k)] = SD_ES[k]; return o; })();
+  function lookup(orig){
+    if (!orig) return orig;
+    var key = normalizeKey(orig);
+    if (!key) return orig;
+    if (Object.prototype.hasOwnProperty.call(DICT_NORM, key)) {
+      var lead = orig.match(/^\s*/)[0], trail = orig.match(/\s*$/)[0];
+      return lead + DICT_NORM[key] + trail;
+    }
+    return orig;
+  }
+  function snapText(n){ if (!TEXT_SNAPSHOT.has(n)) TEXT_SNAPSHOT.set(n, n.nodeValue); return TEXT_SNAPSHOT.get(n); }
+  function snapAttr(el, a){
+    var bag = ATTR_SNAPSHOTS.get(el); if (!bag) { bag = {}; ATTR_SNAPSHOTS.set(el, bag); }
+    if (!Object.prototype.hasOwnProperty.call(bag, a)) bag[a] = el.getAttribute(a);
+    return bag[a];
+  }
+  function applyText(n, lang){
+    var o = snapText(n);
+    if (!o || !o.trim()) return;
+    n.nodeValue = lang === 'en' ? o : lookup(o);
+  }
+  function applyAttr(el, a, lang){
+    if (!el.hasAttribute(a)) return;
+    var o = snapAttr(el, a);
+    if (!o || !o.trim()) return;
+    el.setAttribute(a, lang === 'en' ? o : lookup(o));
+  }
+  function walk(root, lang){
+    if (!root) return;
+    if (root.nodeType === 3) {
+      var p = root.parentNode;
+      if (p && !SKIP_TAGS[p.tagName] && p.id !== 'sd-lang-switcher') applyText(root, lang);
+      return;
+    }
+    if (root.nodeType !== 1) return;
+    if (SKIP_TAGS[root.tagName]) return;
+    if (root.id === 'sd-lang-switcher') return;
+    for (var i = 0; i < TRANSLATABLE_ATTRS.length; i++) applyAttr(root, TRANSLATABLE_ATTRS[i], lang);
+    var c = root.firstChild;
+    while (c) { var nx = c.nextSibling; walk(c, lang); c = nx; }
+  }
+
+  function applyLang(lang){
+    if (lang !== 'en' && lang !== 'es') lang = 'en';
+    document.documentElement.setAttribute('lang', lang);
+    if (document.body) walk(document.body, lang);
+    var t = document.querySelector('head > title');
+    if (t && t.firstChild) applyText(t.firstChild, lang);
+    document.querySelectorAll('#sd-lang-switcher button').forEach(function(b){
+      b.setAttribute('aria-pressed', b.getAttribute('data-lang') === lang ? 'true' : 'false');
+    });
+    window.__sdLang = lang;
+  }
+  function setLanguage(lang, opts){
+    opts = opts || {};
+    try { localStorage.setItem(STORAGE_KEY, lang); localStorage.setItem(LEGACY_KEY, lang); } catch (e) {}
+    if (opts.updateUrl !== false) {
+      try { var u = new URL(window.location.href); u.searchParams.set('lang', lang); window.history.replaceState({}, '', u); } catch (e) {}
+    }
+    applyLang(lang);
+  }
+  function resolveInitialLang(){
+    try {
+      var q = (new URLSearchParams(window.location.search).get('lang') || '').toLowerCase();
+      if (q === 'en' || q === 'es') return q;
+      var s = (localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_KEY) || '').toLowerCase();
+      if (s === 'en' || s === 'es') return s;
+    } catch (e) {}
+    return 'en';
+  }
+  function init(){
+    var sw = document.getElementById('sd-lang-switcher');
+    if (sw) {
+      sw.addEventListener('click', function (e) {
+        var btn = e.target.closest('button[data-lang]');
+        if (!btn) return;
+        setLanguage(btn.getAttribute('data-lang'), { updateUrl: true });
+      });
+      sw.addEventListener('keydown', function (e) {
+        if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+        var btns = sw.querySelectorAll('button[data-lang]');
+        var i = Array.prototype.indexOf.call(btns, document.activeElement);
+        if (i === -1) return;
+        var next = e.key === 'ArrowRight' ? (i + 1) % btns.length : (i - 1 + btns.length) % btns.length;
+        btns[next].focus();
+      });
+    }
+    applyLang(resolveInitialLang());
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+  window.sdI18n = { set: function (l) { setLanguage(l, { updateUrl: true }); }, get: function () { return window.__sdLang || 'en'; } };
 })();
 </script>
 </body>
