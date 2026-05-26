@@ -235,6 +235,30 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 .wh-err{background:var(--redl);color:var(--red);border:1px solid rgba(239,68,68,0.2)}
 .wh-load{background:var(--warnl);color:var(--warn);border:1px solid rgba(245,158,11,0.2)}
 
+/* WORKSPACE READINESS */
+.workspace-readiness{margin-bottom:16px;border:1px solid rgba(201,148,26,0.22);border-radius:var(--r);background:linear-gradient(145deg,rgba(201,148,26,0.08),rgba(26,111,168,0.05));overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,0.04) inset}
+.wr-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.06)}
+.wr-title{font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text)}
+.wr-sub{font-size:11px;color:var(--muted);line-height:1.5;margin-top:3px;max-width:760px}
+.wr-actions{display:flex;gap:8px;align-items:center;flex-shrink:0}
+.wr-list{display:flex;flex-direction:column}
+.wr-item{display:grid;grid-template-columns:86px 1fr auto;gap:12px;align-items:center;padding:11px 16px;border-top:1px solid rgba(255,255,255,0.04)}
+.wr-item:first-child{border-top:none}
+.wr-badge{display:inline-flex;align-items:center;justify-content:center;font:700 8px/1 'Azeret Mono',monospace;letter-spacing:0.09em;text-transform:uppercase;border-radius:6px;padding:5px 7px}
+.wr-badge.critical{background:var(--redl);color:var(--red);border:1px solid var(--redb)}
+.wr-badge.warning{background:var(--warnl);color:var(--warn);border:1px solid var(--warnb)}
+.wr-badge.info{background:var(--bluel);color:#60a5fa;border:1px solid rgba(26,111,168,0.22)}
+.wr-copy{min-width:0}
+.wr-label{font-weight:700;color:var(--text);font-size:12px}
+.wr-desc{font-size:10.5px;color:var(--muted);line-height:1.45;margin-top:2px}
+.wr-item .btn{white-space:nowrap}
+@media(max-width:768px){
+  .wr-head{flex-direction:column}
+  .wr-actions{width:100%;flex-wrap:wrap}
+  .wr-item{grid-template-columns:1fr;gap:8px}
+  .wr-item .btn{width:100%;justify-content:center}
+}
+
 /* OVERLAY / SLIDE PANEL */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;display:none;align-items:stretch;justify-content:flex-end;backdrop-filter:blur(3px)}
 .overlay.open{display:flex}
@@ -566,6 +590,8 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
         <div class="pane-actions"><button class="btn btn-ghost" onclick="renderCmd()">↻ Refresh</button></div>
       </div>
       <div class="pane-body">
+        <div id="cmd-workspace-readiness-banner" class="workspace-readiness" hidden></div>
+
         <style>
           .cc-ribbon-lcc{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-bottom:14px;padding:8px;background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.06);border-radius:10px}
           @media(max-width:820px){.cc-ribbon-lcc{grid-template-columns:repeat(3,1fr)}}
@@ -650,6 +676,8 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
         </div>
       </div>
       <div class="pane-body">
+        <div id="workspace-readiness-banner" class="workspace-readiness" hidden></div>
+
         <!-- KPI ROW -->
         <div class="grid-4 mb-20">
           <div class="kpi gold-kpi kpi-glow-gold">
@@ -1492,6 +1520,8 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
         <div class="pane-actions"><button class="btn btn-gold" onclick="saveSettings()">💾 Save Settings</button></div>
       </div>
       <div class="pane-body">
+        <div id="settings-workspace-readiness-banner" class="workspace-readiness" hidden></div>
+
         <div class="grid-2">
           <div>
             <div class="card mb-14">
@@ -4304,6 +4334,7 @@ function openTab(t){
   });
   try{localStorage.setItem('lcc_active_tab',t);}catch(e){}
   if(t==='dashboard'&&typeof renderDashboard==='function')renderDashboard();
+  if((t==='dashboard'||t==='cmd'||t==='settings')&&typeof renderWorkspaceReadinessBanner==='function')renderWorkspaceReadinessBanner();
   if(t==='leads'&&typeof filterLeads==='function')filterLeads();
   if(t==='overdue'&&typeof renderOverdue==='function')renderOverdue();
   if(t==='email'&&typeof renderEmailTracker==='function')renderEmailTracker();
@@ -5773,7 +5804,7 @@ function followUp(id){const l=allLeads.find(x=>x.id===id);const r=document.getEl
 function triggerProposal(id){const l=allLeads.find(x=>x.id===id);const r=document.getElementById('sp-result');if(r)r.innerHTML='<span class="wh wh-ok">✓ Proposal engine triggered</span>';toast('Proposal: '+l?.fields['Business Name'],'info');logActivity('📄','var(--warn)','Proposal: '+l?.fields['Business Name']);}
 function setStatus(id,s){const l=allLeads.find(x=>x.id===id);if(!l)return;l.fields['Status']=s;const r=document.getElementById('sp-result');if(r)r.innerHTML=`<span class="wh wh-ok">✓ → ${s}</span>`;toast(l.fields['Business Name']+' → '+s,'ok');filterLeads();renderDashboard();logActivity('✏️','var(--green)',l.fields['Business Name']+' → '+s);}
 function markNurture(id){const l=allLeads.find(x=>x.id===id);if(!l)return;l.fields['Status']='New';l.fields['Current Stage']='Nurture';l.fields['Next Action']='Re-engage in 30 days';const r=document.getElementById('sp-result');if(r)r.innerHTML='<span class="wh wh-ok">✓ Moved to nurture</span>';toast(l.fields['Business Name']+' → Nurture','info');filterLeads();renderDashboard();}
-function refreshAll(){loadAirtableLeads();renderDashboard();filterLeads();renderOverdue();toast('Refreshed','ok');}
+function refreshAll(){loadAirtableLeads();renderDashboard();filterLeads();renderOverdue();if(typeof refreshWorkspaceCredentialStatus==='function')refreshWorkspaceCredentialStatus().then(()=>renderWorkspaceReadinessBanner());else if(typeof renderWorkspaceReadinessBanner==='function')renderWorkspaceReadinessBanner();toast('Refreshed','ok');}
 
 // ═══════ COMMAND CENTER — renderCmd() (mirrors sourcedeck.app/command/) ═══════
 async function renderCmd(){
@@ -7690,6 +7721,141 @@ const ARCG_OS = {
   saveBrand(){ localStorage.setItem('arcg_brand',JSON.stringify(this.brand)); }
 };
 
+// ── WORKSPACE READINESS BANNER ──
+let _workspaceCredentialStatus = null;
+
+function wrEscape(value){
+  return String(value == null ? '' : value).replace(/[&<>"']/g, c => ({
+    '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
+  }[c]));
+}
+
+function wrCredentialPresent(service){
+  const present = _workspaceCredentialStatus && _workspaceCredentialStatus.present;
+  if (present && present[service]) return true;
+  if (service === 'openai' && window.OPENAI_KEY) return true;
+  if (service === 'anthropic' && window.CLAUDE_KEY) return true;
+  if (service === 'airtable' && typeof AT_PAT !== 'undefined' && AT_PAT) return true;
+  if (service === 'apollo' && typeof APOLLO_KEY !== 'undefined' && APOLLO_KEY) return true;
+  return false;
+}
+
+async function refreshWorkspaceCredentialStatus(){
+  if (!(window.sd && window.sd.credentials && window.sd.credentials.status)) return null;
+  try {
+    _workspaceCredentialStatus = await window.sd.credentials.status();
+    return _workspaceCredentialStatus;
+  } catch (_) {
+    return null;
+  }
+}
+
+function collectWorkspaceReadinessItems(){
+  const brand = (window.ARCG_OS && ARCG_OS.brand) ? ARCG_OS.brand : {};
+  const items = [];
+  const hasBrandBasics = !!((brand.name || '').trim() && (brand.website || '').trim());
+  const hasAiKey = wrCredentialPresent('openai') || wrCredentialPresent('anthropic');
+  const hasLeadSource = wrCredentialPresent('airtable') || wrCredentialPresent('apollo');
+  const hasBookingWebhook = !!(localStorage.getItem('lcc_BOOK_WH_OVERRIDE') || (typeof BOOK_WH !== 'undefined' && BOOK_WH && !String(BOOK_WH).includes('YOUR_')));
+  const hasCampaign = !!(document.getElementById('s-instantly')?.value || localStorage.getItem('lcc_INSTANTLY_CAMPAIGN') || (typeof INSTANTLY_CAMPAIGN !== 'undefined' && INSTANTLY_CAMPAIGN && INSTANTLY_CAMPAIGN !== 'YOUR_CAMPAIGN_ID'));
+  const hasLiveWork = (Array.isArray(allLeads) && allLeads.length > 0) || (window.ARCG_OS && Array.isArray(ARCG_OS.deals) && ARCG_OS.deals.length > 0);
+
+  if (!hasBrandBasics) items.push({
+    severity: 'critical',
+    label: 'Workspace profile missing',
+    desc: 'Add company name and website so generated copy, reports, and outreach have real business context.',
+    action: 'Open settings',
+    tab: 'settings'
+  });
+  if (!hasAiKey) items.push({
+    severity: 'critical',
+    label: 'AI key not connected',
+    desc: 'AI Generate, reply analysis, and content drafting need an approved OpenAI or Claude key. This banner only checks presence.',
+    action: 'Add AI key',
+    tab: 'settings'
+  });
+  if (!hasLeadSource) items.push({
+    severity: 'warning',
+    label: 'Lead source not connected',
+    desc: 'Connect Airtable or Apollo so the dashboard can show live pipeline and readiness signals.',
+    action: 'Connect source',
+    tab: 'settings'
+  });
+  if (!hasCampaign) items.push({
+    severity: 'warning',
+    label: 'Campaign channel not configured',
+    desc: 'Add an Instantly campaign ID before treating outbound execution as ready.',
+    action: 'Set campaign',
+    tab: 'settings'
+  });
+  if (!hasBookingWebhook) items.push({
+    severity: 'info',
+    label: 'Booking automation not configured',
+    desc: 'Add the booking webhook if you want reply-to-meeting handoff from SourceDeck.',
+    action: 'Add webhook',
+    tab: 'settings'
+  });
+  if (!hasLiveWork) items.push({
+    severity: 'info',
+    label: 'No live workspace data',
+    desc: 'Create a lead, connect Airtable, or use demo data before judging dashboard quality.',
+    action: 'Create lead',
+    tab: 'createlead'
+  });
+
+  const rank = { critical: 0, warning: 1, info: 2 };
+  return items.sort((a,b) => rank[a.severity] - rank[b.severity]);
+}
+
+function renderWorkspaceReadinessBanner(){
+  const targets = [
+    document.getElementById('workspace-readiness-banner'),
+    document.getElementById('cmd-workspace-readiness-banner'),
+    document.getElementById('settings-workspace-readiness-banner')
+  ].filter(Boolean);
+  if (!targets.length) return;
+
+  const items = collectWorkspaceReadinessItems();
+  const criticalCount = items.filter(i => i.severity === 'critical').length;
+  const dismissKey = 'lcc_workspace_readiness_dismissed';
+  const dismissed = sessionStorage.getItem(dismissKey) === '1';
+  if (!items.length || (dismissed && criticalCount === 0)) {
+    targets.forEach(el => { el.hidden = true; el.innerHTML = ''; });
+    return;
+  }
+
+  const shown = items.slice(0, 3);
+  const remaining = items.length - shown.length;
+  const title = criticalCount ? 'Workspace setup is blocking core actions' : 'Workspace setup needs attention';
+  const sub = criticalCount
+    ? criticalCount + ' required item' + (criticalCount === 1 ? '' : 's') + ' must be fixed before SourceDeck can reliably generate, review, or route work.'
+    : items.length + ' setup item' + (items.length === 1 ? '' : 's') + ' can improve readiness. These checks do not certify content as safe to send.';
+  const dismiss = criticalCount ? '' : '<button class="btn btn-ghost" onclick="sessionStorage.setItem(\'' + dismissKey + '\',\'1\');renderWorkspaceReadinessBanner()">Dismiss</button>';
+
+  const html =
+    '<div class="wr-head">' +
+      '<div><div class="wr-title">' + wrEscape(title) + '</div><div class="wr-sub">' + wrEscape(sub) + '</div></div>' +
+      '<div class="wr-actions">' +
+        '<button class="btn btn-ghost" onclick="openTab(\'settings\')">Review setup</button>' +
+        dismiss +
+      '</div>' +
+    '</div>' +
+    '<div class="wr-list">' +
+      shown.map(item =>
+        '<div class="wr-item">' +
+          '<span class="wr-badge ' + wrEscape(item.severity) + '">' + wrEscape(item.severity) + '</span>' +
+          '<div class="wr-copy"><div class="wr-label">' + wrEscape(item.label) + '</div><div class="wr-desc">' + wrEscape(item.desc) + '</div></div>' +
+          '<button class="btn btn-ghost" onclick="openTab(\'' + wrEscape(item.tab) + '\')">' + wrEscape(item.action) + '</button>' +
+        '</div>'
+      ).join('') +
+      (remaining > 0 ? '<div class="wr-item"><span class="wr-badge info">more</span><div class="wr-copy"><div class="wr-label">' + remaining + ' more setup item' + (remaining === 1 ? '' : 's') + '</div><div class="wr-desc">Open settings to continue workspace setup.</div></div><button class="btn btn-ghost" onclick="openTab(\'settings\')">Open settings</button></div>' : '') +
+    '</div>';
+
+  targets.forEach(el => { el.hidden = false; el.innerHTML = html; });
+}
+
+window.renderWorkspaceReadinessBanner = renderWorkspaceReadinessBanner;
+
 // ── DEAL MODEL ──
 function createDeal(lead){
   const f = lead.fields || lead;
@@ -8169,6 +8335,8 @@ applyBrandOverlay();
 document.addEventListener('DOMContentLoaded',()=>{
   let tab='dashboard';
   try{tab=localStorage.getItem('lcc_active_tab')||'dashboard';}catch(e){}
+  if(typeof refreshWorkspaceCredentialStatus==='function')refreshWorkspaceCredentialStatus().then(()=>renderWorkspaceReadinessBanner());
+  else if(typeof renderWorkspaceReadinessBanner==='function')renderWorkspaceReadinessBanner();
   openTab(tab);
   ['ra','cc'].forEach(g=>{
     let fb=g==='ra'?'ra-sum':'cc-hook';
