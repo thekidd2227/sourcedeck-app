@@ -2370,15 +2370,28 @@ async function saveSettings(){
       }
     } catch (_) {}
   }
-  // Remaining keys (Claude, OpenAI, BookWh) still use localStorage
-  // until their renderer migrations land. AT_PAT_OVERRIDE and
-  // APOLLO_KEY are intentionally NOT written here -- both migrated
-  // to safe credentials.
-  Object.entries(keys).forEach(([k,v])=>{
-    if (v && k !== 'AT_PAT_OVERRIDE' && k !== 'APOLLO_KEY') localStorage.setItem('lcc_'+k,v);
-  });
-  if(keys.CLAUDE_KEY) window.CLAUDE_KEY = keys.CLAUDE_KEY;
-  if(keys.OPENAI_KEY) window.OPENAI_KEY = keys.OPENAI_KEY;
+  // OpenAI key migrates to safeStorage (same pattern as Airtable/Apollo)
+  if (keys.OPENAI_KEY && window.sd && window.sd.credentials) {
+    try {
+      const r = await window.sd.credentials.set('openai', keys.OPENAI_KEY);
+      if (r && r.ok) {
+        OPENAI_KEY = '<openai_credential_present>';
+        const el = document.getElementById('s-openai'); if (el) el.value = '';
+      }
+    } catch (_) {}
+  }
+  // Claude key migrates to safeStorage
+  if (keys.CLAUDE_KEY && window.sd && window.sd.credentials) {
+    try {
+      const r = await window.sd.credentials.set('anthropic', keys.CLAUDE_KEY);
+      if (r && r.ok) {
+        CLAUDE_KEY = '<anthropic_credential_present>';
+        const el = document.getElementById('s-claude'); if (el) el.value = '';
+      }
+    } catch (_) {}
+  }
+  // BookWh still uses localStorage (not a secret credential)
+  if (keys.BOOK_WH_OVERRIDE) localStorage.setItem('lcc_BOOK_WH_OVERRIDE', keys.BOOK_WH_OVERRIDE);
   const r = document.getElementById('settings-result');
   if(r) r.innerHTML = '<span class="wh wh-ok">✓ Settings saved</span>';
   toast('Settings saved','ok');
@@ -2400,16 +2413,24 @@ function loadSettings(){
       }
     }).catch(()=>{});
   }
-  // Remaining legacy localStorage keys (until their migration lands).
-  // APOLLO_KEY is intentionally NOT read from localStorage -- migrated
-  // to safe credentials above.
-  ['CLAUDE_KEY','OPENAI_KEY','BOOK_WH_OVERRIDE'].forEach(k=>{
-    const v = localStorage.getItem('lcc_'+k);
-    if(v){
-      if(k==='CLAUDE_KEY'){ window.CLAUDE_KEY=v; const el=document.getElementById('s-claude');if(el)el.value=v; }
-      if(k==='OPENAI_KEY'){ window.OPENAI_KEY=v; const el=document.getElementById('s-openai');if(el)el.value=v; }
-    }
-  });
+  // OpenAI + Claude presence from credential adapter (same pattern as Airtable/Apollo)
+  if (window.sd && window.sd.credentials) {
+    window.sd.credentials.status().then(s => {
+      if (s && s.present && s.present.openai) {
+        OPENAI_KEY = '<openai_credential_present>';
+        const el = document.getElementById('s-openai');
+        if (el && !el.value) el.placeholder = 'OpenAI key saved (write-only)';
+      }
+      if (s && s.present && s.present.anthropic) {
+        CLAUDE_KEY = '<anthropic_credential_present>';
+        const el = document.getElementById('s-claude');
+        if (el && !el.value) el.placeholder = 'Claude key saved (write-only)';
+      }
+    }).catch(()=>{});
+  }
+  // BookWh is the only remaining localStorage key (not a secret)
+  const bookWh = localStorage.getItem('lcc_BOOK_WH_OVERRIDE');
+  if (bookWh) { BOOK_WH = bookWh; }
   // One-time migrations: copy legacy lcc_* credential values into
   // safeStorage and then remove the localStorage entry so the raw
   // value is gone. Idempotent -- if the lcc_* key isn't there, no-op.
@@ -2428,6 +2449,26 @@ function loadSettings(){
       if (r && r.ok) {
         localStorage.removeItem('lcc_APOLLO_KEY');
         APOLLO_KEY = '<apollo_credential_present>';
+      }
+    }).catch(()=>{});
+  }
+  // One-time migration: OpenAI key from localStorage to safeStorage
+  const legacyOpenai = localStorage.getItem('lcc_OPENAI_KEY');
+  if (legacyOpenai && window.sd && window.sd.credentials) {
+    window.sd.credentials.set('openai', legacyOpenai).then(r => {
+      if (r && r.ok) {
+        localStorage.removeItem('lcc_OPENAI_KEY');
+        OPENAI_KEY = '<openai_credential_present>';
+      }
+    }).catch(()=>{});
+  }
+  // One-time migration: Claude key from localStorage to safeStorage
+  const legacyClaude = localStorage.getItem('lcc_CLAUDE_KEY');
+  if (legacyClaude && window.sd && window.sd.credentials) {
+    window.sd.credentials.set('anthropic', legacyClaude).then(r => {
+      if (r && r.ok) {
+        localStorage.removeItem('lcc_CLAUDE_KEY');
+        CLAUDE_KEY = '<anthropic_credential_present>';
       }
     }).catch(()=>{});
   }
@@ -4014,11 +4055,8 @@ function openLD(id){
 // ── INIT ─────────────────────────────────────────────────────────
 window.addEventListener('DOMContentLoaded', function(){
   loadSettings();
-  // Pre-fill settings fields from stored values
-  const ck = localStorage.getItem('lcc_CLAUDE_KEY');
-  if(ck){ const el=document.getElementById('s-claude'); if(el) el.value=ck; }
-  const ok = localStorage.getItem('lcc_OPENAI_KEY');
-  if(ok){ const el=document.getElementById('s-openai'); if(el) el.value=ok; }
+  // Settings fields are now write-only with placeholders (not pre-filled).
+  // Credential presence is shown via loadSettings() → credentials.status().
 });
 
 </script><script>
@@ -4039,34 +4077,19 @@ const BOOK_WH='';
 const CONTENT_WH=''; // Set PROD-10 webhook URL when available
 const CANVA_URL='https://www.canva.com/';
 const LEONARDO_URL='https://app.leonardo.ai/generate?model=motion_2.0-fast';
-// Set these keys — store server-side in production; here for local operator use only
+// AI keys are presence-only flags. Raw values live in safeStorage via
+// the main process. Renderer never sees the actual key.
 if(!window.OPENAI_KEY) window.OPENAI_KEY='';
 if(!window.CLAUDE_KEY) window.CLAUDE_KEY='';
 
-// ── Unified AI call — OpenAI PRIMARY, Claude FALLBACK ──
-function _getKey(name){return window[name]||localStorage.getItem('lcc_'+name)||'';}
+// ── Unified AI call — routes through main-process IPC ──
 async function callAI(systemPrompt, userMessage, maxTokens){
   maxTokens=maxTokens||4000;
-  const ok=_getKey('OPENAI_KEY');
-  const ck=_getKey('CLAUDE_KEY');
-  // Try OpenAI first (primary)
-  if(ok){
-    try{
-      const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Authorization':'Bearer '+ok,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o',max_tokens:maxTokens,messages:[{role:'system',content:systemPrompt},{role:'user',content:userMessage}]})});
-      const d=await r.json();
-      if(r.ok&&d.choices)return{text:(d.choices[0]?.message?.content||'').trim(),provider:'OpenAI'};
-      if(ck)console.warn('OpenAI failed ('+r.status+'), trying Claude...');
-      else throw new Error(d.error?.message||'OpenAI error '+r.status);
-    }catch(e){if(!ck)throw e;console.warn('OpenAI error, switching to Claude:',e.message);}
-  }
-  // Fallback to Claude
-  if(ck){
-    const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json','x-api-key':ck,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:maxTokens,system:systemPrompt,messages:[{role:'user',content:userMessage}]})});
-    const d=await r.json();
-    if(r.ok&&d.content)return{text:(d.content[0]?.text||'').trim(),provider:'Claude'};
-    throw new Error(d.error?.message||'Claude error '+r.status);
-  }
-  throw new Error('No API key set. Add Claude or OpenAI key in Settings.');
+  if(!window.sd||!window.sd.ai){throw new Error('AI adapter not available. Running outside Electron?');}
+  const r=await window.sd.ai.generate({systemPrompt:systemPrompt,userMessage:userMessage,maxTokens:maxTokens});
+  if(r&&r.ok)return{text:(r.text||'').trim(),provider:r.provider||'ai'};
+  if(r&&r.error==='no_provider_configured')throw new Error('No API key set. Add Claude or OpenAI key in Settings.');
+  throw new Error((r&&r.error)||'AI generation failed');
 }
 // Airtable — set PAT for live data mode
 const AT_BASE='appXXXXXXXXXXXXXXX';
@@ -6103,13 +6126,10 @@ Single action sentence. Specific.`;
 
   try{
     let text='';
-    if(OPENAI_KEY){
-      const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Authorization':'Bearer '+OPENAI_KEY,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o',max_tokens:600,messages:[{role:'user',content:prompt}]})});
-      const d=await r.json();text=d.choices?.[0]?.message?.content||'';
-    } else if(CLAUDE_KEY){
-      const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':CLAUDE_KEY,'anthropic-version':'2023-06-01','Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:600,messages:[{role:'user',content:prompt}]})});
-      const d=await r.json();text=d.content?.[0]?.text||'';
-    } else {
+    if((OPENAI_KEY||CLAUDE_KEY)&&window.sd&&window.sd.ai){
+      const r=await window.sd.ai.generate({userMessage:prompt,maxTokens:600});
+      text=(r&&r.ok&&r.text)?r.text:'';
+    } else if(!OPENAI_KEY&&!CLAUDE_KEY) {
       await new Promise(r=>setTimeout(r,1200));
       text=`---SUMMARY---\n${co} responded cautiously but did not decline. They seem open to learning more but want specifics before committing to a call.\n\n---INTENT---\nMaybe Later — Not urgent but not dismissive. Evaluating whether ARCG is the right fit.\n\n---RESPONSE---\nThanks for getting back to me — appreciate you taking a look. Based on what I've seen in portfolios like ${co}'s, the biggest wins come from automating the intake and compliance tracking layer first — that's where most PM firms are bleeding time. I can show you exactly what that looks like in 30 minutes — no pitch, just the operational map. Here's the link to pick a time: [BOOKING LINK]. Totally on your schedule.\n\n---NEXT---\nSend booking link now — reply warmth won't last; follow up in 3 days if no booking.`;
     }
@@ -6563,21 +6583,13 @@ async function generateVisualPromptAI(topic, mode, ind) {
   if (isSourceDeck(topic)) {
     const userMsg = buildSourceDeckVisualPrompt(topic, mode, recent);
     try {
-      const r = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {'Authorization': 'Bearer ' + OPENAI_KEY, 'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {role: 'system', content: 'You are an elite commercial art director for SourceDeck, a GovCon opportunity-intelligence and capture-discipline platform for small primes, SDVOSB/WOSB/8(a)/HUBZone operators, and federal BD teams. You produce premium conceptual ad visuals that expose pipeline, capture, and proposal failure modes through physical metaphors — never stock business or office scenes.'},
-            {role: 'user', content: userMsg}
-          ],
-          temperature: 0.95,
-          max_tokens: 280
-        })
+      if(!window.sd||!window.sd.ai) return sourcedeckOfflineVisual(topic, mode);
+      const r = await window.sd.ai.generate({
+        systemPrompt: 'You are an elite commercial art director for SourceDeck, a GovCon opportunity-intelligence and capture-discipline platform for small primes, SDVOSB/WOSB/8(a)/HUBZone operators, and federal BD teams. You produce premium conceptual ad visuals that expose pipeline, capture, and proposal failure modes through physical metaphors — never stock business or office scenes.',
+        userMessage: userMsg,
+        maxTokens: 280
       });
-      const d = await r.json();
-      const prompt = (d.choices?.[0]?.message?.content || '').trim();
+      const prompt = (r && r.ok && r.text) ? r.text.trim() : '';
       if (prompt) {
         const history = [...(VISUAL_ANTI_REPEAT.get(key) || []), prompt.substring(0, 60)];
         VISUAL_ANTI_REPEAT.set(key, history.slice(-3));
@@ -6590,21 +6602,13 @@ async function generateVisualPromptAI(topic, mode, ind) {
   if (isMedPilot(topic)) {
     const userMsg = buildMedPilotVisualPrompt(topic, mode, recent);
     try {
-      const r = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {'Authorization': 'Bearer ' + OPENAI_KEY, 'Content-Type': 'application/json'},
-        body: JSON.stringify({
-          model: 'gpt-4o-mini',
-          messages: [
-            {role: 'system', content: 'You are an elite commercial art director for MedPilot, an ophthalmology workflow automation and revenue-integrity platform. You produce premium conceptual ad visuals that expose hidden business problems through physical metaphors — never stock healthcare or office scenes.'},
-            {role: 'user', content: userMsg}
-          ],
-          temperature: 0.95,
-          max_tokens: 280
-        })
+      if(!window.sd||!window.sd.ai) return medpilotOfflineVisual(topic, mode);
+      const r = await window.sd.ai.generate({
+        systemPrompt: 'You are an elite commercial art director for MedPilot, an ophthalmology workflow automation and revenue-integrity platform. You produce premium conceptual ad visuals that expose hidden business problems through physical metaphors — never stock healthcare or office scenes.',
+        userMessage: userMsg,
+        maxTokens: 280
       });
-      const d = await r.json();
-      const prompt = (d.choices?.[0]?.message?.content || '').trim();
+      const prompt = (r && r.ok && r.text) ? r.text.trim() : '';
       if (prompt) {
         const history = [...(VISUAL_ANTI_REPEAT.get(key) || []), prompt.substring(0, 60)];
         VISUAL_ANTI_REPEAT.set(key, history.slice(-3));
@@ -6643,23 +6647,14 @@ ${recent.length ? recent.map(r => '- ' + r).join('\n') : 'None yet — explore f
 Return ONLY the prompt text. No preamble. No labels. No explanation. 60-100 words.`;
 
   try {
-    const r = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {'Authorization': 'Bearer ' + OPENAI_KEY, 'Content-Type': 'application/json'},
-      body: JSON.stringify({
-        model: 'gpt-4o-mini',
-        messages: [
-          {role: 'system', content: systemPrompt},
-          {role: 'user', content: 'Generate a fresh, specific visual prompt for this topic. Be precise about scene, composition, and environment.'}
-        ],
-        temperature: 0.9,
-        max_tokens: 180
-      })
+    if(!window.sd||!window.sd.ai) return '';
+    const r = await window.sd.ai.generate({
+      systemPrompt: systemPrompt,
+      userMessage: 'Generate a fresh, specific visual prompt for this topic. Be precise about scene, composition, and environment.',
+      maxTokens: 180
     });
-    const d = await r.json();
-    const prompt = (d.choices?.[0]?.message?.content || '').trim();
+    const prompt = (r && r.ok && r.text) ? r.text.trim() : '';
     if (prompt) {
-      // Anti-repeat: store first 45 chars as fingerprint, keep last 3
       const history = [...(VISUAL_ANTI_REPEAT.get(key) || []), prompt.substring(0, 45)];
       VISUAL_ANTI_REPEAT.set(key, history.slice(-3));
     }
@@ -6780,13 +6775,10 @@ Only return the final post-refinement version. Never return the first draft.`;
   const runGen=async()=>{
     try{
       let text='';
-      if(OPENAI_KEY){
-        const r=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Authorization':'Bearer '+OPENAI_KEY,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o',max_tokens:500,messages:[{role:'user',content:aiPrompt}]})});
-        const d=await r.json();text=d.choices?.[0]?.message?.content||'';
-      }else if(CLAUDE_KEY){
-        const r=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'x-api-key':CLAUDE_KEY,'anthropic-version':'2023-06-01','Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:500,messages:[{role:'user',content:aiPrompt}]})});
-        const d=await r.json();text=d.content?.[0]?.text||'';
-      }else{
+      if((OPENAI_KEY||CLAUDE_KEY)&&window.sd&&window.sd.ai){
+        const r=await window.sd.ai.generate({userMessage:aiPrompt,maxTokens:500});
+        text=(r&&r.ok&&r.text)?r.text:'';
+      }else if(!OPENAI_KEY&&!CLAUDE_KEY){
         // No AI key — use library content directly (fully offline, topic-specific)
         await new Promise(r=>setTimeout(r,800));
         if(SD){
@@ -7662,9 +7654,6 @@ Produce the full brief per the REQUIRED OUTPUT format above. No private data, no
     if(typeof callAI === 'function'){
       const result = await callAI(sysPrompt, userMsg, 4000);
       text = (result && result.text) ? result.text : '';
-    } else if(typeof OPENAI_KEY !== 'undefined' && OPENAI_KEY){
-      const r = await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',headers:{'Authorization':'Bearer '+OPENAI_KEY,'Content-Type':'application/json'},body:JSON.stringify({model:'gpt-4o',max_tokens:4000,messages:[{role:'system',content:sysPrompt},{role:'user',content:userMsg}]})});
-      const d = await r.json(); text = d.choices?.[0]?.message?.content || '';
     } else {
       if(st) st.innerHTML = '<span class="wh wh-err">✗ Set an API key in Settings</span>';
       if(typeof toast==='function') toast('Set an API key to run COR intelligence','err');
