@@ -66,12 +66,15 @@ test('renderer never writes lcc_APOLLO_KEY to localStorage', () => {
   // and to call removeItem on it. It must not be written.
   const re = /localStorage\.setItem\s*\(\s*['"`]lcc_APOLLO_KEY/;
   assert.ok(!re.test(HTML), 'renderer must not write lcc_APOLLO_KEY');
-  // And we must NOT do `localStorage.setItem('lcc_'+k, ...)` for k=APOLLO_KEY.
-  // The Object.entries loop in saveSettings explicitly skips APOLLO_KEY.
+  // saveSettings must not write APOLLO_KEY to localStorage — either by
+  // explicitly skipping it in a loop, or by not having a loop that
+  // could write it at all (the current per-key-migration pattern).
   const ss = HTML.match(/async function saveSettings\(\)\s*\{[\s\S]*?\n\}/);
   assert.ok(ss, 'saveSettings function not found');
-  assert.ok(/k\s*!==\s*['"`]APOLLO_KEY['"`]/.test(ss[0]),
-    'saveSettings localStorage loop must explicitly skip APOLLO_KEY');
+  assert.ok(
+    !(/localStorage\.setItem\s*\(\s*['"`]lcc_APOLLO/.test(ss[0]))
+    && !(/localStorage\.setItem\s*\(\s*['"`]lcc_'\s*\+\s*k/.test(ss[0]) && !/k\s*!==\s*['"`]APOLLO_KEY/.test(ss[0])),
+    'saveSettings must not write lcc_APOLLO_KEY to localStorage');
 });
 
 test('renderer never assigns the raw Apollo key to window.APOLLO_KEY', () => {
