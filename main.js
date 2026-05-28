@@ -315,6 +315,27 @@ ipcMain.handle('govcon:stakeholders-for-opp', (_e, payload) => {
   return appApi.govcon.stakeholders.forOpp(payload || {});
 });
 
+ipcMain.handle('govcon:opportunities-list',      () => appApi.govcon.opportunities.list());
+ipcMain.handle('govcon:opportunities-get',       (_e, id) => appApi.govcon.opportunities.get(id));
+ipcMain.handle('govcon:opportunities-upsert',    (_e, opp) => appApi.govcon.opportunities.upsert(opp || {}));
+ipcMain.handle('govcon:opportunities-favorite',  (_e, payload) => appApi.govcon.opportunities.favorite(payload && payload.id, payload && payload.value));
+ipcMain.handle('govcon:opportunities-favorites', () => appApi.govcon.opportunities.favorites());
+ipcMain.handle('govcon:deadlines-extract',       (_e, input) => appApi.govcon.deadlines.extract(input || {}));
+ipcMain.handle('govcon:deadlines-approve',       (_e, input) => appApi.govcon.deadlines.approve(input || {}));
+ipcMain.handle('govcon:subcontractors-source',   (_e, input) => appApi.govcon.subcontractors.source(input || {}));
+ipcMain.handle('govcon:incumbent-research',      (_e, input) => appApi.govcon.incumbent.research(input || {}));
+ipcMain.handle('govcon:solicitation-analyze',    (_e, input) => appApi.govcon.solicitation.analyze(input || {}));
+ipcMain.handle('govcon:clarifications-generate', (_e, input) => appApi.govcon.clarifications.generate(input || {}));
+ipcMain.handle('govcon:relationship-strategy',   (_e, input) => appApi.govcon.clarifications.relationshipStrategy(input || {}));
+ipcMain.handle('govcon:communications-draft-email', (_e, input) => appApi.govcon.communications.draftEmail(input || {}));
+ipcMain.handle('govcon:exports-create',          (_e, input) => appApi.govcon.exports.create(input || {}));
+ipcMain.handle('govcon:scheduled-searches-list', () => appApi.govcon.scheduledSearches.list());
+ipcMain.handle('govcon:scheduled-searches-save', (_e, input) => appApi.govcon.scheduledSearches.save(input || {}));
+ipcMain.handle('govcon:scheduled-searches-run',  (_e, id) => appApi.govcon.scheduledSearches.run(id));
+ipcMain.handle('govcon:scheduled-searches-history', () => appApi.govcon.scheduledSearches.history());
+ipcMain.handle('govcon:proposal-workspace',      (_e, input) => appApi.govcon.proposal.workspace(input || {}));
+ipcMain.handle('govcon:proposal-cost-volume',    (_e, input) => appApi.govcon.proposal.costVolume(input || {}));
+
 // ─── Audit-log list (UI-facing) ──────────────────────────────────────
 ipcMain.handle('audit:list', (_event, opts) => appApi.audit.list(opts));
 
@@ -364,7 +385,19 @@ function sanitizeSamFilters(f) {
       modifications:       !!f.noticeTypes.modifications
     } : { active_solicitation: true, pre_rfp_intel: true, awards: false, modifications: false },
     posted: { withinDays: typeof f.posted?.withinDays === 'number' ? Math.max(1, Math.min(365, f.posted.withinDays | 0)) : 90 },
-    limit: typeof f.limit === 'number' ? Math.max(1, Math.min(100, f.limit | 0)) : 25,
+    limit: typeof f.limit === 'number' ? Math.max(1, Math.min(1000, f.limit | 0)) : 25,
+    maxPages: typeof f.maxPages === 'number' ? Math.max(1, Math.min(10, f.maxPages | 0)) : 1,
+    offset: typeof f.offset === 'number' ? Math.max(0, f.offset | 0) : 0,
+    solicitationNumber: typeof f.solicitationNumber === 'string' ? f.solicitationNumber.trim().slice(0, 80) : '',
+    noticeId: typeof f.noticeId === 'string' ? f.noticeId.trim().slice(0, 80) : '',
+    title: typeof f.title === 'string' ? f.title.trim().slice(0, 160) : '',
+    state: typeof f.state === 'string' ? f.state.trim().toUpperCase().slice(0, 2) : '',
+    zip: typeof f.zip === 'string' ? f.zip.replace(/[^\d-]/g, '').slice(0, 10) : '',
+    organizationName: typeof f.organizationName === 'string' ? f.organizationName.trim().slice(0, 120) : '',
+    organizationCode: typeof f.organizationCode === 'string' ? f.organizationCode.trim().slice(0, 40) : '',
+    setAsideCode: typeof f.setAsideCode === 'string' ? f.setAsideCode.trim().slice(0, 40) : '',
+    responseFrom: typeof f.responseFrom === 'string' ? f.responseFrom.slice(0, 10) : '',
+    responseTo: typeof f.responseTo === 'string' ? f.responseTo.slice(0, 10) : '',
     agencies: f.agencies && typeof f.agencies === 'object' ? {
       include: Array.isArray(f.agencies.include) ? f.agencies.include.map(String).slice(0, 20) : [],
       exclude: Array.isArray(f.agencies.exclude) ? f.agencies.exclude.map(String).slice(0, 20) : []

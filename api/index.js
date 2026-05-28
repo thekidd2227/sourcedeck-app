@@ -51,6 +51,15 @@ const apollo          = require('../services/apollo');
 const openaiProvider  = require('../services/ai/providers/openai');
 const anthropicProvider = require('../services/ai/providers/anthropic');
 const workflowSvc    = require('../services/workflow');
+const deadlines      = require('../services/govcon/deadline-extraction');
+const subSourcing    = require('../services/govcon/subcontractor-sourcing');
+const incumbentSvc   = require('../services/govcon/incumbent-research');
+const solicitationSvc = require('../services/govcon/solicitation-analysis');
+const clarificationSvc = require('../services/govcon/clarification-strategy');
+const emailCompliance = require('../services/govcon/email-compliance');
+const exportSvc      = require('../services/govcon/export');
+const opportunityRecords = require('../services/govcon/opportunity-records');
+const scheduledSam   = require('../services/govcon/scheduled-sam-search');
 
 function createAppApi(opts) {
   opts = opts || {};
@@ -78,6 +87,13 @@ function createAppApi(opts) {
   const apolloSvc       = apollo.createApolloService({ credentials, fetchFn, audit });
   const openaiSvc       = openaiProvider.createOpenaiProvider({ credentials, fetchFn, audit });
   const anthropicSvc    = anthropicProvider.createAnthropicProvider({ credentials, fetchFn, audit });
+  const opportunities   = opportunityRecords.createOpportunityRecordService(store, now);
+  const scheduledSearches = scheduledSam.createScheduledSamSearchService({
+    store,
+    samSearch,
+    opportunityRecords: opportunities,
+    now
+  });
 
   return Object.freeze({
     audit: {
@@ -109,6 +125,85 @@ function createAppApi(opts) {
       sam: {
         search: (filters)  => samSearch.search(filters || {})
       },
+      opportunities: {
+        list:      ()      => Promise.resolve(opportunities.list()),
+        get:       (id)    => Promise.resolve(opportunities.get(id)),
+        upsert:    (opp)   => Promise.resolve(opportunities.upsert(opp || {})),
+        patch:     (id, p) => Promise.resolve(opportunities.patch(id, p || {})),
+        favorite:  (id, v) => Promise.resolve(opportunities.favorite(id, v)),
+        favorites: ()      => Promise.resolve(opportunities.favorites())
+      },
+      deadlines: {
+        extract: (input) => Promise.resolve(withOpportunity(opportunities, input, (payload, record) => {
+          const result = deadlines.extractDeadlines(payload || {}, { now: new Date(now()) });
+          if (record && result.ok) opportunities.patch(record.id, {
+            deadlineEvents: mergeByKey(record.deadlineEvents, result.events, eventKey),
+            reminders: mergeByKey(record.reminders, result.reminders, reminderKey)
+          });
+          return result;
+        })),
+        approve: (input) => Promise.resolve(withOpportunity(opportunities, input, (payload, record) => {
+          const approved = deadlines.approveEvents(payload.events || [], payload.approvedIds || [], { now: new Date(now()) });
+          if (record) opportunities.patch(record.id, {
+            deadlineEvents: mergeByKey(record.deadlineEvents, approved.events, eventKey),
+            reminders: mergeByKey(record.reminders, approved.reminders, reminderKey)
+          });
+          return approved;
+        }))
+      },
+      subcontractors: {
+        source: (input) => Promise.resolve(withOpportunity(opportunities, input, (payload, record) => {
+          const result = subSourcing.sourceSubcontractors(payload || {});
+          if (record) opportunities.patch(record.id, { subcontractorSourcingRuns: [result] });
+          return result;
+        }))
+      },
+      incumbent: {
+        research: (input) => Promise.resolve(withOpportunity(opportunities, input, (payload, record) => {
+          const result = incumbentSvc.researchIncumbent(payload || {});
+          if (record) opportunities.patch(record.id, { incumbentResearch: result });
+          return result;
+        }))
+      },
+      solicitation: {
+        analyze: (input) => Promise.resolve(withOpportunity(opportunities, input, (payload, record) => {
+          const result = solicitationSvc.analyzeSolicitation(payload || {});
+          if (record) opportunities.patch(record.id, { solicitationAnalysis: result });
+          return result;
+        }))
+      },
+      clarifications: {
+        generate: (input) => Promise.resolve(withOpportunity(opportunities, input, (payload, record) => {
+          const result = clarificationSvc.generateClarificationQuestions(payload || {});
+          if (record) opportunities.patch(record.id, { clarificationQuestions: result.questions || [] });
+          return result;
+        })),
+        relationshipStrategy: (input) => Promise.resolve(withOpportunity(opportunities, input, (payload, record) => {
+          const result = clarificationSvc.buildRelationshipStrategy(payload || {});
+          if (record) opportunities.patch(record.id, { relationshipStrategy: result });
+          return result;
+        }))
+      },
+      communications: {
+        draftEmail: (input) => Promise.resolve(withOpportunity(opportunities, input, (payload, record) => {
+          const result = emailCompliance.draftOfficialEmail(payload || {});
+          if (record && result.logEntry) opportunities.patch(record.id, { communicationsLog: [result.logEntry] });
+          return result;
+        }))
+      },
+      exports: {
+        create: (input) => Promise.resolve(withOpportunity(opportunities, input, (payload, record) => {
+          const result = exportSvc.createExport(payload || {});
+          if (record) opportunities.patch(record.id, { exports: [result] });
+          return result;
+        }))
+      },
+      scheduledSearches: {
+        list:    ()      => Promise.resolve(scheduledSearches.list()),
+        save:    (input) => Promise.resolve(scheduledSearches.save(input || {})),
+        run:     (id)    => scheduledSearches.run(id),
+        history: ()      => Promise.resolve(scheduledSearches.history())
+      },
       compliance: {
         matrix: (payload)  => Promise.resolve(compliance.generateComplianceMatrix(
           (payload && payload.text) || '', (payload && payload.opts) || {}))
@@ -128,7 +223,13 @@ function createAppApi(opts) {
           payload && payload.opp, (payload && payload.extras) || {}))
       },
       proposal: {
-        draftSections: (input) => Promise.resolve(proposal.draftSections(input || {}))
+        draftSections: (input) => Promise.resolve(proposal.draftSections(input || {})),
+        workspace:     (input) => Promise.resolve(withOpportunity(opportunities, input, (payload, record) => {
+          const result = proposal.createProposalWorkspace(payload || {});
+          if (record && result.ok) opportunities.patch(record.id, { proposalWorkspace: result });
+          return result;
+        })),
+        costVolume:    (input) => Promise.resolve(proposal.draftCostVolume(input || {}))
       }
     },
 
@@ -194,6 +295,30 @@ function createAppApi(opts) {
     }
   });
 }
+
+function withOpportunity(opportunities, input, fn) {
+  const payload = input || {};
+  const opp = payload.opportunity || payload.opp || null;
+  const id = payload.opportunityId || payload.id || (opp && (opp.id || opp.noticeId || opp.solicitationNumber));
+  let record = id ? opportunities.get(id) : null;
+  if (!record && opp) record = opportunities.upsert(opp);
+  return fn(payload, record);
+}
+
+function mergeByKey(current, next, keyFn) {
+  const out = Array.isArray(current) ? current.slice() : [];
+  const seen = new Set(out.map(keyFn));
+  for (const item of Array.isArray(next) ? next : []) {
+    const key = keyFn(item);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(item);
+  }
+  return out;
+}
+
+function eventKey(e) { return [e.solicitationNumber, e.date, e.eventType].join('|'); }
+function reminderKey(r) { return [r.eventId, r.remindAt, r.offsetHours].join('|'); }
 
 function _listAudit(audit, store, opts) {
   opts = opts || {};
