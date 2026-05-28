@@ -255,6 +255,34 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
   .wr-item{grid-template-columns:1fr;gap:8px}
   .wr-item .btn{width:100%;justify-content:center}
 }
+/* ── GovCon setup banner + first-time setup wizard ── */
+.gc-setup-banner{margin-bottom:16px;border:1px solid rgba(26,111,168,0.28);border-radius:var(--r);background:linear-gradient(145deg,rgba(26,111,168,0.10),rgba(201,148,26,0.05));padding:13px 16px;display:flex;align-items:flex-start;justify-content:space-between;gap:14px}
+.gc-setup-banner .gcsb-title{font-weight:700;color:var(--text);font-size:12px}
+.gc-setup-banner .gcsb-sub{font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:3px}
+.gc-setup-banner .gcsb-state{display:inline-flex;align-items:center;font:700 8px/1 'Azeret Mono',monospace;letter-spacing:0.09em;text-transform:uppercase;border-radius:6px;padding:5px 7px;margin-right:6px}
+.gcsb-state.incomplete{background:var(--warnl);color:var(--warn);border:1px solid var(--warnb)}
+.gcsb-state.review{background:var(--bluel);color:#60a5fa;border:1px solid rgba(26,111,168,0.22)}
+.gcsb-state.demo{background:rgba(160,160,160,0.12);color:var(--muted);border:1px solid rgba(255,255,255,0.12)}
+.gcwiz-backdrop{position:fixed;inset:0;background:rgba(0,0,0,0.66);z-index:240;display:none;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.gcwiz-backdrop.open{display:flex}
+.gcwiz{width:min(620px,94vw);max-height:90vh;overflow:auto;background:var(--panel,#13161c);border:1px solid rgba(201,148,26,0.25);border-radius:var(--r);box-shadow:0 18px 60px rgba(0,0,0,0.5)}
+.gcwiz-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-bottom:1px solid rgba(255,255,255,0.07)}
+.gcwiz-title{font-weight:700;font-size:14px;color:var(--text)}
+.gcwiz-progress{font:700 9px/1 'Azeret Mono',monospace;letter-spacing:0.09em;color:var(--muted);text-transform:uppercase}
+.gcwiz-body{padding:18px}
+.gcwiz-step{display:none}
+.gcwiz-step.active{display:block}
+.gcwiz-step h4{margin:0 0 6px;font-size:13px;color:var(--text)}
+.gcwiz-step .gcwiz-help{font-size:11px;color:var(--muted);line-height:1.6;margin-bottom:14px}
+.gcwiz-field{margin-bottom:12px}
+.gcwiz-field label{display:block;font:700 9px/1 'Azeret Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;color:var(--sub);margin-bottom:5px}
+.gcwiz-certs{display:flex;flex-wrap:wrap;gap:7px}
+.gcwiz-certs label{display:inline-flex;align-items:center;gap:5px;font:500 11px/1 'Instrument Sans',sans-serif;letter-spacing:0;text-transform:none;color:var(--sub);background:var(--panel2,#1a1e26);border:1px solid var(--border);border-radius:7px;padding:6px 9px;cursor:pointer}
+.gcwiz-note{font-size:10.5px;color:var(--muted);line-height:1.6;background:var(--panel3,#171b22);border-left:3px solid var(--gold);border-radius:var(--r2);padding:11px 12px;margin-bottom:12px}
+.gcwiz-status{font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.06em;margin-top:6px}
+.gcwiz-status.saved{color:var(--green)}
+.gcwiz-status.missing{color:var(--muted)}
+.gcwiz-ftr{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:14px 18px;border-top:1px solid rgba(255,255,255,0.07)}
 
 /* OVERLAY / SLIDE PANEL */
 .overlay{position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:200;display:none;align-items:stretch;justify-content:flex-end;backdrop-filter:blur(3px)}
@@ -1798,9 +1826,12 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <button class="btn btn-gold" onclick="fetchGovconFromAirtable()">↻ Refresh</button>
           <button class="btn btn-ghost" onclick="runGovconSync()">🔎 Search SAM.gov</button>
           <button class="btn btn-ghost" onclick="openGovconFavorites()">★ Favorites</button>
+          <button class="btn btn-ghost" onclick="openGovconSetupWizard()">⚙ Setup</button>
         </div>
       </div>
       <div class="pane-body">
+        <!-- First-time GovCon setup banner (state-only; no certification claims) -->
+        <div id="govcon-setup-banner" hidden></div>
         <!-- KPIs -->
         <div class="grid-4 mb-20" id="gc-kpis">
           <div class="kpi gold-kpi kpi-glow-gold"><div class="kpi-val" id="gc-total">0</div><div class="kpi-label">Total Opps</div></div>
@@ -2236,6 +2267,80 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 
   </div><!-- /main-content -->
 </div><!-- /app-body -->
+
+<!-- FIRST-TIME GOVCON SETUP WIZARD -->
+<div class="gcwiz-backdrop" id="govcon-wizard" onclick="if(event.target===this)closeGovconSetupWizard()">
+  <div class="gcwiz" role="dialog" aria-modal="true" aria-label="GovCon setup">
+    <div class="gcwiz-hdr">
+      <div class="gcwiz-title">GovCon Setup</div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <span class="gcwiz-progress" id="gcwiz-progress">Step 1 of 5</span>
+        <button class="x-btn" onclick="closeGovconSetupWizard()">✕</button>
+      </div>
+    </div>
+    <div class="gcwiz-body">
+      <div class="gcwiz-step active" data-step="1">
+        <h4>1. GovCon profile</h4>
+        <div class="gcwiz-help">Tell SourceDeck who you are so capture outputs use your real context. This stays on your machine.</div>
+        <div class="gcwiz-field"><label>Company name</label><input class="input" id="gcwiz-company" type="text" placeholder="Your company legal name" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Socioeconomic certifications</label>
+          <div class="gcwiz-certs" id="gcwiz-certs">
+            <label><input type="checkbox" value="SDVOSB"> SDVOSB</label>
+            <label><input type="checkbox" value="VOSB"> VOSB</label>
+            <label><input type="checkbox" value="8(a)"> 8(a)</label>
+            <label><input type="checkbox" value="WOSB"> WOSB</label>
+            <label><input type="checkbox" value="HUBZone"> HUBZone</label>
+            <label><input type="checkbox" value="Small Business"> Small Business</label>
+            <label><input type="checkbox" value="Other"> Other</label>
+          </div>
+        </div>
+        <div class="gcwiz-field"><label>Target NAICS (comma separated)</label><input class="input" id="gcwiz-naics" type="text" placeholder="541512, 541611" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Target agencies (comma separated)</label><input class="input" id="gcwiz-agencies" type="text" placeholder="DLA, VA, GSA" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Excluded opportunity types (optional, comma separated)</label><input class="input" id="gcwiz-excluded" type="text" placeholder="construction, IDIQ" style="width:100%"></div>
+      </div>
+      <div class="gcwiz-step" data-step="2">
+        <h4>2. SAM.gov access</h4>
+        <div class="gcwiz-help">A SAM.gov API key lets SourceDeck search opportunities directly. Without a key, you can still use a manual/fallback sam.gov search route.</div>
+        <div class="gcwiz-note">Your key is saved through the secure main-process credential boundary. Key status is presence-only — the raw key is never displayed after save and never reaches the page or logs.</div>
+        <div class="gcwiz-field"><label>SAM.gov API key</label><input class="input" id="gcwiz-sam" type="password" placeholder="Paste SAM.gov API key" autocomplete="off" style="width:100%"></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-blue" onclick="gcWizSaveSam()">Save SAM.gov key</button>
+          <button class="btn btn-ghost" onclick="gcWizRemoveSam()">Remove key</button>
+        </div>
+        <div class="gcwiz-status missing" id="gcwiz-sam-status">SAM.gov key missing</div>
+      </div>
+      <div class="gcwiz-step" data-step="3">
+        <h4>3. Demo or first opportunity</h4>
+        <div class="gcwiz-help">Choose how to start. You can change this anytime.</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <label class="gcwiz-certs" style="display:flex"><input type="radio" name="gcwiz-start" value="demo" checked>&nbsp; Start with a synthetic demo workspace (clearly labeled Demo data)</label>
+          <label class="gcwiz-certs" style="display:flex"><input type="radio" name="gcwiz-start" value="import">&nbsp; Paste / import my first solicitation or opportunity</label>
+          <label class="gcwiz-certs" style="display:flex"><input type="radio" name="gcwiz-start" value="manual">&nbsp; Continue with manual SAM.gov search fallback</label>
+        </div>
+        <div class="gcwiz-field" id="gcwiz-import-wrap" style="display:none;margin-top:12px"><label>Paste opportunity title / solicitation number</label><input class="input" id="gcwiz-import" type="text" placeholder="e.g. IT Helpdesk Support — 70Z08323QABC123" style="width:100%"></div>
+      </div>
+      <div class="gcwiz-step" data-step="4">
+        <h4>4. Safety &amp; review</h4>
+        <div class="gcwiz-note">
+          AI outputs require human review before use.<br>
+          Follow each solicitation's instructions and communication windows.<br>
+          SourceDeck does not approve outreach, certify compliance, or make final bid decisions.<br>
+          RED_RESTRICTED blocks informal outreach drafts during restricted windows, and a KILL decision is irreversible. These guardrails protect procurement integrity.
+        </div>
+        <div class="gcwiz-help">Nothing here is legal, contracting, or compliance advice. You remain responsible for final decisions.</div>
+      </div>
+      <div class="gcwiz-step" data-step="5">
+        <h4>5. You're set up</h4>
+        <div class="gcwiz-help" id="gcwiz-finish-summary">Setup saved. SourceDeck will route you to the GovCon workspace.</div>
+        <div class="gcwiz-note">Next recommended action will appear in the GovCon setup banner. No raw secrets are displayed anywhere in the UI.</div>
+      </div>
+    </div>
+    <div class="gcwiz-ftr">
+      <button class="btn btn-ghost" id="gcwiz-back" onclick="gcWizNav(-1)">Back</button>
+      <button class="btn btn-gold" id="gcwiz-next" onclick="gcWizNav(1)">Next</button>
+    </div>
+  </div>
+</div>
 
 <!-- LEAD DETAIL PANEL -->
 <div class="overlay" id="ov" onclick="if(event.target===this)closeSP()">
@@ -4349,6 +4454,14 @@ function openTab(t){
   if(t==='dailyops'&&typeof renderDailyOps==='function')renderDailyOps();
   if(t==='delivery'&&typeof fetchDeliveryFromAirtable==='function'){if(!_delLoaded)fetchDeliveryFromAirtable().then(()=>renderDelivery());else renderDelivery();}
   if(t==='govcon'&&typeof fetchGovconFromAirtable==='function'){if(!gcLoaded)fetchGovconFromAirtable();else renderGovcon();}
+  if(t==='govcon'&&typeof refreshGovconSetup==='function'){refreshGovconSetup().then(()=>{
+    try{
+      if(!govconSetupComplete() && sessionStorage.getItem('lcc_govcon_wizard_seen')!=='1'){
+        sessionStorage.setItem('lcc_govcon_wizard_seen','1');
+        if(typeof openGovconSetupWizard==='function') openGovconSetupWizard();
+      }
+    }catch(_){}
+  });}
   if(t==='clinical'&&typeof clinicalRefresh==='function')clinicalRefresh();
   return false;
 }
@@ -7860,6 +7973,30 @@ function collectWorkspaceReadinessItems(){
     tab: 'createlead'
   });
 
+  // GovCon setup state (presence-only; no certification/compliance claims).
+  const gs = _govconSetupState || {};
+  if (!gs.profileComplete) items.push({
+    severity: 'warning',
+    label: 'GovCon profile incomplete',
+    desc: 'Add company name and certifications so capture outputs use real context. Setup incomplete — manual review required.',
+    action: 'Open setup',
+    tab: 'govcon'
+  });
+  if (!wrCredentialPresent('sam-gov') && !gs.demoMode) items.push({
+    severity: 'info',
+    label: 'SAM.gov key missing',
+    desc: 'Add a SAM.gov key for direct search, or use the manual fallback. Key status is presence-only.',
+    action: 'Open setup',
+    tab: 'govcon'
+  });
+  if (gs.demoMode) items.push({
+    severity: 'info',
+    label: 'GovCon demo data',
+    desc: 'GovCon is showing synthetic demo data. Connect SAM.gov or import a real opportunity when ready.',
+    action: 'Open setup',
+    tab: 'govcon'
+  });
+
   const rank = { critical: 0, warning: 1, info: 2 };
   return items.sort((a,b) => rank[a.severity] - rank[b.severity]);
 }
@@ -7912,6 +8049,187 @@ function renderWorkspaceReadinessBanner(){
 }
 
 window.renderWorkspaceReadinessBanner = renderWorkspaceReadinessBanner;
+
+// ── GOVCON FIRST-TIME SETUP: state + banner + wizard ──
+// Credential boundary: the renderer only ever calls sd.credentials.set
+// / status / remove. It never reads a raw SAM key, never logs one, and
+// never builds an auth header. SAM key presence is boolean-only.
+let _govconSetupState = { samPresent:false, profileComplete:false, oppCount:0, demoMode:false };
+
+function govconProfile(){
+  try { return (window.ARCG_OS && ARCG_OS.brand) ? ARCG_OS.brand : {}; } catch(_) { return {}; }
+}
+
+async function refreshGovconSetupState(){
+  const b = govconProfile();
+  const profileComplete = !!((b.name||'').trim() && (b.certifications||'').trim());
+  let samPresent = false;
+  try {
+    const st = (window.sd && sd.credentials && sd.credentials.status) ? await sd.credentials.status() : null;
+    samPresent = !!(st && st.present && st.present['sam-gov']);
+  } catch(_) {}
+  let oppCount = 0;
+  try { oppCount = Array.isArray(window.gcOpps) ? gcOpps.length : 0; } catch(_) {}
+  let demoMode = false;
+  try { demoMode = localStorage.getItem('lcc_govcon_demo_mode') === '1'; } catch(_) {}
+  _govconSetupState = { samPresent, profileComplete, oppCount, demoMode };
+  return _govconSetupState;
+}
+
+function govconSetupComplete(){
+  const s = _govconSetupState;
+  return s.profileComplete && (s.samPresent || s.oppCount > 0 || s.demoMode);
+}
+
+// Safe-language banner. Never claims compliant / certified / safe to send.
+function renderGovconSetupBanner(){
+  const el = document.getElementById('govcon-setup-banner');
+  if (!el) return;
+  const s = _govconSetupState;
+  const complete = govconSetupComplete();
+  if (complete && !s.demoMode) { el.hidden = true; el.innerHTML = ''; return; }
+
+  let stateLabel, stateClass, title, sub, action;
+  if (!s.profileComplete || (!s.samPresent && s.oppCount === 0 && !s.demoMode)) {
+    stateLabel = 'Setup incomplete'; stateClass = 'incomplete';
+    title = 'Finish GovCon setup';
+    sub = 'Add your GovCon profile and a SAM.gov key (or choose demo data) so capture outputs use real context. Manual review required on all outputs.';
+    action = 'Open setup';
+  } else if (s.demoMode) {
+    stateLabel = 'Demo data'; stateClass = 'demo';
+    title = 'GovCon is in demo mode';
+    sub = 'You are viewing synthetic demo data. Connect SAM.gov or import a real opportunity when ready. Outputs still require human review.';
+    action = 'Open setup';
+  } else {
+    stateLabel = 'Ready for review'; stateClass = 'review';
+    title = 'GovCon workspace ready for review';
+    sub = 'Setup looks complete. All capture outputs still require human review before use.';
+    action = 'Review setup';
+  }
+  el.hidden = false;
+  el.className = 'gc-setup-banner';
+  el.innerHTML =
+    '<div><span class="gcsb-state ' + stateClass + '">' + wrEscape(stateLabel) + '</span>' +
+    '<span class="gcsb-title">' + wrEscape(title) + '</span>' +
+    '<div class="gcsb-sub">' + wrEscape(sub) + '</div></div>' +
+    '<button class="btn btn-ghost" onclick="openGovconSetupWizard()">' + wrEscape(action) + '</button>';
+}
+
+async function refreshGovconSetup(){
+  await refreshGovconSetupState();
+  renderGovconSetupBanner();
+}
+window.refreshGovconSetup = refreshGovconSetup;
+
+// ── Wizard control ──
+let _gcWizStep = 1;
+const _GC_WIZ_MAX = 5;
+
+async function openGovconSetupWizard(){
+  await refreshGovconSetupState();
+  const b = govconProfile();
+  const company = document.getElementById('gcwiz-company'); if (company) company.value = b.name || '';
+  const certs = (b.certifications || '').split(',').map(c=>c.trim()).filter(Boolean);
+  document.querySelectorAll('#gcwiz-certs input[type=checkbox]').forEach(cb => { cb.checked = certs.includes(cb.value); });
+  try {
+    if (window.sd && sd.govcon && sd.govcon.getTargeting) {
+      const t = await sd.govcon.getTargeting();
+      const naics = document.getElementById('gcwiz-naics'); if (naics) naics.value = (t && t.naics || []).join(', ');
+      const ag = document.getElementById('gcwiz-agencies'); if (ag) ag.value = (t && t.agencies && t.agencies.include || []).join(', ');
+    }
+  } catch(_) {}
+  _gcWizUpdateSamStatus();
+  _gcWizStep = 1; _gcWizShow();
+  const bd = document.getElementById('govcon-wizard'); if (bd) bd.classList.add('open');
+  document.querySelectorAll('input[name=gcwiz-start]').forEach(r => {
+    r.onchange = () => { const w = document.getElementById('gcwiz-import-wrap'); if (w) w.style.display = (document.querySelector('input[name=gcwiz-start]:checked')||{}).value === 'import' ? 'block':'none'; };
+  });
+}
+window.openGovconSetupWizard = openGovconSetupWizard;
+
+function closeGovconSetupWizard(){ const bd = document.getElementById('govcon-wizard'); if (bd) bd.classList.remove('open'); }
+window.closeGovconSetupWizard = closeGovconSetupWizard;
+
+function _gcWizShow(){
+  document.querySelectorAll('.gcwiz-step').forEach(s => s.classList.toggle('active', Number(s.getAttribute('data-step')) === _gcWizStep));
+  const prog = document.getElementById('gcwiz-progress'); if (prog) prog.textContent = 'Step ' + _gcWizStep + ' of ' + _GC_WIZ_MAX;
+  const back = document.getElementById('gcwiz-back'); if (back) back.style.visibility = _gcWizStep === 1 ? 'hidden':'visible';
+  const next = document.getElementById('gcwiz-next'); if (next) next.textContent = _gcWizStep >= _GC_WIZ_MAX ? 'Finish' : 'Next';
+}
+
+async function gcWizNav(dir){
+  if (dir > 0 && _gcWizStep === 1) gcWizSaveProfile();
+  if (dir > 0 && _gcWizStep === _GC_WIZ_MAX) { await gcWizFinish(); return; }
+  _gcWizStep = Math.max(1, Math.min(_GC_WIZ_MAX, _gcWizStep + dir));
+  _gcWizShow();
+}
+window.gcWizNav = gcWizNav;
+
+function gcWizSaveProfile(){
+  const name = (document.getElementById('gcwiz-company')||{}).value || '';
+  const certs = Array.from(document.querySelectorAll('#gcwiz-certs input[type=checkbox]:checked')).map(c=>c.value);
+  try {
+    if (window.ARCG_OS) {
+      ARCG_OS.brand = ARCG_OS.brand || {};
+      if (name.trim()) ARCG_OS.brand.name = name.trim();
+      ARCG_OS.brand.certifications = certs.join(', ');
+      if (typeof ARCG_OS.saveBrand === 'function') ARCG_OS.saveBrand();
+    }
+  } catch(_) {}
+  try {
+    if (window.sd && sd.govcon && sd.govcon.saveTargeting) {
+      const naics = ((document.getElementById('gcwiz-naics')||{}).value||'').split(',').map(s=>s.trim()).filter(Boolean);
+      const agencies = ((document.getElementById('gcwiz-agencies')||{}).value||'').split(',').map(s=>s.trim()).filter(Boolean);
+      const excluded = ((document.getElementById('gcwiz-excluded')||{}).value||'').split(',').map(s=>s.trim()).filter(Boolean);
+      sd.govcon.saveTargeting({ naics, agencies: { include: agencies }, excludedTypes: excluded });
+    }
+  } catch(_) {}
+}
+
+async function _gcWizUpdateSamStatus(){
+  let present = false;
+  try {
+    const st = (window.sd && sd.credentials && sd.credentials.status) ? await sd.credentials.status() : null;
+    present = !!(st && st.present && st.present['sam-gov']);
+  } catch(_) {}
+  const el = document.getElementById('gcwiz-sam-status');
+  if (el) { el.textContent = present ? 'SAM.gov key saved' : 'SAM.gov key missing'; el.className = 'gcwiz-status ' + (present ? 'saved':'missing'); }
+}
+
+async function gcWizSaveSam(){
+  const input = document.getElementById('gcwiz-sam');
+  const val = (input && input.value || '').trim();
+  if (!val) { toast('Paste a SAM.gov key first','warn'); return; }
+  if (!(window.sd && sd.credentials && sd.credentials.set)) { toast('Credential service unavailable','err'); return; }
+  try {
+    const r = await sd.credentials.set('sam-gov', val);
+    if (input) input.value = ''; // never retain raw key in the DOM
+    if (r && r.ok) { toast('SAM.gov key saved','ok'); } else { toast('Could not save key','err'); }
+  } catch(_) { if (input) input.value=''; toast('Could not save key','err'); }
+  await _gcWizUpdateSamStatus();
+}
+window.gcWizSaveSam = gcWizSaveSam;
+
+async function gcWizRemoveSam(){
+  if (!(window.sd && sd.credentials && sd.credentials.remove)) return;
+  try { await sd.credentials.remove('sam-gov'); toast('SAM.gov key removed','info'); } catch(_) {}
+  const input = document.getElementById('gcwiz-sam'); if (input) input.value='';
+  await _gcWizUpdateSamStatus();
+}
+window.gcWizRemoveSam = gcWizRemoveSam;
+
+async function gcWizFinish(){
+  gcWizSaveProfile();
+  const start = (document.querySelector('input[name=gcwiz-start]:checked')||{}).value || 'manual';
+  try { localStorage.setItem('lcc_govcon_demo_mode', start === 'demo' ? '1':'0'); } catch(_) {}
+  closeGovconSetupWizard();
+  await refreshGovconSetup();
+  if (typeof refreshWorkspaceCredentialStatus === 'function') { try { await refreshWorkspaceCredentialStatus(); } catch(_) {} }
+  if (typeof renderWorkspaceReadinessBanner === 'function') renderWorkspaceReadinessBanner();
+  if (start === 'manual') toast('Use Search SAM.gov to load opportunities','info');
+  else if (start === 'demo') toast('Demo mode on — data is synthetic','info');
+}
+window.gcWizFinish = gcWizFinish;
 
 // ── DEAL MODEL ──
 function createDeal(lead){
