@@ -84,20 +84,64 @@ function normalizeSamRecord(rec, nowMs) {
     noticeType,
     noticeGroup:        group,
     agency,
-    subAgency:          rec.subTier || rec.office || null,
+    subAgency:          rec.subTier || rec.subTierName || null,
+    office:             rec.office || rec.officeName || null,
     naics:              naics,
     psc:                rec.classificationCode || rec.psc || null,
     setAside,
+    setAsideCode:       rec.typeOfSetAsideDescription || rec.setAsideCode || null,
     contractType:       rec.contractType || rec.typeOfContract || null,
     placeOfPerformance: rec.placeOfPerformance || null,
     postedDate:         isoDateOnly(postedDate),
     responseDeadline:   isoDateOnly(responseDeadline),
     daysUntilDue:       daysUntil(responseDeadline, nowMs),
+    active:             rec.active !== undefined ? !!rec.active : !/archive|inactive/i.test(String(rec.archiveType || rec.status || '')),
+    archiveType:        rec.archiveType || rec.status || null,
+    award:              normalizeAward(rec.award || rec.awardData || rec.awardInfo || rec),
+    pointOfContact:     normalizePoc(rec.pointOfContact || rec.contacts || rec.poc || rec),
     description:        rec.description || null,
+    descriptionLink:    rec.descriptionLink || rec.descriptionUrl || null,
+    officeAddress:      rec.officeAddress || rec.address || null,
     samUrl:             rec.uiLink || rec.link || rec.url || null,
+    resourceLinks:      normalizeResources(rec.resourceLinks || rec.links || rec.attachments || rec.additionalInfoLink),
     _source:            'sam.gov',
     _normalizedAt:      new Date(nowMs || Date.now()).toISOString()
   });
+}
+
+function normalizeAward(rec) {
+  const amount = rec.awardAmount || rec.awardAmountValue || rec.awardedAmount || rec.awardeeAmount;
+  if (!amount && !rec.awardDate && !rec.awardee && !rec.awardeeName) return null;
+  return {
+    amount,
+    date: rec.awardDate || rec.dateSigned || null,
+    number: rec.awardNumber || rec.contractAwardNumber || rec.contractNumber || null,
+    awardeeName: rec.awardee || rec.awardeeName || rec.recipientName || null
+  };
+}
+
+function normalizePoc(v) {
+  if (Array.isArray(v)) return v.map(normalizeOnePoc).filter(Boolean);
+  const one = normalizeOnePoc(v);
+  return one ? [one] : [];
+}
+
+function normalizeOnePoc(v) {
+  v = v || {};
+  const name = v.fullName || v.name || v.primaryContactFullname || null;
+  const email = v.email || v.emailAddress || v.primaryContactEmail || null;
+  const phone = v.phone || v.phoneNumber || v.primaryContactPhone || null;
+  const role = v.type || v.role || v.title || null;
+  if (!name && !email && !phone && !role) return null;
+  return { name, email, phone, role };
+}
+
+function normalizeResources(v) {
+  const arr = Array.isArray(v) ? v : v ? [v] : [];
+  return arr.map((r) => {
+    if (typeof r === 'string') return { label: r, url: r };
+    return { label: r.name || r.title || r.label || r.url || null, url: r.url || r.href || r.link || null };
+  }).filter(r => r.url || r.label);
 }
 
 // Dedupe by noticeId then by solicitationNumber.
@@ -201,7 +245,10 @@ function createSamSearchService(deps) {
 
     const params = new URLSearchParams();
     params.set('api_key', apiKey);
-    params.set('limit',  String(Math.min(filters.limit || 25, 100)));
+    const limit = Math.max(1, Math.min(filters.limit || 25, 1000));
+    const maxPages = Math.max(1, Math.min(filters.maxPages || 1, 10));
+    const startOffset = Math.max(0, filters.offset || 0);
+    params.set('limit',  String(limit));
 
     // SAM.gov requires postedFrom + postedTo as MM/dd/yyyy.
     const within = (filters.posted && filters.posted.withinDays) || 90;
@@ -219,6 +266,16 @@ function createSamSearchService(deps) {
     if (filters.keyword) {
       params.set('q', filters.keyword);
     }
+    if (filters.solicitationNumber) params.set('solnum', String(filters.solicitationNumber).slice(0, 80));
+    if (filters.noticeId) params.set('noticeid', String(filters.noticeId).slice(0, 80));
+    if (filters.title) params.set('title', String(filters.title).slice(0, 160));
+    if (filters.state) params.set('state', String(filters.state).toUpperCase().slice(0, 2));
+    if (filters.zip) params.set('zip', String(filters.zip).replace(/[^\d-]/g, '').slice(0, 10));
+    if (filters.organizationName) params.set('organizationName', String(filters.organizationName).slice(0, 120));
+    if (filters.organizationCode) params.set('organizationCode', String(filters.organizationCode).slice(0, 40));
+    if (filters.setAsideCode) params.set('typeOfSetAside', String(filters.setAsideCode).slice(0, 40));
+    if (filters.responseFrom) params.set('rdlfrom', mmddyyyy(new Date(filters.responseFrom)));
+    if (filters.responseTo) params.set('rdlto', mmddyyyy(new Date(filters.responseTo)));
     // notice-type group → SAM.gov ptype
     const nt = filters.noticeTypes || { active_solicitation: true };
     const ptypes = [];
@@ -226,35 +283,46 @@ function createSamSearchService(deps) {
     if (nt.pre_rfp_intel)       ptypes.push('r', 'p'); // Sources Sought, Presolicitation
     if (ptypes.length) params.set('ptype', ptypes.join(','));
 
-    const url = SAM_API_BASE + '?' + params.toString();
-    let resp;
-    try {
-      resp = await fetchFn(url, { method: 'GET' });
-    } catch (e) {
-      return { ok: false, usedApi: true, reason: 'fetch_failed', error: e.message, results: [], total: 0 };
+    let total = 0;
+    let fetchedPages = 0;
+    const rawAll = [];
+    for (let page = 0; page < maxPages; page++) {
+      params.set('offset', String(startOffset + page * limit));
+      const url = SAM_API_BASE + '?' + params.toString();
+      let resp;
+      try {
+        resp = await fetchFn(url, { method: 'GET' });
+      } catch (e) {
+        return { ok: false, usedApi: true, reason: 'fetch_failed', error: e.message, results: [], total: 0 };
+      }
+      if (!resp.ok) {
+        let detail = '';
+        try { detail = (await resp.text()).slice(0, 200); } catch (_) {}
+        return { ok: false, usedApi: true, reason: 'http_' + resp.status, detail, results: [], total: 0 };
+      }
+      let body;
+      try { body = await resp.json(); } catch (_) {
+        return { ok: false, usedApi: true, reason: 'invalid_json', results: [], total: 0 };
+      }
+      total = body.totalRecords || body.total || total;
+      const rawList = Array.isArray(body.opportunitiesData) ? body.opportunitiesData
+                    : Array.isArray(body.opportunities)     ? body.opportunities
+                    : Array.isArray(body.data)              ? body.data : [];
+      rawAll.push(...rawList);
+      fetchedPages++;
+      if (rawList.length < limit) break;
+      if (total && rawAll.length >= total) break;
     }
-    if (!resp.ok) {
-      let detail = '';
-      try { detail = (await resp.text()).slice(0, 200); } catch (_) {}
-      return { ok: false, usedApi: true, reason: 'http_' + resp.status, detail, results: [], total: 0 };
-    }
-    let body;
-    try { body = await resp.json(); } catch (_) {
-      return { ok: false, usedApi: true, reason: 'invalid_json', results: [], total: 0 };
-    }
-
-    const rawList = Array.isArray(body.opportunitiesData) ? body.opportunitiesData
-                  : Array.isArray(body.opportunities)     ? body.opportunities
-                  : Array.isArray(body.data)              ? body.data : [];
-    const normalized = rawList.map(r => normalizeSamRecord(r, now()));
+    const normalized = rawAll.map(r => normalizeSamRecord(r, now()));
     const deduped    = dedupe(normalized);
     const targeted   = applyTargeting(deduped, filters);
 
     return {
       ok: true,
       usedApi: true,
-      total: body.totalRecords || body.total || deduped.length,
+      total: total || deduped.length,
       returned: targeted.length,
+      fetchedPages,
       results: targeted
     };
   }

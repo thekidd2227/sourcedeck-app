@@ -39,7 +39,47 @@ contextBridge.exposeInMainWorld('sd', {
       remove:  (id)      => ipcRenderer.invoke('govcon:past-performance-remove', id),
       match:   (opp)     => ipcRenderer.invoke('govcon:past-performance-match', opp)
     },
-    stakeholders:        (payload)  => ipcRenderer.invoke('govcon:stakeholders-for-opp', payload)
+    stakeholders:        (payload)  => ipcRenderer.invoke('govcon:stakeholders-for-opp', payload),
+    opportunities: {
+      list:      ()           => ipcRenderer.invoke('govcon:opportunities-list'),
+      get:       (id)         => ipcRenderer.invoke('govcon:opportunities-get', id),
+      upsert:    (opp)        => ipcRenderer.invoke('govcon:opportunities-upsert', opp),
+      favorite:  (id, value)  => ipcRenderer.invoke('govcon:opportunities-favorite', { id, value }),
+      favorites: ()           => ipcRenderer.invoke('govcon:opportunities-favorites')
+    },
+    deadlines: {
+      extract:   (input)      => ipcRenderer.invoke('govcon:deadlines-extract', input),
+      approve:   (input)      => ipcRenderer.invoke('govcon:deadlines-approve', input)
+    },
+    subcontractors: {
+      source:    (input)      => ipcRenderer.invoke('govcon:subcontractors-source', input)
+    },
+    incumbent: {
+      research:  (input)      => ipcRenderer.invoke('govcon:incumbent-research', input)
+    },
+    solicitation: {
+      analyze:   (input)      => ipcRenderer.invoke('govcon:solicitation-analyze', input)
+    },
+    clarifications: {
+      generate:  (input)      => ipcRenderer.invoke('govcon:clarifications-generate', input),
+      relationshipStrategy: (input) => ipcRenderer.invoke('govcon:relationship-strategy', input)
+    },
+    communications: {
+      draftEmail: (input)     => ipcRenderer.invoke('govcon:communications-draft-email', input)
+    },
+    exports: {
+      create:    (input)      => ipcRenderer.invoke('govcon:exports-create', input)
+    },
+    scheduledSearches: {
+      list:      ()           => ipcRenderer.invoke('govcon:scheduled-searches-list'),
+      save:      (input)      => ipcRenderer.invoke('govcon:scheduled-searches-save', input),
+      run:       (id)         => ipcRenderer.invoke('govcon:scheduled-searches-run', id),
+      history:   ()           => ipcRenderer.invoke('govcon:scheduled-searches-history')
+    },
+    proposal: {
+      workspace:  (input)     => ipcRenderer.invoke('govcon:proposal-workspace', input),
+      costVolume: (input)     => ipcRenderer.invoke('govcon:proposal-cost-volume', input)
+    }
   },
 
   // ── Credential management (presence-only — never returns secrets) ─

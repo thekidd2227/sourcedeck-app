@@ -70,14 +70,15 @@ test('services/capture exposes preRfp + past-performance entry points', () => {
   assert.strictEqual(typeof c.createPastPerformanceService, 'function');
 });
 
-test('services/proposal exposes draftSections scaffold', () => {
+test('services/proposal exposes real draftSections workspace surface', () => {
   const p = require('../services/proposal');
   assert.strictEqual(typeof p.draftSections, 'function');
-  const out = p.draftSections({ opportunity: { noticeId: 'X' } });
+  assert.strictEqual(typeof p.createProposalWorkspace, 'function');
+  const out = p.draftSections({ opportunity: { noticeId: 'X', title: 'Opp' }, companyProfile: { name: 'Example LLC' } });
   assert.strictEqual(out.ok, true);
   assert.ok(Array.isArray(out.drafts) && out.drafts.length >= 4);
   assert.match(out.aiPolicy, /human review/i);
-  assert.strictEqual(out._scaffold, true);
+  assert.ok(!JSON.stringify(out).includes('[Company Name]'));
 });
 
 console.log('\n── credentials abstraction ──');
@@ -251,15 +252,17 @@ asyncTest('app-api: stakeholders.forOpp returns a graph with the safety note', a
   assert.ok(!/dm\s+the\s+(co|cor|contracting)/.test(flat));
 });
 
-asyncTest('app-api: proposal.draftSections returns a scaffold + AI policy reminder', async () => {
+asyncTest('app-api: proposal.draftSections returns drafts + AI policy reminder', async () => {
   const api = createAppApi({ store: makeStore(), credentials: credSurface.createMemoryCredentialStore() });
   const r = await api.govcon.proposal.draftSections({
-    opportunity: { noticeId: 'X' },
+    opportunity: { noticeId: 'X', title: 'Opp' },
+    companyProfile: { name: 'Example LLC' },
     complianceMatrix: { rows: [{ reqId: 'REQ-001', requirement: 'Technical staffing approach', sourceQuote: 'staffing model' }] }
   });
   assert.strictEqual(r.ok, true);
   assert.ok(r.drafts.length >= 1);
   assert.match(r.aiPolicy, /human review/i);
+  assert.ok(!JSON.stringify(r).includes('[Company Name]'));
 });
 
 asyncTest('app-api: credentials.status returns presence-only summary', async () => {

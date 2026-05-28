@@ -1827,6 +1827,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
           </select>
           <button class="btn btn-gold" onclick="fetchGovconFromAirtable()">↻ Refresh</button>
           <button class="btn btn-ghost" onclick="runGovconSync()">🔎 Search SAM.gov</button>
+          <button class="btn btn-ghost" onclick="openGovconFavorites()">★ Favorites</button>
         </div>
       </div>
       <div class="pane-body">
@@ -7179,6 +7180,12 @@ function renderGovcon(){
       <td onclick="event.stopPropagation()" style="display:flex;gap:4px;flex-wrap:wrap">
         <a href="${samLink}" target="_blank" class="btn btn-ghost" style="font-size:8px;padding:2px 6px">SAM</a>
         <button class="btn btn-blue" style="font-size:8px;padding:2px 6px" onclick="analyzeGovcon('${o.id}')">Analyze</button>
+        <button class="btn btn-ghost" style="font-size:8px;padding:2px 6px" onclick="favoriteGovcon('${o.id}')">☆</button>
+        <button class="btn btn-ghost" style="font-size:8px;padding:2px 6px" onclick="extractGovconDeadlines('${o.id}')">Dates</button>
+        <button class="btn btn-ghost" style="font-size:8px;padding:2px 6px" onclick="sourceGovconSubs('${o.id}')">Subs</button>
+        <button class="btn btn-ghost" style="font-size:8px;padding:2px 6px" onclick="researchGovconIncumbent('${o.id}')">Inc</button>
+        <button class="btn btn-ghost" style="font-size:8px;padding:2px 6px" onclick="draftGovconQuestions('${o.id}')">Q&A</button>
+        <button class="btn btn-ghost" style="font-size:8px;padding:2px 6px" onclick="openGovconProposal('${o.id}')">Prop</button>
         <button class="btn btn-red" style="font-size:8px;padding:2px 6px" onclick="archiveGovcon('${o.id}')">Archive</button>
       </td>
     </tr>`;
@@ -7207,7 +7214,7 @@ async function analyzeGovcon(recId){
     logActivity('🛑','var(--red)','GovCon analyze refused (not_solicitation): '+(opp.Title||'').slice(0,40));
     return;
   }
-  toast('Starting deep analysis for: '+(opp.Title||''),'info');
+  toast('Starting deterministic analysis for: '+(opp.Title||''),'info');
   // Pull user-configured company context (blank by default — user fills in Settings → Brand → GovCon Profile).
   const _gcBrand = (typeof ARCG_OS!=='undefined' && ARCG_OS.brand) ? ARCG_OS.brand : {};
   const _gcCompany = (_gcBrand.name || '[your company]').trim();
@@ -7218,7 +7225,12 @@ async function analyzeGovcon(recId){
   const prompt=`GOVCON OPPORTUNITY ANALYSIS\n\nAnalyze this federal contract opportunity for ${_gcCompany}:\n\nTitle: ${opp.Title||''}\nSolicitation: ${opp['Solicitation Number']||opp['Notice ID']||''}\nAgency: ${opp.Agency||''}\nNAICS: ${opp.NAICS||''}\nSet-Aside: ${opp['Set-Aside Code']||'Full & Open'}\nPlace of Performance: ${opp['Place of Performance']||''}\nDeadline: ${opp['Response Deadline']||''}\nDays Remaining: ${opp['Days Until Due']||'?'}\n\nCOMPANY CONTEXT:\n- Certifications: ${_gcCerts}\n- Execution model: ${_gcModel}\n- Target margin: ${_gcMargin}\n- Past performance: ${_gcPastPerf}\n\nProvide:\n1. Win probability assessment\n2. Fit analysis for this company\n3. Pricing strategy recommendations\n4. Subcontractor sourcing plan\n5. COR/PM outreach strategy\n6. Go/No-Go recommendation\n7. Immediate action items`;
 
   try{
-    const result=await callAI('You are a federal procurement strategist.',prompt,4000);
+    const localOpp=normalizeGovconOppForApi(opp);
+    let deterministic=null;
+    if(window.sd&&sd.govcon&&sd.govcon.solicitation){
+      deterministic=await sd.govcon.solicitation.analyze({opportunity:localOpp,text:opp['Full Description']||opp.Description||opp['Full Analysis']||''});
+    }
+    const result=deterministic&&deterministic.ok?{text:deterministic.markdown}:await callAI('You are a federal procurement strategist.',prompt,4000);
     // Save analysis to Airtable
     await sdAirtableFetch('https://api.airtable.com/v0/'+AT_BASE+'/'+GC_TBL+'/'+recId,{
       method:'PATCH',
@@ -7249,6 +7261,81 @@ async function analyzeGovcon(recId){
     toast('Analysis complete for: '+(opp.Title||'').slice(0,40),'ok');
     logActivity('🏛️','var(--gold2)','GovCon analyzed: '+(opp.Title||'').slice(0,40));
   }catch(e){toast('Analysis failed: '+e.message,'err');}
+}
+
+function normalizeGovconOppForApi(opp){
+  return {
+    id:opp.id,
+    noticeId:opp['Notice ID']||opp.noticeId,
+    solicitationNumber:opp['Solicitation Number']||opp.solicitationNumber,
+    title:opp.Title||opp.title,
+    agency:opp.Agency||opp.agency,
+    office:opp.Office||opp.office,
+    naics:opp.NAICS||opp.naics,
+    psc:opp.PSC||opp.psc,
+    setAside:opp['Set-Aside Code']||opp.setAside,
+    responseDeadline:opp['Response Deadline']||opp.responseDeadline,
+    placeOfPerformance:opp['Place of Performance']||opp.placeOfPerformance,
+    contractValue:opp['Contract Value']||opp.Value||opp.contractValue,
+    description:[opp.Description,opp['Full Description'],opp['Full Analysis']].filter(Boolean).join('\n\n')
+  };
+}
+
+function showGovconResult(title,result){
+  const overlay=document.getElementById('ov');
+  if(!overlay){toast(title,'info');return;}
+  document.getElementById('sp-name').textContent=title;
+  document.getElementById('sp-email').textContent='GovCon workspace result';
+  const details=document.getElementById('sp-details');
+  if(details)details.innerHTML='<pre style="white-space:pre-wrap;font-size:11px;color:var(--muted);max-height:220px;overflow:auto">'+escapeHtml(JSON.stringify(result,null,2)).slice(0,6000)+'</pre>';
+  const helpEl=document.getElementById('sp-arcg-help');
+  if(helpEl)helpEl.textContent=(result.markdown||result.officialQAndADraft||result.draft||JSON.stringify(result,null,2)).slice(0,2200);
+  overlay.classList.add('open');
+}
+
+function escapeHtml(s){return String(s||'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+async function favoriteGovcon(recId){
+  const opp=gcOpps.find(o=>o.id===recId); if(!opp||!window.sd?.govcon?.opportunities)return;
+  const saved=await sd.govcon.opportunities.upsert(normalizeGovconOppForApi(opp));
+  await sd.govcon.opportunities.favorite(saved.id,true);
+  toast('Saved to GovCon favorites','ok');
+}
+
+async function openGovconFavorites(){
+  if(!window.sd?.govcon?.opportunities){toast('Favorites unavailable','err');return;}
+  showGovconResult('Favorite GovCon Opportunities',await sd.govcon.opportunities.favorites());
+}
+
+async function extractGovconDeadlines(recId){
+  const opp=gcOpps.find(o=>o.id===recId); if(!opp)return;
+  const result=await sd.govcon.deadlines.extract({opportunity:normalizeGovconOppForApi(opp),text:opp['Full Description']||opp.Description||opp['Full Analysis']||''});
+  showGovconResult('Deadline Review',result);
+}
+
+async function sourceGovconSubs(recId){
+  const opp=gcOpps.find(o=>o.id===recId); if(!opp)return;
+  const result=await sd.govcon.subcontractors.source({opportunity:normalizeGovconOppForApi(opp),sowText:opp['Full Description']||opp.Description||'',vendorCandidates:[]});
+  showGovconResult('Subcontractor Sourcing Package',result);
+}
+
+async function researchGovconIncumbent(recId){
+  const opp=gcOpps.find(o=>o.id===recId); if(!opp)return;
+  const result=await sd.govcon.incumbent.research({opportunity:normalizeGovconOppForApi(opp),awards:[]});
+  showGovconResult('Incumbent Research',result);
+}
+
+async function draftGovconQuestions(recId){
+  const opp=gcOpps.find(o=>o.id===recId); if(!opp)return;
+  const result=await sd.govcon.clarifications.generate({opportunity:normalizeGovconOppForApi(opp),text:opp['Full Description']||opp.Description||opp['Full Analysis']||''});
+  showGovconResult('Official Q&A / Clarification Draft',result);
+}
+
+async function openGovconProposal(recId){
+  const opp=gcOpps.find(o=>o.id===recId); if(!opp)return;
+  const companyProfile={name:((typeof ARCG_OS!=='undefined'&&ARCG_OS.brand&&ARCG_OS.brand.name)||'').trim()};
+  const result=await sd.govcon.proposal.workspace({opportunity:normalizeGovconOppForApi(opp),companyProfile});
+  showGovconResult('Proposal Workspace',result);
 }
 
 // ── APPROVED NAICS SET — single source of truth for GovCon search targeting ──
