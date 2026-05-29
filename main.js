@@ -336,6 +336,17 @@ ipcMain.handle('govcon:scheduled-searches-history', () => appApi.govcon.schedule
 ipcMain.handle('govcon:proposal-workspace',      (_e, input) => appApi.govcon.proposal.workspace(input || {}));
 ipcMain.handle('govcon:proposal-cost-volume',    (_e, input) => appApi.govcon.proposal.costVolume(input || {}));
 
+// SAM.gov Opportunity Outreach Agent. Scan config is sanitized so the
+// renderer can never inject an API key / authorization material; the SAM
+// key is pulled in-process by the sam-search service.
+ipcMain.handle('govcon:outreach-scan',          (_e, config) => appApi.govcon.outreach.scan(sanitizeOutreachConfig(config)));
+ipcMain.handle('govcon:outreach-generate-draft', (_e, input) => appApi.govcon.outreach.generateDraft(sanitizeOutreachDraftInput(input)));
+ipcMain.handle('govcon:outreach-set-status',    (_e, input) => appApi.govcon.outreach.setStatus({
+  id: input && typeof input.id === 'string' ? input.id.slice(0, 200) : '',
+  status: input && typeof input.status === 'string' ? input.status.slice(0, 40) : ''
+}));
+ipcMain.handle('govcon:outreach-export',        (_e, input) => appApi.govcon.outreach.export(input || {}));
+
 // ─── Audit-log list (UI-facing) ──────────────────────────────────────
 ipcMain.handle('audit:list', (_event, opts) => appApi.audit.list(opts));
 
@@ -372,6 +383,40 @@ ipcMain.handle('ai:summarize-opportunity', (_e, input) => appApi.ai.summarizeOpp
 
 // Whitelist filter shape so renderer can't pass stray fields straight
 // to a remote API. Mirrors the targeting-profile sanitizer.
+// Whitelist the outreach scan config coming from the renderer. Critically,
+// no apiKey / authorization / credential field is ever forwarded.
+function sanitizeOutreachConfig(c) {
+  c = c || {};
+  return {
+    closingWindowDays: c.closingWindowDays === 7 ? 7 : 30,
+    naics:   Array.isArray(c.naics) ? c.naics.filter(s => /^\d{2,6}$/.test(String(s))).slice(0, 40) : [],
+    psc:     Array.isArray(c.psc)   ? c.psc.filter(s => /^[A-Z0-9]{1,4}$/i.test(String(s))).map(s => String(s).toUpperCase()).slice(0, 40) : [],
+    keywords: Array.isArray(c.keywords)
+      ? c.keywords.map(s => String(s).slice(0, 60)).slice(0, 30)
+      : (typeof c.keywords === 'string' ? c.keywords.slice(0, 200) : ''),
+    setAside: typeof c.setAside === 'string' ? c.setAside.trim().slice(0, 40) : '',
+    state: typeof c.state === 'string' ? c.state.trim().toUpperCase().slice(0, 2) : '',
+    zip: typeof c.zip === 'string' ? c.zip.replace(/[^\d-]/g, '').slice(0, 10) : '',
+    placeOfPerformance: typeof c.placeOfPerformance === 'string' ? c.placeOfPerformance.trim().slice(0, 40) : '',
+    dailyDraftLimit: typeof c.dailyDraftLimit === 'number' ? Math.max(1, Math.min(200, c.dailyDraftLimit | 0)) : 25,
+    postedWithinDays: typeof c.postedWithinDays === 'number' ? Math.max(1, Math.min(365, c.postedWithinDays | 0)) : 90,
+    limit: typeof c.limit === 'number' ? Math.max(1, Math.min(100, c.limit | 0)) : 25,
+    draft: c.draft !== false,
+    noticeTypes: c.noticeTypes && typeof c.noticeTypes === 'object' ? {
+      active_solicitation: c.noticeTypes.active_solicitation !== false,
+      pre_rfp_intel:       c.noticeTypes.pre_rfp_intel       !== false
+    } : { active_solicitation: true, pre_rfp_intel: true }
+  };
+}
+
+function sanitizeOutreachDraftInput(input) {
+  input = input || {};
+  return {
+    id: typeof input.id === 'string' ? input.id.slice(0, 200) : '',
+    dailyDraftLimit: typeof input.dailyDraftLimit === 'number' ? Math.max(1, Math.min(200, input.dailyDraftLimit | 0)) : 25
+  };
+}
+
 function sanitizeSamFilters(f) {
   f = f || {};
   return {
