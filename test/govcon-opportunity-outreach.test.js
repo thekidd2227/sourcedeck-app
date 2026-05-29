@@ -34,10 +34,12 @@ const NOW = Date.parse('2026-06-01T00:00:00.000Z');
 const nowFn = () => NOW;
 function freshStore() { const d = {}; return { get: (k) => d[k], set: (k, v) => { d[k] = v; }, _d: d }; }
 
-function makeAgent({ apiKey = null, fetchFn = null, store = freshStore() } = {}) {
+function makeAgent({ apiKey = null, fetchFn = null, store = freshStore(), scorer = null } = {}) {
   const samSearch = createSamSearchService({ fetch: fetchFn, getApiKey: async () => apiKey, now: nowFn });
   const opportunities = createOpportunityRecordService(store, nowFn);
-  const agent = createOpportunityOutreachService({ samSearch, opportunities, store, now: nowFn });
+  const deps = { samSearch, opportunities, store, now: nowFn };
+  if (scorer) deps.scorer = scorer;
+  const agent = createOpportunityOutreachService(deps);
   return { agent, opportunities, store };
 }
 
@@ -261,6 +263,46 @@ function makeAgent({ apiKey = null, fetchFn = null, store = freshStore() } = {})
     const src = require('fs').readFileSync(require('path').join(__dirname, '..', 'services', 'govcon', 'opportunity-outreach.js'), 'utf8');
     assert.ok(!/getApiKey|credentials\.get|SAM_API_KEY|process\.env|['"]api_key['"]/.test(src),
       'orchestrator does not read keys; key handling stays in sam-search/main process');
+  });
+
+  // ── Phase 2 hardening cases ───────────────────────────────────────
+  await test('invalid API key surfaces an error (not a silent empty scan)', async () => {
+    const fetchFn = async () => ({ ok: false, status: 403, text: async () => 'Forbidden' });
+    const { agent } = makeAgent({ apiKey: 'BAD-KEY', fetchFn });
+    const r = await agent.scan({ closingWindowDays: 30 });
+    assert.strictEqual(r.ok, false, 'scan reports failure');
+    assert.strictEqual(r.reason, 'http_403');
+    assert.strictEqual(r.demoMode, false, 'a bad key is not demo mode');
+    assert.deepStrictEqual(r.records, []);
+  });
+
+  await test('empty SAM result returns ok with zero metrics (no crash)', async () => {
+    const fetchFn = async () => ({ ok: true, json: async () => ({ totalRecords: 0, opportunitiesData: [] }) });
+    const { agent } = makeAgent({ apiKey: 'GOOD-KEY', fetchFn });
+    const r = await agent.scan({ closingWindowDays: 30 });
+    assert.strictEqual(r.ok, true);
+    assert.strictEqual(r.demoMode, false);
+    assert.strictEqual(r.metrics.opportunitiesFound, 0);
+    assert.strictEqual(r.metrics.draftsCreated, 0);
+  });
+
+  await test('missing NAICS config does not crash the scan', async () => {
+    const { agent } = makeAgent({ apiKey: null });
+    const r = await agent.scan({ closingWindowDays: 30, naics: [] });
+    assert.strictEqual(r.ok, true);
+    assert.strictEqual(r.metrics.inWindow, 3);
+  });
+
+  await test('high vs low fit scores: ordering + qualified-match count', async () => {
+    const scorer = (opp) => opp.noticeId === 'MOCK-B'
+      ? { score: 92, decision: 'STRONG_FIT' }
+      : { score: 30, decision: 'RISKY_FIT' };
+    const { agent } = makeAgent({ apiKey: null, scorer });
+    const r = await agent.scan({ closingWindowDays: 30 });
+    assert.strictEqual(r.metrics.qualifiedMatches, 1, 'one opportunity scores >= 60');
+    const top = r.records.slice().sort((a, b) => b.outreachScore - a.outreachScore)[0];
+    assert.strictEqual(top.noticeId, 'MOCK-B');
+    assert.strictEqual(top.outreachLabel, 'STRONG_FIT');
   });
 
   console.log(`\n=== ${failed === 0 ? 'PASS' : 'FAIL'} — ${passed}/${passed + failed} opportunity-outreach tests ===`);

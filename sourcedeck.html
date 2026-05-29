@@ -1850,7 +1850,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
           ⚠ Review all drafts before contacting government personnel. SourceDeck never sends email; nothing is contacted without your explicit action.
         </div>
         <!-- KPIs -->
-        <div class="grid-4 mb-20" id="out-kpis" style="grid-template-columns:repeat(6,1fr)">
+        <div class="grid-4 mb-20" id="out-kpis" style="grid-template-columns:repeat(auto-fit,minmax(120px,1fr))">
           <div class="kpi gold-kpi"><div class="kpi-val" id="out-found">0</div><div class="kpi-label">Opportunities Found</div></div>
           <div class="kpi green-kpi"><div class="kpi-val" id="out-qualified">0</div><div class="kpi-label">Qualified Matches</div></div>
           <div class="kpi blue-kpi"><div class="kpi-val" id="out-drafts">0</div><div class="kpi-label">Drafts Created</div></div>
@@ -9422,8 +9422,19 @@ document.addEventListener('DOMContentLoaded',()=>{
     try {
       var res = await api.scan(readConfig());
       var note = $('out-demo-note');
-      if (res && res.demoMode && note) {
+      if (res && res.ok === false) {
+        if (note) {
+          note.style.display = 'block';
+          note.style.color = '#f85149';
+          var msg = res.reason === 'http_403' || res.reason === 'http_401'
+            ? 'SAM.gov rejected the API key (check Settings → SAM.gov key).'
+            : res.reason === 'http_429' ? 'SAM.gov rate limit hit — wait a moment and retry.'
+            : 'SAM.gov search failed (' + esc(res.reason || 'unknown') + ').';
+          note.textContent = msg;
+        }
+      } else if (res && res.demoMode && note) {
         note.style.display = 'block';
+        note.style.color = 'var(--muted)';
         note.textContent = 'Demo mode: no SAM.gov key configured, showing sample opportunities. Add a key above for live results' + (res.fallbackUrl ? ', or open SAM.gov directly.' : '.');
       } else if (note) { note.style.display = 'none'; }
     } catch(e){ alert('Scan failed: ' + (e && e.message ? e.message : e)); }

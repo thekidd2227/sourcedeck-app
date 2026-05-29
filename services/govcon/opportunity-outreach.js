@@ -363,6 +363,23 @@ function createOpportunityOutreachService(deps) {
     const filters = mapConfigToFilters(config, nowMs);
     const searchResult = await samSearch.search(filters);
 
+    // Surface a real SAM.gov error (e.g. invalid key -> http_403, rate
+    // limit -> http_429, network failure) instead of silently returning an
+    // empty result that looks like "no opportunities".
+    if (searchResult && searchResult.usedApi && searchResult.ok === false) {
+      return {
+        ok: false,
+        reason: searchResult.reason || 'sam_search_failed',
+        detail: searchResult.detail || null,
+        demoMode: false,
+        windowDays,
+        dailyCap: cap,
+        reviewNotice: REVIEW_NOTICE,
+        metrics: { opportunitiesFound: 0, inWindow: 0, qualifiedMatches: 0, draftsCreated: 0, needsReview: 0, scored: 0 },
+        records: []
+      };
+    }
+
     let demoMode = false;
     let fallbackUrl = null;
     let opps = [];
