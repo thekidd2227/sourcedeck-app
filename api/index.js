@@ -53,6 +53,7 @@ const anthropicProvider = require('../services/ai/providers/anthropic');
 const workflowSvc    = require('../services/workflow');
 const deadlines      = require('../services/govcon/deadline-extraction');
 const subSourcing    = require('../services/govcon/subcontractor-sourcing');
+const primeFinder    = require('../services/govcon/prime-partner-finder');
 const incumbentSvc   = require('../services/govcon/incumbent-research');
 const solicitationSvc = require('../services/govcon/solicitation-analysis');
 const clarificationSvc = require('../services/govcon/clarification-strategy');
@@ -248,6 +249,30 @@ function createAppApi(opts) {
           return result;
         })),
         costVolume:    (input) => Promise.resolve(proposal.draftCostVolume(input || {}))
+      },
+      primes: {
+        find:     (input) => Promise.resolve(primeFinder.findPrimePartners(input || {})),
+        findLive: async (input) => {
+          input = input || {};
+          const liveResult = await primeFinder.fetchPrimesFromUSAspending(
+            input.naics || [], input.filters || {}, fetchFn
+          );
+          if (!liveResult.ok || !liveResult.primes.length) {
+            return primeFinder.findPrimePartners(input);
+          }
+          const profile = Object.assign({ naics: input.naics || [] }, input.profile || {});
+          const scored = liveResult.primes
+            .map(p => primeFinder.scorePrime(p, profile))
+            .sort((a, b) => b.partnershipFitScore - a.partnershipFitScore)
+            .slice(0, 100);
+          return { ok: true, sourceMode: 'live', results: scored, safetyNote: primeFinder.NO_AUTO_SEND_NOTE };
+        },
+        draft:    (input) => Promise.resolve(primeFinder.generateOutreachDraft(
+          (input || {}).prime || {}, (input || {}).profile || {}
+        )),
+        memo:     (input) => Promise.resolve(primeFinder.generateCapabilityMatchMemo(
+          (input || {}).prime || {}, (input || {}).profile || {}
+        ))
       }
     },
 

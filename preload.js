@@ -86,6 +86,12 @@ contextBridge.exposeInMainWorld('sd', {
       generateDraft: (input)  => ipcRenderer.invoke('govcon:outreach-generate-draft', input),
       setStatus:     (input)  => ipcRenderer.invoke('govcon:outreach-set-status', input),
       export:        (input)  => ipcRenderer.invoke('govcon:outreach-export', input)
+    },
+    primes: {
+      find:     (input)  => ipcRenderer.invoke('govcon:primes-find',      input),
+      findLive: (input)  => ipcRenderer.invoke('govcon:primes-find-live', input),
+      draft:    (input)  => ipcRenderer.invoke('govcon:primes-draft',     input),
+      memo:     (input)  => ipcRenderer.invoke('govcon:primes-memo',      input)
     }
   },
 

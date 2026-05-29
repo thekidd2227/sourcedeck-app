@@ -574,6 +574,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
       <div class="nav-label">Federal</div>
       <button class="nav-btn" data-tab="govcon"><span class="nav-icon">🏛️</span>GovCon</button>
       <button class="nav-btn" data-tab="outreach"><span class="nav-icon">✉️</span>Outreach</button>
+      <button class="nav-btn" data-tab="primes"><span class="nav-icon">🤝</span>Prime Partners</button>
     </div>
     <div class="nav-section">
       <div class="nav-label">Operations</div>
@@ -1925,6 +1926,157 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
         </div>
       </div>
     </div>
+
+    <!-- ═══════ PRIME PARTNER FINDER ═══════ -->
+    <div class="tab-pane" id="tab-primes">
+      <div class="pane-hdr">
+        <div>
+          <div class="pane-title">Prime Partner Finder</div>
+          <div class="pane-sub">Find top federal primes by NAICS and create subcontracting outreach</div>
+        </div>
+        <div class="pane-actions" style="flex-wrap:wrap;gap:7px">
+          <select class="select" id="ppf-naics" multiple style="height:32px;min-width:160px" title="Select NAICS codes">
+            <option value="">All NAICS</option>
+          </select>
+          <select class="select" id="ppf-agency" style="min-width:140px">
+            <option value="">All Agencies</option>
+            <option>Department of Defense</option>
+            <option>Department of Veterans Affairs</option>
+            <option>Department of Homeland Security</option>
+            <option>Department of Health and Human Services</option>
+            <option>Army Corps of Engineers</option>
+            <option>State Department</option>
+            <option>NASA</option>
+          </select>
+          <select class="select" id="ppf-state">
+            <option value="">All States</option>
+            <option>VA</option><option>MD</option><option>DC</option>
+            <option>TX</option><option>CA</option><option>FL</option>
+            <option>CO</option><option>GA</option><option>AL</option>
+            <option>NY</option><option>AZ</option><option>MA</option>
+          </select>
+          <select class="select" id="ppf-cert">
+            <option value="">All Certifications</option>
+            <option value="sdvosb">SDVOSB</option>
+            <option value="vosb">VOSB</option>
+            <option value="8a">8(a)</option>
+            <option value="wosb">WOSB</option>
+            <option value="hubzone">HUBZone</option>
+          </select>
+          <button class="btn btn-gold" onclick="runPrimeFinder()">🔍 Find Prime Partners</button>
+          <button class="btn btn-ghost" onclick="runPrimeFinderLive()">↻ Try Live (USAspending)</button>
+        </div>
+      </div>
+      <div class="pane-body" id="ppf-body">
+
+        <style>
+          .ppf-kpi-grid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:16px}
+          @media(max-width:900px){.ppf-kpi-grid{grid-template-columns:repeat(3,1fr)}}
+          @media(max-width:540px){.ppf-kpi-grid{grid-template-columns:repeat(2,1fr)}}
+          .ppf-kpi{background:var(--panel2,#0f1e32);border:1px solid var(--border2,rgba(255,255,255,0.07));border-radius:10px;padding:12px;text-align:center}
+          .ppf-kpi .v{font:800 22px/1 'Instrument Sans',sans-serif;color:var(--text,#eaeaea);font-variant-numeric:tabular-nums}
+          .ppf-kpi .l{font:600 8.5px/1.3 'Azeret Mono',monospace;color:var(--muted,#6a7890);letter-spacing:0.1em;text-transform:uppercase;margin-top:4px}
+          .ppf-kpi.gold .v{color:var(--gold2,#c9941a)}
+          .ppf-kpi.green .v{color:#3fb950}
+          .ppf-kpi.blue .v{color:var(--blue2,#1a6fa8)}
+          .ppf-kpi.red .v{color:#f85149}
+          .ppf-score-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:4px;font:700 9px 'Azeret Mono',monospace;letter-spacing:0.05em;text-transform:uppercase}
+          .ppf-score-badge.strategic{background:rgba(201,148,26,0.18);color:var(--gold2,#c9941a)}
+          .ppf-score-badge.strong{background:rgba(63,185,80,0.15);color:#3fb950}
+          .ppf-score-badge.monitor{background:rgba(26,111,168,0.15);color:var(--blue2,#1a6fa8)}
+          .ppf-score-badge.low{background:rgba(255,255,255,0.05);color:var(--muted,#6a7890)}
+          .ppf-action-btn{display:inline-flex;align-items:center;padding:3px 7px;border-radius:4px;font:600 9px 'Azeret Mono',monospace;letter-spacing:0.04em;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--sub,#8ea0b2);cursor:pointer;white-space:nowrap;transition:background 0.12s}
+          .ppf-action-btn:hover{background:rgba(201,148,26,0.12);border-color:rgba(201,148,26,0.3);color:var(--gold2,#c9941a)}
+          .ppf-note{font:500 10.5px/1.6 'Instrument Sans',sans-serif;color:var(--muted,#6a7890);padding:8px 12px;background:rgba(255,255,255,0.02);border-radius:6px;border-left:2px solid rgba(201,148,26,0.4);margin-bottom:12px}
+          .ppf-modal-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:2000;align-items:center;justify-content:center}
+          .ppf-modal-overlay.open{display:flex}
+          .ppf-modal{background:var(--panel,#0b1626);border:1px solid rgba(255,255,255,0.1);border-radius:14px;width:min(680px,92vw);max-height:80vh;display:flex;flex-direction:column;overflow:hidden}
+          .ppf-modal-hdr{padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.07);display:flex;justify-content:space-between;align-items:center;flex-shrink:0}
+          .ppf-modal-hdr .t{font:700 15px 'Syne',sans-serif;color:var(--text,#eaeaea)}
+          .ppf-modal-hdr .st{font:500 11px 'Instrument Sans',sans-serif;color:var(--muted,#6a7890);margin-top:2px}
+          .ppf-modal-body{padding:20px;overflow-y:auto;flex:1;font-size:12.5px;line-height:1.7;color:var(--sub,#8ea0b2);white-space:pre-wrap;font-family:'Instrument Sans',sans-serif}
+          .ppf-modal-footer{padding:12px 20px;border-top:1px solid rgba(255,255,255,0.07);display:flex;gap:8px;justify-content:flex-end;flex-shrink:0}
+          .ppf-empty{text-align:center;padding:60px 20px;color:var(--muted,#6a7890)}
+          .ppf-empty .icon{font-size:36px;margin-bottom:12px}
+          .ppf-empty .msg{font:600 14px 'Instrument Sans',sans-serif;margin-bottom:6px;color:var(--sub,#8ea0b2)}
+          .ppf-empty .hint{font:500 11.5px 'Instrument Sans',sans-serif}
+        </style>
+
+        <!-- Safety note -->
+        <div class="ppf-note">🔒 <strong>No emails are auto-sent.</strong> All outreach drafts require your review and approval. This tool is for prime contractor <em>partnership</em> outreach — not solicitation outreach to contracting officers.</div>
+
+        <!-- KPI dashboard -->
+        <div class="ppf-kpi-grid">
+          <div class="ppf-kpi gold"><div class="v" id="ppf-k-total">—</div><div class="l">Prime Targets</div></div>
+          <div class="ppf-kpi gold"><div class="v" id="ppf-k-strategic">—</div><div class="l">Strategic Primes</div></div>
+          <div class="ppf-kpi blue"><div class="v" id="ppf-k-drafts">—</div><div class="l">Drafts Pending</div></div>
+          <div class="ppf-kpi blue"><div class="v" id="ppf-k-portals">—</div><div class="l">Portals to Submit</div></div>
+          <div class="ppf-kpi red"><div class="v" id="ppf-k-followups">—</div><div class="l">Follow-Ups Due</div></div>
+          <div class="ppf-kpi green"><div class="v" id="ppf-k-calls">—</div><div class="l">Calls Scheduled</div></div>
+        </div>
+
+        <!-- Results table -->
+        <div class="tbl-wrap" style="max-height:calc(100vh - 380px)">
+          <table class="tbl" id="ppf-table" style="display:none">
+            <thead><tr>
+              <th style="width:56px">Score</th>
+              <th>Prime</th>
+              <th style="width:70px">NAICS</th>
+              <th style="width:100px;text-align:right">Total Oblig.</th>
+              <th style="width:80px;text-align:right">Recent</th>
+              <th>Top Agency</th>
+              <th style="width:60px">State(s)</th>
+              <th>SBLO Contact</th>
+              <th style="width:100px">Status</th>
+              <th style="width:200px">Actions</th>
+            </tr></thead>
+            <tbody id="ppf-tbody"></tbody>
+          </table>
+          <div id="ppf-empty" class="ppf-empty">
+            <div class="icon">🤝</div>
+            <div class="msg">Find your top prime contractor partners</div>
+            <div class="hint">Select your NAICS codes and click "Find Prime Partners" to get started.</div>
+          </div>
+        </div>
+
+      </div><!-- /pane-body -->
+
+      <!-- Prime Profile Modal -->
+      <div class="ppf-modal-overlay" id="ppf-profile-modal" onclick="if(event.target===this)closePpfModal('ppf-profile-modal')">
+        <div class="ppf-modal">
+          <div class="ppf-modal-hdr">
+            <div>
+              <div class="t" id="ppf-profile-title">Prime Profile</div>
+              <div class="st" id="ppf-profile-sub"></div>
+            </div>
+            <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="closePpfModal('ppf-profile-modal')">✕ Close</button>
+          </div>
+          <div class="ppf-modal-body" id="ppf-profile-body"></div>
+          <div class="ppf-modal-footer">
+            <button class="btn btn-ghost" onclick="closePpfModal('ppf-profile-modal')">Close</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Draft / Memo Modal -->
+      <div class="ppf-modal-overlay" id="ppf-draft-modal" onclick="if(event.target===this)closePpfModal('ppf-draft-modal')">
+        <div class="ppf-modal">
+          <div class="ppf-modal-hdr">
+            <div>
+              <div class="t" id="ppf-draft-title">Outreach Draft</div>
+              <div class="st" style="color:#f85149">Requires human review — not auto-sent</div>
+            </div>
+            <button class="btn btn-ghost" style="padding:4px 10px;font-size:11px" onclick="closePpfModal('ppf-draft-modal')">✕ Close</button>
+          </div>
+          <div class="ppf-modal-body" id="ppf-draft-body"></div>
+          <div class="ppf-modal-footer">
+            <button class="btn btn-ghost" onclick="copyPpfDraft()">📋 Copy Draft</button>
+            <button class="btn btn-ghost" onclick="closePpfModal('ppf-draft-modal')">Close</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /tab-pane#tab-primes -->
 
     <!-- ═══════ COMMAND MODE ═══════ -->
     <div class="tab-pane" id="tab-command">
@@ -9538,6 +9690,418 @@ document.addEventListener('DOMContentLoaded',()=>{
       }
     } catch(e){ alert('Export failed: ' + (e && e.message ? e.message : e)); }
   };
+})();
+</script>
+
+<!-- ═══════════════════════════════════════════════════════════════════════
+     PRIME PARTNER FINDER — renderer module
+     Calls sd.govcon.primes.* via IPC (Electron) or graceful fallback.
+     NO auto-send. Human approval required for all drafts.
+     ═══════════════════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+  'use strict';
+
+  // ── State ──────────────────────────────────────────────────────────────
+  var _ppfResults   = [];   // current scored prime list
+  var _ppfDraftText = '';   // last generated draft/memo
+  var _ppfDraftCount = 0;   // pending draft count for KPI card
+
+  // ── Status options ────────────────────────────────────────────────────
+  var PPF_STATUSES = [
+    'New','Researching','Qualified','Drafted','Approved',
+    'Contacted','Portal Submitted','Call Scheduled',
+    'Teaming Discussion','NDA / Paperwork','Dormant','Rejected'
+  ];
+
+  // ── Helpers ───────────────────────────────────────────────────────────
+  function fmtM(n) {
+    n = Number(n) || 0;
+    if (n >= 1e9) return '$' + (n / 1e9).toFixed(1) + 'B';
+    if (n >= 1e6) return '$' + (n / 1e6).toFixed(0) + 'M';
+    return '$' + n.toLocaleString();
+  }
+
+  function scoreClass(s) {
+    s = Number(s) || 0;
+    if (s >= 90) return 'strategic';
+    if (s >= 70) return 'strong';
+    if (s >= 50) return 'monitor';
+    return 'low';
+  }
+
+  function esc(s) {
+    return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function toast(msg, type) {
+    if (typeof window.toast === 'function') window.toast(msg, type || 'ok');
+    else console.log('[PPF]', msg);
+  }
+
+  // ── Load user NAICS into the selector ────────────────────────────────
+  async function loadUserNaics() {
+    var sel = document.getElementById('ppf-naics');
+    if (!sel) return;
+    try {
+      if (window.sd && window.sd.govcon && window.sd.govcon.getTargeting) {
+        var profile = await window.sd.govcon.getTargeting();
+        var codes = Array.isArray(profile && profile.naics) ? profile.naics : [];
+        // Rebuild options
+        sel.innerHTML = '<option value="">All NAICS</option>';
+        (codes.length ? codes : ['541512','541611','541330','561210']).forEach(function(n) {
+          var o = document.createElement('option');
+          o.value = n; o.textContent = n;
+          sel.appendChild(o);
+        });
+        // Select all user codes by default
+        Array.from(sel.options).forEach(function(o) { o.selected = !!o.value; });
+      }
+    } catch (e) { /* no-op */ }
+  }
+
+  // ── Run search ────────────────────────────────────────────────────────
+  async function runPrimeFinder() {
+    var naicsSel  = document.getElementById('ppf-naics');
+    var agency    = (document.getElementById('ppf-agency') || {}).value || '';
+    var state     = (document.getElementById('ppf-state')  || {}).value || '';
+    var cert      = (document.getElementById('ppf-cert')   || {}).value || '';
+    var naics     = naicsSel
+      ? Array.from(naicsSel.selectedOptions).map(function(o){return o.value;}).filter(Boolean)
+      : [];
+
+    var profile = {};
+    try {
+      if (window.sd && window.sd.govcon && window.sd.govcon.getTargeting) {
+        profile = await window.sd.govcon.getTargeting() || {};
+      }
+    } catch(e) {}
+
+    var input = { naics: naics, profile: profile, filters: { agency: agency, state: state, certification: cert } };
+
+    try {
+      var result;
+      if (window.sd && window.sd.govcon && window.sd.govcon.primes && window.sd.govcon.primes.find) {
+        result = await window.sd.govcon.primes.find(input);
+      } else {
+        toast('Prime Partner Finder not available in this context','warn');
+        return;
+      }
+      if (!result || !result.ok) { toast('Prime finder error','error'); return; }
+      _ppfResults = result.results || [];
+      renderPpfKpis(result.summary || {});
+      renderPpfTable(_ppfResults);
+      toast('Found ' + _ppfResults.length + ' prime targets', 'ok');
+    } catch(e) {
+      toast('Prime finder error: ' + e.message, 'error');
+    }
+  }
+
+  async function runPrimeFinderLive() {
+    var naicsSel = document.getElementById('ppf-naics');
+    var naics    = naicsSel
+      ? Array.from(naicsSel.selectedOptions).map(function(o){return o.value;}).filter(Boolean)
+      : [];
+    if (!naics.length) { toast('Select at least one NAICS code for live search', 'warn'); return; }
+
+    var profile = {};
+    try {
+      if (window.sd && window.sd.govcon && window.sd.govcon.getTargeting) {
+        profile = await window.sd.govcon.getTargeting() || {};
+      }
+    } catch(e) {}
+
+    var input = { naics: naics, profile: profile };
+    try {
+      var result;
+      if (window.sd && window.sd.govcon && window.sd.govcon.primes && window.sd.govcon.primes.findLive) {
+        result = await window.sd.govcon.primes.findLive(input);
+      } else {
+        toast('Live search not available','warn'); return;
+      }
+      if (!result || !result.ok) { toast('Live search unavailable — using demo data', 'warn'); return; }
+      _ppfResults = result.results || [];
+      var summary = {
+        primeTargetsFound: _ppfResults.length,
+        strategicPrimes: _ppfResults.filter(function(p){return p.partnershipFitScore >= 90;}).length,
+        draftsNeedingReview: _ppfDraftCount,
+        portalsToSubmit: _ppfResults.filter(function(p){return p.registrationPortalUrl;}).length,
+        followUpsDue: 0,
+        callsScheduled: 0
+      };
+      renderPpfKpis(summary);
+      renderPpfTable(_ppfResults);
+      toast('Live: ' + _ppfResults.length + ' primes from USAspending', 'ok');
+    } catch(e) {
+      toast('Live search error: ' + e.message + ' — try demo mode', 'warn');
+    }
+  }
+
+  // ── KPI rendering ────────────────────────────────────────────────────
+  function renderPpfKpis(s) {
+    function set(id, val) {
+      var el = document.getElementById(id);
+      if (el) el.textContent = val === null || val === undefined ? '—' : val;
+    }
+    set('ppf-k-total',      s.primeTargetsFound    || 0);
+    set('ppf-k-strategic',  s.strategicPrimes      || 0);
+    set('ppf-k-drafts',     _ppfDraftCount         || s.draftsNeedingReview || 0);
+    set('ppf-k-portals',    s.portalsToSubmit      || 0);
+    set('ppf-k-followups',  s.followUpsDue         || 0);
+    set('ppf-k-calls',      s.callsScheduled       || 0);
+  }
+
+  // ── Table rendering ──────────────────────────────────────────────────
+  function renderPpfTable(primes) {
+    var tbl   = document.getElementById('ppf-table');
+    var empty = document.getElementById('ppf-empty');
+    var tbody = document.getElementById('ppf-tbody');
+    if (!tbl || !tbody) return;
+
+    if (!primes || !primes.length) {
+      if (tbl)   tbl.style.display = 'none';
+      if (empty) empty.style.display = '';
+      return;
+    }
+
+    if (tbl)   tbl.style.display = '';
+    if (empty) empty.style.display = 'none';
+
+    tbody.innerHTML = primes.map(function(p, i) {
+      var sc     = Number(p.partnershipFitScore) || 0;
+      var cls    = scoreClass(sc);
+      var naics0 = Array.isArray(p.naics) ? p.naics.slice(0, 2).join(', ') : '';
+      var agency = Array.isArray(p.topAgencies) ? (p.topAgencies[0] || '') : '';
+      if (agency.length > 28) agency = agency.slice(0, 26) + '…';
+      var states = Array.isArray(p.placeOfPerformance) ? p.placeOfPerformance.slice(0,3).join(', ') : '';
+      var contact = p.sbloEmail
+        ? '<span title="' + esc(p.sbloEmail) + '">' + esc(p.sbloContactName || 'SBLO') + '</span>'
+        : (p.sbloContactName ? esc(p.sbloContactName) : '<span style="color:var(--muted)">—</span>');
+      var statusOpts = PPF_STATUSES.map(function(st) {
+        return '<option' + (st === p.outreachStatus ? ' selected' : '') + '>' + esc(st) + '</option>';
+      }).join('');
+
+      return '<tr style="cursor:default">' +
+        '<td>' +
+          '<span class="ppf-score-badge ' + cls + '">' + sc + '</span>' +
+        '</td>' +
+        '<td>' +
+          '<div style="font-weight:600;font-size:11.5px;line-height:1.3">' + esc(p.primeName) + '</div>' +
+          '<div style="font-size:9.5px;color:var(--muted);margin-top:1px">' + esc(p.scoreLabel || '') + '</div>' +
+        '</td>' +
+        '<td style="font-size:10px;color:var(--sub)">' + esc(naics0) + '</td>' +
+        '<td style="text-align:right;font-size:11px;font-variant-numeric:tabular-nums">' + fmtM(p.totalObligations) + '</td>' +
+        '<td style="text-align:right;font-size:11px;font-variant-numeric:tabular-nums">' + (p.recentAwardCount || '—') + '</td>' +
+        '<td style="font-size:10.5px">' + esc(agency) + '</td>' +
+        '<td style="font-size:10px;color:var(--sub)">' + esc(states) + '</td>' +
+        '<td style="font-size:10.5px">' + contact + '</td>' +
+        '<td>' +
+          '<select class="select" style="font-size:9px;padding:2px 4px;height:24px" onchange="ppfUpdateStatus(' + i + ',this.value)">' +
+            statusOpts +
+          '</select>' +
+        '</td>' +
+        '<td>' +
+          '<div style="display:flex;flex-wrap:wrap;gap:3px">' +
+            '<button class="ppf-action-btn" onclick="ppfViewProfile(' + i + ')">Profile</button>' +
+            '<button class="ppf-action-btn" onclick="ppfGenDraft(' + i + ')">Draft</button>' +
+            '<button class="ppf-action-btn" onclick="ppfGenMemo(' + i + ')">Memo</button>' +
+            (p.sbloEmail
+              ? '<button class="ppf-action-btn" onclick="ppfCopyEmail(\'' + esc(p.sbloEmail) + '\')">Copy Email</button>'
+              : '') +
+            (p.registrationPortalUrl
+              ? '<button class="ppf-action-btn" onclick="ppfMarkPortal(' + i + ')">Portal ✓</button>'
+              : '') +
+          '</div>' +
+        '</td>' +
+      '</tr>';
+    }).join('');
+  }
+
+  // ── Actions ───────────────────────────────────────────────────────────
+  function ppfUpdateStatus(idx, status) {
+    if (!_ppfResults[idx]) return;
+    _ppfResults[idx] = Object.assign({}, _ppfResults[idx], { outreachStatus: status });
+  }
+
+  function ppfViewProfile(idx) {
+    var p = _ppfResults[idx];
+    if (!p) return;
+    var el = document.getElementById('ppf-profile-title');
+    var sl = document.getElementById('ppf-profile-sub');
+    var body = document.getElementById('ppf-profile-body');
+    if (el) el.textContent = p.primeName;
+    if (sl) sl.textContent = 'Score: ' + p.partnershipFitScore + '/100 — ' + (p.scoreLabel || '');
+    if (body) body.textContent = [
+      '== PRIME PROFILE ==',
+      'Name:       ' + p.primeName,
+      'UEI:        ' + (p.uei || 'See SAM.gov'),
+      'CAGE:       ' + (p.cage || '—'),
+      'Website:    ' + (p.website || '—'),
+      'NAICS:      ' + (Array.isArray(p.naics) ? p.naics.join(', ') : '—'),
+      '',
+      '== FEDERAL AWARD HISTORY ==',
+      'Total Obligations: ' + fmtM(p.totalObligations),
+      'Award Count:       ' + (p.awardCount || '—'),
+      'Recent Awards:     ' + (p.recentAwardCount || '—'),
+      'Top Agencies:      ' + (Array.isArray(p.topAgencies) ? p.topAgencies.join('; ') : '—'),
+      'Contracting Offices: ' + (Array.isArray(p.topContractingOffices) ? p.topContractingOffices.join('; ') : '—'),
+      'Contract Vehicles: ' + (Array.isArray(p.contractVehicles) ? p.contractVehicles.join(', ') : '—'),
+      'Place of Performance: ' + (Array.isArray(p.placeOfPerformance) ? p.placeOfPerformance.join(', ') : '—'),
+      '',
+      '== SUBCONTRACTING ==',
+      'Sub Plan Required: ' + (p.subcontractingPlanMatch ? 'Yes' : 'Not confirmed'),
+      'SBLO Name:   ' + (p.sbloContactName || '—'),
+      'SBLO Email:  ' + (p.sbloEmail || '—'),
+      'Supplier Diversity: ' + (p.supplierDiversityUrl || '—'),
+      'Registration Portal: ' + (p.registrationPortalUrl || '—'),
+      '',
+      '== PARTNERSHIP FIT ==',
+      'Score:  ' + p.partnershipFitScore + '/100 — ' + (p.scoreLabel || ''),
+      'Reason: ' + (p.reasonForScore || '—'),
+      'Status: ' + (p.outreachStatus || 'New'),
+      'Notes:  ' + (p.notes || '—')
+    ].join('\n');
+    openPpfModal('ppf-profile-modal');
+  }
+
+  async function ppfGenDraft(idx) {
+    var p = _ppfResults[idx];
+    if (!p) return;
+    var profile = {};
+    try {
+      if (window.sd && window.sd.govcon && window.sd.govcon.getTargeting) {
+        profile = await window.sd.govcon.getTargeting() || {};
+      }
+    } catch(e) {}
+
+    var title = document.getElementById('ppf-draft-title');
+    var body  = document.getElementById('ppf-draft-body');
+    if (title) title.textContent = 'Outreach Draft — ' + p.primeName;
+
+    try {
+      var result;
+      if (window.sd && window.sd.govcon && window.sd.govcon.primes && window.sd.govcon.primes.draft) {
+        result = await window.sd.govcon.primes.draft({ prime: p, profile: profile });
+      }
+      if (result && result.ok) {
+        _ppfDraftText = result.draft;
+        _ppfDraftCount = Math.max(0, _ppfDraftCount + 1);
+        var kd = document.getElementById('ppf-k-drafts');
+        if (kd) kd.textContent = _ppfDraftCount;
+        if (body) body.textContent = result.draft + '\n\n---\n' + (result.safetyNote || '');
+        if (_ppfResults[idx]) _ppfResults[idx] = Object.assign({}, _ppfResults[idx], { outreachStatus: 'Drafted' });
+        renderPpfTable(_ppfResults);
+        openPpfModal('ppf-draft-modal');
+      } else {
+        toast('Draft generation failed', 'error');
+      }
+    } catch(e) {
+      toast('Draft error: ' + e.message, 'error');
+    }
+  }
+
+  async function ppfGenMemo(idx) {
+    var p = _ppfResults[idx];
+    if (!p) return;
+    var profile = {};
+    try {
+      if (window.sd && window.sd.govcon && window.sd.govcon.getTargeting) {
+        profile = await window.sd.govcon.getTargeting() || {};
+      }
+    } catch(e) {}
+
+    var title = document.getElementById('ppf-draft-title');
+    var body  = document.getElementById('ppf-draft-body');
+    if (title) title.textContent = 'Capability Match Memo — ' + p.primeName;
+
+    try {
+      var result;
+      if (window.sd && window.sd.govcon && window.sd.govcon.primes && window.sd.govcon.primes.memo) {
+        result = await window.sd.govcon.primes.memo({ prime: p, profile: profile });
+      }
+      if (result && result.ok) {
+        _ppfDraftText = result.memo;
+        if (body) body.textContent = result.memo;
+        openPpfModal('ppf-draft-modal');
+        toast('Capability memo generated', 'ok');
+      } else {
+        toast('Memo generation failed', 'error');
+      }
+    } catch(e) {
+      toast('Memo error: ' + e.message, 'error');
+    }
+  }
+
+  function ppfCopyEmail(email) {
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(email).then(function(){
+        toast('SBLO email copied: ' + email, 'ok');
+      });
+    } else {
+      toast('Email: ' + email, 'ok');
+    }
+  }
+
+  function ppfMarkPortal(idx) {
+    if (!_ppfResults[idx]) return;
+    _ppfResults[idx] = Object.assign({}, _ppfResults[idx], { outreachStatus: 'Portal Submitted' });
+    renderPpfTable(_ppfResults);
+    var kp = document.getElementById('ppf-k-portals');
+    if (kp) {
+      var cur = parseInt(kp.textContent, 10) || 0;
+      kp.textContent = Math.max(0, cur - 1);
+    }
+    toast('Marked as Portal Submitted', 'ok');
+  }
+
+  function copyPpfDraft() {
+    if (!_ppfDraftText) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(_ppfDraftText).then(function(){
+        toast('Draft copied to clipboard', 'ok');
+      });
+    }
+  }
+
+  // ── Modal helpers ────────────────────────────────────────────────────
+  function openPpfModal(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.add('open');
+  }
+
+  function closePpfModal(id) {
+    var el = document.getElementById(id);
+    if (el) el.classList.remove('open');
+  }
+
+  // ── Tab activation hook ──────────────────────────────────────────────
+  var _ppfInit = false;
+  document.addEventListener('DOMContentLoaded', function () {
+    // Watch for tab switches via MutationObserver on the tab-pane
+    var pane = document.getElementById('tab-primes');
+    if (!pane) return;
+    var obs = new MutationObserver(function () {
+      if (pane.classList.contains('active') && !_ppfInit) {
+        _ppfInit = true;
+        loadUserNaics();
+      }
+    });
+    obs.observe(pane, { attributes: true, attributeFilter: ['class'] });
+  });
+
+  // ── Expose globals ───────────────────────────────────────────────────
+  window.runPrimeFinder     = runPrimeFinder;
+  window.runPrimeFinderLive = runPrimeFinderLive;
+  window.ppfUpdateStatus    = ppfUpdateStatus;
+  window.ppfViewProfile     = ppfViewProfile;
+  window.ppfGenDraft        = ppfGenDraft;
+  window.ppfGenMemo         = ppfGenMemo;
+  window.ppfCopyEmail       = ppfCopyEmail;
+  window.ppfMarkPortal      = ppfMarkPortal;
+  window.copyPpfDraft       = copyPpfDraft;
+  window.openPpfModal       = openPpfModal;
+  window.closePpfModal      = closePpfModal;
+
 })();
 </script>
 </body>

@@ -346,6 +346,10 @@ ipcMain.handle('govcon:outreach-set-status',    (_e, input) => appApi.govcon.out
   status: input && typeof input.status === 'string' ? input.status.slice(0, 40) : ''
 }));
 ipcMain.handle('govcon:outreach-export',        (_e, input) => appApi.govcon.outreach.export(input || {}));
+ipcMain.handle('govcon:primes-find',             (_e, input) => appApi.govcon.primes.find(input || {}));
+ipcMain.handle('govcon:primes-find-live',        (_e, input) => appApi.govcon.primes.findLive(input || {}));
+ipcMain.handle('govcon:primes-draft',            (_e, input) => appApi.govcon.primes.draft(input || {}));
+ipcMain.handle('govcon:primes-memo',             (_e, input) => appApi.govcon.primes.memo(input || {}));
 
 // ─── Audit-log list (UI-facing) ──────────────────────────────────────
 ipcMain.handle('audit:list', (_event, opts) => appApi.audit.list(opts));
