@@ -293,6 +293,11 @@ ipcMain.handle('audit-summary', () => audit.summary());
 ipcMain.handle('govcon:targeting-get',   () => appApi.govcon.targeting.get());
 ipcMain.handle('govcon:targeting-set',   (_e, patch) => appApi.govcon.targeting.save(patch || {}));
 ipcMain.handle('govcon:targeting-reset', () => appApi.govcon.targeting.reset());
+ipcMain.handle('govcon:profile-get',     () => appApi.govcon.profile.get());
+ipcMain.handle('govcon:profile-save',    (_e, patch) => appApi.govcon.profile.save(patch || {}));
+ipcMain.handle('govcon:profile-reset',   () => appApi.govcon.profile.reset());
+ipcMain.handle('govcon:capability-statement-extract', (_e, input) => appApi.govcon.profile.extractCapabilityStatement(input || {}));
+ipcMain.handle('govcon:content-generate', (_e, request) => appApi.govcon.content.generate(request || {}));
 
 ipcMain.handle('govcon:sam-search', async (_event, filters) => {
   return appApi.govcon.sam.search(sanitizeSamFilters(filters));

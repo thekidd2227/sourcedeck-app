@@ -2536,34 +2536,74 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div class="gcwiz-hdr">
       <div class="gcwiz-title">GovCon Setup</div>
       <div style="display:flex;align-items:center;gap:10px">
-        <span class="gcwiz-progress" id="gcwiz-progress">Step 1 of 5</span>
+        <span class="gcwiz-progress" id="gcwiz-progress">Step 1 of 9</span>
         <button class="x-btn" onclick="closeGovconSetupWizard()">✕</button>
       </div>
     </div>
     <div class="gcwiz-body">
+      <!-- Step 1 — Business Profile -->
       <div class="gcwiz-step active" data-step="1">
-        <h4>1. GovCon profile</h4>
-        <div class="gcwiz-help">Tell SourceDeck who you are so capture outputs use your real context. This stays on your machine.</div>
-        <div class="gcwiz-field"><label>Company name</label><input class="input" id="gcwiz-company" type="text" placeholder="Your company legal name" style="width:100%"></div>
+        <h4>1. Business profile</h4>
+        <div class="gcwiz-help">Tell SourceDeck who you are so capture and content outputs use your real context. Stored locally as profile context — never as a credential.</div>
+        <div class="gcwiz-field"><label>Legal business name</label><input class="input" id="gcwiz-company" type="text" placeholder="Your company legal name" style="width:100%"></div>
+        <div class="gcwiz-field"><label>DBA / brand name</label><input class="input" id="gcwiz-dba" type="text" placeholder="Brand / trade name" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Website</label><input class="input" id="gcwiz-website" type="text" placeholder="https://example.com" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Business email</label><input class="input" id="gcwiz-bizemail" type="text" placeholder="contact@example.com" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Business phone</label><input class="input" id="gcwiz-bizphone" type="text" placeholder="(555) 555-5555" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Headquarters state</label><input class="input" id="gcwiz-hqstate" type="text" placeholder="VA" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Service area</label><input class="input" id="gcwiz-servicearea" type="text" placeholder="National / Mid-Atlantic / etc." style="width:100%"></div>
+        <div class="gcwiz-field"><label>Primary contact (name)</label><input class="input" id="gcwiz-contactname" type="text" placeholder="Jane Smith" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Short business description</label><textarea class="textarea" id="gcwiz-bizdesc" placeholder="What your company does, in one or two sentences." style="width:100%;min-height:54px"></textarea></div>
+        <div class="gcwiz-field"><label>Core services (comma separated)</label><input class="input" id="gcwiz-coreservices" type="text" placeholder="Help desk, Cloud migration, Staffing" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Differentiators (comma separated)</label><input class="input" id="gcwiz-differentiators" type="text" placeholder="24/7 coverage, CMMC-aware processes" style="width:100%"></div>
+      </div>
+      <!-- Step 2 — Capability Statement -->
+      <div class="gcwiz-step" data-step="2">
+        <h4>2. Capability statement</h4>
+        <div class="gcwiz-help">Paste your capability statement text to extract candidate fields. Nothing is sent to any external provider — extraction runs locally. You approve each field before it is saved.</div>
+        <div class="gcwiz-field"><label>Paste capability statement text (or skip)</label><textarea class="textarea" id="gcwiz-capstmt" placeholder="Paste capability statement text here…" style="width:100%;min-height:90px"></textarea></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-blue" onclick="gcWizExtractCapability()">Extract candidate fields</button>
+          <span class="gcwiz-status missing" id="gcwiz-cap-status">No extraction yet</span>
+        </div>
+        <div class="gcwiz-note" style="margin-top:10px">Candidate fields are <strong>not verified</strong>. Review and check the ones you approve before saving.</div>
+        <div id="gcwiz-cap-candidates" style="margin-top:10px"></div>
+        <div class="gcwiz-help">File upload &amp; PDF extraction: planned (TODO) — paste text or enter fields manually for now.</div>
+      </div>
+      <!-- Step 3 — GovCon Targeting -->
+      <div class="gcwiz-step" data-step="3">
+        <h4>3. GovCon targeting</h4>
+        <div class="gcwiz-help">Used as default context for SAM search, outreach, and prime-partner matching.</div>
         <div class="gcwiz-field"><label>Socioeconomic certifications</label>
           <div class="gcwiz-certs" id="gcwiz-certs">
             <label><input type="checkbox" value="SDVOSB"> SDVOSB</label>
             <label><input type="checkbox" value="VOSB"> VOSB</label>
             <label><input type="checkbox" value="8(a)"> 8(a)</label>
             <label><input type="checkbox" value="WOSB"> WOSB</label>
+            <label><input type="checkbox" value="EDWOSB"> EDWOSB</label>
             <label><input type="checkbox" value="HUBZone"> HUBZone</label>
             <label><input type="checkbox" value="Small Business"> Small Business</label>
             <label><input type="checkbox" value="Other"> Other</label>
           </div>
         </div>
+        <div class="gcwiz-field"><label>UEI</label><input class="input" id="gcwiz-uei" type="text" placeholder="12-char UEI" style="width:100%"></div>
+        <div class="gcwiz-field"><label>CAGE code</label><input class="input" id="gcwiz-cage" type="text" placeholder="5-char CAGE" style="width:100%"></div>
         <div class="gcwiz-field"><label>Target NAICS (comma separated)</label><input class="input" id="gcwiz-naics" type="text" placeholder="541512, 541611" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Target PSC (comma separated)</label><input class="input" id="gcwiz-psc" type="text" placeholder="D310, R425" style="width:100%"></div>
         <div class="gcwiz-field"><label>Target agencies (comma separated)</label><input class="input" id="gcwiz-agencies" type="text" placeholder="DLA, VA, GSA" style="width:100%"></div>
-        <div class="gcwiz-field"><label>Excluded opportunity types (optional, comma separated)</label><input class="input" id="gcwiz-excluded" type="text" placeholder="construction, IDIQ" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Excluded agencies (comma separated)</label><input class="input" id="gcwiz-exclagencies" type="text" placeholder="" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Excluded opportunity types (comma separated)</label><input class="input" id="gcwiz-excluded" type="text" placeholder="construction, IDIQ" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Target states / regions (comma separated)</label><input class="input" id="gcwiz-targetstates" type="text" placeholder="VA, MD, DC" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Target contract size</label><input class="input" id="gcwiz-contractsize" type="text" placeholder="e.g. under $250K fast-cash" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Minimum acceptable margin (%)</label><input class="input" id="gcwiz-minmargin" type="number" min="0" max="100" placeholder="18" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Prime / subcontractor preference</label><input class="input" id="gcwiz-subpref" type="text" placeholder="prime / sub / either" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Remote / on-site preference</label><input class="input" id="gcwiz-remotepref" type="text" placeholder="remote / on-site / hybrid" style="width:100%"></div>
       </div>
-      <div class="gcwiz-step" data-step="2">
-        <h4>2. SAM.gov access</h4>
+      <!-- Step 4 — SAM.gov API key -->
+      <div class="gcwiz-step" data-step="4">
+        <h4>4. SAM.gov API key</h4>
         <div class="gcwiz-help">A SAM.gov API key lets SourceDeck search opportunities directly. Without a key, you can still use a manual/fallback sam.gov search route.</div>
-        <div class="gcwiz-note">Your key is saved through the secure main-process credential boundary. Key status is presence-only — the raw key is never displayed after save and never reaches the page or logs.</div>
+        <div class="gcwiz-note">Saved through the secure main-process credential boundary. Status is presence-only — the raw key is never displayed after save and never reaches the page or logs.</div>
         <div class="gcwiz-field"><label>SAM.gov API key</label><input class="input" id="gcwiz-sam" type="password" placeholder="Paste SAM.gov API key" autocomplete="off" style="width:100%"></div>
         <div style="display:flex;gap:8px;align-items:center">
           <button class="btn btn-blue" onclick="gcWizSaveSam()">Save SAM.gov key</button>
@@ -2571,30 +2611,88 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         </div>
         <div class="gcwiz-status missing" id="gcwiz-sam-status">SAM.gov key missing</div>
       </div>
-      <div class="gcwiz-step" data-step="3">
-        <h4>3. Demo or first opportunity</h4>
-        <div class="gcwiz-help">Choose how to start. You can change this anytime.</div>
-        <div style="display:flex;flex-direction:column;gap:8px">
-          <label class="gcwiz-certs" style="display:flex"><input type="radio" name="gcwiz-start" value="demo" checked>&nbsp; Start with a synthetic demo workspace (clearly labeled Demo data)</label>
-          <label class="gcwiz-certs" style="display:flex"><input type="radio" name="gcwiz-start" value="import">&nbsp; Paste / import my first solicitation or opportunity</label>
-          <label class="gcwiz-certs" style="display:flex"><input type="radio" name="gcwiz-start" value="manual">&nbsp; Continue with manual SAM.gov search fallback</label>
-        </div>
-        <div class="gcwiz-field" id="gcwiz-import-wrap" style="display:none;margin-top:12px"><label>Paste opportunity title / solicitation number</label><input class="input" id="gcwiz-import" type="text" placeholder="e.g. IT Helpdesk Support — 70Z08323QABC123" style="width:100%"></div>
-      </div>
-      <div class="gcwiz-step" data-step="4">
-        <h4>4. Safety &amp; review</h4>
-        <div class="gcwiz-note">
-          AI outputs require human review before use.<br>
-          Follow each solicitation's instructions and communication windows.<br>
-          SourceDeck does not approve outreach, certify compliance, or make final bid decisions.<br>
-          RED_RESTRICTED blocks informal outreach drafts during restricted windows, and a KILL decision is irreversible. These guardrails protect procurement integrity.
-        </div>
-        <div class="gcwiz-help">Nothing here is legal, contracting, or compliance advice. You remain responsible for final decisions.</div>
-      </div>
+      <!-- Step 5 — AI Agent API key -->
       <div class="gcwiz-step" data-step="5">
-        <h4>5. You're set up</h4>
-        <div class="gcwiz-help" id="gcwiz-finish-summary">Setup saved. SourceDeck will route you to the GovCon workspace.</div>
-        <div class="gcwiz-note">Next recommended action will appear in the GovCon setup banner. No raw secrets are displayed anywhere in the UI.</div>
+        <h4>5. AI agent API key</h4>
+        <div class="gcwiz-help">Powers AI drafting and reasoning. Saved presence-only through the credential boundary; the raw key never returns to the page.</div>
+        <div class="gcwiz-field"><label>Provider</label>
+          <select class="select" id="gcwiz-ai-provider" style="width:100%">
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic / Claude</option>
+            <option value="watsonx">IBM watsonx</option>
+          </select>
+        </div>
+        <div class="gcwiz-field"><label>API key</label><input class="input" id="gcwiz-ai-key" type="password" placeholder="Paste AI provider API key" autocomplete="off" style="width:100%"></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-blue" onclick="gcWizSaveAiKey()">Save AI key</button>
+          <button class="btn btn-ghost" onclick="gcWizRemoveAiKey()">Remove key</button>
+        </div>
+        <div class="gcwiz-status missing" id="gcwiz-ai-status">No AI key saved</div>
+      </div>
+      <!-- Step 6 — Creative / Imaging API key -->
+      <div class="gcwiz-step" data-step="6">
+        <h4>6. Creative / imaging API key</h4>
+        <div class="gcwiz-help">Optional. Credential saved for future creative-provider workflows. Manual image prompt workflow is available now; SourceDeck does not generate or publish images on your behalf yet.</div>
+        <div class="gcwiz-field"><label>Provider</label>
+          <select class="select" id="gcwiz-creative-provider" style="width:100%">
+            <option value="canva">Canva</option>
+            <option value="google">Other image provider (placeholder)</option>
+          </select>
+        </div>
+        <div class="gcwiz-field"><label>API key</label><input class="input" id="gcwiz-creative-key" type="password" placeholder="Paste creative-provider API key" autocomplete="off" style="width:100%"></div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <button class="btn btn-blue" onclick="gcWizSaveCreativeKey()">Save creative key</button>
+          <button class="btn btn-ghost" onclick="gcWizRemoveCreativeKey()">Remove key</button>
+        </div>
+        <div class="gcwiz-status missing" id="gcwiz-creative-status">No creative key saved</div>
+      </div>
+      <!-- Step 7 — Social handles / platforms -->
+      <div class="gcwiz-step" data-step="7">
+        <h4>7. Social handles &amp; platforms</h4>
+        <div class="gcwiz-help">Profile context only. SourceDeck prepares draft content — it does not post to or publish on any platform.</div>
+        <div class="gcwiz-field"><label>LinkedIn URL</label><input class="input" id="gcwiz-soc-linkedin" type="text" placeholder="https://linkedin.com/company/…" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Facebook page URL</label><input class="input" id="gcwiz-soc-facebook" type="text" placeholder="https://facebook.com/…" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Instagram handle</label><input class="input" id="gcwiz-soc-instagram" type="text" placeholder="@handle" style="width:100%"></div>
+        <div class="gcwiz-field"><label>TikTok handle</label><input class="input" id="gcwiz-soc-tiktok" type="text" placeholder="@handle" style="width:100%"></div>
+        <div class="gcwiz-field"><label>YouTube channel</label><input class="input" id="gcwiz-soc-youtube" type="text" placeholder="https://youtube.com/@…" style="width:100%"></div>
+        <div class="gcwiz-field"><label>X / Twitter handle</label><input class="input" id="gcwiz-soc-xtwitter" type="text" placeholder="@handle" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Default content platforms</label>
+          <div class="gcwiz-certs" id="gcwiz-platforms">
+            <label><input type="checkbox" value="meta_business_suite"> Meta Business Suite</label>
+            <label><input type="checkbox" value="facebook"> Facebook</label>
+            <label><input type="checkbox" value="instagram"> Instagram</label>
+            <label><input type="checkbox" value="tiktok"> TikTok</label>
+            <label><input type="checkbox" value="linkedin"> LinkedIn</label>
+          </div>
+        </div>
+        <div class="gcwiz-note">No platform posting. Handles and platform choices are profile context for draft preparation only.</div>
+      </div>
+      <!-- Step 8 — Safety & approval rules -->
+      <div class="gcwiz-step" data-step="8">
+        <h4>8. Safety &amp; approval rules</h4>
+        <div class="gcwiz-note">SourceDeck prepares drafts and decision support. You approve before outreach, proposal submission, publishing, or posting. AI outputs require human review. SourceDeck does not approve outreach, certify compliance, or make final bid decisions.</div>
+        <div class="gcwiz-certs" style="flex-direction:column;align-items:flex-start">
+          <label><input type="checkbox" id="gcwiz-saf-outreach" checked> Require human approval before outreach</label>
+          <label><input type="checkbox" id="gcwiz-saf-posting" checked> Require human approval before content posting</label>
+          <label><input type="checkbox" id="gcwiz-saf-certs" checked> Block unsupported certification claims</label>
+          <label><input type="checkbox" id="gcwiz-saf-confidential" checked> Block confidential proposal / CUI / PII content</label>
+        </div>
+        <div class="gcwiz-field" style="margin-top:10px"><label>Content tone preference</label><input class="input" id="gcwiz-tone" type="text" placeholder="direct, operator voice" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Blocked topics (comma separated)</label><input class="input" id="gcwiz-blockedtopics" type="text" placeholder="pricing specifics, source selection" style="width:100%"></div>
+        <div class="gcwiz-field"><label>Approved claims (comma separated)</label><input class="input" id="gcwiz-approvedclaims" type="text" placeholder="claims you have verified you can make" style="width:100%"></div>
+        <div class="gcwiz-help">RED_RESTRICTED blocks informal outreach during restricted windows; a KILL decision is irreversible. These guardrails protect procurement integrity. Nothing here is legal, contracting, or compliance advice.</div>
+      </div>
+      <!-- Step 9 — Finish -->
+      <div class="gcwiz-step" data-step="9">
+        <h4>9. You're set up</h4>
+        <div class="gcwiz-help" id="gcwiz-finish-summary">Setup saved. Review the summary below.</div>
+        <div id="gcwiz-summary" style="font-size:11px;color:var(--sub);line-height:1.7;margin-bottom:10px"></div>
+        <div class="gcwiz-note">No raw secrets are displayed anywhere in the UI. SourceDeck prepares drafts and decision support — you approve before outreach, proposal submission, publishing, or posting.</div>
+        <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">
+          <button class="btn btn-gold" onclick="closeGovconSetupWizard();openTab('govcon')">Go to GovCon</button>
+          <button class="btn btn-ghost" onclick="closeGovconSetupWizard();openTab('outreach')">Outreach</button>
+          <button class="btn btn-ghost" onclick="closeGovconSetupWizard();openTab('primes')">Prime Partners</button>
+        </div>
       </div>
     </div>
     <div class="gcwiz-ftr">
@@ -8387,27 +8485,70 @@ window.refreshGovconSetup = refreshGovconSetup;
 
 // ── Wizard control ──
 let _gcWizStep = 1;
-const _GC_WIZ_MAX = 5;
+const _GC_WIZ_MAX = 9;
+let _gcWizCapCandidates = null;
+
+function _gcv(id){ const el = document.getElementById(id); return el ? el.value : ''; }
+function _gcset(id, v){ const el = document.getElementById(id); if (el) el.value = (v == null ? '' : v); }
+function _gcList(id){ return String(_gcv(id)||'').split(',').map(s=>s.trim()).filter(Boolean); }
 
 async function openGovconSetupWizard(){
   await refreshGovconSetupState();
-  const b = govconProfile();
-  const company = document.getElementById('gcwiz-company'); if (company) company.value = b.name || '';
-  const certs = (b.certifications || '').split(',').map(c=>c.trim()).filter(Boolean);
-  document.querySelectorAll('#gcwiz-certs input[type=checkbox]').forEach(cb => { cb.checked = certs.includes(cb.value); });
-  try {
-    if (window.sd && sd.govcon && sd.govcon.getTargeting) {
-      const t = await sd.govcon.getTargeting();
-      const naics = document.getElementById('gcwiz-naics'); if (naics) naics.value = (t && t.naics || []).join(', ');
-      const ag = document.getElementById('gcwiz-agencies'); if (ag) ag.value = (t && t.agencies && t.agencies.include || []).join(', ');
-    }
-  } catch(_) {}
-  _gcWizUpdateSamStatus();
+  // Prefer the GovCon Operating Profile; fall back to legacy ARCG_OS.brand.
+  let p = null;
+  try { if (window.sd && sd.govcon && sd.govcon.profile && sd.govcon.profile.get) p = await sd.govcon.profile.get(); } catch(_) {}
+  const b = (p && p.business) || {};
+  const legacy = govconProfile();
+  _gcset('gcwiz-company', b.legalBusinessName || legacy.name || '');
+  _gcset('gcwiz-dba', b.dbaName || '');
+  _gcset('gcwiz-website', b.website || legacy.website || '');
+  _gcset('gcwiz-bizemail', b.businessEmail || '');
+  _gcset('gcwiz-bizphone', b.businessPhone || '');
+  _gcset('gcwiz-hqstate', b.headquartersState || '');
+  _gcset('gcwiz-servicearea', b.serviceArea || '');
+  _gcset('gcwiz-contactname', b.primaryContactName || '');
+  _gcset('gcwiz-bizdesc', b.shortBusinessDescription || '');
+  _gcset('gcwiz-coreservices', (b.coreServices || []).join(', '));
+  _gcset('gcwiz-differentiators', (b.differentiators || []).join(', '));
+  // Certifications
+  const certObj = (p && p.identifiers && p.identifiers.certifications) || {};
+  const legacyCerts = (legacy.certifications || '').split(',').map(c=>c.trim());
+  document.querySelectorAll('#gcwiz-certs input[type=checkbox]').forEach(cb => {
+    cb.checked = certObj[cb.value] === true || legacyCerts.includes(cb.value);
+  });
+  // Identifiers + targeting
+  const id = (p && p.identifiers) || {}; const t = (p && p.targeting) || {};
+  _gcset('gcwiz-uei', id.uei || ''); _gcset('gcwiz-cage', id.cageCode || '');
+  _gcset('gcwiz-naics', (t.naicsCodes || []).join(', '));
+  _gcset('gcwiz-psc', (t.pscCodes || []).join(', '));
+  _gcset('gcwiz-agencies', (t.targetAgencies || []).join(', '));
+  _gcset('gcwiz-exclagencies', (t.excludedAgencies || []).join(', '));
+  _gcset('gcwiz-excluded', (t.excludedOpportunityTypes || []).join(', '));
+  _gcset('gcwiz-targetstates', (t.targetStates || []).join(', '));
+  _gcset('gcwiz-contractsize', t.targetContractSize || '');
+  _gcset('gcwiz-minmargin', t.minimumAcceptableMargin != null ? t.minimumAcceptableMargin : '');
+  _gcset('gcwiz-subpref', t.subcontractingPreference || '');
+  _gcset('gcwiz-remotepref', t.remoteOnsitePreference || '');
+  // Social
+  const c = (p && p.content) || {}; const sh = c.socialHandles || {};
+  _gcset('gcwiz-soc-linkedin', sh.linkedin || ''); _gcset('gcwiz-soc-facebook', sh.facebook || '');
+  _gcset('gcwiz-soc-instagram', sh.instagram || ''); _gcset('gcwiz-soc-tiktok', sh.tiktok || '');
+  _gcset('gcwiz-soc-youtube', sh.youtube || ''); _gcset('gcwiz-soc-xtwitter', sh.xTwitter || '');
+  document.querySelectorAll('#gcwiz-platforms input[type=checkbox]').forEach(cb => { cb.checked = (c.defaultPostingPlatforms||[]).includes(cb.value); });
+  _gcset('gcwiz-tone', c.approvedTone || '');
+  _gcset('gcwiz-blockedtopics', (c.restrictedTopics || []).join(', '));
+  _gcset('gcwiz-approvedclaims', (c.approvedClaims || []).join(', '));
+  // Safety
+  const sf = (p && p.safety) || {};
+  const setChk = (id2, v) => { const el = document.getElementById(id2); if (el) el.checked = v !== false; };
+  setChk('gcwiz-saf-outreach', sf.requireApprovalBeforeOutreach);
+  setChk('gcwiz-saf-posting', sf.requireApprovalBeforeContentPosting);
+  setChk('gcwiz-saf-certs', sf.blockUnsupportedCertificationClaims);
+  setChk('gcwiz-saf-confidential', sf.blockConfidentialContent);
+  // Credential statuses
+  _gcWizUpdateSamStatus(); _gcWizUpdateAiStatus(); _gcWizUpdateCreativeStatus();
   _gcWizStep = 1; _gcWizShow();
   const bd = document.getElementById('govcon-wizard'); if (bd) bd.classList.add('open');
-  document.querySelectorAll('input[name=gcwiz-start]').forEach(r => {
-    r.onchange = () => { const w = document.getElementById('gcwiz-import-wrap'); if (w) w.style.display = (document.querySelector('input[name=gcwiz-start]:checked')||{}).value === 'import' ? 'block':'none'; };
-  });
 }
 window.openGovconSetupWizard = openGovconSetupWizard;
 
@@ -8419,79 +8560,213 @@ function _gcWizShow(){
   const prog = document.getElementById('gcwiz-progress'); if (prog) prog.textContent = 'Step ' + _gcWizStep + ' of ' + _GC_WIZ_MAX;
   const back = document.getElementById('gcwiz-back'); if (back) back.style.visibility = _gcWizStep === 1 ? 'hidden':'visible';
   const next = document.getElementById('gcwiz-next'); if (next) next.textContent = _gcWizStep >= _GC_WIZ_MAX ? 'Finish' : 'Next';
+  if (_gcWizStep === _GC_WIZ_MAX) _gcWizRenderSummary();
 }
 
 async function gcWizNav(dir){
-  if (dir > 0 && _gcWizStep === 1) gcWizSaveProfile();
+  // Persist business (step 1) and targeting (step 3) as the user advances.
+  if (dir > 0 && (_gcWizStep === 1 || _gcWizStep === 3 || _gcWizStep === 7 || _gcWizStep === 8)) await gcWizSaveProfile();
   if (dir > 0 && _gcWizStep === _GC_WIZ_MAX) { await gcWizFinish(); return; }
   _gcWizStep = Math.max(1, Math.min(_GC_WIZ_MAX, _gcWizStep + dir));
   _gcWizShow();
 }
 window.gcWizNav = gcWizNav;
 
-function gcWizSaveProfile(){
-  const name = (document.getElementById('gcwiz-company')||{}).value || '';
-  const certs = Array.from(document.querySelectorAll('#gcwiz-certs input[type=checkbox]:checked')).map(c=>c.value);
+// Collect the whole wizard into a profile patch and persist via the safe
+// main-process boundary. NEVER includes API keys (those go through
+// sd.credentials.set only).
+function gcWizProfilePatch(){
+  const certs = {};
+  document.querySelectorAll('#gcwiz-certs input[type=checkbox]').forEach(cb => { certs[cb.value] = cb.checked; });
+  const platforms = Array.from(document.querySelectorAll('#gcwiz-platforms input[type=checkbox]:checked')).map(c=>c.value);
+  const marginRaw = _gcv('gcwiz-minmargin');
+  return {
+    business: {
+      legalBusinessName: _gcv('gcwiz-company'), dbaName: _gcv('gcwiz-dba'), website: _gcv('gcwiz-website'),
+      businessEmail: _gcv('gcwiz-bizemail'), businessPhone: _gcv('gcwiz-bizphone'),
+      headquartersState: _gcv('gcwiz-hqstate'), serviceArea: _gcv('gcwiz-servicearea'),
+      primaryContactName: _gcv('gcwiz-contactname'), shortBusinessDescription: _gcv('gcwiz-bizdesc'),
+      coreServices: _gcList('gcwiz-coreservices'), differentiators: _gcList('gcwiz-differentiators')
+    },
+    identifiers: { uei: _gcv('gcwiz-uei'), cageCode: _gcv('gcwiz-cage'), certifications: certs },
+    targeting: {
+      naicsCodes: _gcList('gcwiz-naics'), pscCodes: _gcList('gcwiz-psc'),
+      targetAgencies: _gcList('gcwiz-agencies'), excludedAgencies: _gcList('gcwiz-exclagencies'),
+      excludedOpportunityTypes: _gcList('gcwiz-excluded'), targetStates: _gcList('gcwiz-targetstates'),
+      targetContractSize: _gcv('gcwiz-contractsize'),
+      minimumAcceptableMargin: marginRaw === '' ? null : Number(marginRaw),
+      subcontractingPreference: _gcv('gcwiz-subpref'), remoteOnsitePreference: _gcv('gcwiz-remotepref')
+    },
+    content: {
+      socialHandles: {
+        linkedin: _gcv('gcwiz-soc-linkedin'), facebook: _gcv('gcwiz-soc-facebook'),
+        instagram: _gcv('gcwiz-soc-instagram'), tiktok: _gcv('gcwiz-soc-tiktok'),
+        youtube: _gcv('gcwiz-soc-youtube'), xTwitter: _gcv('gcwiz-soc-xtwitter')
+      },
+      defaultPostingPlatforms: platforms,
+      approvedTone: _gcv('gcwiz-tone'),
+      restrictedTopics: _gcList('gcwiz-blockedtopics'),
+      approvedClaims: _gcList('gcwiz-approvedclaims')
+    },
+    safety: {
+      requireApprovalBeforeOutreach: !!(document.getElementById('gcwiz-saf-outreach')||{}).checked,
+      requireApprovalBeforeContentPosting: !!(document.getElementById('gcwiz-saf-posting')||{}).checked,
+      blockUnsupportedCertificationClaims: !!(document.getElementById('gcwiz-saf-certs')||{}).checked,
+      blockConfidentialContent: !!(document.getElementById('gcwiz-saf-confidential')||{}).checked
+    }
+  };
+}
+
+async function gcWizSaveProfile(){
+  const patch = gcWizProfilePatch();
+  // Keep legacy ARCG_OS.brand name/certs in sync for existing consumers.
   try {
     if (window.ARCG_OS) {
       ARCG_OS.brand = ARCG_OS.brand || {};
-      if (name.trim()) ARCG_OS.brand.name = name.trim();
-      ARCG_OS.brand.certifications = certs.join(', ');
+      if ((patch.business.legalBusinessName||'').trim()) ARCG_OS.brand.name = patch.business.legalBusinessName.trim();
+      ARCG_OS.brand.certifications = Object.keys(patch.identifiers.certifications).filter(k=>patch.identifiers.certifications[k]).join(', ');
       if (typeof ARCG_OS.saveBrand === 'function') ARCG_OS.saveBrand();
     }
   } catch(_) {}
   try {
-    if (window.sd && sd.govcon && sd.govcon.saveTargeting) {
-      const naics = ((document.getElementById('gcwiz-naics')||{}).value||'').split(',').map(s=>s.trim()).filter(Boolean);
-      const agencies = ((document.getElementById('gcwiz-agencies')||{}).value||'').split(',').map(s=>s.trim()).filter(Boolean);
-      const excluded = ((document.getElementById('gcwiz-excluded')||{}).value||'').split(',').map(s=>s.trim()).filter(Boolean);
-      sd.govcon.saveTargeting({ naics, agencies: { include: agencies }, excludedTypes: excluded });
+    if (window.sd && sd.govcon && sd.govcon.profile && sd.govcon.profile.save) {
+      const r = await sd.govcon.profile.save(patch);
+      if (r && r._rejected && r._rejected.length) toast('Some fields looked like secrets and were not stored in the profile','warn');
+    } else if (window.sd && sd.govcon && sd.govcon.saveTargeting) {
+      sd.govcon.saveTargeting({ naics: patch.targeting.naicsCodes, agencies: { include: patch.targeting.targetAgencies, exclude: patch.targeting.excludedAgencies } });
     }
   } catch(_) {}
 }
 
+// ── Capability statement extraction (candidate-only; user approves) ──
+async function gcWizExtractCapability(){
+  const text = _gcv('gcwiz-capstmt');
+  const status = document.getElementById('gcwiz-cap-status');
+  if (!text.trim()) { if (status){status.textContent='Paste text first'; status.className='gcwiz-status missing';} return; }
+  let res = null;
+  try { if (window.sd && sd.govcon && sd.govcon.profile && sd.govcon.profile.extractCapabilityStatement) res = await sd.govcon.profile.extractCapabilityStatement({ text }); } catch(_) {}
+  if (!res || !res.ok) { if (status){status.textContent='Extraction unavailable'; status.className='gcwiz-status missing';} return; }
+  _gcWizCapCandidates = res.candidates || {};
+  if (status){ status.textContent='Candidates found — review & approve (not verified)'; status.className='gcwiz-status saved'; }
+  _gcWizRenderCapCandidates(res);
+}
+window.gcWizExtractCapability = gcWizExtractCapability;
+
+function _gcWizRenderCapCandidates(res){
+  const host = document.getElementById('gcwiz-cap-candidates'); if (!host) return;
+  const c = res.candidates || {}; const conf = res.confidence || {};
+  const rowsHtml = [];
+  const add = (key, label, val) => {
+    if (!val || (Array.isArray(val) && !val.length)) return;
+    const display = Array.isArray(val) ? val.join(', ') : val;
+    rowsHtml.push('<label style="display:flex;gap:7px;align-items:flex-start;margin-bottom:5px;font-size:11px"><input type="checkbox" class="gcwiz-cap-field" data-key="'+escapeHtml(key)+'" checked> <span><strong>'+escapeHtml(label)+'</strong> <span style="color:var(--muted)">['+escapeHtml(conf[key]||'low')+']</span>: '+escapeHtml(display)+'</span></label>');
+  };
+  add('legalName','Business name',c.legalName); add('uei','UEI',c.uei); add('cage','CAGE',c.cage);
+  add('naics','NAICS',c.naics); add('psc','PSC',c.psc); add('certifications','Certifications',c.certifications);
+  add('services','Services',c.services); add('differentiators','Differentiators',c.differentiators);
+  add('pastPerformanceSnippets','Past performance',c.pastPerformanceSnippets);
+  host.innerHTML = rowsHtml.length
+    ? rowsHtml.join('') + '<button class="btn btn-blue" style="margin-top:8px" onclick="gcWizApproveCapability()">Approve selected → fill form</button>'
+    : '<div style="font-size:11px;color:var(--muted)">No candidate fields detected.</div>';
+}
+
+function gcWizApproveCapability(){
+  if (!_gcWizCapCandidates) return;
+  const approved = Array.from(document.querySelectorAll('.gcwiz-cap-field:checked')).map(cb=>cb.getAttribute('data-key'));
+  const c = _gcWizCapCandidates;
+  if (approved.includes('legalName') && c.legalName) _gcset('gcwiz-company', c.legalName);
+  if (approved.includes('uei') && c.uei) _gcset('gcwiz-uei', c.uei);
+  if (approved.includes('cage') && c.cage) _gcset('gcwiz-cage', c.cage);
+  if (approved.includes('naics') && c.naics) _gcset('gcwiz-naics', (c.naics||[]).join(', '));
+  if (approved.includes('psc') && c.psc) _gcset('gcwiz-psc', (c.psc||[]).join(', '));
+  if (approved.includes('services') && c.services) _gcset('gcwiz-coreservices', (c.services||[]).join(', '));
+  if (approved.includes('differentiators') && c.differentiators) _gcset('gcwiz-differentiators', (c.differentiators||[]).join(', '));
+  if (approved.includes('certifications') && c.certifications) {
+    document.querySelectorAll('#gcwiz-certs input[type=checkbox]').forEach(cb => { if (c.certifications.includes(cb.value)) cb.checked = true; });
+  }
+  toast('Approved fields copied into the form — review before saving','ok');
+}
+window.gcWizApproveCapability = gcWizApproveCapability;
+
+// ── credential status helpers (presence-only) ──
+async function _gcCredStatus(){
+  try { return (window.sd && sd.credentials && sd.credentials.status) ? await sd.credentials.status() : null; } catch(_) { return null; }
+}
 async function _gcWizUpdateSamStatus(){
-  let present = false;
-  try {
-    const st = (window.sd && sd.credentials && sd.credentials.status) ? await sd.credentials.status() : null;
-    present = !!(st && st.present && st.present['sam-gov']);
-  } catch(_) {}
+  const st = await _gcCredStatus(); const present = !!(st && st.present && st.present['sam-gov']);
   const el = document.getElementById('gcwiz-sam-status');
   if (el) { el.textContent = present ? 'SAM.gov key saved' : 'SAM.gov key missing'; el.className = 'gcwiz-status ' + (present ? 'saved':'missing'); }
 }
+async function _gcWizUpdateAiStatus(){
+  const st = await _gcCredStatus(); const pr = (st && st.present) || {};
+  const present = !!(pr['openai'] || pr['anthropic'] || pr['watsonx']);
+  const el = document.getElementById('gcwiz-ai-status');
+  if (el) { el.textContent = present ? 'AI provider key saved' : 'No AI key saved'; el.className = 'gcwiz-status ' + (present ? 'saved':'missing'); }
+}
+async function _gcWizUpdateCreativeStatus(){
+  const st = await _gcCredStatus(); const pr = (st && st.present) || {};
+  const present = !!(pr['canva'] || pr['google']);
+  const el = document.getElementById('gcwiz-creative-status');
+  if (el) { el.textContent = present ? 'Creative key saved (for future workflows)' : 'No creative key saved'; el.className = 'gcwiz-status ' + (present ? 'saved':'missing'); }
+}
 
-async function gcWizSaveSam(){
-  const input = document.getElementById('gcwiz-sam');
+async function _gcWizSaveKey(service, inputId, statusFn){
+  const input = document.getElementById(inputId);
   const val = (input && input.value || '').trim();
-  if (!val) { toast('Paste a SAM.gov key first','warn'); return; }
+  if (!val) { toast('Paste a key first','warn'); return; }
   if (!(window.sd && sd.credentials && sd.credentials.set)) { toast('Credential service unavailable','err'); return; }
   try {
-    const r = await sd.credentials.set('sam-gov', val);
+    const r = await sd.credentials.set(service, val);
     if (input) input.value = ''; // never retain raw key in the DOM
-    if (r && r.ok) { toast('SAM.gov key saved','ok'); } else { toast('Could not save key','err'); }
+    toast((r && r.ok) ? 'Key saved' : 'Could not save key', (r && r.ok) ? 'ok' : 'err');
   } catch(_) { if (input) input.value=''; toast('Could not save key','err'); }
-  await _gcWizUpdateSamStatus();
+  if (statusFn) await statusFn();
 }
-window.gcWizSaveSam = gcWizSaveSam;
-
-async function gcWizRemoveSam(){
+async function _gcWizRemoveKey(service, inputId, statusFn){
   if (!(window.sd && sd.credentials && sd.credentials.remove)) return;
-  try { await sd.credentials.remove('sam-gov'); toast('SAM.gov key removed','info'); } catch(_) {}
-  const input = document.getElementById('gcwiz-sam'); if (input) input.value='';
-  await _gcWizUpdateSamStatus();
+  try { await sd.credentials.remove(service); toast('Key removed','info'); } catch(_) {}
+  const input = document.getElementById(inputId); if (input) input.value='';
+  if (statusFn) await statusFn();
 }
-window.gcWizRemoveSam = gcWizRemoveSam;
+
+async function gcWizSaveSam(){ await _gcWizSaveKey('sam-gov', 'gcwiz-sam', _gcWizUpdateSamStatus); }
+async function gcWizRemoveSam(){ await _gcWizRemoveKey('sam-gov', 'gcwiz-sam', _gcWizUpdateSamStatus); }
+window.gcWizSaveSam = gcWizSaveSam; window.gcWizRemoveSam = gcWizRemoveSam;
+
+async function gcWizSaveAiKey(){ await _gcWizSaveKey(_gcv('gcwiz-ai-provider')||'openai', 'gcwiz-ai-key', _gcWizUpdateAiStatus); }
+async function gcWizRemoveAiKey(){ await _gcWizRemoveKey(_gcv('gcwiz-ai-provider')||'openai', 'gcwiz-ai-key', _gcWizUpdateAiStatus); }
+window.gcWizSaveAiKey = gcWizSaveAiKey; window.gcWizRemoveAiKey = gcWizRemoveAiKey;
+
+async function gcWizSaveCreativeKey(){ await _gcWizSaveKey(_gcv('gcwiz-creative-provider')||'canva', 'gcwiz-creative-key', _gcWizUpdateCreativeStatus); }
+async function gcWizRemoveCreativeKey(){ await _gcWizRemoveKey(_gcv('gcwiz-creative-provider')||'canva', 'gcwiz-creative-key', _gcWizUpdateCreativeStatus); }
+window.gcWizSaveCreativeKey = gcWizSaveCreativeKey; window.gcWizRemoveCreativeKey = gcWizRemoveCreativeKey;
+
+async function _gcWizRenderSummary(){
+  const host = document.getElementById('gcwiz-summary'); if (!host) return;
+  let p = null;
+  try { if (window.sd && sd.govcon && sd.govcon.profile && sd.govcon.profile.get) p = await sd.govcon.profile.get(); } catch(_) {}
+  const st = await _gcCredStatus(); const pr = (st && st.present) || {};
+  const b = (p && p.business) || {}; const t = (p && p.targeting) || {}; const c = (p && p.content) || {};
+  const yn = (v) => v ? 'complete' : 'incomplete';
+  const handlesComplete = !!(c.socialHandles && Object.values(c.socialHandles).some(Boolean));
+  host.innerHTML = [
+    '• Business profile: ' + yn(!!(b.legalBusinessName||'').trim()),
+    '• Capability statement approved fields: ' + ((p && p.capabilityStatement && (p.capabilityStatement.userApprovedExtractedFields||[]).length) || 0),
+    '• GovCon targeting: ' + yn((t.naicsCodes||[]).length > 0),
+    '• SAM.gov key: ' + (pr['sam-gov'] ? 'present' : 'missing'),
+    '• AI provider key: ' + ((pr['openai']||pr['anthropic']||pr['watsonx']) ? 'present' : 'missing'),
+    '• Creative provider key: ' + ((pr['canva']||pr['google']) ? 'present' : 'missing'),
+    '• Social handles: ' + yn(handlesComplete)
+  ].map(s=>escapeHtml(s)).join('<br>');
+}
 
 async function gcWizFinish(){
-  gcWizSaveProfile();
-  const start = (document.querySelector('input[name=gcwiz-start]:checked')||{}).value || 'manual';
-  try { localStorage.setItem('lcc_govcon_demo_mode', start === 'demo' ? '1':'0'); } catch(_) {}
+  await gcWizSaveProfile();
   closeGovconSetupWizard();
   await refreshGovconSetup();
   if (typeof refreshWorkspaceCredentialStatus === 'function') { try { await refreshWorkspaceCredentialStatus(); } catch(_) {} }
   if (typeof renderWorkspaceReadinessBanner === 'function') renderWorkspaceReadinessBanner();
-  if (start === 'manual') toast('Use Search SAM.gov to load opportunities','info');
-  else if (start === 'demo') toast('Demo mode on — data is synthetic','info');
+  toast('GovCon operating profile saved','ok');
 }
 window.gcWizFinish = gcWizFinish;
 

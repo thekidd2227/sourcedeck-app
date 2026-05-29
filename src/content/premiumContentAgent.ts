@@ -10,6 +10,19 @@
  * This file is the canonical surface other code reads to render
  * marketing copy, gate access, generate prompts, and validate drafts.
  * It does not run any external API call. It does not auto-post.
+ *
+ * Phase 14A — Operating Profile alignment:
+ * The runnable implementation lives at
+ * `services/govcon/premium-content-agent.js` and consumes the GovCon
+ * Operating Profile (`services/settings/govcon-operating-profile.js`):
+ * business profile, certifications, NAICS/PSC, target agencies,
+ * services, differentiators, past-performance snippets, social handles,
+ * default platforms, tone preferences, approved/blocked claims, and
+ * image-style preferences. Supported content-prep platforms:
+ * meta_business_suite, facebook, instagram, tiktok, linkedin. Output is
+ * draft-only (captions, hooks, quote cards, hashtags, image prompts,
+ * carousel outlines, reel/TikTok hooks, manual posting notes, claim
+ * review checklist). No auto-post, no platform publishing.
  */
 
 export type PremiumContentAgentSpec = {

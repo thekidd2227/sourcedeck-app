@@ -42,8 +42,14 @@
 'use strict';
 
 const KNOWN_SERVICES = Object.freeze([
+  // Core data + AI providers
   'sam-gov', 'airtable', 'apollo', 'openai', 'anthropic',
-  'watsonx', 'ibm-cos'
+  'watsonx', 'ibm-cos',
+  // Creative / imaging + social-platform providers (presence-only;
+  // SourceDeck stores keys for FUTURE draft-prep workflows — it does
+  // NOT auto-post or publish to any of these platforms).
+  'canva', 'meta', 'instagram', 'facebook', 'tiktok',
+  'linkedin', 'google', 'x-twitter'
 ]);
 
 function _validate(serviceName) {
