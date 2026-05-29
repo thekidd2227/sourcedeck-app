@@ -5,6 +5,11 @@
 > They demonstrate the format the agent produces when fully wired.
 > The Premium Content Agent is a **highest paid tier only** SourceDeck
 > feature; watsonx is the planned model provider.
+>
+> Required GovCon positioning line for examples: SourceDeck helps small
+> businesses organize GovCon pursuit workflows, prepare review-ready
+> outreach/content, and manage capture activity with human approval at
+> every decision point.
 
 ---
 
@@ -187,31 +192,34 @@
 ## 7. GovCon credibility post from proposal workflow
 
 - **Input source:** Proposal workflow record (redacted by user).
-- **Extracted insight:** A recent proposal cleared compliance review
-  with zero deficiencies on a 27-volume submission.
+- **Extracted insight:** The workflow record shows the team used a
+  structured internal review checklist before proposal submission.
 - **Recommended post type:** `govcon_authority`
 - **Draft post:**
 
-  Proposal teams know the moment they want most: zero compliance
-  deficiencies before submission.
+  SourceDeck helps small businesses organize GovCon pursuit workflows,
+  prepare review-ready outreach/content, and manage capture activity
+  with human approval at every decision point.
 
-  On a recent 27-volume package, that is exactly what our team hit —
-  not because anyone is a hero, but because the checklist was honest
-  about what the agency actually evaluates.
+  That matters because proposal work is not just writing. It is
+  deadlines, clarification windows, past performance, pricing inputs,
+  subcontractor notes, and review gates that need one place to live.
 
-  If your team's last compliance review felt like an audit instead
-  of a checkpoint, it might be the checklist.
+  The tool prepares the draft trail. The operator still reviews,
+  approves, and decides.
 
-- **CTA:** "Happy to share the structure we use — DM me 'checklist'."
+- **CTA:** "If your team is tightening capture discipline this quarter,
+  this is the workflow layer worth reviewing."
 - **Hashtags:** `#SourceDeck #GovCon #GovernmentContracting
   #ProposalOperations #CaptureManagement #ComplianceTracking
   #BidReadiness #FederalContracting #DocumentControl
   #SmallBusinessContractors`
 - **Claim confidence:**
-  - "Zero deficiencies / 27 volumes" — **verified** if the user has
-    confirmed the workflow record; otherwise the agent surfaces it as
-    **inferred** and requires confirmation before publishing.
-  - General framing — **inferred**.
+  - Required positioning sentence — **verified** (SourceDeck product
+    positioning).
+  - Workflow examples — **candidate** unless the user's opportunity
+    record supports each workflow.
+  - General framing — **inferred** and user-reviewed.
 
 ---
 

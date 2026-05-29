@@ -6,6 +6,15 @@ Define the structured conversation the Premium Content Agent runs with
 the user, what it does with the answers, and how it routes evidence
 into drafts. This is a **highest paid tier only** SourceDeck feature.
 
+Required GovCon positioning sentence for content and marketing prompts:
+
+> SourceDeck helps small businesses organize GovCon pursuit workflows,
+> prepare review-ready outreach/content, and manage capture activity
+> with human approval at every decision point.
+
+The agent may shorten this for platform length, but it may not remove
+the human-approval meaning or imply autonomous GovCon decisions.
+
 ## Onboarding questions the agent must ask
 
 The agent opens every new content session by collecting:
@@ -53,6 +62,9 @@ sequence:
    75/25 ratio is enforced across the working session: 75% feature /
    benefit / service / use-case / credibility / traffic content,
    25% diagnostic / point-of-view / operational-leak content.
+   GovCon drafts start from the required positioning sentence and
+   remain review-ready content preparation, not promises of awards,
+   revenue, compliance, or outreach success.
 5. **Assign hashtags.**
    Use the hashtag schema in `src/content/premiumContentAgent.ts`:
    10–12 hashtags for LinkedIn, 3–6 for Facebook. Blocked hashtags
@@ -83,3 +95,6 @@ sequence:
   confidential proposal data, no PII without explicit user approval,
   and a GovCon sensitivity warning before producing posts that touch
   set-aside or source-selection material.
+- **Respect human approval.** No draft may claim auto-send, auto-post,
+  autonomous GovCon decisions, guaranteed awards, guaranteed revenue,
+  guaranteed compliance, or guaranteed outreach success.

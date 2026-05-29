@@ -29,6 +29,7 @@ export type PremiumContentAgentSpec = {
   readonly featureName: 'SourceDeck Premium Content Agent';
   readonly tierRequirement: 'highest_paid_tier_only';
   readonly positioning: string;
+  readonly govconPositioningLine: string;
   readonly poweredBy: 'watsonx';
   readonly poweredByStatus: 'planned' | 'implemented';
   readonly supportedPlatforms: readonly ['linkedin', 'facebook'];
@@ -48,6 +49,7 @@ export type PremiumContentAgentSpec = {
   };
   readonly approvalWorkflow: ApprovalWorkflow;
   readonly safetyRules: readonly string[];
+  readonly govconPostPromptRules: readonly string[];
   readonly blockedClaims: readonly string[];
   readonly hashtagSchemas: HashtagSchemas;
   readonly ctaRules: readonly string[];
@@ -147,6 +149,8 @@ export const premiumContentAgent: PremiumContentAgentSpec = {
   tierRequirement: 'highest_paid_tier_only',
   positioning:
     'A watsonx-powered AI content strategist for the highest SourceDeck tier — turns the user\'s own documents, linked repositories, websites, product docs, and pipeline activity into LinkedIn and Facebook posts that build authority, traffic, and trust.',
+  govconPositioningLine:
+    'SourceDeck helps small businesses organize GovCon pursuit workflows, prepare review-ready outreach/content, and manage capture activity with human approval at every decision point.',
   poweredBy: 'watsonx',
   poweredByStatus: 'planned',
   supportedPlatforms: ['linkedin', 'facebook'] as const,
@@ -267,7 +271,17 @@ export const premiumContentAgent: PremiumContentAgentSpec = {
     'Redact PII (customer names, employee names, account numbers, contact details) by default; require user opt-in to reintroduce.',
     'Warn the user before drafting on sensitive GovCon material (set-aside posture, source selection, CUI markings, contract-vehicle-sensitive content) and require explicit confirmation to continue.',
     'Mark every claim verified, inferred, or candidate. Drafts with inferred or candidate claims surface those tags inline.',
-    'Do not auto-post. Every draft passes through user approval.'
+    'Do not auto-post. Every draft passes through user approval.',
+    'Do not claim SourceDeck wins contracts, guarantees awards, guarantees revenue, guarantees compliance, or guarantees outreach success.',
+    'Do not claim auto-send, auto-post, or autonomous GovCon decision-making.'
+  ],
+  govconPostPromptRules: [
+    'Use the GovCon positioning line as the base positioning sentence when drafting GovCon posts; adapt only for platform length.',
+    'Keep the meaning intact: organize GovCon pursuit workflows, prepare review-ready outreach/content, manage capture activity, and require human approval at every decision point.',
+    'Every GovCon draft is review-ready content preparation only.',
+    'Do not imply SourceDeck makes final bid/no-bid, outreach, pricing, compliance, proposal, teaming, or award decisions.',
+    'Do not claim SourceDeck wins work or guarantees awards, revenue, compliance, or outreach results.',
+    'Do not claim auto-send, auto-post, or autonomous GovCon decision-making.'
   ],
   blockedClaims: [
     'exaggerated_metrics',
@@ -338,7 +352,8 @@ export const premiumContentAgent: PremiumContentAgentSpec = {
     'Who is the audience for this post — federal buyers, small-business operators, partners, or someone else?',
     'What is the goal — website traffic, authority, leads, or trust?',
     'LinkedIn, Facebook, or both?',
-    'Preferred format — text-only, poll, checklist, document outline, or media-supported?'
+    'Preferred format — text-only, poll, checklist, document outline, or media-supported?',
+    'Draft a GovCon post using this base positioning sentence: SourceDeck helps small businesses organize GovCon pursuit workflows, prepare review-ready outreach/content, and manage capture activity with human approval at every decision point.'
   ],
   autoPostingClaim: 'not_supported_in_this_repo'
 };

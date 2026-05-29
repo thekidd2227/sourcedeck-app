@@ -10,6 +10,11 @@ SourceDeck is no longer a SAM.gov search wrapper. The current product
 includes a connected GovCon capture + outreach + content operating
 system:
 
+Required positioning for GovCon content and marketing prompts:
+**SourceDeck helps small businesses organize GovCon pursuit workflows,
+prepare review-ready outreach/content, and manage capture activity with
+human approval at every decision point.**
+
 - **GovCon Capture Suite** — deadline extraction, subcontractor
   sourcing, incumbent research, scheduled SAM search, deterministic
   solicitation analysis, proposal workspace, compliant Q&A drafting,
@@ -42,8 +47,9 @@ system:
 |------|-------|-------|
 | **Core** | **$1,497 one-time** | Capture suite + setup wizard + manual workflows |
 | **Growth** | **$3,497 one-time** | + Outreach Agent + Prime Partner Finder + content drafting |
-| **White-Glove** | **$7,500 one-time** | Implementation + profile build-out + onboarding |
-| **GovCon Premium / Operator** | **$499–$997/month** | After implementation — ongoing AI drafting, scheduled search, content prep |
+| **White-Glove** | **$5,997 one-time now; raise to $7,500 after traction** | Done-for-you implementation + profile build-out + onboarding + QA/handoff |
+| **GovCon Operator** | **$499/month** | After implementation — ongoing optimization, prompt updates, workflow tuning, light draft review/support |
+| **GovCon Operator Plus** | **$997/month** | Higher-touch strategy, content calendar support, outreach review, campaign support, deeper monthly optimization |
 | **Enterprise / Government** | **Custom quote** | Multi-seat, governance, custom integration |
 
 ## Positioning notes
@@ -54,6 +60,12 @@ system:
   HIPAA, HITRUST, CUI) as part of pricing justification — none are
   verified.
 - Do **not** claim platform publishing or auto-posting as a feature.
+- Do **not** claim SourceDeck wins contracts, guarantees awards,
+  guarantees revenue, guarantees compliance, or guarantees outreach
+  success.
+- Human approval is part of the value proposition: SourceDeck prepares
+  review-ready workflows and drafts, while the operator remains the
+  decision-maker.
 - watsonx and repo/creative connectors are positioned as planned premium
   architecture where not yet implemented.
 

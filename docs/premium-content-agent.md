@@ -43,6 +43,19 @@ It is an explicit decision-support agent: it **drafts and recommends**,
 the user **approves before publishing**. Nothing is auto-posted by this
 feature in the current codebase.
 
+## Required GovCon positioning
+
+Use this as the base positioning sentence for GovCon content drafts and
+marketing prompts:
+
+> SourceDeck helps small businesses organize GovCon pursuit workflows,
+> prepare review-ready outreach/content, and manage capture activity
+> with human approval at every decision point.
+
+The sentence may be shortened for platform length, but it must preserve
+the same meaning: workflow organization, review-ready drafts, capture
+activity management, and human approval at every decision point.
+
 ## Supported platforms
 
 - **LinkedIn**
@@ -91,6 +104,8 @@ drafting workflows where the tier policy and tenant policy permit it.
 
 ## What the agent generates
 
+- GovCon post drafts that use the required positioning sentence as the
+  base message, adapted only for platform length.
 - LinkedIn text-only authority posts
 - LinkedIn polls
 - LinkedIn document / PDF outlines (carousel-style narrative)
@@ -129,6 +144,11 @@ The agent does not auto-post. The Premium Content Agent surface in this
 repo is currently spec + documentation; no auto-publish code path
 exists in this repository.
 
+For GovCon content, the workflow language must keep the required
+positioning intact: SourceDeck organizes pursuit workflows, prepares
+review-ready outreach/content, and manages capture activity with human
+approval at every decision point.
+
 TikTok and YouTube live scheduling should not be claimed unless a
 supported publishing connector is implemented. If those platforms are
 referenced, describe them as content preparation or manual-post
@@ -145,8 +165,36 @@ fallback only.
   content (set-aside protests, source selection, CUI-adjacent details).
 - Do not claim compliance, security certifications, or customer
   references that the user has not verified.
+- Do not claim SourceDeck wins contracts, guarantees awards, guarantees
+  revenue, guarantees compliance, or guarantees outreach success.
+- Do not claim auto-send, auto-post, or autonomous GovCon
+  decision-making.
 - Mark every claim in a draft as **verified**, **inferred**, or
   **candidate** so the user can correct inference before publishing.
+
+## GovCon post prompt rules
+
+- Start from this base sentence when drafting GovCon posts:
+  "SourceDeck helps small businesses organize GovCon pursuit workflows,
+  prepare review-ready outreach/content, and manage capture activity
+  with human approval at every decision point."
+- Adapt for LinkedIn, Facebook, Instagram, TikTok, and Meta Business
+  Suite length only when needed.
+- Keep every output draft-only and review-ready.
+- Do not imply SourceDeck makes final bid/no-bid, outreach, pricing,
+  compliance, proposal, teaming, or award decisions.
+- Do not claim SourceDeck wins work or guarantees any outcome.
+
+## Example GovCon content prompts
+
+- Draft a LinkedIn post using the required positioning sentence as the
+  opening idea for small-business GovCon operators evaluating capture
+  workflow discipline.
+- Draft a Facebook post that explains how SourceDeck helps a contractor
+  organize pursuit activity and prepare review-ready outreach/content,
+  with human approval before any public post or outreach action.
+- Draft a short Meta Business Suite caption that preserves the required
+  positioning while trimming only for platform length.
 
 ## Premium gating rationale
 
