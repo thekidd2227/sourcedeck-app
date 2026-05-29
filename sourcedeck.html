@@ -4,26 +4,29 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <title>SourceDeck</title>
-<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&family=Azeret+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
-  --bg:#080A10;--panel:#0B1829;--panel2:#07111F;--panel3:#0E2040;--panel4:#0a1e38;
-  --gold:#C9941A;--gold2:#E8B84B;--goldl:rgba(201,148,26,0.10);--goldb:rgba(201,148,26,0.18);
-  --blue:#1A6FA8;--blue2:#2280C0;--bluel:rgba(26,111,168,0.10);
-  --text:#EAEEF5;--sub:#C4CFD9;--muted:#7A8FA6;--dim:#3A4E62;--faint:#1E2E40;
-  --border:#152638;--border2:rgba(21,38,56,0.7);
-  --green:#22C55E;--greenl:rgba(34,197,94,0.10);--greenb:rgba(34,197,94,0.18);
-  --red:#EF4444;--redl:rgba(239,68,68,0.10);--redb:rgba(239,68,68,0.18);
-  --warn:#F59E0B;--warnl:rgba(245,158,11,0.10);--warnb:rgba(245,158,11,0.18);
+  --bg:#07090F;--panel:#0C1626;--panel2:#0A1420;--panel3:#111F36;--panel4:#162844;
+  --gold:#C9941A;--gold2:#E8A91E;--goldl:rgba(201,148,26,0.09);--goldb:rgba(201,148,26,0.18);
+  --signal:#1B4D6E;--signal2:#2260A0;--signall:rgba(27,77,110,0.10);
+  --crimson:#8B1A2E;--crimsonl:rgba(139,26,46,0.10);--crimsonb:rgba(139,26,46,0.20);
+  --parchment:#F2EDE3;--ivory:#F7F4EE;
+  --text:#E8EDF4;--sub:#B8C6D4;--muted:#6B7F94;--dim:#2E4358;--faint:#192D44;
+  --border:#1C3050;--border2:#111E2E;
+  --green:#1E7A4E;--greenl:rgba(30,122,78,0.10);--greenb:rgba(30,122,78,0.18);
+  --red:#8B1A2E;--redl:rgba(139,26,46,0.10);--redb:rgba(139,26,46,0.18);
+  --warn:#C4820A;--warnl:rgba(196,130,10,0.10);--warnb:rgba(196,130,10,0.18);
   --purple:#A78BFA;--purplel:rgba(167,139,250,0.10);
-  --sidebar:228px;--topbar:64px;--r:12px;--r2:8px;--t:all 0.22s ease;
+  --sidebar:224px;--topbar:64px;--r:12px;--r2:8px;--t:all 0.22s ease;
 }
 html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;background:var(--bg);color:var(--text);font-size:13px}
+.brief-head,.opp-title,.section-lede,.pane-lede{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600}
+.nav-label,.kpi-label,.tb-kl,.sl,.label{font-family:'IBM Plex Mono',monospace}
+.kpi-val{font-family:'Syne',sans-serif;font-weight:800;font-size:28px;letter-spacing:-0.02em}
+.brand-name{font-family:'Syne',sans-serif;font-weight:800;letter-spacing:0.02em}
 
-/* WATERMARK */
-.wm{position:fixed;inset:0;z-index:0;pointer-events:none;display:flex;align-items:center;justify-content:center}
-.wm img{width:460px;max-width:65vw;opacity:0.02;user-select:none;filter:grayscale(1) brightness(1.2)}
 
 /* TOPBAR */
 .topbar{
@@ -85,8 +88,8 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
   color:var(--gold2);border:1px solid rgba(201,148,26,0.18);
   box-shadow:0 0 12px rgba(201,148,26,0.05) inset;
 }
-.nav-btn.active::before{content:'';position:absolute;left:0;top:20%;bottom:20%;width:2px;border-radius:2px;background:var(--gold)}
-.nav-icon{font-size:14px;width:17px;text-align:center;flex-shrink:0}
+.nav-btn.active::before{content:'';position:absolute;left:0;top:15%;bottom:15%;width:2px;border-radius:2px;background:var(--gold);box-shadow:0 0 8px rgba(201,148,26,0.6)}
+.nav-icon{font-size:14px;width:17px;text-align:center;flex-shrink:0;display:flex;align-items:center;justify-content:center}.nav-icon svg{stroke:currentColor}
 .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:7px;font-weight:700;padding:2px 5px;border-radius:8px;font-family:'Azeret Mono',monospace;min-width:16px;text-align:center}
 
 /* MAIN */
@@ -162,7 +165,8 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 .k{color:var(--muted);flex-shrink:0}.v{font-family:'Azeret Mono',monospace;color:var(--sub);word-break:break-all;text-align:right;max-width:65%}
 
 /* SECTION LABEL */
-.sl{font-size:8px;font-family:'Azeret Mono',monospace;text-transform:uppercase;letter-spacing:0.12em;color:var(--dim);margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.sl{font-size:8px;font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:0.14em;color:var(--dim);margin-bottom:10px;padding-bottom:7px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.sl::before{content:'';display:inline-block;width:16px;height:1px;background:var(--gold);opacity:0.6}
 
 /* BADGE */
 .badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:10px;font-size:8px;font-weight:600;font-family:'Azeret Mono',monospace;letter-spacing:0.03em}
@@ -307,6 +311,28 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 .check-item.done .check-box{background:var(--green);border-color:var(--green);color:#fff}
 .check-text{font-size:11px;line-height:1.5;color:var(--sub)}
 .check-tag{margin-left:auto;flex-shrink:0}
+
+/* OPPORTUNITY BRIEF */
+.opp-brief{background:var(--panel3);border:1px solid var(--border);border-left:3px solid var(--gold);border-radius:var(--r);padding:20px 24px;position:relative;transition:var(--t)}
+.opp-brief:hover{border-color:rgba(201,148,26,0.35);box-shadow:0 0 24px rgba(201,148,26,0.06) inset}
+.opp-brief-agency{font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.14em;color:var(--gold);margin-bottom:8px}
+.opp-brief-title{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:20px;font-weight:600;color:var(--text);line-height:1.25;margin-bottom:12px}
+.opp-brief-meta{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
+.opp-brief-value{font-family:'Syne',sans-serif;font-weight:800;font-size:20px;color:var(--gold2)}
+.opp-brief-naics{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--muted);padding:3px 8px;border:1px solid var(--border);border-radius:5px}
+.opp-brief-deadline{font-family:'IBM Plex Mono',monospace;font-size:10px;color:var(--warn)}
+.opp-brief-confidence{margin-top:8px}
+.opp-confidence-label{font-family:'IBM Plex Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:4px}
+.opp-confidence-bar{height:3px;background:var(--faint);border-radius:2px;overflow:hidden}
+.opp-confidence-fill{height:100%;background:linear-gradient(90deg,var(--gold),var(--gold2));border-radius:2px;transition:width 0.6s ease}
+.opp-cert-strip{display:flex;gap:5px;margin-top:10px;flex-wrap:wrap}
+.opp-cert{font-family:'IBM Plex Mono',monospace;font-size:8px;font-weight:700;letter-spacing:0.06em;padding:3px 7px;border-radius:4px;background:var(--goldl);color:var(--gold2);border:1px solid rgba(201,148,26,0.2)}
+
+/* DOCUMENT SURFACE — for briefs, proposals, reports */
+.doc-surface{background:var(--parchment);color:#1A1208;border-radius:var(--r);padding:24px 28px;border:1px solid rgba(0,0,0,0.08)}
+.doc-surface .doc-label{font-family:'IBM Plex Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:0.14em;color:#6B5C3E;margin-bottom:6px}
+.doc-surface .doc-title{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:22px;color:#1A1208;line-height:1.2;margin-bottom:12px}
+.doc-surface .doc-body{font-family:'Instrument Sans',sans-serif;font-size:13px;line-height:1.75;color:#3A2E1C}
 
 /* TOAST */
 #tc{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:7px}
@@ -494,33 +520,6 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 }
 
 /* ═══════════════════════════════════════════════════════════════
-   APPLE METALLIC DESIGN LAYER — v7
-   Adds vibrancy, metallic sheen, and modern macOS polish.
-   Colors unchanged. Layout unchanged. Pure visual enhancement.
-═══════════════════════════════════════════════════════════════ */
-.topbar{background:linear-gradient(180deg,rgba(20,32,52,0.97) 0%,rgba(11,24,41,0.95) 100%)!important;-webkit-backdrop-filter:blur(24px) saturate(180%);backdrop-filter:blur(24px) saturate(180%);border-bottom:1px solid rgba(255,255,255,0.06);box-shadow:0 1px 0 rgba(255,255,255,0.04) inset,0 -1px 0 rgba(0,0,0,0.4) inset,0 2px 20px rgba(0,0,0,0.35)}
-.topbar::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent 0%,rgba(255,255,255,0.12) 20%,rgba(255,255,255,0.18) 50%,rgba(255,255,255,0.12) 80%,transparent 100%);pointer-events:none}
-.sidebar{background:linear-gradient(180deg,rgba(10,20,35,0.98) 0%,rgba(7,17,31,0.99) 100%)!important;-webkit-backdrop-filter:blur(20px) saturate(160%);backdrop-filter:blur(20px) saturate(160%);border-right:1px solid rgba(255,255,255,0.04)!important;box-shadow:1px 0 0 rgba(0,0,0,0.3) inset}
-.nav-btn{border-radius:8px!important;transition:all 0.15s cubic-bezier(0.25,0.46,0.45,0.94)!important}
-.nav-btn.active{background:linear-gradient(135deg,rgba(201,148,26,0.18) 0%,rgba(201,148,26,0.10) 40%,rgba(26,111,168,0.12) 100%)!important;border:1px solid rgba(201,148,26,0.22)!important;box-shadow:0 1px 0 rgba(255,255,255,0.06) inset,0 0 0 1px rgba(201,148,26,0.08),0 2px 8px rgba(0,0,0,0.2)}
-.card{background:linear-gradient(145deg,rgba(14,30,54,0.95) 0%,rgba(11,24,41,0.98) 60%,rgba(8,18,34,0.95) 100%)!important;border:1px solid rgba(255,255,255,0.05)!important;box-shadow:0 1px 0 rgba(255,255,255,0.04) inset,0 -1px 0 rgba(0,0,0,0.2) inset,0 4px 16px rgba(0,0,0,0.25),0 1px 3px rgba(0,0,0,0.15)}
-.kpi{background:linear-gradient(145deg,rgba(16,32,56,0.96) 0%,rgba(11,24,41,0.98) 50%,rgba(8,16,30,0.95) 100%)!important;border:1px solid rgba(255,255,255,0.05)!important;box-shadow:0 1px 0 rgba(255,255,255,0.06) inset,0 -1px 0 rgba(0,0,0,0.25) inset,0 4px 20px rgba(0,0,0,0.3)}
-.kpi.gold-kpi{background:linear-gradient(145deg,rgba(20,36,58,0.96) 0%,rgba(201,148,26,0.04) 50%,rgba(10,22,40,0.98) 100%)!important}
-.btn{position:relative;overflow:hidden;box-shadow:0 1px 0 rgba(255,255,255,0.08) inset,0 -1px 0 rgba(0,0,0,0.25) inset,0 2px 8px rgba(0,0,0,0.2);transition:all 0.12s cubic-bezier(0.25,0.46,0.45,0.94)!important}
-.btn::after{content:'';position:absolute;top:0;left:0;right:0;height:50%;background:linear-gradient(180deg,rgba(255,255,255,0.08) 0%,transparent 100%);pointer-events:none;border-radius:inherit}
-.btn-gold{background:linear-gradient(180deg,rgba(220,165,40,1) 0%,rgba(185,132,18,1) 100%)!important;box-shadow:0 1px 0 rgba(255,220,100,0.3) inset,0 -1px 0 rgba(0,0,0,0.3) inset,0 2px 12px rgba(201,148,26,0.3)}
-.btn-blue{background:linear-gradient(180deg,rgba(40,130,195,1) 0%,rgba(20,100,165,1) 100%)!important;box-shadow:0 1px 0 rgba(100,180,255,0.2) inset,0 -1px 0 rgba(0,0,0,0.3) inset,0 2px 10px rgba(26,111,168,0.25)}
-.logo-mark{background:linear-gradient(145deg,rgba(20,36,58,1) 0%,rgba(10,18,32,1) 100%)!important;border:1px solid rgba(255,255,255,0.1)!important;box-shadow:0 1px 0 rgba(255,255,255,0.12) inset,0 -1px 0 rgba(0,0,0,0.4) inset,0 0 0 1px rgba(0,0,0,0.3),0 0 18px rgba(201,148,26,0.18)}
-.slide-panel{background:linear-gradient(180deg,rgba(12,26,44,0.98) 0%,rgba(8,18,32,0.99) 100%)!important;-webkit-backdrop-filter:blur(32px) saturate(180%);backdrop-filter:blur(32px) saturate(180%);border-left:1px solid rgba(255,255,255,0.06)!important;box-shadow:1px 0 0 rgba(255,255,255,0.04) inset,-12px 0 40px rgba(0,0,0,0.5)}
-.pane-hdr{-webkit-backdrop-filter:blur(20px) saturate(160%);backdrop-filter:blur(20px) saturate(160%);background:linear-gradient(180deg,rgba(14,28,48,0.92) 0%,rgba(11,22,38,0.80) 100%)!important;border-bottom:1px solid rgba(255,255,255,0.04)!important;box-shadow:0 1px 0 rgba(255,255,255,0.03) inset}
-.tbl-wrap{border:1px solid rgba(255,255,255,0.05)!important;box-shadow:0 1px 0 rgba(255,255,255,0.03) inset,0 4px 20px rgba(0,0,0,0.2)}
-.tbl thead th{background:linear-gradient(180deg,rgba(16,30,52,0.98) 0%,rgba(12,24,42,0.98) 100%)!important;border-bottom:1px solid rgba(255,255,255,0.06)!important;box-shadow:0 1px 0 rgba(255,255,255,0.03) inset}
-input.input,select.select,textarea.textarea{background:linear-gradient(180deg,rgba(4,12,24,0.8) 0%,rgba(6,16,28,0.9) 100%)!important;border:1px solid rgba(255,255,255,0.08)!important;box-shadow:0 1px 3px rgba(0,0,0,0.3) inset,0 1px 0 rgba(255,255,255,0.04)}
-input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(201,148,26,0.4)!important;box-shadow:0 0 0 3px rgba(201,148,26,0.12),0 1px 3px rgba(0,0,0,0.3) inset;outline:none}
-.tb-kpi{background:rgba(255,255,255,0.03)!important;border:1px solid rgba(255,255,255,0.06)!important;box-shadow:0 1px 0 rgba(255,255,255,0.04) inset}
-.overlay{-webkit-backdrop-filter:blur(6px) saturate(140%);backdrop-filter:blur(6px) saturate(140%);background:rgba(0,0,0,0.6)!important}
-::-webkit-scrollbar{width:5px;height:5px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:linear-gradient(180deg,rgba(80,110,140,0.5),rgba(50,80,110,0.4));border-radius:10px}::-webkit-scrollbar-corner{background:transparent}
-
 /* ── LANGUAGE SWITCHER ── */
 #sd-lang-switcher{display:inline-flex;align-items:center;gap:0;padding:2px;border-radius:980px;background:rgba(255,255,255,0.05);border:0.5px solid rgba(255,255,255,0.12);font:600 10px/1 'Azeret Mono',monospace;letter-spacing:0.04em;color:rgba(245,245,247,0.7);margin-left:12px}
 #sd-lang-switcher button{appearance:none;background:transparent;border:0;color:inherit;font:inherit;padding:5px 10px;border-radius:980px;cursor:pointer;transition:background 0.15s,color 0.15s}
@@ -531,29 +530,29 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
 </head>
 <body>
 
-<div class="wm"><img src="arcg-medallion.jpg" alt="" onerror="this.src='arcg-systems-logo.png';this.onerror=function(){this.style.display='none'}"></div>
+
 
 <div class="topbar">
   <div class="logo-block">
     <div class="logo-mark"><img src="sourcedeck-logo.png" alt="SourceDeck" onerror="this.parentElement.textContent='S'"></div>
     <div>
       <div class="brand-name" id="brand-name-el">SourceDeck</div>
-      <div class="brand-ver">Lead Command Center</div>
+      <div class="brand-ver">Intelligence Platform</div>
     </div>
   </div>
   <div class="topbar-sep"></div>
   <div class="topbar-kpis">
     <div class="tb-kpi kpi-glow-gold" title="Total pipeline value">
       <div class="tb-kl">Pipeline</div>
-      <div class="tb-kv" id="tb-pipeline" style="color:var(--gold2)">$0</div>
+      <div class="tb-kv" id="tb-pipeline" style="color:var(--gold2)">—</div>
     </div>
     <div class="tb-kpi" title="Weighted expected revenue">
       <div class="tb-kl">Expected</div>
-      <div class="tb-kv" id="tb-expected" style="color:var(--warn)">$0</div>
+      <div class="tb-kv" id="tb-expected" style="color:var(--warn)">—</div>
     </div>
     <div class="tb-kpi" title="Total leads">
       <div class="tb-kl">Leads</div>
-      <div class="tb-kv" id="tb-leads" style="color:#60a5fa">0</div>
+      <div class="tb-kv" id="tb-leads" style="color:#60a5fa">—</div>
     </div>
   </div>
   <div class="topbar-right">
@@ -569,56 +568,57 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
   <!-- SIDEBAR -->
   <div class="sidebar">
     <div class="nav-section">
-      <div class="nav-label">Overview</div>
-      <button class="nav-btn" data-tab="cmd"><span class="nav-icon">⚡</span>Command Center</button>
-      <button class="nav-btn active" data-tab="dashboard"><span class="nav-icon">📊</span>Dashboard</button>
-      <button class="nav-btn" data-tab="leads"><span class="nav-icon">👥</span>Lead Generator</button>
-      <button class="nav-btn" data-tab="revenue"><span class="nav-icon">💰</span>Revenue</button>
-      <button class="nav-btn" data-tab="email"><span class="nav-icon">📧</span>Email Tracker</button>
-    </div>
-    <div class="nav-section">
-      <div class="nav-label">Action</div>
-      <button class="nav-btn" data-tab="overdue" id="overdue-nav"><span class="nav-icon">🔴</span>Overdue <span class="nav-badge" id="oc">0</span></button>
-      <button class="nav-btn" data-tab="reply"><span class="nav-icon">🧠</span>Reply Analyzer</button>
-    </div>
-    <div class="nav-section">
-      <div class="nav-label">Create</div>
-      <button class="nav-btn" data-tab="content"><span class="nav-icon">🎬</span>Ad Engine</button>
-      <button class="nav-btn" data-tab="dailyops"><span class="nav-icon">📋</span>Daily Ops</button>
-      <button class="nav-btn" data-tab="socials"><span class="nav-icon">📱</span>Socials</button>
-      <button class="nav-btn" data-tab="sysflow"><span class="nav-icon">⚙️</span>System Flow</button>
-    </div>
-    <div class="nav-section">
-      <div class="nav-label">Pipeline</div>
-      <button class="nav-btn" data-tab="createlead"><span class="nav-icon">➕</span>Create Lead</button>
-      <button class="nav-btn" data-tab="aigenerate"><span class="nav-icon">🤖</span>AI Generate</button>
-      <button class="nav-btn" data-tab="settings"><span class="nav-icon">🔑</span>Settings</button>
-    </div>
-    <div class="nav-section">
-      <div class="nav-label">Delivery</div>
-      <button class="nav-btn" data-tab="delivery"><span class="nav-icon">🚀</span>Client Delivery</button>
-    </div>
-    <div class="nav-section">
-      <div class="nav-label">Federal</div>
-      <button class="nav-btn" data-tab="govcon"><span class="nav-icon">🏛️</span>GovCon</button>
-      <button class="nav-btn" data-tab="outreach"><span class="nav-icon">✉️</span>Outreach</button>
-      <button class="nav-btn" data-tab="primes"><span class="nav-icon">🤝</span>Prime Partners</button>
-    </div>
-    <div class="nav-section">
+
       <div class="nav-label">Operations</div>
-      <button class="nav-btn" data-tab="command"><span class="nav-icon">⚡</span>Command</button>
-      <button class="nav-btn" data-tab="opportunities"><span class="nav-icon">🎯</span>Opportunities</button>
-      <button class="nav-btn" data-tab="dealwork"><span class="nav-icon">📐</span>Deal Workspace</button>
-      <button class="nav-btn" data-tab="pipeline"><span class="nav-icon">🔄</span>Pipeline</button>
-      <button class="nav-btn" data-tab="execution"><span class="nav-icon">🚀</span>Execution</button>
-      <button class="nav-btn" data-tab="proof"><span class="nav-icon">📊</span>Reports</button>
+      <button class="nav-btn" data-tab="cmd"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>Command Center</button>
+      <button class="nav-btn active" data-tab="dashboard"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>Dashboard</button>
+      <button class="nav-btn" data-tab="leads"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Lead Generator</button>
+      <button class="nav-btn" data-tab="revenue"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Revenue</button>
+      <button class="nav-btn" data-tab="email"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>Email Tracker</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Alerts</div>
+      <button class="nav-btn" data-tab="overdue" id="overdue-nav"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>Overdue <span class="nav-badge" id="oc">0</span></button>
+      <button class="nav-btn" data-tab="reply"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Reply Analyzer</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Workflow</div>
+      <button class="nav-btn" data-tab="content"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></span>Ad Engine</button>
+      <button class="nav-btn" data-tab="dailyops"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>Daily Ops</button>
+      <button class="nav-btn" data-tab="socials"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>Socials</button>
+      <button class="nav-btn" data-tab="sysflow"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg></span>System Flow</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Tools</div>
+      <button class="nav-btn" data-tab="createlead"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>Create Lead</button>
+      <button class="nav-btn" data-tab="aigenerate"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span>AI Generate</button>
+      <button class="nav-btn" data-tab="settings"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Settings</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Client</div>
+      <button class="nav-btn" data-tab="delivery"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Client Delivery</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">GovCon</div>
+      <button class="nav-btn" data-tab="govcon"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><path d="M3 10h18"/><path d="M3 18h18"/><path d="M5 6h14l1 4H4l1-4z"/><rect x="3" y="18" width="18" height="3" rx="1"/></svg></span>GovCon</button>
+      <button class="nav-btn" data-tab="outreach"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span>Outreach</button>
+      <button class="nav-btn" data-tab="primes"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 17l5-5-5-5"/><path d="M8 7l-5 5 5 5"/><path d="M14 4l-4 16"/></svg></span>Prime Partners</button>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Intelligence</div>
+      <button class="nav-btn" data-tab="command"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>Command</button>
+      <button class="nav-btn" data-tab="opportunities"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>Opportunities</button>
+      <button class="nav-btn" data-tab="dealwork"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>Deal Workspace</button>
+      <button class="nav-btn" data-tab="pipeline"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Pipeline</button>
+      <button class="nav-btn" data-tab="execution"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Execution</button>
+      <button class="nav-btn" data-tab="proof"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Reports</button>
     </div>
     <!-- ── CAPABILITIES — Optional product modes. Hidden by default;
          shown when a capability is enabled via the capability card or
          operator provisioning. Clinical/EHR mode is the first capability. -->
     <div class="nav-section" id="nav-capabilities" style="display:none">
-      <div class="nav-label">Capabilities</div>
-      <button class="nav-btn" data-tab="clinical"><span class="nav-icon">🏥</span>Clinical / EHR</button>
+      <div class="nav-label">Healthcare</div>
+      <button class="nav-btn" data-tab="clinical"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>Clinical / EHR</button>
     </div>
   </div>
 
@@ -627,7 +627,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <!-- ═══════ COMMAND CENTER (mirrors sourcedeck.app/command/) ═══════ -->
     <div class="tab-pane" id="tab-cmd">
       <div class="pane-hdr">
-        <div><div class="pane-title">Command Center</div><div class="pane-sub">Operational inbox · revenue path · connector health · readiness</div></div>
+        <div><div class="pane-title"><span class="brief-head">Command Center</span></div><div class="pane-sub">Operational inbox · revenue path · connector health · readiness</div></div>
         <div class="pane-actions"><button class="btn btn-ghost" onclick="renderCmd()">↻ Refresh</button></div>
       </div>
       <div class="pane-body">
@@ -708,7 +708,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <div class="tab-pane active" id="tab-dashboard">
       <div class="pane-hdr">
         <div>
-          <div class="pane-title">Command Dashboard</div>
+          <div class="pane-title"><span class="brief-head">Command Dashboard</span></div>
           <div class="pane-sub">Revenue-first decision engine</div>
         </div>
         <div class="pane-actions">
@@ -756,7 +756,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
           </div>
           <div class="kpi">
             <div class="kpi-label">Weighted Expected</div>
-            <div class="kpi-val" style="color:var(--warn)" id="kpi-weighted">$0</div>
+            <div class="kpi-val" style="color:var(--gold2)" id="kpi-weighted">$0</div>
             <div class="kpi-delta">probability-adjusted</div>
           </div>
           <div class="kpi">
@@ -804,7 +804,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <!-- ═══════ LEADS ═══════ -->
     <div class="tab-pane" id="tab-leads">
       <div class="pane-hdr">
-        <div><div class="pane-title">Lead Generator</div><div class="pane-sub" id="leads-count">0 leads</div></div>
+        <div><div class="pane-title"><span class="brief-head">Lead Generator</span></div><div class="pane-sub" id="leads-count">0 leads</div></div>
         <div class="pane-actions" style="flex-wrap:wrap;gap:7px">
           <input class="input" id="ls" placeholder="Search..." style="width:130px" oninput="filterLeads()">
           <select class="select" id="sf" onchange="filterLeads()">
@@ -898,7 +898,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <!-- ═══════ REVENUE ═══════ -->
     <div class="tab-pane" id="tab-revenue">
       <div class="pane-hdr">
-        <div><div class="pane-title">Revenue Command</div><div class="pane-sub">Deal tracking · Weighted forecast · Stage aging</div></div>
+        <div><div class="pane-title"><span class="brief-head">Revenue Command</span></div><div class="pane-sub">Deal tracking · Weighted forecast · Stage aging</div></div>
         <div class="pane-actions"><button class="btn btn-ghost" onclick="renderRevenue()">↻ Refresh</button></div>
       </div>
       <div class="pane-body">
@@ -933,7 +933,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <!-- ═══════ EMAIL ═══════ -->
     <div class="tab-pane" id="tab-email">
       <div class="pane-hdr">
-        <div><div class="pane-title">Email Tracker</div><div class="pane-sub">Ledger-backed · Email Events table · auto-sync 15min</div></div>
+        <div><div class="pane-title"><span class="brief-head">Email Tracker</span></div><div class="pane-sub">Ledger-backed · Email Events table · auto-sync 15min</div></div>
       </div>
       <div class="pane-body">
         <div class="grid-3 mb-20">
@@ -956,7 +956,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <!-- ═══════ OVERDUE ═══════ -->
     <div class="tab-pane" id="tab-overdue">
       <div class="pane-hdr">
-        <div><div class="pane-title">Overdue Actions</div><div class="pane-sub">Leads needing immediate attention</div></div>
+        <div><div class="pane-title"><span class="brief-head">Overdue Actions</span></div><div class="pane-sub">Leads needing immediate attention</div></div>
         <div class="pane-actions"><button class="btn btn-ghost" onclick="renderOverdue()">↻</button><button class="btn btn-red" onclick="bulkFollowUp()">⚡ Bulk Follow-Up</button></div>
       </div>
       <div class="pane-body">
@@ -974,7 +974,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <!-- ═══════ REPLY ANALYZER ═══════ -->
     <div class="tab-pane" id="tab-reply">
       <div class="pane-hdr">
-        <div><div class="pane-title">Reply Analyzer</div><div class="pane-sub">OpenAI GPT-4o primary · Claude fallback · Airtable writeback ready</div></div>
+        <div><div class="pane-title"><span class="brief-head">Reply Analyzer</span></div><div class="pane-sub">OpenAI GPT-4o primary · Claude fallback · Airtable writeback ready</div></div>
       </div>
       <div class="pane-body">
         <div class="grid-2">
@@ -1020,7 +1020,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <!-- ═══════ AD ENGINE ═══════ -->
     <div class="tab-pane" id="tab-content">
       <div class="pane-hdr">
-        <div><div class="pane-title">Faceless Ad Engine</div><div class="pane-sub">Image · Video · Combo — brand content production</div></div>
+        <div><div class="pane-title"><span class="brief-head">Faceless Ad Engine</span></div><div class="pane-sub">Image · Video · Combo — brand content production</div></div>
       </div>
       <div class="pane-body">
         <div class="mode-toggle">
@@ -1177,7 +1177,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <!-- ═══════ DAILY OPS ═══════ -->
     <div class="tab-pane" id="tab-dailyops">
       <div class="pane-hdr">
-        <div><div class="pane-title">Daily Operating Rhythm</div><div class="pane-sub" id="do-date">Checklist — reset daily</div></div>
+        <div><div class="pane-title"><span class="brief-head">Daily Operating Rhythm</span></div><div class="pane-sub" id="do-date">Checklist — reset daily</div></div>
         <div class="pane-actions">
           <select class="select" id="do-day" onchange="renderDailyOps()">
             <option value="1">Day 1 — Outreach + Replies</option>
@@ -1221,7 +1221,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
 
     <!-- ═══════ SOCIALS ═══════ -->
     <div class="tab-pane" id="tab-socials">
-      <div class="pane-hdr"><div><div class="pane-title">Social Access Points</div><div class="pane-sub">Configure your brand channels in Settings → Brand</div></div></div>
+      <div class="pane-hdr"><div><div class="pane-title"><span class="brief-head">Social Access Points</span></div><div class="pane-sub">Configure your brand channels in Settings → Brand</div></div></div>
       <div class="pane-body">
         <div id="socials-empty" class="empty-state" style="padding:40px 20px;text-align:center;color:var(--muted)">
           <div style="font-size:28px;margin-bottom:12px">🔗</div>
@@ -1238,7 +1238,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
 
     <!-- ═══════ SYSTEM FLOW ═══════ -->
     <div class="tab-pane" id="tab-sysflow">
-      <div class="pane-hdr"><div><div class="pane-title">System Architecture</div><div class="pane-sub">End-to-end automation map</div></div></div>
+      <div class="pane-hdr"><div><div class="pane-title"><span class="brief-head">System Architecture</span></div><div class="pane-sub">End-to-end automation map</div></div></div>
       <div class="pane-body">
         <div class="card mb-14">
           <div class="sl">9-Stage Revenue Pipeline</div>
@@ -1270,7 +1270,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <!-- ═══ CREATE LEAD ═══ -->
     <div class="tab-pane" id="tab-createlead">
       <div class="pane-hdr">
-        <div><div class="pane-title">Create Lead</div><div class="pane-sub">Push directly to Airtable Leads table</div></div>
+        <div><div class="pane-title"><span class="brief-head">Create Lead</span></div><div class="pane-sub">Push directly to Airtable Leads table</div></div>
         <div class="pane-actions"><button class="btn btn-ghost" onclick="clearCreateForm()">↺ Clear</button></div>
       </div>
       <div class="pane-body">
@@ -1356,7 +1356,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <!-- ═══ AI GENERATE ═══ -->
     <div class="tab-pane" id="tab-aigenerate">
       <div class="pane-hdr">
-        <div><div class="pane-title">AI Lead Generator</div><div class="pane-sub">Claude-powered prospect research → push to Airtable</div></div>
+        <div><div class="pane-title"><span class="brief-head">AI Lead Generator</span></div><div class="pane-sub">Claude-powered prospect research → push to Airtable</div></div>
         <div class="pane-actions" id="ag-bulk-actions" style="display:none;flex-wrap:wrap;gap:6px">
           <span id="ag-sel-count" style="font-size:9px;color:var(--gold2);font-family:'Azeret Mono',monospace;align-self:center"></span>
           <button class="btn btn-blue" onclick="agValidateAll()" title="DNS MX validation gate — must pass before push">🔬 Validate (MX)</button>
@@ -1557,7 +1557,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <!-- ═══ SETTINGS ═══ -->
     <div class="tab-pane" id="tab-settings">
       <div class="pane-hdr">
-        <div><div class="pane-title">Settings</div><div class="pane-sub">API keys · Automation config · System identifiers</div></div>
+        <div><div class="pane-title"><span class="brief-head">Settings</span></div><div class="pane-sub">API keys · Automation config · System identifiers</div></div>
         <div class="pane-actions"><button class="btn btn-gold" onclick="saveSettings()">💾 Save Settings</button></div>
       </div>
       <div class="pane-body">
@@ -1716,7 +1716,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <!-- ═══ CLIENT DELIVERY OS ═══ -->
     <div class="tab-pane" id="tab-delivery">
       <div class="pane-hdr">
-        <div><div class="pane-title">Client Delivery OS</div><div class="pane-sub">Post-contact delivery pipeline · Diagnose → Expand</div></div>
+        <div><div class="pane-title"><span class="brief-head">Client Delivery OS</span></div><div class="pane-sub">Post-contact delivery pipeline · Diagnose → Expand</div></div>
         <div class="pane-actions">
           <button class="btn btn-gold" onclick="refreshDelivery()">↻ Refresh</button>
           <button class="btn btn-ghost" onclick="newDiagnostic()">+ New Diagnostic</button>
@@ -1905,7 +1905,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
 
     <div class="tab-pane" id="tab-govcon">
       <div class="pane-hdr">
-        <div><div class="pane-title">GovCon Pipeline</div><div class="pane-sub" id="gc-count">Federal opportunities · SAM.gov</div></div>
+        <div><div class="pane-title"><span class="brief-head">GovCon Pipeline</span></div><div class="pane-sub" id="gc-count">Federal opportunities · SAM.gov</div></div>
         <div class="pane-actions" style="flex-wrap:wrap;gap:7px">
           <select class="select" id="gc-filter" onchange="renderGovcon()">
             <option value="">All Opportunities</option>
@@ -2111,7 +2111,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
 
     <!-- ═══════ COMMAND MODE ═══════ -->
     <div class="tab-pane" id="tab-command">
-      <div class="pane-hdr"><div><div class="pane-title">Command Mode</div><div class="pane-sub">Mission control · DISCOVER → EVALUATE → DECIDE → ACT → MONITOR → PROVE</div></div></div>
+      <div class="pane-hdr"><div><div class="pane-title"><span class="brief-head">Command Mode</span></div><div class="pane-sub">Mission control · DISCOVER → EVALUATE → DECIDE → ACT → MONITOR → PROVE</div></div></div>
       <div class="pane-body" id="cmd-body">
         <div class="grid-4" id="cmd-kpis"></div>
         <div class="grid-2" style="margin-top:16px">
@@ -2133,7 +2133,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <!-- ═══════ OPPORTUNITIES ═══════ -->
     <div class="tab-pane" id="tab-opportunities">
       <div class="pane-hdr">
-        <div><div class="pane-title">Opportunities</div><div class="pane-sub" id="opp-count">Intake · Filtering · Qualification</div></div>
+        <div><div class="pane-title"><span class="brief-head">Opportunities</span></div><div class="pane-sub" id="opp-count">Intake · Filtering · Qualification</div></div>
         <div class="pane-actions">
           <input class="input" id="opp-search" type="text" placeholder="Search opportunities..." oninput="renderOpportunities()" style="width:180px">
           <select class="select" id="opp-status-filter" onchange="renderOpportunities()">
@@ -2151,7 +2151,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
 
     <!-- ═══════ DEAL WORKSPACE ═══════ -->
     <div class="tab-pane" id="tab-dealwork">
-      <div class="pane-hdr"><div><div class="pane-title" id="dw-title">Deal Workspace</div><div class="pane-sub" id="dw-sub">Select an opportunity to begin evaluation</div></div>
+      <div class="pane-hdr"><div><div class="pane-title" id="dw-title"><span class="brief-head">Deal Workspace</span></div><div class="pane-sub" id="dw-sub">Select an opportunity to begin evaluation</div></div>
         <div class="pane-actions">
           <button class="btn btn-gold" id="dw-pursue-btn" onclick="dealVerdict('pursue')" style="display:none">✓ PURSUE</button>
           <button class="btn btn-ghost" id="dw-cond-btn" onclick="dealVerdict('conditional')" style="display:none">⚠ CONDITIONAL</button>
@@ -2189,7 +2189,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
 
     <!-- ═══════ PIPELINE ═══════ -->
     <div class="tab-pane" id="tab-pipeline">
-      <div class="pane-hdr"><div><div class="pane-title">Pipeline</div><div class="pane-sub" id="pipe-count">Post-decision tracking · Stage management</div></div></div>
+      <div class="pane-hdr"><div><div class="pane-title"><span class="brief-head">Pipeline</span></div><div class="pane-sub" id="pipe-count">Post-decision tracking · Stage management</div></div></div>
       <div class="pane-body">
         <div id="pipe-stages" class="grid-4" style="margin-bottom:16px"></div>
         <div class="card"><div class="sl">🔍 Leak Detector</div><div id="pipe-leaks" style="margin-top:8px"></div></div>
@@ -2203,7 +2203,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
 
     <!-- ═══════ EXECUTION ═══════ -->
     <div class="tab-pane" id="tab-execution">
-      <div class="pane-hdr"><div><div class="pane-title">Execution</div><div class="pane-sub">Timeline · Subcontractors · Readiness</div></div></div>
+      <div class="pane-hdr"><div><div class="pane-title"><span class="brief-head">Execution</span></div><div class="pane-sub">Timeline · Subcontractors · Readiness</div></div></div>
       <div class="pane-body">
         <div id="exec-locked" style="text-align:center;padding:48px">
           <div style="font-size:28px;margin-bottom:10px">🔒</div>
@@ -2223,7 +2223,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
 
     <!-- ═══════ REPORTS / PROOF ═══════ -->
     <div class="tab-pane" id="tab-proof">
-      <div class="pane-hdr"><div><div class="pane-title">Reports & Proof</div><div class="pane-sub">Pipeline reports · Qualification outcomes · Performance snapshots</div></div></div>
+      <div class="pane-hdr"><div><div class="pane-title"><span class="brief-head">Reports & Proof</span></div><div class="pane-sub">Pipeline reports · Qualification outcomes · Performance snapshots</div></div></div>
       <div class="pane-body">
         <div class="grid-3">
           <div class="card" style="cursor:pointer" onclick="generateProofReport('pipeline')">
@@ -2265,7 +2265,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <div class="tab-pane" id="tab-clinical">
       <div class="pane-hdr">
         <div>
-          <div class="pane-title">Clinical Capability / EHR Mode</div>
+          <div class="pane-title"><span class="brief-head">Clinical Capability / EHR Mode</span></div>
           <div class="pane-sub">Optional deployment mode — configure, implement, and monitor clinical workflow readiness</div>
         </div>
         <div class="pane-actions">
@@ -4711,6 +4711,7 @@ function openTab(t){
   if(t==='delivery'&&typeof fetchDeliveryFromAirtable==='function'){if(!_delLoaded)fetchDeliveryFromAirtable().then(()=>renderDelivery());else renderDelivery();}
   if(t==='govcon'&&typeof fetchGovconFromAirtable==='function'){if(!gcLoaded)fetchGovconFromAirtable();else renderGovcon();}
   if(t==='outreach'&&typeof renderOutreach==='function')renderOutreach();
+
   if(t==='govcon'&&typeof refreshGovconSetup==='function'){refreshGovconSetup().then(()=>{
     try{
       if(!govconSetupComplete() && sessionStorage.getItem('lcc_govcon_wizard_seen')!=='1'){
