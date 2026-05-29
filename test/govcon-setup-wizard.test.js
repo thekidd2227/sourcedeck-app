@@ -33,12 +33,12 @@ test('wizard entry + close functions exist', () => {
   assert.ok(/function closeGovconSetupWizard/.test(html), 'closeGovconSetupWizard missing');
 });
 
-test('wizard has 5 steps incl. profile, SAM, demo, safety, finish', () => {
-  for (let i = 1; i <= 5; i++) {
+test('wizard has 9 steps incl. business, capability, targeting, SAM, AI, creative, social, safety, finish', () => {
+  for (let i = 1; i <= 9; i++) {
     assert.ok(new RegExp('data-step="' + i + '"').test(html), 'missing step ' + i);
   }
-  assert.ok(/GovCon profile/.test(html), 'profile step copy missing');
-  assert.ok(/SAM\.gov access/.test(html), 'SAM step copy missing');
+  assert.ok(/Business profile/.test(html), 'business profile step copy missing');
+  assert.ok(/SAM\.gov (access|API key)/.test(html), 'SAM step copy missing');
 });
 
 test('wizard collects profile fields (company, certs, NAICS, agencies)', () => {

@@ -41,6 +41,9 @@
 
 const settings        = require('../services/settings/targeting-profile');
 const credSurface     = require('../services/settings/credentials');
+const operatingProfile = require('../services/settings/govcon-operating-profile');
+const capabilityExtractor = require('../services/govcon/capability-statement-extractor');
+const premiumContent = require('../services/govcon/premium-content-agent');
 const sam             = require('../services/sam');
 const compliance      = require('../services/compliance');
 const stakeholders    = require('../services/stakeholders');
@@ -79,6 +82,7 @@ function createAppApi(opts) {
 
   // Construct stateful service instances (bound to store/credentials).
   const targeting       = settings.createTargetingProfileService(store);
+  const opProfile       = operatingProfile.createOperatingProfileService({ store, credentials, targetingProfile: targeting });
   const pastPerformance = capture.createPastPerformanceService(store);
   const samSearch       = sam.createSamSearchService({
     fetch: fetchFn,
@@ -130,6 +134,24 @@ function createAppApi(opts) {
         get:    ()         => Promise.resolve(targeting.load()),
         save:   (patch)    => Promise.resolve(targeting.save(patch || {})),
         reset:  ()         => Promise.resolve(targeting.reset())
+      },
+      profile: {
+        get:    ()         => opProfile.get(),
+        save:   (patch)    => opProfile.save(patch || {}),
+        reset:  ()         => Promise.resolve(opProfile.reset()),
+        // Deterministic, offline capability-statement extraction. Returns
+        // candidate fields only; the renderer presents them for explicit
+        // user approval before any save. No external upload.
+        extractCapabilityStatement: (input) =>
+          Promise.resolve(capabilityExtractor.extractCapabilityStatementFields((input && input.text) || ''))
+      },
+      content: {
+        // Draft-only premium content using the operating profile as
+        // context. Never auto-posts; never publishes to any platform.
+        generate: async (request) => {
+          const profile = await opProfile.get();
+          return premiumContent.generatePremiumContent(profile, request || {});
+        }
       },
       sam: {
         search: (filters)  => samSearch.search(filters || {})

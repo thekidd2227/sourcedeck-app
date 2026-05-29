@@ -30,6 +30,18 @@ contextBridge.exposeInMainWorld('sd', {
     getTargeting:        ()         => ipcRenderer.invoke('govcon:targeting-get'),
     saveTargeting:       (patch)    => ipcRenderer.invoke('govcon:targeting-set', patch),
     resetTargeting:      ()         => ipcRenderer.invoke('govcon:targeting-reset'),
+    // GovCon Operating Profile (business/content context — never holds
+    // API keys; presence flags are derived in the main process).
+    profile: {
+      get:                       ()       => ipcRenderer.invoke('govcon:profile-get'),
+      save:                      (patch)  => ipcRenderer.invoke('govcon:profile-save', patch),
+      reset:                     ()       => ipcRenderer.invoke('govcon:profile-reset'),
+      extractCapabilityStatement:(input)  => ipcRenderer.invoke('govcon:capability-statement-extract', input)
+    },
+    content: {
+      // Draft-only premium content (never auto-posts / publishes).
+      generate: (request) => ipcRenderer.invoke('govcon:content-generate', request)
+    },
     samSearch:           (filters)  => ipcRenderer.invoke('govcon:sam-search', filters),
     complianceMatrix:    (payload)  => ipcRenderer.invoke('govcon:compliance-matrix', payload),
     evaluatePreRfp:      (payload)  => ipcRenderer.invoke('govcon:pre-rfp-evaluate', payload),

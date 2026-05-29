@@ -65,6 +65,41 @@ references. The steps below still require a human for true UI behavior.
     "certified", or "fully operational".
 30. **Modal escapes HTML** — result modal output is HTML-escaped.
 
+## Operating Profile Wizard (Phase 14A)
+
+31. **Open wizard** — GovCon tab → ⚙ Setup opens the 9-step Operating
+    Profile Wizard.
+32. **Business profile** — enter legal name, website, contact, core
+    services, differentiators; advance.
+33. **Capability statement extraction** — paste capability statement
+    text, click "Extract candidate fields", confirm candidate UEI / CAGE
+    / NAICS / PSC / certs appear labeled **not verified**; check fields
+    and "Approve selected → fill form"; confirm the form fields populate.
+34. **GovCon targeting** — confirm UEI/CAGE/NAICS/PSC/agencies persist.
+35. **SAM.gov key** — save → status shows "saved"; confirm raw key never
+    redisplayed; remove → status shows "missing".
+36. **AI provider key** — select OpenAI/Anthropic/watsonx, save → status
+    "AI provider key saved"; remove → "No AI key saved". Raw key never
+    shown.
+37. **Creative / Canva key** — save → status "Creative key saved (for
+    future workflows)"; confirm copy does not claim live Canva generation;
+    remove works.
+38. **Social handles** — enter LinkedIn/Facebook/Instagram/TikTok handles
+    + default platforms; confirm saved as profile context only (no
+    posting); edit and re-save; confirm persisted on reopen.
+39. **Safety rules** — confirm approval toggles + blocked topics +
+    approved claims persist; confirm disclaimer copy present.
+40. **Finish** — summary shows business / capability / targeting / SAM /
+    AI / creative / social state; routes to GovCon/Outreach/Prime.
+41. **Premium Content Agent context** — generate content; confirm it uses
+    the operating profile (company, services, certs, PP), is draft-only
+    (`requiresApproval`, `sendingEnabled:false`, `autoPost:false`),
+    scrubs unsupported certs, and shows a claim-review checklist + human-
+    review footer. Confirm no platform publishing / auto-post claims.
+42. **Credential boundary** — confirm no raw key appears in renderer,
+    logs, exports, or profile JSON; profile save rejects credential-
+    looking strings.
+
 ## Sign-off
 
 - Operator: ____________________  Date: __________
