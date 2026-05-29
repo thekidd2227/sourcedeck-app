@@ -10,6 +10,7 @@
     "i18n:audit": "node scripts/audit-i18n.mjs",
     "govcon:smoke": "node scripts/govcon-release-smoke.mjs",
     "govcon:outreach-os:audit": "node scripts/govcon-outreach-os-audit.mjs",
+    "phase13:rc-check": "node scripts/phase-13-rc-check.mjs",
     "prerelease": "node scripts/release-check.js",
     "dev": "electron .",
     "start": "electron .",

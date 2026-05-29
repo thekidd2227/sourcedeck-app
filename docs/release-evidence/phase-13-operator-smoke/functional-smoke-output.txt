@@ -1,0 +1,28 @@
+
+=== Phase 13 Headless Functional Smoke (synthetic data) ===
+NOTE: GUI not launchable in this environment; this exercises the real
+main-process service logic behind each operator UI action.
+
+  [PASS] item 6 — SAM search without key -> demo/fallback route  (demoMode=true window=7)
+  [PASS] item 6.1 — SAM API error surfaced (not silent empty)  (reason=http_403)
+  [PASS] item 13 — closing-window 7/30 day filters differ  (7d in=2 30d in=3)
+  [PASS] item 14 — past-deadline opportunities excluded  (withinClosingWindow(past)=false)
+  [PASS] item 15 — outreach draft is staged (ok, not sent)  (ok=true sent=undefined)
+  [PASS] item 16 — requiresApproval:true & sendingEnabled:false (persisted)  (approval=true sending=false)
+  [PASS] item 17 — overclaim/guarantee/cert language scrubbed  (out="We .")
+  [PASS] item 9 — RED_RESTRICTED blocks outreach drafts  (window=RED_RESTRICTED drafts=false)
+  [PASS] item 10 — informal CO outreach blocked -> official Q&A only  (allowed=false)
+  [PASS] item 7 — GovCon analyze returns deterministic decision  (deterministicDecision=MORE_RESEARCH_NEEDED)
+  [PASS] item 8 — KILL stays KILL (AI cannot promote)  (verdict=KILL)
+  [PASS] item 19 — Prime Partner Finder returns demo primes by NAICS  (count=16)
+  [PASS] item 21 — prime scoring labels resolve  (label=Low Priority)
+  [PASS] item 20 — live USAspending fails gracefully (no crash)  (result=graceful-error)
+  [PASS] item 22 — prime outreach draft generated  (has draft=true)
+  [PASS] item 23 — prime draft not auto-sent (approval/sending flags)  (approval=true sending=false)
+  [PASS] item 24 — capability memo generated  (has memo=true)
+  [PASS] item 25 — human-review footer/notice present  (note="SourceDeck does not auto-send outreach. All drafts")
+  [PASS] item 27 — exports strip secrets  (leak=false)
+
+  passes: 19   failures: 0
+
+=== FUNCTIONAL SMOKE PASS ===
