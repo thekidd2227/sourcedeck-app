@@ -24,6 +24,7 @@
 
 const SUPPORTED_PLATFORMS = Object.freeze(['meta_business_suite', 'facebook', 'instagram', 'tiktok', 'linkedin']);
 const HUMAN_REVIEW_FOOTER = 'Draft only — human review and approval required before posting. SourceDeck does not auto-post or publish to any platform.';
+const GOVCON_POSITIONING_LINE = 'SourceDeck helps small businesses organize GovCon pursuit workflows, prepare review-ready outreach/content, and manage capture activity with human approval at every decision point.';
 
 function arr(v) { return Array.isArray(v) ? v.filter(Boolean) : []; }
 function str(v) { return typeof v === 'string' ? v.trim() : ''; }
@@ -127,7 +128,8 @@ function generatePremiumContent(profile, request) {
 
   // Per-platform draft captions (draft-only).
   const drafts = platforms.map(platform => {
-    let caption = hooks[0] + '\n\n' +
+    let caption = GOVCON_POSITIONING_LINE + '\n\n' +
+      hooks[0] + '\n\n' +
       company + (services.length ? (' helps with ' + services.slice(0, 2).join(' and ') + '.') : ' supports federal buyers.') +
       (diffs.length ? ('\n\nWhat sets us apart: ' + diffs.slice(0, 2).join('; ') + '.') : '') +
       (pp.length ? ('\n\nRecent work: ' + pp[0]) : '') +
@@ -157,6 +159,7 @@ function generatePremiumContent(profile, request) {
     drafts,
     manualPostingNotes: 'Copy the approved caption into ' + platforms.join(', ') + ' yourself. SourceDeck does not connect to or post on any platform.',
     claimReviewChecklist: buildClaimReviewChecklist(profile),
+    govconPositioningLine: GOVCON_POSITIONING_LINE,
     // Hard invariants (defensively re-asserted)
     requiresApproval: true,
     sendingEnabled: false,
@@ -173,5 +176,6 @@ module.exports = {
   activeCertifications,
   buildHashtags,
   SUPPORTED_PLATFORMS,
-  HUMAN_REVIEW_FOOTER
+  HUMAN_REVIEW_FOOTER,
+  GOVCON_POSITIONING_LINE
 };
