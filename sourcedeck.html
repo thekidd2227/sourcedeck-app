@@ -573,6 +573,7 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     <div class="nav-section">
       <div class="nav-label">Federal</div>
       <button class="nav-btn" data-tab="govcon"><span class="nav-icon">🏛️</span>GovCon</button>
+      <button class="nav-btn" data-tab="outreach"><span class="nav-icon">✉️</span>Outreach</button>
     </div>
     <div class="nav-section">
       <div class="nav-label">Operations</div>
@@ -1800,6 +1801,79 @@ input.input:focus,select.select:focus,textarea.textarea:focus{border-color:rgba(
     </div>
 
     <!-- ═══ GOVCON ═══ -->
+    <div class="tab-pane" id="tab-outreach">
+      <div class="pane-hdr">
+        <div><div class="pane-title">SAM.gov Opportunity Outreach</div><div class="pane-sub">Find closing federal opportunities, score fit, and draft buyer outreach.</div></div>
+        <div class="pane-actions" style="flex-wrap:wrap;gap:7px">
+          <button class="btn btn-ghost" onclick="exportOutreach()">⬇ Export</button>
+          <button class="btn btn-ghost" onclick="renderOutreach()">↻ Refresh</button>
+        </div>
+      </div>
+      <div class="pane-body">
+        <!-- Action card -->
+        <div class="card mb-20">
+          <div class="sl">SAM.gov Opportunity Outreach</div>
+          <div style="color:var(--muted);font-size:13px;margin:6px 0 10px">Find closing federal opportunities, score fit, and draft buyer outreach.</div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:12px">
+            <span style="background:rgba(63,185,80,.12);border:1px solid rgba(63,185,80,.4);padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700">Draft-only</span>
+            <span style="background:rgba(201,148,26,.12);border:1px solid rgba(201,148,26,.4);padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700">Human approval required</span>
+            <span style="background:rgba(31,166,201,.12);border:1px solid rgba(31,166,201,.4);padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700">SAM.gov API</span>
+          </div>
+          <!-- SAM key -->
+          <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+            <input class="input" id="out-samkey" type="password" placeholder="SAM.gov API key (stored securely; never leaves your device)" style="flex:1;min-width:240px">
+            <button class="btn btn-ghost" onclick="saveSamKey()">Save Key</button>
+            <span id="out-samkey-status" style="font-size:12px;color:var(--muted)">SAM.gov key: checking…</span>
+          </div>
+          <!-- Scan config -->
+          <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
+            <label style="font-size:11px;color:var(--muted)">Closing window<br>
+              <select class="select" id="out-window"><option value="30">Next 30 days</option><option value="7">Next 7 days</option></select>
+            </label>
+            <label style="font-size:11px;color:var(--muted)">NAICS (space/comma)<br>
+              <input class="input" id="out-naics" placeholder="561710 561720" style="width:160px"></label>
+            <label style="font-size:11px;color:var(--muted)">Keywords (comma)<br>
+              <input class="input" id="out-keywords" placeholder="janitorial, pest" style="width:170px"></label>
+            <label style="font-size:11px;color:var(--muted)">Place of performance<br>
+              <input class="input" id="out-place" placeholder="MD or 20782" style="width:120px"></label>
+            <label style="font-size:11px;color:var(--muted)">Set-aside<br>
+              <select class="select" id="out-setaside"><option value="">Any</option><option value="SDVOSB">SDVOSB</option><option value="VOSB">VOSB</option><option value="8A">8(a)</option><option value="WOSB">WOSB</option><option value="EDWOSB">EDWOSB</option><option value="HUBZONE">HUBZone</option><option value="SBA">Total Small Business</option></select>
+            </label>
+            <label style="font-size:11px;color:var(--muted)">Daily draft limit<br>
+              <input class="input" id="out-dailylimit" type="number" min="1" max="200" value="25" style="width:90px"></label>
+            <button class="btn btn-gold" id="out-scan-btn" onclick="runOutreachScan()">Start Opportunity Scan</button>
+          </div>
+          <div id="out-demo-note" style="display:none;font-size:12px;color:var(--muted);margin-top:8px"></div>
+        </div>
+        <!-- Compliance notice -->
+        <div style="background:rgba(201,148,26,.10);border:1px solid rgba(201,148,26,.35);border-radius:8px;padding:9px 12px;font-size:12px;font-weight:600;margin-bottom:16px">
+          ⚠ Review all drafts before contacting government personnel. SourceDeck never sends email; nothing is contacted without your explicit action.
+        </div>
+        <!-- KPIs -->
+        <div class="grid-4 mb-20" id="out-kpis" style="grid-template-columns:repeat(6,1fr)">
+          <div class="kpi gold-kpi"><div class="kpi-val" id="out-found">0</div><div class="kpi-label">Opportunities Found</div></div>
+          <div class="kpi green-kpi"><div class="kpi-val" id="out-qualified">0</div><div class="kpi-label">Qualified Matches</div></div>
+          <div class="kpi blue-kpi"><div class="kpi-val" id="out-drafts">0</div><div class="kpi-label">Drafts Created</div></div>
+          <div class="kpi red-kpi"><div class="kpi-val" id="out-review">0</div><div class="kpi-label">Needs Review</div></div>
+          <div class="kpi gold-kpi"><div class="kpi-val" id="out-bidtargets">0</div><div class="kpi-label">Bid Targets</div></div>
+          <div class="kpi"><div class="kpi-val" id="out-rejected">0</div><div class="kpi-label">Rejected / Archived</div></div>
+        </div>
+        <!-- Opportunity table -->
+        <div class="tbl-wrap" style="max-height:calc(100vh - 460px)">
+          <table class="tbl">
+            <thead><tr>
+              <th>Score</th><th>Deadline</th><th>Days Left</th><th>Agency</th><th>Title</th><th>NAICS</th><th>Set-Aside</th><th>POC Email</th><th>Status</th><th style="width:200px">Actions</th>
+            </tr></thead>
+            <tbody id="out-tbody">
+              <tr><td colspan="10" style="text-align:center;color:var(--muted);padding:40px">Run a scan to find closing opportunities. No SAM.gov key? It runs in demo mode with sample data.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <!-- Draft preview -->
+        <div class="card mt-20" id="out-detail" style="display:none"></div>
+      </div>
+    </div>
+
     <div class="tab-pane" id="tab-govcon">
       <div class="pane-hdr">
         <div><div class="pane-title">GovCon Pipeline</div><div class="pane-sub" id="gc-count">Federal opportunities · SAM.gov</div></div>
@@ -4379,6 +4453,7 @@ function openTab(t){
   if(t==='dailyops'&&typeof renderDailyOps==='function')renderDailyOps();
   if(t==='delivery'&&typeof fetchDeliveryFromAirtable==='function'){if(!_delLoaded)fetchDeliveryFromAirtable().then(()=>renderDelivery());else renderDelivery();}
   if(t==='govcon'&&typeof fetchGovconFromAirtable==='function'){if(!gcLoaded)fetchGovconFromAirtable();else renderGovcon();}
+  if(t==='outreach'&&typeof renderOutreach==='function')renderOutreach();
   if(t==='clinical'&&typeof clinicalRefresh==='function')clinicalRefresh();
   return false;
 }
@@ -9254,6 +9329,204 @@ document.addEventListener('DOMContentLoaded',()=>{
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
   window.sdI18n = { set: function (l) { setLanguage(l, { updateUrl: true }); }, get: function () { return window.__sdLang || 'en'; } };
+})();
+</script>
+<script>
+// ─── SAM.gov Opportunity Outreach Agent (renderer controller) ───
+// Draft-only. The SAM.gov key never enters the renderer — it is set via
+// the secure credential bridge and used only inside the main process.
+(function(){
+  var _rows = [];
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, function(c){ return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'})[c]; }); }
+  function sd(){ return (window.sd && window.sd.govcon && window.sd.govcon.outreach) ? window.sd.govcon.outreach : null; }
+  function daysLeft(r){
+    if (r && typeof r.daysUntilDue === 'number') return r.daysUntilDue;
+    var t = Date.parse((r && r.responseDeadline) || '');
+    if (!isFinite(t)) return null;
+    return Math.ceil((t - Date.now())/86400000);
+  }
+  function labelColor(l){
+    return l==='STRONG_FIT' ? '#3fb950'
+         : l==='POSSIBLE_FIT' ? '#C9941A'
+         : l==='RISKY_FIT' ? '#d29922'
+         : l==='KILL' ? '#f85149'
+         : 'var(--muted)';
+  }
+  function statusChip(s){
+    var bg = s==='Drafted' ? 'rgba(31,166,201,.15)'
+           : s==='Needs Review' ? 'rgba(248,81,73,.15)'
+           : s==='Approved' ? 'rgba(63,185,80,.15)'
+           : s==='Bid Target' ? 'rgba(201,148,26,.15)'
+           : 'rgba(160,160,160,.12)';
+    return '<span style="background:'+bg+';padding:2px 8px;border-radius:9px;font-size:11px;font-weight:700">'+esc(s||'New')+'</span>';
+  }
+
+  window.renderOutreach = async function(){
+    await refreshFromStore();
+    await updateKeyStatus();
+  };
+
+  async function refreshFromStore(){
+    try {
+      var list = (window.sd && window.sd.govcon && window.sd.govcon.opportunities)
+        ? await window.sd.govcon.opportunities.list() : [];
+      _rows = (list || []).filter(function(r){ return r && r.outreachStatus; });
+    } catch(e){ _rows = []; }
+    renderTable();
+    renderMetrics();
+  }
+
+  async function updateKeyStatus(){
+    var el = $('out-samkey-status'); if (!el) return;
+    try {
+      var s = await window.sd.credentials.status();
+      var present = s && s.present && s.present['sam-gov'];
+      el.textContent = present ? 'SAM.gov key: configured ✓' : 'SAM.gov key: not set — scans run in demo mode';
+      el.style.color = present ? '#3fb950' : 'var(--muted)';
+    } catch(e){ el.textContent = 'SAM.gov key: status unavailable'; }
+  }
+
+  window.saveSamKey = async function(){
+    var inp = $('out-samkey'); if (!inp) return;
+    var v = (inp.value||'').trim();
+    if (!v) { return; }
+    try {
+      if (window.sd && window.sd.credentials) {
+        var r = await window.sd.credentials.set('sam-gov', v);
+        if (r && r.ok) inp.value = '';
+      }
+    } catch(e){}
+    updateKeyStatus();
+  };
+
+  function readConfig(){
+    var naics = ((($('out-naics')||{}).value)||'').split(/[ ,]+/).filter(Boolean);
+    var keywords = ((($('out-keywords')||{}).value)||'').split(',').map(function(s){ return s.trim(); }).filter(Boolean);
+    var limit = parseInt((($('out-dailylimit')||{}).value)||'25', 10);
+    return {
+      closingWindowDays: Number((($('out-window')||{}).value)) === 7 ? 7 : 30,
+      naics: naics,
+      keywords: keywords,
+      setAside: (($('out-setaside')||{}).value)||'',
+      placeOfPerformance: (($('out-place')||{}).value)||'',
+      dailyDraftLimit: (isFinite(limit) ? Math.max(1, Math.min(200, limit)) : 25)
+    };
+  }
+
+  window.runOutreachScan = async function(){
+    var api = sd();
+    var btn = $('out-scan-btn');
+    if (!api) { alert('Outreach service unavailable in this build.'); return; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Scanning…'; }
+    try {
+      var res = await api.scan(readConfig());
+      var note = $('out-demo-note');
+      if (res && res.demoMode && note) {
+        note.style.display = 'block';
+        note.textContent = 'Demo mode: no SAM.gov key configured, showing sample opportunities. Add a key above for live results' + (res.fallbackUrl ? ', or open SAM.gov directly.' : '.');
+      } else if (note) { note.style.display = 'none'; }
+    } catch(e){ alert('Scan failed: ' + (e && e.message ? e.message : e)); }
+    await refreshFromStore();
+    if (btn) { btn.disabled = false; btn.textContent = 'Start Opportunity Scan'; }
+  };
+
+  function renderMetrics(){
+    var found = _rows.length;
+    var qualified = _rows.filter(function(r){ return (r.outreachScore||0) >= 60; }).length;
+    var drafts = _rows.filter(function(r){ return r.outreachStatus === 'Drafted'; }).length;
+    var review = _rows.filter(function(r){ return r.outreachStatus === 'Needs Review'; }).length;
+    var bids = _rows.filter(function(r){ return r.outreachStatus === 'Bid Target'; }).length;
+    var rej = _rows.filter(function(r){ return r.outreachStatus === 'Rejected' || r.outreachStatus === 'Archived'; }).length;
+    if ($('out-found')) $('out-found').textContent = found;
+    if ($('out-qualified')) $('out-qualified').textContent = qualified;
+    if ($('out-drafts')) $('out-drafts').textContent = drafts;
+    if ($('out-review')) $('out-review').textContent = review;
+    if ($('out-bidtargets')) $('out-bidtargets').textContent = bids;
+    if ($('out-rejected')) $('out-rejected').textContent = rej;
+  }
+
+  function renderTable(){
+    var tb = $('out-tbody'); if (!tb) return;
+    if (!_rows.length) {
+      tb.innerHTML = '<tr><td colspan="10" style="text-align:center;color:var(--muted);padding:40px">No opportunities yet. Run a scan above.</td></tr>';
+      return;
+    }
+    var sorted = _rows.slice().sort(function(a,b){ return (b.outreachScore||0)-(a.outreachScore||0); });
+    tb.innerHTML = sorted.map(function(r){
+      var d = daysLeft(r);
+      var poc = (Array.isArray(r.pointOfContact) && r.pointOfContact[0] && r.pointOfContact[0].email) || (r.outreachDraft && r.outreachDraft.pocEmail) || '—';
+      var idA = "'" + esc(r.id) + "'";
+      return '<tr>'
+        + '<td><b style="color:'+labelColor(r.outreachLabel)+'">'+(r.outreachScore||0)+'</b><div style="font-size:10px;color:var(--muted)">'+esc((r.outreachLabel||'').replace(/_/g,' '))+'</div></td>'
+        + '<td>'+esc(r.responseDeadline||'—')+'</td>'
+        + '<td>'+(d==null?'—':d)+'</td>'
+        + '<td>'+esc(r.agency||'—')+'</td>'
+        + '<td style="max-width:240px">'+esc(r.title||'—')+'</td>'
+        + '<td>'+esc(r.naics||'—')+'</td>'
+        + '<td>'+esc(r.setAside||'—')+'</td>'
+        + '<td>'+esc(poc)+'</td>'
+        + '<td>'+statusChip(r.outreachStatus)+'</td>'
+        + '<td style="white-space:nowrap">'
+          + '<button class="btn btn-ghost" style="padding:2px 7px" onclick="outreachView('+idA+')">View</button> '
+          + '<button class="btn btn-ghost" style="padding:2px 7px" onclick="outreachDraft('+idA+')">Draft</button> '
+          + '<button class="btn btn-ghost" style="padding:2px 7px" onclick="outreachStatus('+idA+",'Approved')\">Approve</button> "
+          + '<button class="btn btn-ghost" style="padding:2px 7px" onclick="outreachStatus('+idA+",'Rejected')\">Reject</button> "
+          + '<button class="btn btn-ghost" style="padding:2px 7px" onclick="outreachStatus('+idA+",'Bid Target')\">Bid</button> "
+          + '<button class="btn btn-ghost" style="padding:2px 7px" onclick="outreachStatus('+idA+",'Archived')\">Archive</button> "
+          + (r.samUrl ? '<button class="btn btn-ghost" style="padding:2px 7px" onclick="window.open('+"'"+esc(r.samUrl)+"'"+",'_blank')\">SAM</button>" : '')
+        + '</td>'
+        + '</tr>';
+    }).join('');
+  }
+
+  window.outreachView = function(id){
+    var r = _rows.find(function(x){ return x.id === id; });
+    var el = $('out-detail'); if (!el) return;
+    var d = r && r.outreachDraft;
+    el.style.display = 'block';
+    if (!d) { el.innerHTML = '<div class="sl">Draft preview</div><div style="color:var(--muted);font-size:13px;margin-top:6px">No draft yet. Use the "Draft" action to generate one.</div>'; return; }
+    var text = d.draft || d.officialQAndADraft || '(no draft content)';
+    el.innerHTML = '<div class="sl">Draft preview — '+(d.blocked?'Official Q&amp;A only (active solicitation)':'Capability outreach draft')+'</div>'
+      + '<pre style="white-space:pre-wrap;font-size:12px;background:rgba(0,0,0,.18);padding:12px;border-radius:8px;margin-top:8px">'+esc(text)+'</pre>'
+      + '<div style="font-size:12px;font-weight:700;color:#C9941A;margin-top:6px">⚠ '+esc(d.reviewNotice||'Review all drafts before contacting government personnel.')+'</div>'
+      + '<div style="font-size:11px;color:var(--muted);margin-top:4px">Sending disabled · approval required · no email is ever sent by SourceDeck.</div>';
+  };
+
+  window.outreachDraft = async function(id){
+    var api = sd(); if (!api) return;
+    try {
+      var res = await api.generateDraft({ id: id });
+      if (res && res.ok === false && res.reason === 'daily_draft_cap_reached') {
+        alert('Daily draft limit reached. Increase the limit or try again tomorrow.');
+      }
+    } catch(e){}
+    await refreshFromStore();
+    window.outreachView(id);
+  };
+
+  window.outreachStatus = async function(id, status){
+    var api = sd(); if (!api) return;
+    try { await api.setStatus({ id: id, status: status }); } catch(e){}
+    await refreshFromStore();
+  };
+
+  window.exportOutreach = async function(){
+    var api = sd(); if (!api) return;
+    try {
+      var res = await api.export({ format: 'csv', payload: { rows: _rows.map(function(r){
+        return { score:r.outreachScore, label:r.outreachLabel, deadline:r.responseDeadline, agency:r.agency, title:r.title, naics:r.naics, setAside:r.setAside, status:r.outreachStatus };
+      }) } });
+      if (res && res.content) {
+        var blob = new Blob([res.content], { type: res.mime || 'text/csv' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = res.filename || 'outreach-export.csv';
+        document.body.appendChild(a); a.click();
+        setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 100);
+      }
+    } catch(e){ alert('Export failed: ' + (e && e.message ? e.message : e)); }
+  };
 })();
 </script>
 </body>

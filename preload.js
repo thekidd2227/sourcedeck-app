@@ -79,6 +79,13 @@ contextBridge.exposeInMainWorld('sd', {
     proposal: {
       workspace:  (input)     => ipcRenderer.invoke('govcon:proposal-workspace', input),
       costVolume: (input)     => ipcRenderer.invoke('govcon:proposal-cost-volume', input)
+    },
+    // SAM.gov Opportunity Outreach Agent (draft-only; key stays main-side).
+    outreach: {
+      scan:          (config) => ipcRenderer.invoke('govcon:outreach-scan', config),
+      generateDraft: (input)  => ipcRenderer.invoke('govcon:outreach-generate-draft', input),
+      setStatus:     (input)  => ipcRenderer.invoke('govcon:outreach-set-status', input),
+      export:        (input)  => ipcRenderer.invoke('govcon:outreach-export', input)
     }
   },
 

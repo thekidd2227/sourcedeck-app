@@ -60,6 +60,7 @@ const emailCompliance = require('../services/govcon/email-compliance');
 const exportSvc      = require('../services/govcon/export');
 const opportunityRecords = require('../services/govcon/opportunity-records');
 const scheduledSam   = require('../services/govcon/scheduled-sam-search');
+const opportunityOutreach = require('../services/govcon/opportunity-outreach');
 
 function createAppApi(opts) {
   opts = opts || {};
@@ -92,6 +93,13 @@ function createAppApi(opts) {
     store,
     samSearch,
     opportunityRecords: opportunities,
+    now
+  });
+  const outreach = opportunityOutreach.createOpportunityOutreachService({
+    samSearch,
+    opportunities,
+    store,
+    targetingProfile: targeting,
     now
   });
 
@@ -203,6 +211,16 @@ function createAppApi(opts) {
         save:    (input) => Promise.resolve(scheduledSearches.save(input || {})),
         run:     (id)    => scheduledSearches.run(id),
         history: ()      => Promise.resolve(scheduledSearches.history())
+      },
+      // SAM.gov Opportunity -> Outreach Agent. Draft-only; the SAM key
+      // stays inside this trust boundary (samSearch pulls it via
+      // credentials.get); the renderer only sends a scan config and
+      // receives normalized opportunity + draft/status results.
+      outreach: {
+        scan:          (config) => outreach.scan(config || {}),
+        generateDraft: (input)  => outreach.generateDraft(input || {}),
+        setStatus:     (input)  => Promise.resolve(outreach.setStatus(input || {})),
+        export:        (input)  => Promise.resolve(exportSvc.createExport(input || {}))
       },
       compliance: {
         matrix: (payload)  => Promise.resolve(compliance.generateComplianceMatrix(
