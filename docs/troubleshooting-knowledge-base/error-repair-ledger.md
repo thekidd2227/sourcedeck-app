@@ -1,0 +1,90 @@
+# SourceDeck Error & Repair Ledger
+
+**Total events captured:** 41  
+**Audit date:** 2026-05-29  
+**Evidence sources:** git log, commit messages, release notes, QA output, documentation files
+
+---
+
+## How to Read This Table
+
+- **Event ID:** `SD-YYYY-NNN`
+- **Status:** Fixed / Partially Fixed / Open / Unverified
+- **Severity:** CRITICAL / HIGH / MEDIUM / LOW
+- **Source Evidence:** git commit hash, file path, or document name
+
+---
+
+## Full Ledger
+
+| Event ID | Date | Repo | Category | Severity | Symptom | Root Cause | Repair Summary | Status | Source Evidence |
+|---|---|---|---|---|---|---|---|---|---|
+| SD-2026-001 | ~2026-04-24 | sourcedeck-app | Security / Privacy | CRITICAL | v1.0.0 shipped with 10 real lead records (names, emails, phones), 484-line owner prompt library, owner brand defaults, and personal social handles baked into the packaged app | No separation between product defaults and developer operational data; demo/dev content never stripped from release artifact | Emptied MOCK_LEADS and PROMPT_LIBRARY; neutralized brand defaults; added first-run privacy scrub in main.js; added 30+ pattern blocklist release gate; moved demo data to excluded fixtures file; v1.0.0 WITHDRAWN | Fixed | `docs/release/privacy-first-run-verification.md`, commit `aa1e523`, release/notes/v1.0.0.md |
+| SD-2026-002 | 2026-05-24 | sourcedeck-app | UI/UX / Copy | LOW | Settings UI displayed "stored in sessionStorage only" but saveSettings() actually used localStorage.setItem() | Copy written during an earlier architecture pass, never updated when storage mechanism changed | Updated static status line and post-save toast copy to say localStorage | Fixed | Commit `d42509a`, PR #5 |
+| SD-2026-003 | 2026-05-07 | sourcedeck-app | Security / API | HIGH | Third-party HTTP error bodies from watsonx and IBM COS passed unredacted to renderer; error responses could contain internal service metadata | Error handling in services/ai/providers/watsonx.js and services/storage/providers/ibm-cos.js propagated raw provider error bodies | Added redaction of HTTP error bodies before exposing to renderer; added ibm-readiness test coverage | Fixed | Commit `7cb5144` |
+| SD-2026-004 | ~2026-04-01 | sourcedeck-app | Security / Architecture | HIGH | Airtable PAT, Apollo API key built as Bearer headers directly in renderer; 27 direct Airtable fetches and 1 Apollo fetch in sourcedeck.html; credentials stored in localStorage | Architecture placed credentials in renderer context with no IPC boundary | Multi-phase migration: SAM.gov to safeStorage (commit 90cc04f); Airtable to window.sd.airtable.* (commit f8f86c8); Apollo to window.sd.enrichment.* (commit 113c208) | Partially Fixed | `docs/renderer-credential-migration.md`, commits `b2765c8`, `f8f86c8`, `113c208` |
+| SD-2026-005 | ~2026-04-24 | sourcedeck-app | Test Failure | LOW | test/clinical-capability.test.js failed — manifest provider assertion expected 'ARCG Systems' but shipped source now says 'SourceDeck' | Provider name changed as part of privacy repair; test assertion not updated in parallel | Updated test assertion from 'ARCG Systems' to 'SourceDeck' | Fixed | Commit `aa1e523`, `test/clinical-capability.test.js` |
+| SD-2026-006 | Ongoing | sourcedeck-app | Integration / API | HIGH | IBM watsonx app-side calls return HTTP 403 `no_associated_service_instance_error` | Existing runtimes tagged `cpdaas` context; SourceDeck project tagged `wx` context; IBM URL rewrite prevents association under either context | IBM support ticket filed; pending IBM migration of runtime from cpdaas to wx context | Open | `docs/IBM_WATSONX_STATUS.md`, `docs/IBM_SUPPORT_TICKET_RUNTIME_ASSOCIATION.md` |
+| SD-2026-007 | ~2026-04-20 | sourcedeck-app | Integration | MEDIUM | ChartNav smoke test: scenario D "telemetry failed (bad token)" and scenario E "manifest failed (unreachable)" | Test scenarios designed with bad/invalid tokens to exercise failure paths; not a defect in production flow | Bearer-mode auth proven; schema_version added; release-prep hardening complete | Fixed (expected behavior) | `qa/live-smoke-output.json`, `qa/live-smoke-output-bearer.json`, commit `bea619d` |
+| SD-2026-008 | 2026-05-28 | sourcedeck-site | Deployment / Vercel | HIGH | Vercel attempted `npm run build` on a static HTML site, breaking the deployment | vercel.json lacked explicit `framework: null` and empty `buildCommand`; Vercel auto-detection triggered npm build on a directory with no build toolchain | Added `"framework": null` and `"buildCommand": ""` to vercel.json | Fixed | Commit `bf3dc6f`, `vercel.json` |
+| SD-2026-009 | 2026-05-28 | sourcedeck-site | Deployment / Vercel | MEDIUM | chartnavmd.com redirect not resolving; Vercel rejected the redirect config | Invalid `source` path pattern in vercel.json redirect rule for the `has.host` conditional redirect | Corrected `source` syntax in vercel.json redirect | Fixed | Commit `36d4539`, `vercel.json` |
+| SD-2026-010 | 2026-05-10 | sourcedeck-site | Copy / Security | MEDIUM | Raw email addresses rendered as visible text in CTA buttons; multiple instances of misspelled domain `arivergrop.com` (missing 'u') | CTAs initially hardcoded email as link text; typo entered at creation and propagated through copy and SECURITY.md | Replaced all rendered email text with generic labels; corrected all `arivergrop.com` → `arivergroup.com`; updated sd-config.js SALES_EMAIL constant | Fixed | Commit `c358a0f` |
+| SD-2026-011 | 2026-05-10 | sourcedeck-site | Product Logic / Access | HIGH | Site offered "Join for Free", "Book Enterprise Demo", public app trial download, "Enable in workspace" for integrations — all without authorization | Site built with self-serve model assumption; business model changed to sales-gated/request-only after initial build | All demo/download/integration routes redirected to request-access page; CTAs changed to mailto; PWA `display: standalone` changed to `browser` to remove install prompt | Fixed | Commit `28346ee` |
+| SD-2026-012 | 2026-05-10 | sourcedeck-site | CI / Build | MEDIUM | CI pipeline failed to run server tests on some Node 20.x builds | Test glob in package.json scripts was single-quoted (`'test/*.test.js'`), preventing shell expansion; Node received literal pattern string | Removed single quotes from test glob so shell expands file list before Node runs | Fixed | Commit `9c2749a` |
+| SD-2026-013 | 2026-05-10 | sourcedeck-site | Security / Privacy | CRITICAL | app/demo/index.html and app/downloads/sourcedeck-lcc.html contained personal Airtable base IDs, table IDs, Instantly campaign ID, Make.com webhook URLs, Notion DB ID | Customer-facing demo files were copies of operational files with no sanitization pass | Replaced all real IDs with redacted placeholders; added automated privacy guardrails (check-private-data.js); added CI privacy check workflow | Fixed | Commit `fcdd858`, `scripts/check-private-data.js`, `.github/workflows/privacy-check.yml` |
+| SD-2026-014 | ~2026-05-10 | sourcedeck-site | Routing | MEDIUM | Production 404 at /app/downloads/ URL | Directory existed but no index.html was present | Added app/downloads/index.html as 2-second meta-refresh stub pointing to sourcedeck-lcc.html | Fixed | Commit `2c10e78` |
+| SD-2026-015 | ~2026-05-10 | sourcedeck-site | Routing / Auth | MEDIUM | OAuth callback URL /auth/callback/ could theoretically be cached by service worker | /auth/callback/ not in NEVER_CACHE_PATHS in sw.js; already partially protected by query-string/cookie bypass guards but no explicit exclusion | Added /auth/callback/ to NEVER_CACHE_PATHS in sw.js | Fixed | Commit `2c10e78`, `sw.js` |
+| SD-2026-016 | 2026-04-15 | sourcedeck-site | Integration | MEDIUM | Chatwoot chat widget loaded SDK but init silently failed; no visible chat widget on site | Token `W2KHym6M2383sUhpiS7R644v` didn't match any inbox in Chatwoot account 160989 | Replaced with correct inbox 105434 token `YpLcRBqSnmqrQKvQLVnc8tgN` | Fixed | Commit `5bb1721` |
+| SD-2026-017 | 2026-04-15 | sourcedeck-site | Integration / Logic | MEDIUM | Chatwoot widget guard skipping the live token instead of the placeholder token | Condition in assets/chatwoot.js was inverted — blocked legitimate tokens, allowed placeholders | Fixed inverted condition in assets/chatwoot.js | Fixed | Commit `f3f726c`, `assets/chatwoot.js` |
+| SD-2026-018 | 2026-04-15 | sourcedeck-site | UI/UX / Copy | LOW | Users confused about which Mac download to choose: "Apple Silicon" label not universally understood | "Apple Silicon" is a technical/marketing term; many users don't know which chip their Mac has | Changed to `Mac (M1/M2/M3/M4)`; added helper text "Not sure which Mac? Go to  → About This Mac" | Fixed | Commit `5bb1721` |
+| SD-2026-019 | Pre-May-2026 | sourcedeck-site | Compliance Claims | CRITICAL | Site copy made claims about IBM watsonx production readiness, SOC 2, FedRAMP, HIPAA, HITRUST compliance without any certification | Marketing copy written ahead of actual technical verification; no review gate for compliance claims | Created IBM_WATSONX_STATUS.md as internal honesty doc; removed false certification claims from all public pages; added copy guardrails in COPY_CUT_REPORT.md | Partially Fixed | `docs/IBM_WATSONX_STATUS.md`, commit `02d410e` |
+| SD-2026-020 | Pre-May-2026 | sourcedeck-site | Copy / Branding | MEDIUM | Site referenced "ARCG Systems" branding in customer-facing pages; SourceDeck product not separated from ARCG corporate identity | SourceDeck is a separate product; brand separation not enforced at initial launch | Multiple rounds of copy scrubbing; Rebrand security strip commits; brand identity now uses SourceDeck name | Fixed | Commits `6d2a7b9`, `6f6b7f8`, and multiple subsequent commits |
+| SD-2026-021 | Pre-Apr-2026 | sourcedeck-site | Deployment | MEDIUM | GitHub Pages CNAME conflicted after migration to Vercel | Migration to Vercel started before removing GitHub Pages CNAME | Removed GitHub Pages CNAME | Fixed | Commit `27d651a` |
+| SD-2026-022 | 2026-05-29 | ARCGSystems | API / Integration | HIGH | Imagen models returned HTTP 404 when called via Gemini API key | Imagen (imagen-3.0-generate-002) requires Vertex AI; returns 404 on standard Gemini API key via generativelanguage endpoint | Switched to generateContent endpoint with gemini-2.5-flash-image-preview; changed responseModalities to [TEXT, IMAGE]; decode inlineData base64 | Fixed | Commit `2655b1b` |
+| SD-2026-023 | 2026-05-29 | ARCGSystems | API / Integration | HIGH | Image generation returned HTTP 400 "only available on paid plans" | Imagen models ranked first in provider order; account only has free-tier access; Imagen requires paid plan | Changed model ranking to put free-tier Gemini flash/pro models above paid Imagen; added auto-discovery via ListModels | Fixed | Commit `ea61c8f` |
+| SD-2026-024 | 2026-05-29 | ARCGSystems | API / Integration | HIGH | Hardcoded Gemini model names 404 on account's API key | Account has different set of available image models than hardcoded defaults | Added auto-discovery via ListModels; uses best available image-capable model per account; respects configured GEMINI_IMAGE_MODEL as override | Fixed | Commit `92e536b` |
+| SD-2026-025 | 2026-05-29 | ARCGSystems | API / Performance | HIGH | Hung Gemini API requests caused entire CI workflow to stall; posts stuck at `not_started` indefinitely | No timeout on Gemini fetch calls; a single hung request blocked all subsequent posts | Added fetchWithTimeout (90s abort signal) to all Gemini provider calls | Fixed | Commit `cd5dcc2` |
+| SD-2026-026 | 2026-05-29 | ARCGSystems | Agent / Workflow | MEDIUM | Posts with cached `failed` mediaStatus were skipped on retry even after underlying issue (OpenAI balance) was resolved | Stale `failed` status and cached `mediaPromptHash` not cleared after fixing underlying API issue; workflow skips already-processed posts | Cleared stale failed status and hash for affected posts; workflow now re-attempts | Fixed | Commit `9572198` |
+| SD-2026-027 | 2026-05-29 | ARCGSystems | CI / Environment Variables | HIGH | Claude SVG fallback never activated; Anthropic SDK couldn't authenticate | Secret stored as `CLAUDE_API_KEY` but Anthropic SDK reads `ANTHROPIC_API_KEY`; no mapping in workflow YAML | Added `ANTHROPIC_API_KEY: ${{ secrets.CLAUDE_API_KEY }}` env mapping in workflow | Fixed | Commit `0591095` |
+| SD-2026-028 | 2026-05-29 | ARCGSystems | CI / Data Persistence | HIGH | calendar.json updates (asset URLs, bufferPostIds) lost when ephemeral CI runner shut down; future runs couldn't see scheduled posts — duplicates possible | Workflow updated calendar.json in runner but didn't commit changes back to repo | Added commit-back step at end of workflow that pushes calendar.json to main when execute_confirm is set | Fixed | Commit `80bf8f4` |
+| SD-2026-029 | 2026-05-29 | ARCGSystems | CI / GitHub Permissions | HIGH | Commit-back step silently failed even though CI run showed green; calendar.json changes not persisted | Workflow lacked explicit `contents: write` permission; GitHub Actions requires explicit permission grant | Added `contents: write` to workflow YAML permissions | Fixed | Commit `18dd160` |
+| SD-2026-030 | 2026-05-26 | ARCGSystems | Agent / Workflow / API | HIGH | Buffer API rejected posts with `dueAt` in the past; one past-time post blocked entire scheduling run with a fatal error | No graceful skip for past-due posts; scheduler treated past-time post as fatal error | Scheduler now skips posts with past `dueAt` instead of crashing; bumped timing for affected posts | Fixed | Commit `20da102` |
+| SD-2026-031 | ~May-2026 | ARCGSystems | API / Integration | MEDIUM | Facebook posts failed Buffer API validation | Facebook posts missing required `metadata.facebook.type` field (PostTypeFacebook enum) | Added `metadata.facebook.type` for all Facebook posts | Fixed | Commit `1e764f1` |
+| SD-2026-032 | ~May-2026 | ARCGSystems | Content / Product Logic | MEDIUM | Published social posts contained visible placeholder text and Canva template artifacts | Canva export included unfilled template placeholder regions | Removed affected images; regenerated without template placeholders | Fixed | Commit `66e7b77` |
+| SD-2026-033 | ~May-2026 | ARCGSystems | Deployment / Vercel | CRITICAL | vercel.json added to fix ARCGSystems Vercel project build overrode all 4 connected Vercel projects; arivergroup.com started showing wrong content | vercel.json at repo root applies globally to all Vercel projects connected to that repo — not just one | Removed vercel.json from ARCGSystems repo; all projects reverted to Vercel dashboard configurations | Fixed | Commit `14a194e` |
+| SD-2026-034 | ~May-2026 | ARCGSystems | TypeScript / Build | MEDIUM | TypeScript compilation errors in ARCGSystems project | Type mismatches and missing type declarations introduced during rapid feature development | Fixed TypeScript project health | Fixed | Commit `29248b8` |
+| SD-2026-035 | ~May-2026 | ARCGSystems | API / Content | MEDIUM | Buffer API rejected Instagram reel/story and Facebook video/carousel format posts | These formats require additional API setup (video upload, product catalog) not yet implemented | Converted affected posts to standard image format as workaround | Partially Fixed | Commits `aed2797`, `40cae98` |
+| SD-2026-036 | ~2026-04 | arcg-lcc | Build / Electron | MEDIUM | Production compatibility issues when `NODE_ENV=production` because electron was in devDependencies | Electron placed in devDependencies; npm skips devDependencies in production installs | Moved electron to dependencies | Fixed | Commit `1e5bb6a` |
+| SD-2026-037 | ~2026-04 | arcg-lcc | Build | MEDIUM | package.json had incorrect electron dependency configuration | Initial setup errors in package.json | Corrected package.json electron dependency | Fixed | Commit `b10201f` |
+| SD-2026-038 | ~2026-04 | arcg-lcc | Build / Security | MEDIUM | Preload bridge for OS keychain not functioning | Incorrect IPC wiring in main.js/preload.js for keychain bridge | Fixed preload bridge implementation (multiple attempts) | Fixed | Commits `13d0ee6`, `b3d7533`, `57eef72` |
+| SD-2026-039 | ~2026-04 | arcg-lcc | Build / Electron | MEDIUM | App started without auto-updater functionality | Wrong main.js file referenced | Corrected main.js to version with auto-updater | Fixed | Commit `d91aeb8` |
+| SD-2026-040 | ~May-2026 | sourcedeck | UI/UX / i18n | LOW | Language switcher behavior not aligned with site.language specification | i18n implementation incomplete relative to spec | Fixed language switcher to align with site.language spec | Fixed | Commit `da079db`, PR #1 |
+| SD-2026-041 | Pre-May-2026 | sourcedeck-app | Security / Privacy | CRITICAL | OpenAI and Claude API keys still stored in localStorage in renderer (`lcc_OPENAI_KEY`, `lcc_CLAUDE_KEY`); not yet migrated to safeStorage | Migration of credential boundary was done in phases; OpenAI/Claude migration not yet complete at time of last audit | Migration plan documented; OpenAI/Claude remain as planned next phase | Open / Partially Fixed | `docs/renderer-credential-migration.md` — table shows "⏳ Not migrated" |
+
+---
+
+## Events by Category
+
+| Category | Count | Open |
+|---|---|---|
+| Security / Privacy | 5 | 2 (SD-2026-041, SD-2026-019 partial) |
+| API / Integration | 8 | 1 (SD-2026-006) |
+| CI / Deployment | 8 | 0 |
+| Product Logic / Access | 2 | 0 |
+| UI/UX / Copy | 5 | 0 |
+| Build / Electron | 4 | 0 |
+| Agent / Workflow | 3 | 0 |
+| Compliance Claims | 1 | 1 (SD-2026-019 watsonx unverified) |
+| Routing | 2 | 0 |
+| TypeScript / Build | 1 | 0 |
+| i18n | 1 | 0 |
+| Content | 1 | 0 |
+
+## Events by Severity
+
+| Severity | Count | Open |
+|---|---|---|
+| CRITICAL | 5 | 1 (SD-2026-041) |
+| HIGH | 16 | 2 (SD-2026-006, SD-2026-027) |
+| MEDIUM | 17 | 1 |
+| LOW | 3 | 0 |
