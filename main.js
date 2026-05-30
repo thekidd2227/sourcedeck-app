@@ -390,6 +390,7 @@ ipcMain.handle('enrichment:search-companies',   (_e, input) => appApi.enrichment
 ipcMain.handle('ai:generate',              (_e, input) => appApi.ai.generate(input || {}));
 ipcMain.handle('ai:draft-proposal-section',(_e, input) => appApi.ai.draftProposalSection(input || {}));
 ipcMain.handle('ai:summarize-opportunity', (_e, input) => appApi.ai.summarizeOpportunity(input || {}));
+ipcMain.handle('ai:watsonx-readiness',     (_e, lastError) => appApi.ai.watsonxReadiness(lastError || null));
 
 // Whitelist filter shape so renderer can't pass stray fields straight
 // to a remote API. Mirrors the targeting-profile sanitizer.

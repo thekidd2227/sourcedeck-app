@@ -217,3 +217,32 @@ Repairs pending approval: [list or "None"]
 
 Next action required: [summary or "None — all green"]
 ```
+
+---
+
+## E-007: watsonx readiness must classify failures without exposing secrets
+
+**Added:** 2026-05-30 (Phase 15B repair for OPEN-002)
+
+**Rule:** Any watsonx-related failure must be classified by
+`services/ai/watsonx-readiness.js` into one of the stable statuses
+(`ready` · `provider_disabled` · `missing_credentials` ·
+`missing_project_id` · `missing_region_or_url` · `unauthorized_401` ·
+`forbidden_403` · `network_error` · `unknown_error`). The renderer may
+only receive presence/status/remediation; raw IBM/watsonx tokens,
+project IDs, space IDs, trace IDs, and bearer values must be redacted
+before they reach the renderer.
+
+**Public-copy gate:** SourceDeck must not claim watsonx is "fully
+operational" or "live" until a real readiness check from the settings
+panel reports `ready` and the evidence is recorded.
+
+**Automated checks (run every `npm test`):**
+1. `test/watsonx-runtime-context.test.js` — 18 assertions covering
+   classification, redaction, renderer/preload boundary, and safe UI
+   copy.
+2. `test/ibm-readiness.test.js` — existing 38 assertions cover provider
+   redaction.
+3. Repo-wide grep for watsonx Authorization/Bearer/x-api-key construction
+   in `sourcedeck.html` and `preload.js` is part of the wizard/
+   integration tests (boundary section).

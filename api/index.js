@@ -44,6 +44,7 @@ const credSurface     = require('../services/settings/credentials');
 const operatingProfile = require('../services/settings/govcon-operating-profile');
 const capabilityExtractor = require('../services/govcon/capability-statement-extractor');
 const premiumContent = require('../services/govcon/premium-content-agent');
+const watsonxReadiness = require('../services/ai/watsonx-readiness');
 const sam             = require('../services/sam');
 const compliance      = require('../services/compliance');
 const stakeholders    = require('../services/stakeholders');
@@ -357,6 +358,15 @@ function createAppApi(opts) {
                   + 'Always end with: "AI draft. Human review required."';
         const user = JSON.stringify(input.opportunity || {}).slice(0, 6000);
         return this.generate({ ...input, systemPrompt: sys, userMessage: user, surface: 'opportunity_summary' });
+      },
+      // Renderer-safe watsonx readiness diagnostic. Returns presence/
+      // classification/remediation only — never tokens, account IDs,
+      // project IDs values, or trace IDs.
+      async watsonxReadiness(lastError) {
+        const cfg = require('../services/config').watsonxStatus();
+        let credStatus = null;
+        try { credStatus = await credentials.status(); } catch (_) {}
+        return watsonxReadiness.buildWatsonxReadinessReport(cfg, credStatus, lastError || null);
       }
     }
   });

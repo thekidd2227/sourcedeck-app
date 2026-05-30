@@ -42,26 +42,47 @@ Audit of current `main` confirmed the migration was already complete in prior co
 
 ### OPEN-002: IBM watsonx Runtime Context Mismatch (HTTP 403)
 **Severity:** HIGH  
+**Status:** **PARTIALLY FIXED — safe diagnostic shipped; IBM-side account/IAM action still required for live readiness.**  
 **Related event:** SD-2026-006  
 **Repo:** sourcedeck-app
 
 **Description:**  
 IBM watsonx calls return HTTP 403 `no_associated_service_instance_error`. Existing runtimes are tagged `cpdaas` context; SourceDeck project is `wx` context. IBM's URL rewrite prevents association under either context. Code adapters are present and lint-clean; the issue is purely on IBM's platform side.
 
-**Current state:**  
-- IBM support ticket filed (see `docs/IBM_SUPPORT_TICKET_RUNTIME_ASSOCIATION.md`)
-- Smoke test cannot pass until IBM migrates one runtime from `cpdaas` to `wx` context
+**Phase 15B repair (shipped):**
+- `services/ai/watsonx-readiness.js` deterministically classifies failures
+  into `ready` / `provider_disabled` / `missing_credentials` /
+  `missing_project_id` / `missing_region_or_url` / `unauthorized_401` /
+  `forbidden_403` / `network_error` / `unknown_error`.
+- 403 bodies are redacted (project_id / space_id values + 32-char trace
+  ids + sk- / sk-ant- / JWT / long-hex / Bearer shapes), but safe IBM
+  diagnostic fragments such as `no_associated_service_instance_error`
+  survive so operators can see the real cause.
+- IPC `ai:watsonx-readiness` → `window.sd.ai.watsonxReadiness()`
+  returns a presence/status/remediation report only — no secrets.
+- Settings panel adds a **watsonx readiness** sub-panel with the safe
+  remediation copy "IBM returned a permission/context error. Check IBM
+  account, project ID, region, model access, and IAM permissions."
+- 18/18 `test/watsonx-runtime-context.test.js` plus existing
+  `test/ibm-readiness.test.js` 38/38 still pass.
 
-**Risk if unresolved:**  
-AI features that route to watsonx will fail silently or with 403 in production. Watsonx cannot be marketed as a live integration.
+**Still required (outside the app):**
+- IBM support to migrate runtime `Runtime-wk` from `cpdaas` to `wx`
+  context, or detach the prior project for re-association.
+- Associate the migrated runtime with the SourceDeck project under
+  `?context=wx`.
+- Run a live readiness check from this app's settings panel; only when
+  it reports `ready` may the public site update "watsonx" wording.
 
-**What needs to happen:**
-1. IBM support to migrate runtime `Runtime-wk` from `cpdaas` to `wx` context (or detach from prior project for re-association)
-2. Associate migrated runtime with SourceDeck project under `?context=wx`
-3. Run `node server/scripts/verify-watsonx.mjs` — capture green output as evidence
-4. Update `/agents/`, `/security/`, homepage to say "live on watsonx" — ONLY after step 3
+**Risk if the IBM-side step remains unresolved:**  
+AI features that route to watsonx will still 403 in production, but the
+app now surfaces a classified, redacted, actionable diagnostic instead
+of failing silently. Public copy still **must not** claim watsonx is
+fully operational until readiness reports `ready`.
 
-**Automated check:** Agent rule E-007 (once runtime is associated)
+**Automated check:** Agent rule E-007 (once runtime is associated); the
+new `test/watsonx-runtime-context.test.js` plus the renderer/preload
+boundary checks run on every `npm test`.
 
 ---
 

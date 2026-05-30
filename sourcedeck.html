@@ -1656,6 +1656,17 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               </div>
               <div id="ibm-output" style="font:500 11px ui-monospace,monospace;color:var(--sub);background:rgba(0,0,0,0.35);border:0.5px solid rgba(255,255,255,0.06);border-radius:6px;padding:10px;max-height:160px;overflow:auto;white-space:pre-wrap;word-break:break-word">Run a test action above. Output appears here. No secrets are ever shown.</div>
               <div id="ibm-audit" style="margin-top:8px;font-size:10.5px;color:var(--muted)">Audit: —</div>
+
+              <!-- watsonx readiness diagnostic (OPEN-002 repair) — presence/status/remediation only -->
+              <div style="margin-top:12px;padding:10px;background:rgba(255,255,255,0.02);border:0.5px solid rgba(255,255,255,0.06);border-radius:8px">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:6px">
+                  <div style="font:600 9.5px 'JetBrains Mono',monospace;letter-spacing:0.12em;color:var(--muted);text-transform:uppercase">watsonx readiness</div>
+                  <button class="btn btn-ghost" type="button" onclick="watsonxReadinessCheck()">Run readiness check</button>
+                </div>
+                <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-bottom:8px">watsonx credentials are stored securely and are not exposed back to the interface.</div>
+                <div id="watsonx-readiness-state" style="font-size:11.5px;color:var(--sub);line-height:1.65">Click "Run readiness check" to validate configuration.</div>
+                <div id="watsonx-readiness-remediation" style="font-size:11px;color:var(--sub);line-height:1.6;margin-top:6px"></div>
+              </div>
             </div>
 
             <script>
@@ -1706,6 +1717,37 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               // First paint
               refresh();
             })();
+
+            // ── watsonx readiness check (renderer-safe; presence/status/remediation only) ──
+            async function watsonxReadinessCheck() {
+              const stateEl = document.getElementById('watsonx-readiness-state');
+              const remEl   = document.getElementById('watsonx-readiness-remediation');
+              if (!window.sd || !window.sd.ai || !window.sd.ai.watsonxReadiness) {
+                if (stateEl) stateEl.textContent = 'Readiness diagnostic unavailable (preload bridge missing).';
+                return;
+              }
+              if (stateEl) stateEl.textContent = 'Checking watsonx readiness…';
+              if (remEl) remEl.innerHTML = '';
+              let rpt = null;
+              try { rpt = await window.sd.ai.watsonxReadiness(null); } catch (_) {}
+              if (!rpt) { if (stateEl) stateEl.textContent = 'Readiness diagnostic returned no report.'; return; }
+              const fp = rpt.fieldPresence || {};
+              const colour = rpt.ready ? 'var(--green,#30d158)' : 'var(--gold,#d4a843)';
+              const presence = [
+                'API key: '   + (fp.apiKey    ? 'present' : 'missing'),
+                'Project ID: '+ (fp.projectId ? 'present' : (fp.spaceId ? 'space id present' : 'missing')),
+                'Region URL: '+ (fp.url       ? 'present' : 'missing'),
+                'Model ID: '  + (fp.modelId   ? 'present' : 'missing')
+              ].join(' · ');
+              if (stateEl) {
+                stateEl.innerHTML =
+                  '<b>status:</b> <span style="color:' + colour + '">' + escapeHtml(rpt.status) + '</span><br>' +
+                  '<span style="color:var(--muted)">' + escapeHtml(presence) + '</span>';
+              }
+              const steps = (rpt.remediation || []).map(s => '<div>• ' + escapeHtml(s) + '</div>').join('');
+              if (remEl) remEl.innerHTML = steps;
+            }
+            window.watsonxReadinessCheck = watsonxReadinessCheck;
             </script>
             <!-- ─── /IBM mode ───────────────────────────────────────────── -->
           </div>
