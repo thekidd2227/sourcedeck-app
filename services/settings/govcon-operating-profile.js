@@ -358,10 +358,182 @@ function createOperatingProfileService(deps) {
     return fresh;
   }
 
-  return { get, save, reset, presence };
+  async function completeness() {
+    const profile = await get();
+    return computeProfileCompleteness(profile, profile.credentialPresence);
+  }
+
+  async function mergeApprovedExtraction(extraction, approvedKeys) {
+    const { patch, approved } = _buildPatchFromApprovedExtraction(extraction, approvedKeys);
+    const result = await save(patch);
+    return { profile: result, approvedMerged: approved };
+  }
+
+  return { get, save, reset, presence, completeness, mergeApprovedExtraction };
+}
+
+// ── Phase 14A completeness/extraction-approval helpers ──────────────
+// Additive: existing behavior unchanged. These power the spec-required
+// completeness() + mergeApprovedExtraction() service methods and the
+// Step 9 Finish summary in the wizard.
+
+const REQUIRED_BUSINESS_TEXT = ['legalBusinessName', 'businessEmail', 'shortBusinessDescription'];
+const REQUIRED_BUSINESS_LISTS = ['coreServices'];
+const REQUIRED_SAFETY_FLAGS = ['requireApprovalBeforeOutreach', 'requireApprovalBeforeContentPosting', 'blockUnsupportedCertificationClaims', 'blockConfidentialContent'];
+
+function _scoreSection(checks) {
+  const total = checks.length || 1;
+  const passed = checks.filter(c => c.ok).length;
+  const missing = checks.filter(c => !c.ok).map(c => c.key);
+  const score = Math.round((passed / total) * 100) / 100;
+  return { complete: missing.length === 0, missing, score };
+}
+
+function _businessProfileCompleteness(profile) {
+  const b = (profile && profile.business) || {};
+  const checks = [];
+  for (const k of REQUIRED_BUSINESS_TEXT) checks.push({ key: 'business.' + k, ok: typeof b[k] === 'string' && b[k].trim().length > 0 });
+  for (const k of REQUIRED_BUSINESS_LISTS) checks.push({ key: 'business.' + k, ok: Array.isArray(b[k]) && b[k].length > 0 });
+  return _scoreSection(checks);
+}
+
+function _govconTargetingCompleteness(profile) {
+  const t = (profile && profile.targeting) || {};
+  const checks = [
+    { key: 'targeting.naicsCodes',    ok: Array.isArray(t.naicsCodes)    && t.naicsCodes.length > 0 },
+    { key: 'targeting.targetAgencies', ok: Array.isArray(t.targetAgencies) && t.targetAgencies.length > 0 },
+    { key: 'targeting.targetStates',  ok: Array.isArray(t.targetStates)   && t.targetStates.length > 0 }
+  ];
+  return _scoreSection(checks);
+}
+
+function _credentialsCompleteness(presence) {
+  const p = presence || {};
+  const aiPresent = !!(p.openaiPresent || p.anthropicPresent || p.watsonxPresent);
+  const checks = [
+    { key: 'credentials.samGov',     ok: !!p.samGovPresent },
+    { key: 'credentials.aiProvider', ok: aiPresent }
+  ];
+  const section = _scoreSection(checks);
+  section.present = JSON.parse(JSON.stringify(p));
+  return section;
+}
+
+function _capabilityStatementCompleteness(profile) {
+  const cs = (profile && profile.capabilityStatement) || {};
+  const approved = Array.isArray(cs.userApprovedExtractedFields) ? cs.userApprovedExtractedFields : [];
+  const hasUei  = typeof cs.extractedUEI  === 'string' && cs.extractedUEI.length > 0;
+  const hasCage = typeof cs.extractedCAGE === 'string' && cs.extractedCAGE.length > 0;
+  const checks = [
+    { key: 'capabilityStatement.userApprovedExtractedFields', ok: approved.length > 0 },
+    { key: 'capabilityStatement.identifiers', ok: hasUei || hasCage }
+  ];
+  return _scoreSection(checks);
+}
+
+function _socialProfileCompleteness(profile) {
+  const sh = (profile && profile.content && profile.content.socialHandles) || {};
+  const filled = SOCIAL_KEYS.filter(k => typeof sh[k] === 'string' && sh[k].trim().length > 0);
+  const minHandles = 2;
+  const checks = [{ key: 'content.socialHandles', ok: filled.length >= minHandles }];
+  const section = _scoreSection(checks);
+  if (!section.complete) {
+    section.missing = SOCIAL_KEYS
+      .filter(k => !(typeof sh[k] === 'string' && sh[k].trim().length > 0))
+      .map(k => 'content.socialHandles.' + k);
+  }
+  return section;
+}
+
+function _safetyRulesCompleteness(profile) {
+  const s = (profile && profile.safety) || {};
+  const checks = REQUIRED_SAFETY_FLAGS.map(k => ({ key: 'safety.' + k, ok: s[k] === true }));
+  return _scoreSection(checks);
+}
+
+function computeProfileCompleteness(profile, presence) {
+  const sections = {
+    businessProfile:     _businessProfileCompleteness(profile),
+    govconTargeting:     _govconTargetingCompleteness(profile),
+    credentials:         _credentialsCompleteness(presence || (profile && profile.credentialPresence) || {}),
+    capabilityStatement: _capabilityStatementCompleteness(profile),
+    socialProfile:       _socialProfileCompleteness(profile),
+    safetyRules:         _safetyRulesCompleteness(profile)
+  };
+  const keys = ['businessProfile', 'govconTargeting', 'credentials', 'capabilityStatement', 'socialProfile', 'safetyRules'];
+  const scores = keys.map(k => sections[k].score || 0);
+  const overallScore = Math.round((scores.reduce((a, b) => a + b, 0) / scores.length) * 100) / 100;
+  const allComplete = keys.every(k => sections[k].complete);
+  const allMissing = keys.reduce((acc, k) => acc.concat(sections[k].missing || []), []);
+  sections.overall = { complete: allComplete, score: overallScore, missing: allMissing };
+  return sections;
+}
+
+// ── Spec-named export aliases (additive; existing names preserved) ──
+const createGovconOperatingProfileService = createOperatingProfileService;
+const normalizeGovconOperatingProfile = (input) => sanitizeProfile(input || {});
+const sanitizeGovconOperatingProfilePatch = (patch) => sanitizeProfile(patch || {});
+function rejectCredentialLikeValues(value) {
+  if (typeof value === 'string' && looksLikeSecret(value)) {
+    const err = new Error('govcon-operating-profile: credential-looking value rejected');
+    err.code = 'CREDENTIAL_LIKE_VALUE';
+    throw err;
+  }
+  return value;
+}
+function deriveCredentialPresence(credentialsStatus) {
+  const present = (credentialsStatus && credentialsStatus.present) || {};
+  const flags = {};
+  for (const [flag, svc] of Object.entries(PRESENCE_MAP)) flags[flag] = !!present[svc];
+  return flags;
+}
+
+// ── mergeApprovedExtraction: candidate → live profile (approved only) ──
+const _EXTRACTION_KEYS = Object.freeze(['legalName', 'uei', 'cage', 'naics', 'psc', 'certifications', 'services', 'differentiators', 'pastPerformanceSnippets']);
+
+function _buildPatchFromApprovedExtraction(extraction, approvedKeys) {
+  const candidates = (extraction && (extraction.candidates || extraction)) || {};
+  const approved = Array.isArray(approvedKeys) ? Array.from(new Set(approvedKeys.filter(k => _EXTRACTION_KEYS.includes(k)))) : [];
+
+  // Always persist the raw extraction snapshot into capabilityStatement.extracted*
+  // so the audit trail survives. These are candidates, never treated as verified.
+  const patch = { business: {}, identifiers: {}, targeting: {}, capabilityStatement: {} };
+  patch.capabilityStatement = {
+    extractedLegalName: typeof candidates.legalName === 'string' ? candidates.legalName : '',
+    extractedUEI:       typeof candidates.uei === 'string' ? candidates.uei : '',
+    extractedCAGE:      typeof candidates.cage === 'string' ? candidates.cage : '',
+    extractedNAICS:     Array.isArray(candidates.naics) ? candidates.naics.slice() : [],
+    extractedPSC:       Array.isArray(candidates.psc) ? candidates.psc.slice() : [],
+    extractedCertifications: Array.isArray(candidates.certifications) ? candidates.certifications.slice() : [],
+    extractedServices:  Array.isArray(candidates.services) ? candidates.services.slice() : [],
+    extractedDifferentiators: Array.isArray(candidates.differentiators) ? candidates.differentiators.slice() : [],
+    extractedPastPerformanceSnippets: Array.isArray(candidates.pastPerformanceSnippets) ? candidates.pastPerformanceSnippets.slice() : [],
+    extractionConfidenceLabels: (extraction && extraction.confidence && typeof extraction.confidence === 'object') ? Object.assign({}, extraction.confidence) : {},
+    userApprovedExtractedFields: approved.slice()
+  };
+
+  // Only lift APPROVED candidates into live profile sections.
+  for (const key of approved) {
+    if (key === 'legalName'       && typeof candidates.legalName === 'string') patch.business.legalBusinessName = candidates.legalName;
+    else if (key === 'uei'        && typeof candidates.uei === 'string')       patch.identifiers.uei = candidates.uei;
+    else if (key === 'cage'       && typeof candidates.cage === 'string')      patch.identifiers.cageCode = candidates.cage;
+    else if (key === 'naics'      && Array.isArray(candidates.naics))          patch.targeting.naicsCodes = candidates.naics.slice();
+    else if (key === 'psc'        && Array.isArray(candidates.psc))            patch.targeting.pscCodes = candidates.psc.slice();
+    else if (key === 'services'   && Array.isArray(candidates.services))       patch.business.coreServices = candidates.services.slice();
+    else if (key === 'differentiators' && Array.isArray(candidates.differentiators)) patch.business.differentiators = candidates.differentiators.slice();
+    else if (key === 'certifications'  && Array.isArray(candidates.certifications)) {
+      patch.identifiers.certifications = {};
+      for (const c of candidates.certifications) {
+        if (CERT_KEYS.includes(c) && c !== 'other') patch.identifiers.certifications[c] = true;
+      }
+    }
+    // pastPerformanceSnippets is preserved in capabilityStatement.extracted* + userApprovedExtractedFields
+  }
+  return { patch, approved };
 }
 
 module.exports = {
+  // Existing names — preserved verbatim.
   createOperatingProfileService,
   defaultProfile,
   sanitizeProfile,
@@ -372,5 +544,12 @@ module.exports = {
   CERT_KEYS,
   CONTENT_GOALS,
   POSTING_PLATFORMS,
-  SOCIAL_KEYS
+  SOCIAL_KEYS,
+  // Phase 14A delta — additive helpers and spec-named aliases.
+  computeProfileCompleteness,
+  createGovconOperatingProfileService,
+  normalizeGovconOperatingProfile,
+  sanitizeGovconOperatingProfilePatch,
+  rejectCredentialLikeValues,
+  deriveCredentialPresence
 };
