@@ -296,6 +296,7 @@ ipcMain.handle('govcon:targeting-reset', () => appApi.govcon.targeting.reset());
 ipcMain.handle('govcon:profile-get',     () => appApi.govcon.profile.get());
 ipcMain.handle('govcon:profile-save',    (_e, patch) => appApi.govcon.profile.save(patch || {}));
 ipcMain.handle('govcon:profile-reset',   () => appApi.govcon.profile.reset());
+ipcMain.handle('govcon:profile-completeness', () => appApi.govcon.profile.completeness());
 ipcMain.handle('govcon:capability-statement-extract', (_e, input) => appApi.govcon.profile.extractCapabilityStatement(input || {}));
 ipcMain.handle('govcon:content-generate', (_e, request) => appApi.govcon.content.generate(request || {}));
 

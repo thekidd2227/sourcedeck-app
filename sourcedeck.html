@@ -8745,19 +8745,48 @@ async function _gcWizRenderSummary(){
   const host = document.getElementById('gcwiz-summary'); if (!host) return;
   let p = null;
   try { if (window.sd && sd.govcon && sd.govcon.profile && sd.govcon.profile.get) p = await sd.govcon.profile.get(); } catch(_) {}
+
+  // Phase 14A: back the Finish summary with profile.completeness() when
+  // available. Falls back to local derivation if the IPC is unavailable
+  // (e.g. tests, dev shell). Credential presence still comes from the
+  // canonical credentials.status() in either path.
+  let cmp = null;
+  try { if (window.sd && sd.govcon && sd.govcon.profile && sd.govcon.profile.completeness) cmp = await sd.govcon.profile.completeness(); } catch(_) {}
   const st = await _gcCredStatus(); const pr = (st && st.present) || {};
-  const b = (p && p.business) || {}; const t = (p && p.targeting) || {}; const c = (p && p.content) || {};
+
   const yn = (v) => v ? 'complete' : 'incomplete';
-  const handlesComplete = !!(c.socialHandles && Object.values(c.socialHandles).some(Boolean));
-  host.innerHTML = [
-    '• Business profile: ' + yn(!!(b.legalBusinessName||'').trim()),
-    '• Capability statement approved fields: ' + ((p && p.capabilityStatement && (p.capabilityStatement.userApprovedExtractedFields||[]).length) || 0),
-    '• GovCon targeting: ' + yn((t.naicsCodes||[]).length > 0),
-    '• SAM.gov key: ' + (pr['sam-gov'] ? 'present' : 'missing'),
-    '• AI provider key: ' + ((pr['openai']||pr['anthropic']||pr['watsonx']) ? 'present' : 'missing'),
-    '• Creative provider key: ' + ((pr['canva']||pr['google']) ? 'present' : 'missing'),
-    '• Social handles: ' + yn(handlesComplete)
-  ].map(s=>escapeHtml(s)).join('<br>');
+  const presPair = (a, b) => (a || b) ? 'present' : 'missing';
+  const pct = (s) => Math.round((Number(s) || 0) * 100) + '%';
+
+  let lines;
+  if (cmp && cmp.businessProfile && cmp.overall) {
+    const approvedCount = (p && p.capabilityStatement && (p.capabilityStatement.userApprovedExtractedFields||[]).length) || 0;
+    lines = [
+      '• Business profile: ' + yn(cmp.businessProfile.complete) + ' (' + pct(cmp.businessProfile.score) + ')',
+      '• Capability statement approved fields: ' + approvedCount + ' (' + yn(cmp.capabilityStatement.complete) + ')',
+      '• GovCon targeting: ' + yn(cmp.govconTargeting.complete) + ' (' + pct(cmp.govconTargeting.score) + ')',
+      '• SAM.gov key: ' + (pr['sam-gov'] ? 'present' : 'missing'),
+      '• AI provider key: ' + presPair(pr['openai'], pr['anthropic'] || pr['watsonx']),
+      '• Creative provider key: ' + presPair(pr['canva'], pr['google']),
+      '• Social handles: ' + yn(cmp.socialProfile.complete),
+      '• Safety rules: ' + yn(cmp.safetyRules.complete),
+      '• Overall setup readiness: ' + pct(cmp.overall.score) + (cmp.overall.complete ? ' — ready' : '')
+    ];
+  } else {
+    // Fallback path — preserves original behavior.
+    const b = (p && p.business) || {}; const t = (p && p.targeting) || {}; const c = (p && p.content) || {};
+    const handlesComplete = !!(c.socialHandles && Object.values(c.socialHandles).some(Boolean));
+    lines = [
+      '• Business profile: ' + yn(!!(b.legalBusinessName||'').trim()),
+      '• Capability statement approved fields: ' + ((p && p.capabilityStatement && (p.capabilityStatement.userApprovedExtractedFields||[]).length) || 0),
+      '• GovCon targeting: ' + yn((t.naicsCodes||[]).length > 0),
+      '• SAM.gov key: ' + (pr['sam-gov'] ? 'present' : 'missing'),
+      '• AI provider key: ' + ((pr['openai']||pr['anthropic']||pr['watsonx']) ? 'present' : 'missing'),
+      '• Creative provider key: ' + ((pr['canva']||pr['google']) ? 'present' : 'missing'),
+      '• Social handles: ' + yn(handlesComplete)
+    ];
+  }
+  host.innerHTML = lines.map(s=>escapeHtml(s)).join('<br>');
 }
 
 async function gcWizFinish(){

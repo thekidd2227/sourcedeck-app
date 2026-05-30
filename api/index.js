@@ -139,6 +139,7 @@ function createAppApi(opts) {
         get:    ()         => opProfile.get(),
         save:   (patch)    => opProfile.save(patch || {}),
         reset:  ()         => Promise.resolve(opProfile.reset()),
+        completeness: ()   => opProfile.completeness(),
         // Deterministic, offline capability-statement extraction. Returns
         // candidate fields only; the renderer presents them for explicit
         // user approval before any save. No external upload.

@@ -36,7 +36,8 @@ contextBridge.exposeInMainWorld('sd', {
       get:                       ()       => ipcRenderer.invoke('govcon:profile-get'),
       save:                      (patch)  => ipcRenderer.invoke('govcon:profile-save', patch),
       reset:                     ()       => ipcRenderer.invoke('govcon:profile-reset'),
-      extractCapabilityStatement:(input)  => ipcRenderer.invoke('govcon:capability-statement-extract', input)
+      extractCapabilityStatement:(input)  => ipcRenderer.invoke('govcon:capability-statement-extract', input),
+      completeness:              ()       => ipcRenderer.invoke('govcon:profile-completeness')
     },
     content: {
       // Draft-only premium content (never auto-posts / publishes).
