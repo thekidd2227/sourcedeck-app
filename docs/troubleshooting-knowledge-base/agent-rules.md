@@ -20,8 +20,10 @@ Run all checks below every 24 hours. Log results with timestamp, check ID, pass/
 | A-001 | Privacy gate clean | `cd sourcedeck-app && npm run release:check` | Any failure | SD-2026-001, SD-2026-013 |
 | A-002 | Site PII scanner | `cd sourcedeck-site && node scripts/check-private-data.js` | Any failure | SD-2026-013, SD-2026-019 |
 | A-003 | Demo parity | `cd sourcedeck-site && node scripts/check-demo-parity.js` | Any failure | SD-2026-013 |
-| A-004 | Renderer credential count | `grep -c "lcc_OPENAI_KEY\|lcc_CLAUDE_KEY" sourcedeck-app/sourcedeck.html` | > 0 unmitigated | SD-2026-041 |
-| A-005 | Bearer header count in renderer | `grep -c "'Bearer '\+" sourcedeck-app/sourcedeck.html` | > 0 | SD-2026-004 |
+| A-004 | No renderer localStorage writes for AI keys | `grep -c "localStorage.setItem.*lcc_OPENAI_KEY\|localStorage.setItem.*lcc_CLAUDE_KEY" sourcedeck-app/sourcedeck.html` | > 0 | SD-2026-041 (Fixed Phase 15A) |
+| A-005 | No direct API fetch to OpenAI/Anthropic from renderer | `grep -cE "fetch\('https://api\.(openai\|anthropic)\.com" sourcedeck-app/sourcedeck.html` | > 0 | SD-2026-041 (Fixed Phase 15A) |
+| A-005b | No Bearer/x-api-key header builds in renderer | `grep -cE "Bearer.*OPENAI_KEY\|x-api-key.*CLAUDE_KEY" sourcedeck-app/sourcedeck.html` | > 0 | SD-2026-004, SD-2026-041 |
+| A-005c | Credential boundary test suite passes | `node test/credential-boundary-openai-claude.test.js` | Any failure | SD-2026-041 (Phase 15A) |
 | A-006 | TypeScript compile | `cd ARCGSystems && npx tsc --noEmit` | Any error | SD-2026-034 |
 | A-007 | Test suite (sourcedeck-app) | `cd sourcedeck-app && npm test` | Any failure | SD-2026-005 |
 | A-008 | Test suite (sourcedeck-site server) | `cd sourcedeck-site/server && npm test` | Any failure | SD-2026-012 |
@@ -140,6 +142,20 @@ The agent may prepare a fix and open a draft PR, but must not merge without huma
 | APR-004 | IBM watsonx smoke test failure | Engineering |
 | APR-005 | Chatwoot token mismatch | Operator |
 | APR-006 | vercel.json fix required | Operator |
+
+---
+
+## Prevention Rules (Phase 15A additions)
+
+These rules enforce the credential boundary repair from OPEN-001. Treat any violation as CRITICAL.
+
+| Rule ID | Rule | Enforcement |
+|---|---|---|
+| PREV-001 | No AI provider credential may be stored, read, or returned through renderer localStorage | Automated check A-004, A-005, A-005b daily |
+| PREV-002 | `window.OPENAI_KEY` and `window.CLAUDE_KEY` must only ever hold `''` or the sentinel strings `'<openai_credential_present>'` / `'<anthropic_credential_present>'` — never raw key values | `test/renderer-ai-migration.test.js` assertion; checked in `npm test` |
+| PREV-003 | All AI generation calls must route through `window.sd.ai.generate()` IPC — never direct fetch to openai.com or anthropic.com from renderer | Automated check A-005 + `test/credential-boundary-openai-claude.test.js` Section B |
+| PREV-004 | `preload.js` must not expose `credentials.get()` to the renderer — presence-only credential surface only | `test/credential-boundary-openai-claude.test.js` Section C; breaks compilation if violated |
+| PREV-005 | Provider services (`services/ai/providers/*.js`) must read credentials via `credentials.get()` inside main process only; never return key value in result | `test/credential-boundary-openai-claude.test.js` Sections D, E |
 
 ---
 
