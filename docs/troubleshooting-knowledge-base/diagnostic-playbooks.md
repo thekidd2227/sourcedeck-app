@@ -614,3 +614,42 @@ done
 
 ### Agent Automation Rule
 Daily: check each URL in sitemap.xml returns HTTP 200 or 301/302. Alert on any 404.
+
+---
+
+## Playbook: watsonx HTTP 403 (OPEN-002 / SD-2026-006)
+
+### Symptom
+- AI calls routed to watsonx return HTTP 403.
+- The IBM error body contains
+  `no_associated_service_instance_error` and a
+  `project_id … is not associated with a WML instance` message.
+
+### Safe Diagnostic Path (in-app)
+1. Settings → IBM mode → **watsonx readiness** → "Run readiness check".
+2. The panel returns a classified status from
+   `services/ai/watsonx-readiness.js`:
+   - `forbidden_403` (the OPEN-002 case),
+   - or one of the other 8 stable codes.
+3. The panel renders deterministic remediation steps without exposing
+   any token, project id, space id, or trace id.
+
+### Repair Pattern (operator action required)
+- Verify the `WATSONX_API_KEY` belongs to the same IBM Cloud account
+  as the `WATSONX_PROJECT_ID` (or `WATSONX_SPACE_ID`).
+- Verify `WATSONX_URL` matches the region of your WML instance.
+- Verify the IAM identity has the `watsonx.ai` role on that project.
+- For the `cpdaas` vs `wx` runtime context case: file IBM support
+  request per `docs/IBM_SUPPORT_TICKET_RUNTIME_ASSOCIATION.md`.
+
+### Public-copy Gate
+Do not claim watsonx is "live" or "fully operational" until the
+readiness check returns `ready` from a real environment. The KB E-007
+rule enforces this and the test suite blocks misleading copy via
+`test/watsonx-runtime-context.test.js`.
+
+### Agent Automation Rule
+On every `npm test`: run
+`test/watsonx-runtime-context.test.js` and
+`test/ibm-readiness.test.js`. Block release if any fail or if any
+public doc claims watsonx is fully operational without paired evidence.

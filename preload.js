@@ -138,7 +138,10 @@ contextBridge.exposeInMainWorld('sd', {
   ai: {
     generate:              (input) => ipcRenderer.invoke('ai:generate',                 input),
     draftProposalSection:  (input) => ipcRenderer.invoke('ai:draft-proposal-section',   input),
-    summarizeOpportunity:  (input) => ipcRenderer.invoke('ai:summarize-opportunity',    input)
+    summarizeOpportunity:  (input) => ipcRenderer.invoke('ai:summarize-opportunity',    input),
+    // Renderer-safe watsonx readiness diagnostic (presence + classified
+    // status + remediation only; never tokens or secret values).
+    watsonxReadiness:      (lastError) => ipcRenderer.invoke('ai:watsonx-readiness', lastError || null)
   },
 
   version: '1.1.0',
