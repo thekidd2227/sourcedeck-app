@@ -2,8 +2,39 @@
 
 Rules for the future SourceDeck Troubleshooting Agent. This agent will run daily automated health checks across all SourceDeck repos and surfaces.
 
-**Last updated:** 2026-05-29  
+**Last updated:** 2026-05-30
 **Agent scope:** All repos + all production surfaces under sourcedeck.app domain
+**Implementation status:** Phase 16A — repo-native scan for `sourcedeck-app` only. Cross-repo + HTTP route checks remain a later phase.
+
+## Phase 16A — Daily Agent (shipped 2026-05-30)
+
+The first production-safe version of the agent runs against this repo only. See `services/troubleshooting/troubleshooting-agent.js`, `scripts/run-troubleshooting-agent.js`, and `.github/workflows/daily-troubleshooting-agent.yml`.
+
+Mapping of KB checks to this phase's coverage:
+
+| KB check | Phase 16A finding id | Notes |
+|---|---|---|
+| A-004 / A-005 / A-005b renderer credential boundary | `CRED-001`, `CRED-002`, `CRED-003`, `CRED-004` | Catches `localStorage.setItem('lcc_OPENAI_KEY'…)`, direct provider fetches, Bearer/x-api-key construction, raw-key window assignment |
+| A-005c credential boundary tests present | `CRED-020:*` | Presence-check only; full suite still runs in `npm test` |
+| B-005 / B-006 MOCK_LEADS / PROMPT_LIBRARY empty | `HEALTH-001`, `HEALTH-002` | Matches release-check shape ({} for PROMPT_LIBRARY) |
+| D-001 false certification claims | `CLAIM-001` | Mirrors KB exact phrases |
+| D-002 watsonx live wording | `CLAIM-002` | Critical-severity OPEN-002 gate |
+| D-003 free demo/download CTAs (app-side) | `DEMO-001` | App-side only this phase |
+| D-006 owner identifiers | `CLAIM-004` | |
+| F-003 release gate exists | `REL-001`, `REL-002`, `REL-010:*` | |
+| F-004 owner phone signatures | `CLAIM-005` | Mirrors KB `(212) 663`, `(718) 320` |
+| E-007 watsonx readiness classifier + safe UI surface | `WX-001`..`WX-005` | WX-005 is `manual` until OPEN-002 IBM-side action completes |
+| RED_RESTRICTED / KILL / no-auto-send / no-auto-post | `GOVCON-001`..`GOVCON-004` | |
+| Human-approval language in playbooks | `GOVCON-005` | |
+| KB integrity (7 files + OPEN-002 partial state) | `KB-001:*`, `KB-002`, `KB-003`, `KB-004` | |
+
+KB checks **not** covered by this phase (target other repos or routes; will be picked up by a later phase):
+A-002, A-003, A-006, A-008, B-001..B-004, C-001..C-010, D-004, D-005, E-001..E-006, F-001, F-002, F-005, G-001..G-005.
+
+Hard rules carried into the engine:
+- Every finding ships `autoRepairAllowed: false` and `requiresHumanApproval: true`. A runtime assertion throws if any check returns otherwise.
+- NAR-001..NAR-010 stay enumerated as "never auto-repair." No engine code path bypasses them.
+- The daily workflow uses `permissions: contents: read` and references no secrets.
 
 ---
 

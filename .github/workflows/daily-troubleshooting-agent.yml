@@ -1,0 +1,57 @@
+# Phase 16A — Daily SourceDeck Troubleshooting Agent
+#
+# Scheduled local/repo-native scan. Does not auto-repair, does not commit,
+# does not push, does not require secrets, does not send external email.
+# Generated markdown / JSON reports are uploaded as an artifact only.
+name: Daily SourceDeck Troubleshooting Agent
+
+on:
+  schedule:
+    # 09:15 UTC every day — early morning ET, after typical CI windows.
+    - cron: "15 9 * * *"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: troubleshooting-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    name: Daily troubleshooting scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      # Make the agent's output deterministic; suppress noisy npm color
+      # codes in artifact text.
+      NO_COLOR: "1"
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run troubleshooting scan (markdown + JSON)
+        run: npm run troubleshooting:scan:json
+
+      - name: Run troubleshooting agent test suite
+        run: node test/troubleshooting-agent.test.js
+
+      - name: Upload troubleshooting reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: troubleshooting-reports-${{ github.run_id }}
+          path: reports/troubleshooting/
+          retention-days: 30
+
+      # Explicit safety: this workflow does not commit, push, or auto-repair.
+      # See docs/troubleshooting-knowledge-base/agent-rules.md (NAR-001..NAR-010).

@@ -32,15 +32,33 @@ This knowledge base serves three purposes:
 
 ---
 
-## How the Future Troubleshooting Agent Should Use This
+## Daily Troubleshooting Agent (Phase 16A — shipped 2026-05-30)
 
-### On each daily scan:
-1. Load `agent-rules.md` — run every check in the daily checklist
-2. For any failed check, search `error-repair-ledger.md` for matching category + symptom
-3. If a matching event exists, apply the repair pattern from `diagnostic-playbooks.md`
-4. If no match exists, flag as a new unknown event and append to `open-issues.md`
-5. Never auto-apply repairs marked `requires-human-approval` in `agent-rules.md`
-6. Log every scan run with timestamp, checks run, failures found, repairs applied
+The first production-safe version of the agent now lives in this repo:
+
+- **Engine:** [`services/troubleshooting/troubleshooting-agent.js`](../../services/troubleshooting/troubleshooting-agent.js)
+- **CLI:** [`scripts/run-troubleshooting-agent.js`](../../scripts/run-troubleshooting-agent.js) — `npm run troubleshooting:scan` / `:json` / `:strict`
+- **Daily workflow:** [`.github/workflows/daily-troubleshooting-agent.yml`](../../.github/workflows/daily-troubleshooting-agent.yml) (scheduled + manual)
+- **Tests:** [`test/troubleshooting-agent.test.js`](../../test/troubleshooting-agent.test.js)
+- **Reports:** `reports/troubleshooting/latest-troubleshooting-report.md` (+ JSON, + timestamped). Gitignored; not committed.
+
+What it covers today: credential boundary, public-claim regressions, demo/download CTA, GovCon safety (RED_RESTRICTED / KILL / no auto-send / no auto-post), watsonx readiness policy (incl. OPEN-002 partial gate), release readiness, app-side privacy-gate inputs, and KB integrity.
+
+What it deliberately does not do (Phase 16A):
+- No auto-repair on any finding. Every finding ships `autoRepairAllowed: false` and `requiresHumanApproval: true`.
+- No commits, no pushes, no PRs.
+- No external email or notifications. Future phase: email to `arcgsystems@gmail.com` only after explicit approval.
+- No cross-repo HTTP route checks. The site / cross-repo wrapper is a later phase.
+
+### Daily run lifecycle (current)
+1. GitHub Actions invokes `npm run troubleshooting:scan:json` and `node test/troubleshooting-agent.test.js`.
+2. The CLI writes markdown + JSON reports to `reports/troubleshooting/`.
+3. The workflow uploads the reports as a build artifact (`troubleshooting-reports-<run_id>`, 30-day retention).
+4. Workflow exits 1 only on critical/high failures; manual findings (e.g. OPEN-002 IBM-side action, missing macOS signing env) keep the run green.
+5. Operator reviews any failed/warn findings before they enter `open-issues.md` or trigger remediation work.
+
+### What the agent does NOT auto-apply
+The agent never modifies production code, never opens PRs, never amends commits. NAR-001..NAR-010 (vercel.json, workflow files, release-check blocklist, main pushes, privacy-scrub logic, credential rotation, billing, compliance copy, file deletions) are explicit hard exclusions enumerated in `agent-rules.md` and reflected in engine constants.
 
 ### On user-reported incidents:
 1. Match reported symptom to entries in `diagnostic-playbooks.md`

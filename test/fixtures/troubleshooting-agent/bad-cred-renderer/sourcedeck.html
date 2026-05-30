@@ -1,0 +1,16 @@
+<!doctype html>
+<html><body>
+<script>
+// Synthetic fixture — this file MUST trigger CRED-001/CRED-002/CRED-003/CRED-004.
+// Strings below are intentionally bad shapes used only by the troubleshooting
+// agent test suite. They are NOT real keys and NOT live code.
+localStorage.setItem('lcc_OPENAI_KEY', 'sk-test-NOT-A-REAL-KEY-AAAAAA');
+fetch('https://api.openai.com/v1/responses', {
+  headers: { Authorization: `Bearer ${OPENAI_KEY}` }
+});
+fetch('https://api.anthropic.com/v1/messages', {
+  headers: { 'x-api-key': CLAUDE_KEY }
+});
+window.OPENAI_KEY = 'sk-test-XXXXXXXXXXXX';
+</script>
+</body></html>
