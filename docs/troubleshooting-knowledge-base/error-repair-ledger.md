@@ -59,7 +59,7 @@
 | SD-2026-038 | ~2026-04 | arcg-lcc | Build / Security | MEDIUM | Preload bridge for OS keychain not functioning | Incorrect IPC wiring in main.js/preload.js for keychain bridge | Fixed preload bridge implementation (multiple attempts) | Fixed | Commits `13d0ee6`, `b3d7533`, `57eef72` |
 | SD-2026-039 | ~2026-04 | arcg-lcc | Build / Electron | MEDIUM | App started without auto-updater functionality | Wrong main.js file referenced | Corrected main.js to version with auto-updater | Fixed | Commit `d91aeb8` |
 | SD-2026-040 | ~May-2026 | sourcedeck | UI/UX / i18n | LOW | Language switcher behavior not aligned with site.language specification | i18n implementation incomplete relative to spec | Fixed language switcher to align with site.language spec | Fixed | Commit `da079db`, PR #1 |
-| SD-2026-041 | Pre-May-2026 | sourcedeck-app | Security / Privacy | CRITICAL | OpenAI and Claude API keys still stored in localStorage in renderer (`lcc_OPENAI_KEY`, `lcc_CLAUDE_KEY`); not yet migrated to safeStorage | Migration of credential boundary was done in phases; OpenAI/Claude migration not yet complete at time of last audit | Migration plan documented; OpenAI/Claude remain as planned next phase | Open / Partially Fixed | `docs/renderer-credential-migration.md` — table shows "⏳ Not migrated" |
+| SD-2026-041 | Pre-May-2026 (fixed 2026-05-30) | sourcedeck-app | Security / Privacy | CRITICAL | OpenAI and Claude API keys were stored in localStorage in renderer (`lcc_OPENAI_KEY`, `lcc_CLAUDE_KEY`) and used directly in renderer fetch calls with Bearer/x-api-key headers | Migration of credential boundary was done in phases; OpenAI/Claude migration completed in commits prior to Phase 15A audit | Phase 15A (2026-05-30): Audit confirmed migration complete. Added `docs/audits/credential-boundary-openai-claude-audit.md` and `test/credential-boundary-openai-claude.test.js` (22/22 PASS). All AI calls route through IPC. No renderer localStorage usage remains. | **Fixed** | `docs/audits/credential-boundary-openai-claude-audit.md`, `test/credential-boundary-openai-claude.test.js`, `test/renderer-ai-migration.test.js` |
 
 ---
 
@@ -67,7 +67,7 @@
 
 | Category | Count | Open |
 |---|---|---|
-| Security / Privacy | 5 | 2 (SD-2026-041, SD-2026-019 partial) |
+| Security / Privacy | 5 | 1 (SD-2026-019 watsonx partial) |
 | API / Integration | 8 | 1 (SD-2026-006) |
 | CI / Deployment | 8 | 0 |
 | Product Logic / Access | 2 | 0 |
@@ -84,7 +84,7 @@
 
 | Severity | Count | Open |
 |---|---|---|
-| CRITICAL | 5 | 1 (SD-2026-041) |
+| CRITICAL | 5 | 0 |
 | HIGH | 16 | 2 (SD-2026-006, SD-2026-027) |
 | MEDIUM | 17 | 1 |
 | LOW | 3 | 0 |

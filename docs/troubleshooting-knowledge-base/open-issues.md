@@ -2,37 +2,41 @@
 
 Problems that are unresolved, partially fixed, unverified, or require ongoing monitoring.
 
-**Last updated:** 2026-05-29
+**Last updated:** 2026-05-30
+
+---
+
+## ✅ RESOLVED — Phase 15A (2026-05-30)
+
+### ~~OPEN-001: OpenAI and Claude Keys Still in localStorage (Renderer)~~
+**Severity:** ~~CRITICAL~~ → **FIXED**  
+**Related event:** SD-2026-041  
+**Repo:** sourcedeck-app  
+**Resolved by:** Phase 15A — `fix/credential-boundary-openai-claude` branch / PR #26
+
+**Resolution summary:**  
+Audit of current `main` confirmed the migration was already complete in prior commits. Phase 15A added formal audit documentation and a dedicated enforcement test suite.
+
+**Confirmed state:**
+- Zero direct fetch() calls to `api.openai.com` or `api.anthropic.com` from renderer
+- Zero Bearer/x-api-key header builds in renderer
+- Zero `localStorage.setItem` for `lcc_OPENAI_KEY` or `lcc_CLAUDE_KEY`
+- `window.OPENAI_KEY` / `window.CLAUDE_KEY` are sentinel presence flags only (`'<openai_credential_present>'`), never raw key values
+- All AI calls route through `window.sd.ai.generate()` → IPC → `services/ai/providers/openai.js` / `anthropic.js` → `credentials.get()` in main process only
+- preload.js exposes `credentials.status/set/remove` only — no `credentials.get()` to renderer
+- Legacy migration code reads old `lcc_*` localStorage entries, migrates to safeStorage, and removes them
+
+**Test coverage added:**
+- `test/credential-boundary-openai-claude.test.js` — 22/22 PASS
+- `test/renderer-ai-migration.test.js` — 15/15 PASS (pre-existing)
+- `test/credential-boundary.test.js` — 14/14 PASS (pre-existing)
+- All wired into `npm test`
+
+**Prevention rule:** No AI provider credential may be stored, read, or returned through renderer localStorage. Automated check: grep `sourcedeck.html` and `preload.js` for `lcc_OPENAI_KEY`, `lcc_CLAUDE_KEY`, direct `api.openai.com`/`api.anthropic.com` fetches, Bearer/x-api-key header builds — must return 0.
 
 ---
 
 ## OPEN — Requires Action
-
-### OPEN-001: OpenAI and Claude Keys Still in localStorage (Renderer)
-**Severity:** CRITICAL  
-**Related event:** SD-2026-041  
-**Repo:** sourcedeck-app
-
-**Description:**  
-Two API credentials remain stored in renderer-accessible `localStorage` and used via direct fetch calls from `sourcedeck.html`:
-- `lcc_OPENAI_KEY` — 4 Bearer header builds in renderer
-- `lcc_CLAUDE_KEY` — 2 `x-api-key` builds in renderer
-
-Migration of SAM.gov, Airtable, and Apollo credentials to `safeStorage` via the `window.sd` IPC boundary is complete. OpenAI and Claude migration is the documented next step.
-
-**Evidence:**  
-`docs/renderer-credential-migration.md` — table row "OpenAI key: ⏳ Not migrated" and "Anthropic / Claude key: ⏳ Not migrated"
-
-**Risk if unresolved:**  
-Credentials accessible to any renderer-side code, including any future script injection. On a web deployment, this becomes a direct credential leak vector.
-
-**What needs to happen:**
-1. Migrate `fetch('https://api.openai.com/...', {headers:{Authorization:'Bearer '+OPENAI_KEY}})` → `await window.sd.ai.generate({provider:'openai', ...})`
-2. Migrate `fetch('https://api.anthropic.com/...', {headers:{'x-api-key':CLAUDE_KEY}})` → `await window.sd.ai.generate({provider:'anthropic', ...})`
-3. Remove `lcc_OPENAI_KEY` and `lcc_CLAUDE_KEY` from localStorage; migrate to `safeStorage` via `window.sd.credentials.set`
-4. Update `test/renderer-ai-migration.test.js` to assert 0 remaining renderer-side credential patterns
-
-**Automated check:** Agent rule A-004, A-005
 
 ---
 
