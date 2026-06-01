@@ -653,3 +653,38 @@ On every `npm test`: run
 `test/watsonx-runtime-context.test.js` and
 `test/ibm-readiness.test.js`. Block release if any fail or if any
 public doc claims watsonx is fully operational without paired evidence.
+
+---
+
+## Playbook: macOS signing/notarization readiness (E-009 / REL-020)
+
+### Symptom
+- `scripts/release-check.js` warns
+  `codesign verify failed (artifact is unsigned or improperly signed)`
+- Daily troubleshooting agent surfaces REL-020 as MANUAL.
+
+### Safe Diagnostic Path
+1. `npm run release:mac-signing-readiness` — expected
+   `status: unsigned_dev_ok` and exit `0` in local dev.
+2. From a configured signing environment, run
+   `npm run release:mac-signing-readiness:strict` — must report
+   `ready_to_sign` and exit `0`. Any other status with exit `1` is
+   actionable per the printed remediation.
+
+### Repair Pattern (operator only; no app code change)
+- Provide `CSC_LINK` + `CSC_KEY_PASSWORD`.
+- Provide either 3 `APPLE_*` env vars or 3 `APPLE_API_*` env vars for
+  notarization.
+- Flip `package.json` `build.mac.notarize` to `true` for the release
+  build.
+
+### Public-copy Gate
+Do not change public copy from "SourceDeck is configured for macOS
+signing" or similar tentative wording to a "live on signed/notarized"
+claim until evidence (codesign verify + spctl + stapler) is captured.
+
+### Agent Automation Rule
+On every `npm test`: run
+`test/macos-signing-readiness.test.js`. Block release if any fail or
+if any public doc positively claims the app is signed/notarized
+outside of negated/conditional language.

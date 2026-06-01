@@ -817,8 +817,8 @@ function runReleaseReadinessChecks(rootDir) {
         ? "CSC_LINK / APPLE_ID present"
         : "no signing env detected; expected outside a signing environment",
       remediation: signingEnv
-        ? ""
-        : "Sign + notarize only from a configured signing environment. Daily scans outside that env may report this as manual.",
+        ? "Run `npm run release:mac-signing-readiness:strict` to confirm `ready_to_sign` before publishing."
+        : "Sign + notarize only from a configured signing environment. Run `npm run release:mac-signing-readiness` (local dev, non-blocking) or `npm run release:mac-signing-readiness:strict` (release env). Daily scans outside a signing env will report this as manual.",
     })
   );
 
