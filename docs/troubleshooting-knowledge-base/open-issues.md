@@ -279,3 +279,38 @@ troubleshooting agent surfaces it as `MANUAL`.
 public surface until a real signed run is captured as evidence.
 
 **Automated check:** Agent rule E-009; `test/macos-signing-readiness.test.js`.
+
+---
+
+### REL-030: Release Evidence Capture present and reachable
+**Severity:** MEDIUM
+**Status:** **PASS once a report is written; non-blocking by design.**
+**Source:** Daily Troubleshooting Agent finding `REL-030`
+**Repo:** sourcedeck-app
+
+**Description:**
+SourceDeck now ships a deterministic release-evidence capture system
+(`services/release/release-evidence.js` + CLI). The finding asserts
+the module + CLI exist and that at least one captured report is
+available. It is never `FAIL` so that daily CI does not break when an
+operator has simply not run `npm run release:evidence` yet.
+
+**Phase 17B repair (shipped):**
+- `release:evidence`, `release:evidence:json`,
+  `release:evidence:strict` npm scripts.
+- `.github/workflows/release-evidence.yml` — `workflow_dispatch`-only;
+  no secrets; uploads only as GitHub Actions artifact.
+- 20/20 `test/release-evidence.test.js`.
+- Agent-rule E-010 + diagnostic playbook.
+
+**Still required (operator only):**
+- A real signed-release evidence bundle (`packaged_signed_verified`)
+  before a public macOS publish. Requires the Phase 17A operator steps
+  (Apple credentials, flip `notarize:true`, build + verify) and then
+  `npm run release:evidence:strict`.
+
+**Public-copy rule:** Do not claim a signed/notarized macOS release in
+any public surface until both `release:mac-signing-readiness:strict`
+and `release:evidence:strict` pass.
+
+**Automated check:** Agent rule E-010; `test/release-evidence.test.js`.

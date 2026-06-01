@@ -822,6 +822,36 @@ function runReleaseReadinessChecks(rootDir) {
     })
   );
 
+  // REL-030 — Release Evidence Capture wiring exists and at least one
+  // generated report is available. Non-blocking: status is PASS when the
+  // module + CLI exist; WARN if neither a latest report nor a dated one
+  // has been produced yet. Never FAIL (daily CI must not fail because
+  // an operator has not yet captured a release-evidence bundle).
+  const evModule = path.join(rootDir, "services", "release", "release-evidence.js");
+  const evCli    = path.join(rootDir, "scripts", "release-evidence.js");
+  const evDir    = path.join(rootDir, "reports", "release-evidence");
+  const latestMd = path.join(evDir, "latest-release-evidence.md");
+  const latestJson = path.join(evDir, "latest-release-evidence.json");
+  const wired = fs.existsSync(evModule) && fs.existsSync(evCli);
+  const captured = fs.existsSync(latestMd) || fs.existsSync(latestJson);
+  findings.push(
+    makeFinding({
+      id: "REL-030",
+      severity: SEVERITIES.MEDIUM,
+      category: CATEGORIES.RELEASE_READINESS,
+      title: "Release Evidence Capture present and reachable",
+      status: !wired ? STATUSES.MANUAL : (captured ? STATUSES.PASS : STATUSES.WARN),
+      file: null,
+      evidence: !wired
+        ? "release-evidence module or CLI not present"
+        : (captured
+            ? "release-evidence reports present under reports/release-evidence/"
+            : "module + CLI present but no captured report yet"),
+      remediation:
+        "Run `npm run release:evidence` to capture a bundle. For a release-environment gate, run `npm run release:evidence:strict` — that exits 1 on dirty tree, missing asar files, or blocked signing readiness. This finding is never FAIL by design; it only surfaces that evidence capture should be exercised.",
+    })
+  );
+
   return findings;
 }
 

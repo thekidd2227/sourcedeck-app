@@ -367,3 +367,58 @@ in any public surface until a real signed run is captured as evidence.
   remediation reference.
 - The CLI test path uses `env: {}` to confirm strict mode exits `1`
   and default mode exits `0` without any Apple credentials.
+
+---
+
+## E-010: Release evidence capture — dev non-blocking; strict release gate
+
+**Added:** 2026-06-01 (Phase 17B — Release Artifact Evidence Capture)
+
+**Rule:** Release evidence is captured by
+`services/release/release-evidence.js` and the CLI
+`scripts/release-evidence.js`.
+
+- **Local dev** (`npm run release:evidence`): MUST exit `0`. The
+  default mode writes `reports/release-evidence/latest-release-evidence.{md,json}`
+  and a dated copy. Daily troubleshooting agent surfaces `REL-030` as
+  `PASS` (when a report is present) or `WARN` (when wired but no report
+  yet) — never `FAIL`.
+- **Public release / strict mode**
+  (`npm run release:evidence:strict`): MUST exit `1` when any of:
+  - working tree is dirty,
+  - the packaged asar is missing required files,
+  - signing readiness is not `ready_to_sign`,
+  - a positive "SourceDeck is signed/notarized" claim is detected in
+    the generated text,
+  - any secret-shaped fragment leaks past the redactor.
+
+**Secret guardrails:**
+- Evidence is presence-only. The redactor strips Bearer / sk- / sk-ant-
+  / IBM keys / SMTP credentials / Apple env assignments / PEM
+  certificates and private keys / Developer ID identities / long base64
+  + long hex blobs.
+- Git commit is recorded as a 7-char short SHA so the redactor does
+  not falsely strip it.
+- The CLI's `containsUnsupportedSignedClaim` and `containsSecretShape`
+  predicates fail the strict run if either predicate is true on the
+  generated text.
+
+**Public-copy gate:** Do not ship a public macOS release until:
+1. `npm run release:mac-signing-readiness:strict` reports `ready_to_sign`.
+2. `npm run release:evidence:strict` exits `0` with state
+   `packaged_signed_verified`.
+3. `codesign --verify --deep --strict` passes on the built artifact.
+
+**Workflow safety:** `.github/workflows/release-evidence.yml` is
+`workflow_dispatch`-only, requires no repository secret, never
+commits/pushes, never invokes `codesign`/`xcrun notarytool`, never
+publishes. It only uploads the evidence + troubleshooting reports as
+GitHub Actions artifacts.
+
+**Automated checks (run every `npm test`):**
+- `test/release-evidence.test.js` (20 assertions) covers state
+  classification, redaction, CLI dev-vs-strict exit codes, workflow
+  safety, and the REL-030 finding.
+- `test/troubleshooting-agent.test.js` covers the agent's invariant
+  loop (NAR-001..NAR-010) which throws if any finding flips
+  `autoRepairAllowed` / `requiresHumanApproval`.

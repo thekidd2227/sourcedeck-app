@@ -1,0 +1,68 @@
+# Phase 17B — Release Artifact Evidence Capture
+#
+# Runs ON DEMAND only (workflow_dispatch). Captures a release-evidence
+# bundle and uploads it as a GitHub Actions artifact. Does not commit,
+# does not push, does not require any repository secret, does not
+# attempt live signing or notarization, does not publish.
+name: Release Artifact Evidence Capture
+
+on:
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-evidence-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  evidence:
+    name: Capture release evidence
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      NO_COLOR: '1'
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Run full test suite
+        run: npm test
+
+      - name: Run macOS signing readiness (dev, non-blocking)
+        # Local-dev posture from CI — no Apple env required.
+        run: npm run release:mac-signing-readiness
+
+      - name: Run troubleshooting scan (markdown + JSON)
+        run: npm run troubleshooting:scan:json
+
+      - name: Capture release evidence (writes reports/release-evidence/)
+        run: npm run release:evidence
+
+      - name: Upload release evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-evidence-${{ github.run_id }}
+          path: reports/release-evidence/
+          retention-days: 30
+
+      - name: Upload troubleshooting reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: troubleshooting-reports-${{ github.run_id }}
+          path: reports/troubleshooting/
+          retention-days: 30
+
+      # Explicit safety: this workflow does not sign, notarize, publish,
+      # commit, or push. It does not require any repository secret.
