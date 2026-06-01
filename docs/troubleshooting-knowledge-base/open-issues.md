@@ -234,3 +234,48 @@ Two repos (`arcg-lcc` and `sourcedeck-app`) both appear to wrap an LCC HTML inte
 | Free demo/download access | All routes to request-access, commit 28346ee | 2026-05-10 |
 | Gemini 404 / 400 errors | Auto-discovery + model ranking, commits 2655b1b + ea61c8f | 2026-05-29 |
 | CI calendar changes lost | Commit-back step, commit 80bf8f4 | 2026-05-29 |
+
+---
+
+### REL-020: macOS signing/notarization configured (manual, non-blocking in local dev)
+**Severity:** MEDIUM
+**Status:** **PARTIALLY FIXED — Phase 17A shipped deterministic readiness diagnostic; actual signing requires operator credentials.**
+**Source:** Daily Troubleshooting Agent finding `REL-020`
+**Repo:** sourcedeck-app
+
+**Description:**
+SourceDeck's macOS build is currently produced unsigned in local dev
+because no Apple signing/notarization credentials are present in this
+environment. `scripts/release-check.js` warns about this and the daily
+troubleshooting agent surfaces it as `MANUAL`.
+
+**Phase 17A repair (shipped):**
+- `services/release/macos-signing-readiness.js` classifies readiness
+  into 7 stable codes: `ready_to_sign` · `partial_signing` ·
+  `blocked_notarize_off` · `blocked_missing_signing` ·
+  `blocked_missing_entitlements` · `unsigned_dev_ok` · `unknown`.
+- `scripts/macos-signing-readiness.js` CLI (`--json`, `--strict`).
+- `npm run release:mac-signing-readiness` (dev, non-blocking),
+  `release:mac-signing-readiness:json`,
+  `release:mac-signing-readiness:strict` (public-release gate).
+- `release-check.js` now points at the readiness script in its
+  codesign-warn branch.
+- REL-020 remediation in the agent now references both readiness
+  commands.
+- 19/19 `test/macos-signing-readiness.test.js` plus existing 95/95
+  `troubleshooting-agent.test.js` still pass.
+
+**Still required (operator only):**
+- Provide `CSC_LINK` + `CSC_KEY_PASSWORD` (signing) AND either the 3
+  `APPLE_*` env vars or the 3 `APPLE_API_*` env vars (notarization).
+- Flip `package.json build.mac.notarize` to `true` for the release
+  build.
+- Run `npm run release:mac-signing-readiness:strict` from the signing
+  environment and confirm `ready_to_sign`.
+- Build (`npm run build:mac`), run `codesign --verify --deep --strict`,
+  `spctl --assess`, and `xcrun stapler validate`, and capture output.
+
+**Public-copy rule:** Do not claim the app is signed/notarized in any
+public surface until a real signed run is captured as evidence.
+
+**Automated check:** Agent rule E-009; `test/macos-signing-readiness.test.js`.

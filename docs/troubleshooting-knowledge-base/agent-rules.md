@@ -324,3 +324,46 @@ the live-send phase ships with evidence captured.
    and the CI workflow's read-only / dry-run-only posture.
 2. The CI workflow runs `npm run troubleshooting:email-dry-run || true`
    so missing config never fails the daily job.
+
+---
+
+## E-009: macOS signing readiness — local dev non-blocking; public release strict
+
+**Added:** 2026-06-01 (Phase 17A — macOS Signing & Release Packaging Readiness)
+
+**Rule:** macOS signing & notarization readiness is checked by
+`services/release/macos-signing-readiness.js` and its CLI
+`scripts/macos-signing-readiness.js`.
+
+- **Local dev** (`npm run release:mac-signing-readiness`): MUST exit
+  `0` when the only issue is missing Apple credentials. The
+  classification returned is `unsigned_dev_ok`. The daily troubleshooting
+  agent's REL-020 finding remains `MANUAL` in this state and does not
+  fail the daily CI job.
+- **Public release / strict mode**
+  (`npm run release:mac-signing-readiness:strict`): MUST exit `1` when
+  any of these hold:
+  - signing env (`CSC_LINK` + `CSC_KEY_PASSWORD`) is missing,
+  - both notarization paths (3 `APPLE_*` envs OR 3 `APPLE_API_*` envs)
+    are missing,
+  - `package.json build.mac.notarize` is not `true`,
+  - `build/entitlements.mac.plist` or the app icon is missing.
+
+**Secret guardrails:**
+- Env status is presence-only — never echoes values.
+- Missing envs are reported as **names**.
+- All free-text payloads pass through
+  `redactSigningReadinessReport()` which strips `CSC_KEY_PASSWORD=…` /
+  `APPLE_APP_SPECIFIC_PASSWORD=…` / PEM certs/keys / Developer ID
+  identities / long base64 / long hex blobs.
+
+**Public-copy gate:** Do not claim "SourceDeck is signed / notarized"
+in any public surface until a real signed run is captured as evidence.
+
+**Automated checks (run every `npm test`):**
+- `test/macos-signing-readiness.test.js` (19 assertions) covers stable
+  statuses, dev-vs-strict classification, redaction, presence-only
+  shape, CLI exit codes, the `release-check.js` pointer, and REL-020
+  remediation reference.
+- The CLI test path uses `env: {}` to confirm strict mode exits `1`
+  and default mode exits `0` without any Apple credentials.

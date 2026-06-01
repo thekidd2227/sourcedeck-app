@@ -208,6 +208,8 @@ if (fs.existsSync(asarPath)) {
   } catch (e) {
     warn('codesign verify failed (artifact is unsigned or improperly signed)');
     warn((e.stderr || e.message || '').toString().trim());
+    info('macOS signing/notarization not configured in this environment. ' +
+         'Local dev warning only; public release requires `npm run release:mac-signing-readiness:strict`.');
   }
 } else {
   info('no packaged artifact present (' + path.relative(REPO, appPath) + ')');
