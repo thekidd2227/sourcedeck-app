@@ -89,3 +89,17 @@ Example: `SD-2026-001` = first recorded event in 2026.
 | HIGH | Deployment blocked, feature broken for all users, security regression |
 | MEDIUM | Feature broken for some users, incorrect behavior, copy/UX wrong |
 | LOW | Cosmetic, docs, naming, minor inconsistency |
+
+---
+
+## Email alerts (Phase 16B)
+
+The Daily Troubleshooting Agent now prepares optional email alerts for
+critical/high failures. Live sending is **disabled by default** and is
+intentionally **not implemented** in Phase 16B — the transport stub
+returns `disabled` / `missing_config` / `dry_run` / `prepared_no_send`
+without external side effects. See `agent-rules.md` (E-008) and
+`docs/release-notes/troubleshooting-email-alerts.md` for the safety
+contract. Intended recipient when live sending is later approved:
+`arcgsystems@gmail.com` (read from `TROUBLESHOOTING_EMAIL_TO` at
+runtime; never hardcoded).
