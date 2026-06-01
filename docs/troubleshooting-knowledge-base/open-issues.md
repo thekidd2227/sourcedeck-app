@@ -2,7 +2,7 @@
 
 Problems that are unresolved, partially fixed, unverified, or require ongoing monitoring.
 
-**Last updated:** 2026-05-30
+**Last updated:** 2026-05-30 (Phase 16A — Daily Troubleshooting Agent landed; OPEN-002 state unchanged)
 
 ---
 
@@ -83,6 +83,11 @@ fully operational until readiness reports `ready`.
 **Automated check:** Agent rule E-007 (once runtime is associated); the
 new `test/watsonx-runtime-context.test.js` plus the renderer/preload
 boundary checks run on every `npm test`.
+
+**Phase 16A reminder:** the daily troubleshooting agent's `WX-005` finding
+is intentionally `status: manual` until a live readiness check from the
+settings panel reports `ready`. Public copy must not be promoted to
+"watsonx live" / "fully operational" before that.
 
 ---
 

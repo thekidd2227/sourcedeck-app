@@ -40,6 +40,11 @@ dist/_app_pack/
 # Local DNS zone exports
 sourcedeck-site-zone.txt
 
+# Daily Troubleshooting Agent reports (regenerated on every run; the
+# .gitkeep keeps the dir alive — generated markdown/JSON stays out of git).
+reports/troubleshooting/*
+!reports/troubleshooting/.gitkeep
+
 # Release artifacts (published via GitHub Releases, not versioned in source)
 release/mac/*.dmg
 release/mac/*.zip
