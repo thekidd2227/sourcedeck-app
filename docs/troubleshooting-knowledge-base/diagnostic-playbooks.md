@@ -688,3 +688,38 @@ On every `npm test`: run
 `test/macos-signing-readiness.test.js`. Block release if any fail or
 if any public doc positively claims the app is signed/notarized
 outside of negated/conditional language.
+
+---
+
+## Playbook: release evidence capture (E-010 / REL-030)
+
+### Symptom
+- An operator needs a single deterministic record of the local release
+  state (git, package, asar, signing readiness, troubleshooting,
+  release-check) before deciding whether SourceDeck is ready to publish.
+
+### Safe Diagnostic Path
+1. `npm run release:evidence` — writes
+   `reports/release-evidence/latest-release-evidence.{md,json}` and a
+   dated copy. Exits 0 in local dev. State reflects the local
+   environment.
+2. From a release environment, `npm run release:evidence:strict` —
+   must exit 0 and state must be `packaged_signed_verified` before
+   publishing.
+3. The daily troubleshooting agent surfaces `REL-030` as PASS once at
+   least one report is written; never FAIL by design.
+
+### Repair Pattern
+- For local dev: capture a report via `npm run release:evidence`.
+- For a release: complete the steps in
+  `docs/release/release-evidence.md` (signing env, notarize flag,
+  build, verify, evidence strict).
+
+### Public-copy Gate
+Do not change public copy to claim a signed/notarized macOS release
+until evidence shows `packaged_signed_verified` AND
+`codesign --verify` PASS is captured.
+
+### Agent Automation Rule
+On every `npm test`: run
+`test/release-evidence.test.js`. Block release if any fail.

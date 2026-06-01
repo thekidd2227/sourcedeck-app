@@ -53,3 +53,8 @@ release/mac/*.yml
 release/win/*.exe
 release/win/*.blockmap
 release/win/*.yml
+
+# Release evidence reports (regenerated on every run; the .gitkeep
+# preserves the directory while keeping generated content out of git).
+reports/release-evidence/*
+!reports/release-evidence/.gitkeep
