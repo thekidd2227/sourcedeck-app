@@ -277,3 +277,50 @@ panel reports `ready` and the evidence is recorded.
 3. Repo-wide grep for watsonx Authorization/Bearer/x-api-key construction
    in `sourcedeck.html` and `preload.js` is part of the wizard/
    integration tests (boundary section).
+
+---
+
+## E-008: Email alerts must stay safe-by-default
+
+**Added:** 2026-06-01 (Phase 16B — Email Alert Stub)
+
+**Rule:** The Daily Troubleshooting Agent may prepare email alerts
+through `services/troubleshooting/troubleshooting-alerts.js` and
+`services/troubleshooting/troubleshooting-email-transport.js`, but
+**must not** send a live email unless ALL of the following hold:
+
+1. `SEND_TROUBLESHOOTING_EMAIL=true` is set in the environment.
+2. Every required SMTP env var is present
+   (`TROUBLESHOOTING_EMAIL_TO/FROM`,
+    `TROUBLESHOOTING_SMTP_HOST/PORT/USER/PASS`).
+3. A future, separately gated phase ships the live-send code path with
+   an audit-recorded approval.
+
+In Phase 16B the transport **never** transmits; the most-affirmative
+state it returns is `prepared_no_send`. Dry-run mode
+(`--email-dry-run` / `npm run troubleshooting:email-dry-run`) is the
+default safe operation in CI.
+
+**Body / payload guardrails:**
+- Body is run through `redactTroubleshootingAlert()` (strips Bearer,
+  sk-/sk-ant-, IBM keys, `Authorization:` headers, JWT, long hex blobs)
+  before leaving the formatter.
+- Body **never** embeds the raw JSON report.
+- Body always carries the `NO_AUTO_REPAIR_NOTE`.
+- `getEmailTransportStatus(env)` never echoes SMTP user/pass values.
+
+**Recipient:** `arcgsystems@gmail.com` is the intended recipient when
+the future live-send phase ships. It is **not** hardcoded; it is read
+from `TROUBLESHOOTING_EMAIL_TO`.
+
+**Public-copy gate:** Do not claim "SourceDeck sends email alerts" until
+the live-send phase ships with evidence captured.
+
+**Automated checks (run every `npm test`):**
+1. `test/troubleshooting-email-alerts.test.js` — 18 assertions
+   covering subject/body shape, no-auto-repair note, report paths,
+   redaction of all common credential shapes, `shouldSend` gate logic,
+   transport disabled/missing_config/dry_run/prepared_no_send modes,
+   and the CI workflow's read-only / dry-run-only posture.
+2. The CI workflow runs `npm run troubleshooting:email-dry-run || true`
+   so missing config never fails the daily job.

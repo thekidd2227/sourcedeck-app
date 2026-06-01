@@ -45,6 +45,16 @@ jobs:
       - name: Run troubleshooting agent test suite
         run: node test/troubleshooting-agent.test.js
 
+      - name: Run email alert suite (formatter + transport)
+        # Pure formatter + redactor + disabled-by-default transport stub.
+        # No secrets required; never sends real email.
+        run: node test/troubleshooting-email-alerts.test.js
+
+      - name: Build email alert (dry-run only — never sends)
+        # Always dry-run in CI; SEND_TROUBLESHOOTING_EMAIL is intentionally
+        # NOT set here. The step never fails the job because email is off.
+        run: npm run troubleshooting:email-dry-run || true
+
       - name: Upload troubleshooting reports
         if: always()
         uses: actions/upload-artifact@v4
