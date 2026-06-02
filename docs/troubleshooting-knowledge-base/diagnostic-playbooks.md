@@ -642,17 +642,34 @@ Daily: check each URL in sitemap.xml returns HTTP 200 or 301/302. Alert on any 4
 - For the `cpdaas` vs `wx` runtime context case: file IBM support
   request per `docs/IBM_SUPPORT_TICKET_RUNTIME_ASSOCIATION.md`.
 
+### Live Runtime Evidence Path (Phase 18A — in CLI)
+The static readiness panel diagnoses an already-produced error. To prove a
+real runtime request actually works, run the runtime probe from an
+environment with valid IBM env:
+1. `npm run watsonx:runtime-probe` — human-readable diagnosis.
+2. `npm run watsonx:runtime-probe:evidence` — writes redacted evidence to
+   `reports/watsonx-runtime/` (git-ignored).
+3. `npm run watsonx:runtime-probe:strict` — exits `0` only when the
+   outcome is `verified_ready`.
+The probe attempts a real IAM exchange + minimal runtime request **only**
+when required env is present, and classifies the result into the stable
+states in `services/ai/watsonx-runtime-evidence.js`. A blocked outcome
+prints exact IBM-side operator steps.
+
 ### Public-copy Gate
-Do not claim watsonx is "live" or "fully operational" until the
-readiness check returns `ready` from a real environment. The KB E-007
-rule enforces this and the test suite blocks misleading copy via
-`test/watsonx-runtime-context.test.js`.
+Do not claim watsonx is "fully operational" and do not claim watsonx is
+live until a real runtime request succeeds with captured `verified_ready`
+evidence. The KB E-007 / E-010 rules enforce this; the test suite blocks
+misleading copy via `test/watsonx-runtime-context.test.js` and
+`test/watsonx-runtime-evidence.test.js`.
 
 ### Agent Automation Rule
-On every `npm test`: run
-`test/watsonx-runtime-context.test.js` and
-`test/ibm-readiness.test.js`. Block release if any fail or if any
-public doc claims watsonx is fully operational without paired evidence.
+On every `npm test`: run `test/watsonx-runtime-context.test.js`,
+`test/watsonx-runtime-evidence.test.js`, and `test/ibm-readiness.test.js`.
+Finding **WX-006** is PASS only when the latest runtime evidence outcome is
+`verified_ready`; otherwise MANUAL/WARN (never FAIL for absent IBM env).
+Block release if any fail or if any public doc claims watsonx is fully
+operational without paired evidence.
 
 ---
 
