@@ -1,6 +1,6 @@
 # SourceDeck Premium Content Agent
 
-A watsonx-powered AI content strategist that turns the user's own documents,
+A watsonx-ready / provider-governed AI content workflow that turns the user's own documents,
 linked repositories, websites, product pages, and pipeline activity into
 LinkedIn and Facebook posts that build authority, traffic, and sales
 conversations.
