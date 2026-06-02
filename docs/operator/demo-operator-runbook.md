@@ -1,0 +1,159 @@
+# Demo Operator Runbook
+
+This runbook is the exact checklist a SourceDeck demo operator follows before, during, and after a buyer demo. Follow it in order. Do not improvise.
+
+## Purpose
+
+The purpose of this runbook is to give the demo operator a single, deterministic procedure for running a buyer demo of SourceDeck without making claims the product cannot currently back, without leaking secrets, and without bypassing the human-approval gates that govern outreach, proposals, pricing, compliance, bid/no-bid, teaming, publishing, and sending.
+
+A demo operator must:
+
+- Start from a clean, verified `main` build.
+- Run the baseline gates and confirm each one before going on camera.
+- Show only safe, non-sensitive surfaces.
+- Speak about AI provisioning using the SAFE-AI language verbatim.
+- Defer any commitments outside the explicit pricing and packaging docs.
+
+Human approval remains required for outreach, proposal, pricing, compliance, bid/no-bid, teaming, publishing, and sending. Nothing is sent automatically.
+
+## Before the demo — pull main, confirm branch `main`, confirm clean working tree, run the baseline gates
+
+Open a terminal in the repo root. Confirm you are on branch `main`, that the working tree is clean (`git status --short` returns no output), and then run the baseline gates in the order shown. Do not edit any files between commands.
+
+Run these commands EXACTLY:
+
+```
+git checkout main
+git pull origin main
+git status --short
+npm test
+npm run troubleshooting:scan
+npm run troubleshooting:scan:json
+npm run troubleshooting:email-dry-run
+npm run release:evidence
+npm run govcon:smoke
+npm run govcon:outreach-os:audit
+npm run phase13:rc-check
+npm run i18n:audit
+node scripts/release-check.js
+```
+
+Every command must complete before you start the demo. If any command exits non-zero or surfaces a `fail`, stop and follow the "What to do if a check fails" section below.
+
+Note on `release:evidence:strict`: the strict variant is designed to block until signing is ready. That is by design. Do not attempt to bypass it for the demo.
+
+## Optional commands after Phase 18A merges
+
+Only available after Phase 18A is merged.
+
+```
+npm run watsonx:runtime-probe
+npm run watsonx:runtime-probe:evidence
+```
+
+If these scripts do not exist yet on your branch, that is expected. Skip them and continue with the baseline gates above. Do not claim IBM watsonx as a live capability of the shipping product on the basis of running (or not running) these probes; their presence only indicates that runtime verification scaffolding exists.
+
+## How to interpret pass / warn / manual / fail
+
+Use this status mapping for every gate, scan, and audit you run:
+
+- **pass** — The check ran cleanly and reports green. Proceed to the next command. No operator action required.
+- **warn** — The check ran but flagged a non-blocking issue. Read the warning, note the report path, and decide whether the warning is safe to demo around. If the warning touches a surface you plan to show on camera, do not show that surface.
+- **manual** — The check is deferred to a human reviewer. You are that human for the demo. Open the referenced artifact, confirm it matches what you intend to show, and only then continue. If you cannot confirm, treat it as a fail.
+- **fail** — Do not demo. Abort and follow the "What to do if a check fails" section.
+
+If a command exits non-zero with no clear status label, treat it as **fail**.
+
+## What to do if a check fails
+
+If any baseline gate fails:
+
+1. Abort the demo. Do not attempt to demo around the failure.
+2. Capture the report path that the failing command printed (for example, the troubleshooting report path or the release-evidence path).
+3. Run `npm run troubleshooting:scan:json` and attach the JSON output to the bug report.
+4. File the bug report with the failing command, the exit code, the captured report path, and the JSON attachment.
+5. Notify the buyer that you are rescheduling and propose a new time. Do not improvise during the demo. Do not edit code, env, or reports to make a check pass.
+
+If the failure is in `release:evidence` or `release:evidence:strict` and signing-readiness is the cause, that is the expected block until signing is ready — reschedule, do not bypass.
+
+## Screenshots to capture (safe)
+
+The following surfaces are safe to capture and show on camera, provided the baseline gates passed and no warnings touched them:
+
+- The GovCon Operating Profile Wizard, with placeholder inputs only.
+- The opportunity intake fixture (the bundled sample opportunity), not a real customer opportunity.
+- The prime partner finder view, using fixture data.
+- A Premium Content Agent draft. If a provider is configured, show a generated draft from non-sensitive inputs. If no provider is configured, show the safe-fallback language the agent emits.
+- The troubleshooting scan summary view (the human-readable summary, not raw logs containing paths or tokens).
+- The release-evidence markdown summary that was freshly regenerated by `npm run release:evidence` for this demo.
+- The signing-readiness summary, which currently shows pending real credentials — describe this honestly.
+
+When describing AI provisioning at any point while showing the Premium Content Agent, use the SAFE-AI language verbatim (see below).
+
+## Never show live
+
+Do not share, screenshot, or screen-share any of the following at any point during the demo:
+
+- Raw `.env` files or any environment file.
+- Raw API keys of any kind.
+- Raw watsonx response payloads.
+- Raw signing certificate files.
+- Real customer PII (names, emails, phone numbers, addresses, contract IDs).
+- The Capture OS stash.
+- The SoHo×DC redesign stash.
+- Any `reports/` directory contents that have not been freshly regenerated for this demo.
+
+If the buyer asks to see any of the above, decline and offer the equivalent fixture or summary view instead.
+
+## Never paste into screen share
+
+Never paste any of the following into a window that is being screen-shared, even momentarily:
+
+- Real Apple credentials (Apple ID, app-specific password, team ID values).
+- Real OpenAI, Anthropic, or IBM API keys.
+- Real customer email addresses.
+- Real SMTP credentials.
+
+If you need to demonstrate configuration, use angle-bracket placeholders such as `<api-key>`, `<password>`, `<smtp-user>`. Treat the clipboard as adversarial during a demo — clear it before going live.
+
+## Handling customer questions
+
+Defer all detailed buyer questions to `docs/demo/sourceDeck-v1-buyer-demo-script.md` Q&A section. Read from that script rather than improvising.
+
+Do not invent commitments around:
+
+- Compliance posture. Do not claim FedRAMP, SOC 2, CMMC, HIPAA, HITRUST, or ISO 27001 status. Do not claim "government compliant" or "government compliance."
+- Contract outcomes. Do not promise a guaranteed contract, guaranteed award, or guaranteed revenue.
+- AI inclusion. Do not promise "unlimited AI." Do not claim IBM watsonx as a live, included capability of the shipping product.
+
+If a buyer asks a question that is not covered by the buyer demo script or the pricing docs, write it down as a follow-up and answer in the written recap after the demo, once you have confirmed the answer with the team.
+
+## SAFE-AI language
+
+When describing AI provisioning to a buyer, use this language verbatim:
+
+> Standard plans use customer-provided AI keys. Premium and enterprise deployments may include SourceDeck-managed IBM watsonx configuration or customer-provided AI credentials depending on workflow risk, usage volume, and deployment requirements. Usage limits, overages, or enterprise deployment terms may apply.
+
+Do not paraphrase. Do not shorten. Do not add side claims. If asked to clarify, point the buyer to `docs/pricing/` and the buyer demo script.
+
+## Human approval reminder
+
+Throughout the demo, every time you show a surface that produces outreach, proposals, pricing, compliance assessments, bid/no-bid recommendations, teaming proposals, or any artifact that could be published or sent, say plainly: human approval is required before that artifact leaves the operator's workstation.
+
+Human approval remains required for outreach, proposal, pricing, compliance, bid/no-bid, teaming, publishing, and sending. Nothing is sent automatically.
+
+If a buyer asks whether SourceDeck can auto-send or auto-submit, the honest answer is no — the product is designed around explicit human approval gates at each of those stages.
+
+## How to end the demo
+
+To close the demo:
+
+1. Recap what you showed: wizard, intake fixture, prime partner finder, Premium Content Agent draft, troubleshooting summary, release-evidence summary, signing-readiness summary.
+2. Surface the next step. Offer one of:
+   - A deeper technical walkthrough on a specific surface the buyer flagged interest in.
+   - A pricing conversation grounded in `docs/pricing/`.
+   - A sandbox setup so the buyer can try the operator surfaces themselves.
+3. Capture follow-ups. Write down every buyer question you deferred, every artifact you promised to send, and every clarification you owe.
+4. Send a written recap. The recap must contain no commitments outside the explicit pricing and packaging docs under `docs/pricing/`. Use the SAFE-AI language verbatim if AI provisioning is mentioned. Reaffirm that outreach, proposals, pricing, compliance, bid/no-bid, teaming, publishing, and sending all require human approval and that nothing is sent automatically.
+
+That ends the demo. Do not send the recap until you have re-read it for forbidden claims (compliance certifications, guaranteed outcomes, unlimited AI, watsonx-as-live, signed/notarized claims, auto-send/auto-submit).
