@@ -24,6 +24,7 @@ Mapping of KB checks to this phase's coverage:
 | F-003 release gate exists | `REL-001`, `REL-002`, `REL-010:*` | |
 | F-004 owner phone signatures | `CLAIM-005` | Mirrors KB `(212) 663`, `(718) 320` |
 | E-007 watsonx readiness classifier + safe UI surface | `WX-001`..`WX-005` | WX-005 is `manual` until OPEN-002 IBM-side action completes |
+| E-010 watsonx runtime evidence probe (Phase 18A) | `WX-006` | PASS only on `verified_ready`; MANUAL/WARN on `not_configured` / `blocked_by_ibm_config`; FAIL only on app-side regression |
 | RED_RESTRICTED / KILL / no-auto-send / no-auto-post | `GOVCON-001`..`GOVCON-004` | |
 | Human-approval language in playbooks | `GOVCON-005` | |
 | KB integrity (7 files + OPEN-002 partial state) | `KB-001:*`, `KB-002`, `KB-003`, `KB-004` | |
@@ -277,6 +278,39 @@ panel reports `ready` and the evidence is recorded.
 3. Repo-wide grep for watsonx Authorization/Bearer/x-api-key construction
    in `sourcedeck.html` and `preload.js` is part of the wizard/
    integration tests (boundary section).
+
+---
+
+## E-010: watsonx runtime evidence must be honest (verified or blocked)
+
+**Added:** 2026-06-02 (Phase 18A — watsonx runtime completion)
+
+**Rule:** watsonx is described as verified for an environment **only** when
+a real runtime request succeeds and redacted evidence is captured with
+outcome `verified_ready`. Any other state is honest-but-not-live:
+`not_configured`, `configured_missing_required_env`, or
+`blocked_by_ibm_config` (rollup of `iam_token_failed` /
+`project_or_space_invalid` / `model_or_deployment_invalid` /
+`runtime_request_failed`). SourceDeck must not claim watsonx is live
+without `verified_ready` evidence.
+
+**Probe:** `scripts/watsonx-runtime-probe.js` reads env only, attempts a
+real IAM exchange + minimal runtime request **only** when required env is
+present, and writes redacted evidence to `reports/watsonx-runtime/`
+(git-ignored). Required env: `WATSONX_API_KEY` (or `IBM_CLOUD_API_KEY`) and
+`WATSONX_PROJECT_ID` (or `WATSONX_SPACE_ID`); URL and model have defaults.
+
+**Finding WX-006:** PASS only on `verified_ready`; MANUAL/WARN on
+`not_configured` / `blocked_by_ibm_config`; FAIL only on an app-side
+regression (missing probe/module or a captured evidence file containing a
+raw secret). Auto-repair stays disabled; human approval required. Daily
+CI must not fail just because IBM env is absent.
+
+**Automated check (every `npm test`):**
+`test/watsonx-runtime-evidence.test.js` — 17 assertions covering env
+presence-only reporting, state classification, redaction, CLI exit
+semantics, the WX-006 invariant, release-evidence integration, and the
+renderer/preload boundary.
 
 ---
 

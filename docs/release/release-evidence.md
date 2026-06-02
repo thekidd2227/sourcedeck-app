@@ -40,6 +40,19 @@ The bundle picks one of these:
   could not run or did not pass.
 - `packaged_signed_verified` — artifact present + codesign verify PASS.
 
+## watsonx runtime evidence summary (Phase 18A)
+
+When a runtime probe report exists under `reports/watsonx-runtime/`, the
+release-evidence bundle includes a presence-only `watsonxRuntime` summary:
+`present`, `state`, `outcome`, `verifiedReady`, and `blockedReason` (plus
+the report path). It never embeds IBM credentials or generated text.
+
+This is informational and **never blocks** `release:evidence` — watsonx
+not being configured is not a release blocker. To check watsonx runtime
+status itself, run `npm run watsonx:runtime-probe:evidence`. SourceDeck
+must not claim watsonx is live unless the summary shows
+`verifiedReady: true` (outcome `verified_ready`).
+
 ## Local unsigned dev evidence policy
 
 Default mode (`npm run release:evidence`) writes a bundle that

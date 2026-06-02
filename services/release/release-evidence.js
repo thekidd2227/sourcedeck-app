@@ -130,6 +130,37 @@ function collectTroubleshootingEvidence(rootDir) {
   return out;
 }
 
+// ── watsonx runtime evidence (paths + redacted summary) ─────────────
+// Reads the latest captured watsonx runtime evidence if a report exists.
+// Presence-only summary; never fails release:evidence when watsonx is
+// not configured. The underlying report is already redacted by the
+// probe; we re-redact any free text on the way out.
+function collectWatsonxRuntimeEvidence(rootDir) {
+  const root = rootDir || process.cwd();
+  const dir = path.join(root, 'reports', 'watsonx-runtime');
+  const latestMd = path.join(dir, 'latest-watsonx-runtime-evidence.md');
+  const latestJson = path.join(dir, 'latest-watsonx-runtime-evidence.json');
+  const out = {
+    present: _exists(latestJson) || _exists(latestMd),
+    latestMarkdownPath: _exists(latestMd) ? path.relative(root, latestMd) : null,
+    latestJsonPath:     _exists(latestJson) ? path.relative(root, latestJson) : null,
+    state: null,
+    outcome: null,
+    verifiedReady: false,
+    blockedReason: null
+  };
+  if (out.latestJsonPath) {
+    try {
+      const j = JSON.parse(fs.readFileSync(latestJson, 'utf8'));
+      out.state = j.state || null;
+      out.outcome = j.outcome || null;
+      out.verifiedReady = j.verifiedReady === true;
+      out.blockedReason = j.blockedReason || null;
+    } catch (_) {}
+  }
+  return out;
+}
+
 // ── gate evidence (NOT run here; reports the COMMANDS that should run) ──
 function collectGateEvidence() {
   // We do NOT execute gates here — that's the CLI/runner's job and
@@ -209,6 +240,7 @@ function collectReleaseEvidence(options) {
   const asar = collectAsarMetadata(root);
   const signing = collectSigningReadinessEvidence(root, env, { mode });
   const troubleshooting = collectTroubleshootingEvidence(root);
+  const watsonxRuntime = collectWatsonxRuntimeEvidence(root);
   const gates = collectGateEvidence();
 
   const evidence = {
@@ -221,6 +253,7 @@ function collectReleaseEvidence(options) {
     asar,
     signing,
     troubleshooting,
+    watsonxRuntime,
     gates,
     releaseCheck: opts.releaseCheck || { ok: null, warnings: [], codesignAttempted: false, codesignVerified: null },
     warnings: [],
@@ -317,6 +350,15 @@ function formatReleaseEvidenceMarkdown(evidence) {
                ' manual=' + (t.summary.counts && t.summary.counts.manual));
   }
   lines.push('');
+  lines.push('## watsonx runtime evidence');
+  const wx = e.watsonxRuntime || {};
+  lines.push('- present:        ' + (wx.present ? 'yes' : 'no'));
+  lines.push('- state:          ' + (wx.state || '(none)'));
+  lines.push('- outcome:        ' + (wx.outcome || '(none)'));
+  lines.push('- verified_ready: ' + (wx.verifiedReady === true ? 'yes' : 'no'));
+  if (wx.blockedReason) lines.push('- blocked reason: ' + wx.blockedReason);
+  if (wx.latestJsonPath) lines.push('- latest json:    ' + wx.latestJsonPath);
+  lines.push('');
   lines.push('## Release-check summary');
   const rc = e.releaseCheck || {};
   lines.push('- ok:                ' + (rc.ok === null ? 'unknown' : (rc.ok ? 'yes' : 'no')));
@@ -353,6 +395,7 @@ module.exports = {
   collectAsarMetadata,
   collectSigningReadinessEvidence,
   collectTroubleshootingEvidence,
+  collectWatsonxRuntimeEvidence,
   collectGateEvidence,
   redactReleaseEvidence,
   formatReleaseEvidenceMarkdown,

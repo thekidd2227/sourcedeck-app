@@ -720,9 +720,89 @@ function runWatsonxReadinessPolicyChecks(rootDir) {
       status: STATUSES.MANUAL,
       file: "docs/troubleshooting-knowledge-base/open-issues.md",
       remediation:
-        "Do not claim watsonx is live. Live readiness from settings panel must report 'ready' before public copy changes.",
+        "Do not claim watsonx is live. Live runtime probe must report 'verified_ready' before public copy changes.",
     })
   );
+
+  // E-006 / WX-006 — watsonx runtime evidence (Phase 18A).
+  //
+  // PASS only when the latest captured runtime evidence outcome is
+  // verified_ready (a real runtime request succeeded). MANUAL/WARN when
+  // not configured or blocked by IBM-side config (these are NOT app-side
+  // failures — daily CI must not fail just because IBM env is absent).
+  // FAIL only for an app-side regression: the probe CLI or evidence
+  // module is missing, or a captured evidence file contains a raw secret.
+  const wxRemediation =
+    "Run `npm run watsonx:runtime-probe` (diagnose), `npm run watsonx:runtime-probe:evidence` (capture redacted evidence), or `npm run watsonx:runtime-probe:strict` (exit 1 unless verified_ready). Do not claim watsonx is live until outcome is verified_ready.";
+  const wxProbeCli = path.join(rootDir, "scripts/watsonx-runtime-probe.js");
+  const wxEvModule = path.join(rootDir, "services/ai/watsonx-runtime-evidence.js");
+  const wxCliPresent = fileExists(wxProbeCli);
+  const wxModulePresent = fileExists(wxEvModule);
+
+  if (!wxCliPresent || !wxModulePresent) {
+    findings.push(
+      makeFinding({
+        id: "WX-006",
+        severity: SEVERITIES.HIGH,
+        category: CATEGORIES.WATSONX_READINESS_POLICY,
+        title: "watsonx runtime evidence probe present (app-side)",
+        status: STATUSES.FAIL,
+        file: !wxModulePresent ? "services/ai/watsonx-runtime-evidence.js" : "scripts/watsonx-runtime-probe.js",
+        evidence: `missing: ${[!wxModulePresent && "services/ai/watsonx-runtime-evidence.js", !wxCliPresent && "scripts/watsonx-runtime-probe.js"].filter(Boolean).join(", ")}`,
+        remediation:
+          "Restore the watsonx runtime evidence module and probe CLI — Phase 18A app-side regression. " + wxRemediation,
+      })
+    );
+  } else {
+    const wxLatestJson = path.join(rootDir, "reports/watsonx-runtime/latest-watsonx-runtime-evidence.json");
+    const wxRaw = readFileSafe(wxLatestJson);
+    // Belt-and-braces: an evidence file must never contain raw secrets.
+    const secretShape =
+      wxRaw &&
+      (/\b(WATSONX_API_KEY|IBM_CLOUD_API_KEY)\s*=\s*\S/.test(wxRaw) ||
+        /\bBearer\s+[A-Za-z0-9._-]{16,}/.test(wxRaw) ||
+        /\bey[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{4,}\b/.test(wxRaw) ||
+        /\bsk-[A-Za-z0-9_-]{16,}\b/.test(wxRaw));
+
+    let parsed = null;
+    try { parsed = wxRaw ? JSON.parse(wxRaw) : null; } catch { parsed = null; }
+    const outcome = parsed && (parsed.outcome || parsed.state);
+
+    let status, title, evidence;
+    if (secretShape) {
+      status = STATUSES.FAIL;
+      title = "watsonx runtime evidence contains a raw secret shape";
+      evidence = "redaction regression — captured evidence appears to contain a secret-shaped value";
+    } else if (outcome === "verified_ready" || (parsed && parsed.verifiedReady === true)) {
+      status = STATUSES.PASS;
+      title = "watsonx runtime verified_ready (real runtime request succeeded)";
+      evidence = "latest evidence outcome: verified_ready";
+    } else if (!wxRaw) {
+      status = STATUSES.MANUAL;
+      title = "watsonx runtime evidence not yet captured";
+      evidence = "no reports/watsonx-runtime/latest-watsonx-runtime-evidence.json present";
+    } else {
+      status = STATUSES.MANUAL;
+      title = `watsonx runtime not verified (outcome: ${outcome || "unknown"})`;
+      evidence = `latest evidence outcome: ${outcome || "unknown"} — not configured or blocked by IBM-side config (not an app-side failure)`;
+    }
+
+    findings.push(
+      makeFinding({
+        id: "WX-006",
+        severity: SEVERITIES.HIGH,
+        category: CATEGORIES.WATSONX_READINESS_POLICY,
+        title,
+        status,
+        file: "reports/watsonx-runtime/latest-watsonx-runtime-evidence.json",
+        evidence,
+        remediation:
+          status === STATUSES.FAIL && secretShape
+            ? "A captured evidence file looks like it contains a secret. Delete it, fix redaction in services/ai/watsonx-runtime-evidence.js, and re-capture with `npm run watsonx:runtime-probe:evidence`."
+            : wxRemediation,
+      })
+    );
+  }
 
   return findings;
 }

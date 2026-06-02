@@ -2,7 +2,7 @@
 
 Problems that are unresolved, partially fixed, unverified, or require ongoing monitoring.
 
-**Last updated:** 2026-05-30 (Phase 16A — Daily Troubleshooting Agent landed; OPEN-002 state unchanged)
+**Last updated:** 2026-06-02 (Phase 18A — watsonx runtime probe + WX-006 added; OPEN-002 stays PARTIALLY FIXED until `verified_ready` evidence is captured)
 
 ---
 
@@ -87,7 +87,25 @@ boundary checks run on every `npm test`.
 **Phase 16A reminder:** the daily troubleshooting agent's `WX-005` finding
 is intentionally `status: manual` until a live readiness check from the
 settings panel reports `ready`. Public copy must not be promoted to
-"watsonx live" / "fully operational" before that.
+"fully operational" before that, and must not claim watsonx is live.
+
+**Phase 18A update (runtime completion):** a real runtime probe now exists.
+- `services/ai/watsonx-runtime-evidence.js` — stable states
+  `not_configured` / `configured_missing_required_env` / `iam_token_failed`
+  / `project_or_space_invalid` / `model_or_deployment_invalid` /
+  `runtime_request_failed` / `runtime_request_succeeded` /
+  `blocked_by_ibm_config` / `verified_ready`.
+- `scripts/watsonx-runtime-probe.js` — attempts a real IAM exchange +
+  minimal runtime request **only** when required env is present; writes
+  redacted evidence to `reports/watsonx-runtime/` (git-ignored).
+- Run: `npm run watsonx:runtime-probe`, `:json`, `:evidence`, `:strict`.
+- New finding **WX-006** is PASS only when the latest evidence outcome is
+  `verified_ready`; MANUAL/WARN when `not_configured` /
+  `blocked_by_ibm_config`; FAIL only on an app-side regression.
+- OPEN-002 may be promoted to FIXED **only** when a `verified_ready`
+  evidence report is captured from the configured environment. Until then
+  the honest state is `blocked_by_ibm_config` (or `not_configured`), and
+  SourceDeck must not claim watsonx is live.
 
 ---
 
