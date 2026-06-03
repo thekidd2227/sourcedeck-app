@@ -587,6 +587,50 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 #sd-lang-switcher button:hover{color:#fff}
 #sd-lang-switcher button[aria-pressed="true"]{background:rgba(201,148,26,0.18);color:#fff}
 #sd-lang-switcher button:focus-visible{outline:2px solid var(--gold2);outline-offset:2px}
+
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 20D — DASHBOARD + GOVCON WORKSPACE — Civic Atelier scoped
+   ═══════════════════════════════════════════════════════════════
+   Civic-ledger refinements applied ONLY inside #tab-dashboard and
+   #tab-govcon. The dark ground is preserved here: 147 inline
+   color/background attributes inside these two tabs would clash
+   with a ground inversion, so 20D layers brass + ink-navy editorial
+   accents at the stylesheet level where they can apply without
+   fighting inline overrides. Global --gold/--gold2/--goldb aliases
+   are NOT repointed; .btn-gold remains cool gold everywhere. No
+   body markup, no inline styles, no JS edited. */
+
+/* Section labels + KPI labels — raised contrast off low-contrast --dim/--muted */
+#tab-dashboard .sl,
+#tab-govcon .sl{color:var(--sd-text-secondary)}
+#tab-dashboard .sl::before,
+#tab-govcon .sl::before{background:var(--sd-brass-gold)}
+#tab-dashboard .kpi-label,
+#tab-govcon .kpi-label{color:var(--sd-text-secondary)}
+
+/* KPI top-rail accent — cool gold -> Civic Atelier brass (scoped) */
+#tab-dashboard .kpi.gold-kpi::before,
+#tab-govcon .kpi.gold-kpi::before{background:linear-gradient(90deg,transparent,var(--sd-brass-gold),transparent)}
+#tab-dashboard .kpi-glow-gold,
+#tab-govcon .kpi-glow-gold{box-shadow:0 0 28px rgba(176,138,60,0.08) inset;border-color:rgba(176,138,60,0.18)}
+
+/* Editorial brass hairline under each KPI numeral (briefing-room flavor) */
+#tab-dashboard .kpi-val,
+#tab-govcon .kpi-val{padding-bottom:4px;position:relative}
+#tab-dashboard .kpi-val::after,
+#tab-govcon .kpi-val::after{content:'';position:absolute;left:0;bottom:0;width:28px;height:1px;background:var(--sd-brass-gold)}
+
+/* GovCon opportunity briefs — brass rail + brass-light accent text */
+#tab-govcon .opp-brief{border-left-color:var(--sd-brass-gold)}
+#tab-govcon .opp-brief:hover{border-color:rgba(176,138,60,0.35);box-shadow:0 0 24px rgba(176,138,60,0.06) inset}
+#tab-govcon .opp-brief-agency{color:var(--sd-brass-gold-light)}
+#tab-govcon .opp-brief-value{color:var(--sd-brass-gold-light)}
+#tab-govcon .opp-confidence-fill{background:linear-gradient(90deg,var(--sd-brass-gold),var(--sd-brass-gold-light))}
+#tab-govcon .opp-cert{background:rgba(176,138,60,0.08);color:var(--sd-brass-gold-light);border-color:rgba(176,138,60,0.22)}
+
+/* GovCon workspace banners — civic brass + ink-navy retint (no copy change) */
+#tab-govcon .workspace-readiness{border-color:rgba(176,138,60,0.30);background:linear-gradient(145deg,rgba(176,138,60,0.06),rgba(23,32,51,0.05))}
+#tab-govcon .gc-setup-banner{border-color:rgba(23,32,51,0.45);background:linear-gradient(145deg,rgba(23,32,51,0.10),rgba(176,138,60,0.05))}
 </style>
 </head>
 <body>
