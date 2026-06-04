@@ -113,3 +113,47 @@ Rules:
 - `sourcedeck.html` (Agent 1 branch — no UI changes in this PR)
 - `package.json` (no new scripts, no new dependencies)
 - Pricing page, payment processing, watsonx, signing, release-evidence, Vercel logic
+
+---
+
+## Update — Profile Setup + Plan-Aware UX
+
+Adds the user-facing profile setup experience and plan-aware visibility for SAM Opportunity Sprint.
+
+### What's new
+
+- **Profile completeness scoring.** `services/govcon/govcon-pursuit-profile.js` adds `calculateProfileCompleteness`, `getRequiredProfileFields`, `getProfileSetupWarnings`, `summarizeProfileForUi`. Twelve weighted fields. Readiness labels: `incomplete` / `usable` / `strong` / `ready`. Default profile is always `incomplete`.
+- **Safe local profile persistence.** `services/govcon/govcon-pursuit-profile-store.js` (new) provides JSON-only persistence under a platform-appropriate user-app-data directory. Missing file → defaults. Corrupt file → defaults + warning, never throws. `SAM_GOV_API_KEY` is never stored. Secret-shaped fields are stripped before write; the writer refuses any payload that still looks like a credential. No database dependency.
+- **Sprint result metadata.** `runSprint` now exposes `profile_completeness`, `scoring_confidence` (`preliminary` | `profile_driven`), `active_naics_codes`, and `withheld_naics_codes` on both the `ran` and `not_configured` branches.
+- **CLI profile path.** `scripts/sam-opportunity-sprint.js` accepts `SAM_SPRINT_PROFILE_PATH=/path/to/profile.json` env var in addition to `--profile=`. The CLI prints readiness label, percent, missing-field count, scoring confidence, plan, active NAICS count, and withheld NAICS count on every run (including the safe `not_configured` exit).
+- **GovCon workspace UI.** `sourcedeck.html` gains a manual-only **GovCon Pursuit Profile** card above the existing SAM Opportunity Sprint card. The card surfaces profile readiness fields, plan-aware NAICS access (1/free vs all/paid), the setup path (links to the pre-existing GovCon Setup Wizard), and the human-approval reminder. **No new live execution is wired** — the card reuses the already-shipped `openGovconSetupWizard()` handler and adds no `fetch`/email/payment transport.
+
+### How operators set up
+
+1. Open the GovCon workspace.
+2. Click the **⚙ Open GovCon Setup** button in the new Pursuit Profile card (or the existing **⚙ Setup** button in the GovCon header).
+3. Populate identity / certifications / NAICS / lanes / geography / capacity / risk filters / past performance.
+4. (Optional, for CLI-only operators) Save the profile JSON to the path returned by `getDefaultProfilePath()`, or point the CLI at a custom path via `SAM_SPRINT_PROFILE_PATH`.
+5. Export `SAM_GOV_API_KEY` in the shell that will run the sprint (never paste into chat or commit).
+6. Run `npm run sam:sprint` or `node scripts/sam-opportunity-sprint.js`. Review the reports under `./reports/`.
+
+### Safety
+
+- `SAM_GOV_API_KEY` is never stored in the profile; the store actively refuses to write any payload containing one.
+- No `.env` files were modified.
+- No emails sent. Drafts remain `draft_only / auto_send:false / manual_approval_required:true` under every plan and every readiness level.
+- Human approval remains required for any outreach.
+- No payment processing, no billing IDs, no pricing changes.
+- No guaranteed-award / guaranteed-revenue / guaranteed-response / guaranteed-ROI / guaranteed-savings claims.
+- No watsonx / signing / release-evidence / Vercel logic changes.
+- Reports are not auto-committed.
+
+### Tests
+
+- **62 sprint-specific tests** (up from 46), all green.
+- New coverage: 8 completeness tests, 5 profile-store tests, 3 sprint-result metadata tests.
+
+### Known limitations
+
+- The UI card is informational only — it does not run the sprint from the browser-style chrome. Operators trigger sprints from the CLI.
+- The `openGovconSetupWizard()` modal is the existing setup surface for identity / certifications / capability data; this PR does not refactor or extend that wizard.

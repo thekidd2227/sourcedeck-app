@@ -110,3 +110,40 @@ Added Free vs Paid NAICS access enforcement to SAM Opportunity Sprint. **Entitle
 - No `package.json` script changes, no new dependencies.
 - No payment processing, no billing flows, no pricing page changes.
 - No watsonx / signing / release-evidence / Vercel logic changes.
+
+---
+
+## Phase — Profile Setup + Plan-Aware UX
+
+Adds GovCon Pursuit Profile completeness/readiness scoring, safe local profile persistence, CLI profile-path support, sprint-result completeness/confidence metadata, and a manual-only **GovCon Pursuit Profile** card in the GovCon workspace.
+
+### What's new
+
+- `services/govcon/govcon-pursuit-profile.js` — exports `calculateProfileCompleteness`, `getRequiredProfileFields`, `getProfileSetupWarnings`, `summarizeProfileForUi`. Twelve weighted fields; readiness labels: `incomplete` / `usable` / `strong` / `ready`. Default profile is **always** `incomplete`.
+- `services/govcon/govcon-pursuit-profile-store.js` (new) — `getDefaultProfilePath` (platform-aware: macOS `~/Library/Application Support/SourceDeck/`, Windows `%APPDATA%\SourceDeck\`, Linux `$XDG_DATA_HOME/sourcedeck/`); `loadGovconPursuitProfile` (missing file → defaults; corrupt JSON → defaults + warning, never throws); `saveGovconPursuitProfile` (runs through `stripSecrets` + `normalizePursuitProfile`, refuses to write any payload containing a `SAM_GOV_API_KEY`-shaped value or any other credential-shaped field, writes with `mode: 0o600`); `exportProfileSnapshot` (plain-object snapshot for embedding in reports; forces `manual_review_required: true`).
+- `services/govcon/sam-opportunity-sprint.js` — `runSprint` now returns `profile_completeness`, `scoring_confidence` (`preliminary` | `profile_driven`), `active_naics_codes`, `withheld_naics_codes` on both the `ran` and `not_configured` branches.
+- `scripts/sam-opportunity-sprint.js` — accepts `SAM_SPRINT_PROFILE_PATH` env var (in addition to the existing `--profile=` flag); loads through the new store loader for explicit paths and the canonical user-app-data path otherwise; prints readiness label + percent + missing-field count + scoring confidence on every run; explicit "no reports written when key is missing" notice on the `not_configured` exit.
+- `sourcedeck.html` — adds a new **GovCon Pursuit Profile** card above the existing SAM Opportunity Sprint card inside `#tab-govcon`. Manual-only / informational: the card has no `fetch`, no email transport, no payment link, no quote/bid submission. The only `onclick` reuses the **already-existing** `openGovconSetupWizard()` handler (no new behavior). The card surfaces: readiness notice, the eight profile field categories the sprint scorer reads, plan-aware NAICS access (1/free vs all/paid), the setup path, and the human-approval reminder.
+
+### Design discipline
+
+- Default profile must score below `ready` — the `incomplete` label is the operator-facing signal to set up the profile before trusting rankings.
+- The five "hard" fields (company name, target NAICS, service lanes, geography, contract goal) drive the readiness label. The other seven fields (certifications, capacity, sub capacity, risk filters, past performance, sprint window, manual review) contribute to the percent but are not required for "usable".
+- The profile store refuses to write any secret-shaped field — both the credential-pattern regex from `stripSecrets()` and a final `SAM_GOV_API_KEY` literal guard.
+- `summarizeProfileForUi` never returns secret-shaped fields; test asserts this.
+- Manual review is force-set to `true` everywhere (`normalizePursuitProfile`, `exportProfileSnapshot`, all sprint result branches).
+
+### Tests added
+
+- 8 profile-completeness tests (default incomplete, configured strong/ready, NAICS-removed lowers readiness, `national_allowed` substitutes for geography, manual-review lock is unbypassable, required-fields shape, UI summary has no secrets, incomplete-profile warning text).
+- 5 profile-store tests (missing file → defaults, corrupt JSON safe handling, save normalizes + strips secrets, snapshot is plain + forced manual-review, default-path shape).
+- 3 sprint-result tests (`profile_completeness` + `scoring_confidence` on incomplete profile, `profile_driven` for complete profile, completeness surfaces on `not_configured` exit).
+- Total: **62 sprint tests** (up from 46), full suite green.
+
+### Out of scope (intentional)
+
+- No changes to `main.js`, `preload.js`, `api/index.js`, `services/config.js`, `scripts/release-check.js`.
+- No `package.json` script changes, no new dependencies, no `package-lock.json` churn.
+- No payment processing, no billing flows, no pricing-page changes.
+- No watsonx / signing / release-evidence / Vercel logic changes.
+- No live execution from the UI card; the existing GovCon Setup Wizard handler is the only handler reused.

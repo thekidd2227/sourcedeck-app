@@ -23,6 +23,7 @@
 const { createSamSearchService, normalizeSamRecord } = require('./sam-search');
 const {
   normalizePursuitProfile,
+  calculateProfileCompleteness,
   LANE_TO_NAICS,
   LANE_TO_KEYWORDS,
   SPRINT_WINDOWS,
@@ -547,6 +548,15 @@ async function runSprint(opts) {
   const entitlement = getSamSprintEntitlement(profile);
   const previewPlan = buildQueryPlan(profile, nowMs, { entitlement });
   const entitlementMetadata = previewPlan.entitlement;
+  const profileCompleteness = calculateProfileCompleteness(profile);
+  // Scoring confidence: 'preliminary' if the profile is not at least
+  // 'usable', otherwise 'profile_driven'. The CLI / UI / report all
+  // surface this so operators know whether to trust the rankings.
+  const scoringConfidence = (profileCompleteness.readiness_label === 'incomplete')
+    ? 'preliminary'
+    : 'profile_driven';
+  const activeNaicsCodes = previewPlan.naics.slice();
+  const withheldNaicsCodes = (entitlementMetadata.blocked_naics_codes || []).slice();
 
   if (!apiKey) {
     return Object.freeze({
@@ -556,6 +566,10 @@ async function runSprint(opts) {
       profile_snapshot: profile,
       profile_issues: issues,
       profile_complete: isComplete,
+      profile_completeness: profileCompleteness,
+      scoring_confidence: scoringConfidence,
+      active_naics_codes: Object.freeze(activeNaicsCodes.slice()),
+      withheld_naics_codes: Object.freeze(withheldNaicsCodes.slice()),
       query_metadata: Object.freeze({
         window_days: previewPlan.window,
         naics_queried: [],
@@ -607,6 +621,10 @@ async function runSprint(opts) {
     profile_snapshot: profile,
     profile_issues: issues,
     profile_complete: isComplete,
+    profile_completeness: profileCompleteness,
+    scoring_confidence: scoringConfidence,
+    active_naics_codes: Object.freeze(activeNaicsCodes.slice()),
+    withheld_naics_codes: Object.freeze(withheldNaicsCodes.slice()),
     query_metadata: Object.freeze({
       window_days: plan.window,
       naics_queried: plan.naics,

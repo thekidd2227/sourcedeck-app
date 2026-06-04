@@ -30,7 +30,14 @@ const fs = require('fs');
 const path = require('path');
 
 const { runSprint } = require('../services/govcon/sam-opportunity-sprint');
-const { normalizePursuitProfile } = require('../services/govcon/govcon-pursuit-profile');
+const {
+  normalizePursuitProfile,
+  calculateProfileCompleteness,
+} = require('../services/govcon/govcon-pursuit-profile');
+const {
+  getDefaultProfilePath,
+  loadGovconPursuitProfile,
+} = require('../services/govcon/govcon-pursuit-profile-store');
 const {
   getSamSprintEntitlement,
   applyNaicsLimit,
@@ -49,23 +56,55 @@ function arg(flag, fallback) {
 }
 
 function loadProfile() {
-  const explicit = arg('--profile', null);
-  const candidates = [
-    explicit,
+  // Priority:
+  //   1. --profile=<path> flag
+  //   2. SAM_SPRINT_PROFILE_PATH env var
+  //   3. reports/govcon-pursuit-profile.json (legacy in-repo)
+  //   4. ./govcon-pursuit-profile.json (legacy in-repo)
+  //   5. canonical user-app-data path via the profile store
+  //   6. defaults
+  const explicit = arg('--profile', null) || process.env.SAM_SPRINT_PROFILE_PATH || null;
+  const legacy = [
     path.join(REPORTS_DIR, 'govcon-pursuit-profile.json'),
     path.resolve(process.cwd(), 'govcon-pursuit-profile.json'),
-  ].filter(Boolean);
-  for (const f of candidates) {
+  ];
+
+  // Clone the profile via JSON round-trip so the CLI can mutate it
+  // (e.g. to apply the SAM_SPRINT_PLAN env override) without tripping
+  // the deep-freeze set by normalizePursuitProfile.
+  const mutable = (p) => JSON.parse(JSON.stringify(p || {}));
+
+  if (explicit) {
+    // Use the store loader for the explicit path so we get the same
+    // safety semantics (missing file, corrupt JSON, secret stripping).
+    const r = loadGovconPursuitProfile({ path: explicit });
+    return {
+      source: r.source === 'file'
+        ? explicit
+        : `(defaults; ${r.was_corrupt ? 'corrupt at ' + explicit : 'no file at ' + explicit})`,
+      profile: mutable(r.profile),
+      issues: r.issues,
+      was_corrupt: r.was_corrupt,
+    };
+  }
+
+  for (const f of legacy) {
     try {
       if (fs.existsSync(f)) {
         const raw = JSON.parse(fs.readFileSync(f, 'utf8'));
-        return { source: f, profile: raw };
+        return { source: f, profile: raw, issues: [], was_corrupt: false };
       }
     } catch (e) {
       console.error(`[profile] could not parse ${f}: ${e.message}`);
     }
   }
-  return { source: '(defaults)', profile: {} };
+
+  // Canonical user-data store. If absent, returns defaults safely.
+  const r = loadGovconPursuitProfile();
+  if (r.source === 'file') {
+    return { source: r.raw_path, profile: mutable(r.profile), issues: r.issues, was_corrupt: false };
+  }
+  return { source: '(defaults)', profile: {}, issues: [], was_corrupt: false };
 }
 
 function mkdirp(dir) { fs.mkdirSync(dir, { recursive: true }); }
@@ -105,6 +144,26 @@ function writeMd(file, result) {
   lines.push(`- Raw results: ${result.raw_count}`);
   lines.push(`- Unique after dedupe: ${result.unique_count}`);
   lines.push(`- Errors: ${(result.errors || []).length}`);
+  lines.push('');
+  const comp = result.profile_completeness;
+  if (comp) {
+    lines.push('## Profile Completeness');
+    lines.push('');
+    lines.push(`- Readiness: **${comp.readiness_label}** (${comp.percent}%, ${comp.satisfied_count}/${comp.total_field_count} fields)`);
+    lines.push(`- Scoring confidence: **${result.scoring_confidence || 'preliminary'}**`);
+    if (comp.missing_fields && comp.missing_fields.length) {
+      lines.push(`- Missing fields:`);
+      for (const f of comp.missing_fields) lines.push(`  - ${f.label} (\`${f.key}\`)`);
+    } else {
+      lines.push('- Missing fields: none');
+    }
+    lines.push('');
+  }
+  if ((result.scoring_confidence || 'preliminary') === 'preliminary') {
+    lines.push('> ⚠ Scoring is preliminary because your GovCon Pursuit Profile is incomplete. Rankings will personalize once you configure identity, goal, NAICS, lanes, geography, certifications, capacity, risk filters, and past performance.');
+    lines.push('');
+  }
+  lines.push('> 👤 Human approval required before any outreach. SourceDeck does not auto-send emails, submit quotes, or contact agencies.');
   lines.push('');
   const ent = result.entitlement || (result.query_metadata && result.query_metadata.entitlement);
   if (ent) {
@@ -257,11 +316,18 @@ async function main() {
   const naicsLimit = applyNaicsLimit(profile, entitlement);
   const entitlementLine = describeNaicsLimit(entitlement, naicsLimit.requested_count, naicsLimit.allowed_count);
 
+  // Profile completeness — always printed so the operator knows whether
+  // SAM Sprint rankings are preliminary or profile-driven.
+  const completeness = calculateProfileCompleteness(profile);
+  const scoringConfidence = (completeness.readiness_label === 'incomplete') ? 'preliminary' : 'profile_driven';
+
   const key = process.env.SAM_GOV_API_KEY;
   if (!key) {
     console.log('[sam-sprint] status: not_configured');
     console.log(`[sam-sprint] profile source: ${profileSource}`);
-    console.log(`[sam-sprint] profile complete: ${isComplete ? 'yes' : 'no'}`);
+    console.log(`[sam-sprint] profile readiness: ${completeness.readiness_label} (${completeness.percent}%, ${completeness.satisfied_count}/${completeness.total_field_count} fields)`);
+    console.log(`[sam-sprint] missing profile fields: ${completeness.missing_fields.length}`);
+    console.log(`[sam-sprint] scoring confidence: ${scoringConfidence}`);
     console.log(`[sam-sprint] plan: ${entitlement.plan} (paid=${entitlement.is_paid})`);
     console.log(`[sam-sprint] ${entitlementLine}`);
     if (naicsLimit.blocked_count > 0) {
@@ -276,13 +342,19 @@ async function main() {
     console.log('  3. Re-run:  node scripts/sam-opportunity-sprint.js');
     console.log('');
     console.log('Exiting safely with status not_configured. No network calls were made.');
+    console.log('(No reports were written; reports are only generated when the key is configured.)');
     process.exit(0);
     return;
   }
 
   console.log('[sam-sprint] status: running');
   console.log(`[sam-sprint] profile source: ${profileSource}`);
-  console.log(`[sam-sprint] profile complete: ${isComplete ? 'yes' : 'no'}`);
+  console.log(`[sam-sprint] profile readiness: ${completeness.readiness_label} (${completeness.percent}%, ${completeness.satisfied_count}/${completeness.total_field_count} fields)`);
+  console.log(`[sam-sprint] missing profile fields: ${completeness.missing_fields.length}`);
+  console.log(`[sam-sprint] scoring confidence: ${scoringConfidence}`);
+  if (scoringConfidence === 'preliminary') {
+    console.log('[sam-sprint] WARNING: scoring is preliminary because the profile is incomplete; results will personalize once you configure identity, goal, NAICS, lanes, and geography.');
+  }
   console.log(`[sam-sprint] plan: ${entitlement.plan} (paid=${entitlement.is_paid})`);
   console.log(`[sam-sprint] ${entitlementLine}`);
   if (naicsLimit.blocked_count > 0) {

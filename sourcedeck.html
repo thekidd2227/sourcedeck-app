@@ -2158,6 +2158,67 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         </div>
         <!--
           ─────────────────────────────────────────────────────────────
+          GovCon Pursuit Profile — manual-only setup/readiness card.
+          Static HTML only: no onclick beyond a single navigation to
+          the pre-existing GovCon Setup Wizard (already wired in
+          openGovconSetupWizard() — no new behavior is introduced).
+          No fetch, no email transport, no Buffer wiring, no payment
+          link. The card explains what fields the SAM Opportunity
+          Sprint scorer reads and how readiness affects scoring
+          confidence. See docs/features/sam-opportunity-sprint.md and
+          docs/runbooks/sam-sprint-profile-setup.md.
+          ─────────────────────────────────────────────────────────────
+        -->
+        <section class="govcon-pursuit-profile-card" aria-labelledby="govcon-pursuit-profile-title" style="margin-bottom:14px;padding:14px 16px;border:1px solid rgba(176,138,60,0.22);border-radius:var(--r2);background:linear-gradient(145deg,rgba(23,32,51,0.20),rgba(176,138,60,0.04));font-size:12px;line-height:1.55;color:var(--sub)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+            <div>
+              <div id="govcon-pursuit-profile-title" style="font:700 13px/1.3 'Instrument Sans',sans-serif;color:var(--text);letter-spacing:0.01em">GovCon Pursuit Profile</div>
+              <div style="margin-top:3px;font:600 9.5px/1.3 'Azeret Mono',monospace;color:var(--gold2,#c9941a);letter-spacing:0.1em;text-transform:uppercase">Profile-backed scoring · settings required</div>
+            </div>
+            <div style="font:600 9.5px/1.3 'Azeret Mono',monospace;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase">Manual setup · no auto-send</div>
+          </div>
+
+          <div class="govcon-pursuit-profile-notice" style="margin-bottom:12px;padding:9px 11px;border-left:3px solid var(--gold2,#c9941a);background:rgba(23,32,51,0.40);border-radius:4px;color:var(--text);font-size:11.5px">
+            Complete your GovCon Pursuit Profile before relying on SAM rankings. Scoring is driven by your profile — when fields are missing, results are marked <em>preliminary</em>.
+          </div>
+
+          <div class="govcon-pursuit-profile-fields" style="margin-bottom:12px">
+            <div style="font:700 9.5px/1.3 'Azeret Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Fields the sprint scorer reads</div>
+            <ul style="margin:0;padding:0;list-style:none;display:grid;grid-template-columns:repeat(2,1fr);gap:3px 14px">
+              <li style="font-size:11.5px;color:var(--text)">• Contract goal (goal name + 30/90-day revenue target)</li>
+              <li style="font-size:11.5px;color:var(--text)">• Target NAICS codes</li>
+              <li style="font-size:11.5px;color:var(--text)">• Active service lanes</li>
+              <li style="font-size:11.5px;color:var(--text)">• Geography (primary states / national / remote)</li>
+              <li style="font-size:11.5px;color:var(--text)">• Certifications (SDVOSB, MBE, HUBZone, etc.)</li>
+              <li style="font-size:11.5px;color:var(--text)">• Capacity (response time, sub network, quote speed)</li>
+              <li style="font-size:11.5px;color:var(--text)">• Risk filters (clearance, construction, supply-only)</li>
+              <li style="font-size:11.5px;color:var(--text)">• Past performance status</li>
+            </ul>
+            <div style="margin-top:6px;color:var(--muted);font-size:10.5px">Manual review is locked on; outreach is always human-gated.</div>
+          </div>
+
+          <div class="govcon-pursuit-profile-plan" style="margin-bottom:12px;padding:9px 11px;border:1px solid rgba(201,148,26,0.22);border-radius:6px;background:rgba(201,148,26,0.04);color:var(--text);font-size:11.5px">
+            <div style="font-weight:700;margin-bottom:3px">Plan-aware NAICS access</div>
+            <div>Free users: 1 NAICS per sprint. Paid users: all configured NAICS codes.</div>
+            <div style="margin-top:3px;color:var(--muted);font-size:10.5px">Plan limits affect active searches only, not saved profile preferences.</div>
+          </div>
+
+          <div class="govcon-pursuit-profile-setup-path" style="margin-bottom:12px;padding:9px 11px;border:1px dashed var(--border);border-radius:6px;background:rgba(0,0,0,0.15)">
+            <div style="font:700 9px/1.3 'Azeret Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:5px">Setup path</div>
+            <div style="font-size:11.5px;color:var(--text)">Open the GovCon Setup Wizard (already available in the GovCon header bar) to populate certifications, NAICS, and capability fields. The SAM Sprint scorer reads from the same profile.</div>
+            <div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:8px">
+              <button class="btn btn-ghost" onclick="openGovconSetupWizard()" style="font-size:11px">⚙ Open GovCon Setup</button>
+            </div>
+            <div style="margin-top:6px;color:var(--muted);font-size:10.5px">Profile is stored locally as a JSON file under your SourceDeck app-data directory. <code>SAM_GOV_API_KEY</code> is never stored in the profile.</div>
+          </div>
+
+          <div class="govcon-pursuit-profile-approval" style="margin-bottom:4px;padding:9px 11px;border:1px solid rgba(248,81,73,0.25);border-radius:6px;background:rgba(248,81,73,0.04);color:var(--text);font-size:11.5px">
+            <div style="font-weight:700;margin-bottom:3px">Human approval required</div>
+            Email drafts are generated for review only. SourceDeck does not send outreach, submit quotes, or contact agencies without human approval.
+          </div>
+        </section>
+        <!--
+          ─────────────────────────────────────────────────────────────
           SAM Opportunity Sprint — manual-only action / report-viewer
           card. Pure information surface: there is no live Run button,
           no email transport, no Buffer wiring. Operators run the
