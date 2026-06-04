@@ -2249,6 +2249,187 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             SourceDeck does not submit bids. All extraction outputs are draft and require human review against the source document. No outreach is drafted, sent, or queued by this surface. No bid is submitted to SAM.gov, PIEE, eBuy, GSA, agency portals, or email. Every advisory recommendation requires human approval before any further action.
           </div>
         </section>
+        <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 22D — Vendor Quote Room + Pricing Worksheet
+             Buyer-facing vendor sourcing + pricing triage surfaces.
+             Manual intake only. SourceDeck does not send vendor quote
+             requests. "Requested manually" means the operator requested
+             the quote outside SourceDeck. No bid or quote is submitted
+             to SAM.gov, PIEE, eBuy, GSA, agency portals, or email. No
+             outreach is drafted, sent, or queued by these surfaces.
+             Pricing is advisory and must be reviewed before bid
+             submission. SourceDeck does not submit bids or quotes.
+             ═══════════════════════════════════════════════════════════════ -->
+        <section id="gc-vqr-pricing" class="gc-vqr-pricing" data-section="govcon-vendor-pricing" style="margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+
+          <!-- ─── Vendor Quote Room ─── -->
+          <section id="gc-vqr" class="gc-vqr" data-section="govcon-vendor-quote-room" style="margin-bottom:18px">
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Vendor Quote Room</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Vendor needs · Quote intake · Credentials · Risk · Human approval required</div>
+              <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">No quote requests are sent from SourceDeck. Vendor outreach requires human approval. "Requested manually" means the operator requested the quote outside SourceDeck — SourceDeck does not send the request.</div>
+            </div>
+
+            <!-- 3 stat cards -->
+            <div class="gc-vqr-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px">
+              <div class="gc-vqr-card" data-vqr="needs" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Vendor / Subcontractor Needs</div>
+                <div id="gc-vqr-needs-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
+                <div id="gc-vqr-needs-empty" class="gc-vqr-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No vendor quote needs added yet. Add a required trade, service, or supplier manually.</div>
+              </div>
+              <div class="gc-vqr-card" data-vqr="received" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Quotes Received</div>
+                <div id="gc-vqr-received-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
+                <div id="gc-vqr-received-empty" class="gc-vqr-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No vendor quotes received yet.</div>
+              </div>
+              <div class="gc-vqr-card" data-vqr="missing" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Missing / Expired</div>
+                <div id="gc-vqr-missing-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
+                <div id="gc-vqr-missing-empty" class="gc-vqr-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No missing or expired quotes. Vendor outreach requires human approval; SourceDeck does not send quote requests.</div>
+              </div>
+            </div>
+
+            <!-- Manual vendor quote intake -->
+            <details class="gc-vqr-intake" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">
+              <summary style="cursor:pointer;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:12.5px;color:var(--text)">Add a vendor / subcontractor quote (manual entry — SourceDeck does not send the request)</summary>
+              <form id="gc-vqr-intake-form" onsubmit="return gcVqrAddQuote(event)" style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Required trade / service category</span><input class="input" id="gc-vqr-f-category" type="text" required placeholder="e.g. Electrical / HVAC / Software / Janitorial"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Vendor name</span><input class="input" id="gc-vqr-f-vendor" type="text" placeholder="e.g. Acme Trade Services LLC"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Contact name</span><input class="input" id="gc-vqr-f-contact" type="text" placeholder="e.g. Jane Operator"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Contact email</span><input class="input" id="gc-vqr-f-email" type="email" placeholder="operator@example.com — SourceDeck does not send mail"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Phone</span><input class="input" id="gc-vqr-f-phone" type="tel" placeholder="e.g. +1 555 555 0123"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Quote amount (USD)</span><input class="input" id="gc-vqr-f-amount" type="number" min="0" step="0.01" placeholder="0.00"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Quote status</span>
+                  <select class="select" id="gc-vqr-f-status">
+                    <option value="Needed">Needed</option>
+                    <option value="Requested manually">Requested manually (operator sent outside SourceDeck)</option>
+                    <option value="Received">Received</option>
+                    <option value="Missing">Missing</option>
+                    <option value="Expired">Expired</option>
+                    <option value="Excluded">Excluded</option>
+                  </select>
+                </label>
+                <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr;gap:6px;margin-top:4px">
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--sub)">Credential checklist</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:12px;font-size:10.5px;color:var(--sub)">
+                    <label><input type="checkbox" id="gc-vqr-f-cred-license"> License current</label>
+                    <label><input type="checkbox" id="gc-vqr-f-cred-insurance"> Insurance current</label>
+                    <label><input type="checkbox" id="gc-vqr-f-cred-bonding"> Bonding capacity verified</label>
+                    <label><input type="checkbox" id="gc-vqr-f-cred-w9"> W-9 / vendor file</label>
+                    <label><input type="checkbox" id="gc-vqr-f-cred-sam"> SAM.gov active</label>
+                    <label><input type="checkbox" id="gc-vqr-f-cred-cage"> CAGE / UEI</label>
+                    <label><input type="checkbox" id="gc-vqr-f-cred-clearance"> Clearance if required</label>
+                  </div>
+                </div>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Insurance / license / certification notes</span><textarea class="input" id="gc-vqr-f-cert-notes" rows="2" placeholder="e.g. GL aggregate, EMR, current cybersecurity certs (CMMC posture from vendor, do not claim on SourceDeck's behalf)"></textarea></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Risk notes</span><textarea class="input" id="gc-vqr-f-risk-notes" rows="2" placeholder="e.g. lead-time risk, single-source risk, capacity concerns"></textarea></label>
+                <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+                  <button type="submit" class="btn btn-gold">Add Vendor Quote Row</button>
+                  <button type="button" class="btn btn-ghost" onclick="gcVqrRender()">Refresh</button>
+                </div>
+                <div style="grid-column:1/-1;font-size:10px;color:var(--muted);line-height:1.55;margin-top:4px">SourceDeck does not send quote requests. Vendor outreach requires human approval. No bid or quote is submitted to SAM.gov, PIEE, eBuy, GSA, agency portals, or email.</div>
+              </form>
+            </details>
+
+            <!-- Vendor quote table -->
+            <div class="gc-vqr-table-wrap" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;overflow-x:auto">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Vendor Quotes</div>
+                <div style="font-size:10px;color:var(--muted)">Manual entry only — SourceDeck does not send vendor outreach.</div>
+              </div>
+              <table id="gc-vqr-table" style="width:100%;border-collapse:collapse;font-size:10.5px;min-width:820px">
+                <thead>
+                  <tr style="text-align:left;color:var(--sub);font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.08em">
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Category</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Vendor</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Contact</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Amount</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Status</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Credentials</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Risk</th>
+                  </tr>
+                </thead>
+                <tbody id="gc-vqr-tbody">
+                  <tr><td colspan="7" class="gc-vqr-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No vendor quote needs added yet. Add a required trade, service, or supplier manually. SourceDeck does not send vendor outreach.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- ─── Pricing Worksheet ─── -->
+          <section id="gc-pricing" class="gc-pricing" data-section="govcon-pricing-worksheet" style="margin-bottom:18px">
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Pricing Worksheet</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Labor · Materials · Vendor · Travel · Equipment · Overhead · Profit · Contingency</div>
+              <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">Pricing output is advisory and must be reviewed before bid submission. SourceDeck does not submit bids or quotes.</div>
+            </div>
+
+            <div class="gc-pricing-form" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:12px">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Labor cost (USD)</span><input class="input" id="gc-pr-f-labor" type="number" min="0" step="0.01" placeholder="0.00" oninput="gcPricingRecalc()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Materials cost (USD)</span><input class="input" id="gc-pr-f-materials" type="number" min="0" step="0.01" placeholder="0.00" oninput="gcPricingRecalc()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Subcontractor / vendor cost (USD)</span><input class="input" id="gc-pr-f-vendor" type="number" min="0" step="0.01" placeholder="0.00" oninput="gcPricingRecalc()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Travel / logistics cost (USD)</span><input class="input" id="gc-pr-f-travel" type="number" min="0" step="0.01" placeholder="0.00" oninput="gcPricingRecalc()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Equipment cost (USD)</span><input class="input" id="gc-pr-f-equipment" type="number" min="0" step="0.01" placeholder="0.00" oninput="gcPricingRecalc()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Overhead %</span><input class="input" id="gc-pr-f-overhead" type="number" min="0" step="0.1" placeholder="0.0" oninput="gcPricingRecalc()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Profit %</span><input class="input" id="gc-pr-f-profit" type="number" min="0" step="0.1" placeholder="0.0" oninput="gcPricingRecalc()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Contingency %</span><input class="input" id="gc-pr-f-contingency" type="number" min="0" step="0.1" placeholder="0.0" oninput="gcPricingRecalc()"></label>
+              </div>
+            </div>
+
+            <!-- Computed advisory output -->
+            <div class="gc-pricing-output" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:12px">
+              <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Estimated Price (advisory)</div>
+                <div id="gc-pr-out-price" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">$0.00</div>
+                <div style="font-size:10px;color:var(--muted)">Advisory only — review every assumption before bid submission. SourceDeck does not submit bids or quotes.</div>
+              </div>
+              <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Estimated Margin (advisory)</div>
+                <div id="gc-pr-out-margin" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">—</div>
+                <div style="font-size:10px;color:var(--muted)">Advisory only — verify with operator before bid submission.</div>
+              </div>
+            </div>
+
+            <!-- Missing cost input + margin warning -->
+            <div id="gc-pr-missing-warn" class="gc-pr-warn" style="display:none;background:rgba(196,130,10,0.08);border:1px solid rgba(196,130,10,0.40);border-radius:var(--r2);padding:9px 12px;font-size:10.5px;color:var(--sub);line-height:1.55;margin-bottom:8px"></div>
+            <div id="gc-pr-margin-warn" class="gc-pr-warn" style="display:none;background:rgba(139,26,46,0.10);border:1px solid rgba(139,26,46,0.45);border-radius:var(--r2);padding:9px 12px;font-size:10.5px;color:var(--sub);line-height:1.55;margin-bottom:12px"></div>
+
+            <!-- Quote comparison table -->
+            <div class="gc-pr-quote-compare" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:12px;overflow-x:auto">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Quote Comparison</div>
+                <div style="font-size:10px;color:var(--muted)">Advisory — review before bid submission.</div>
+              </div>
+              <table id="gc-pr-quote-compare-table" style="width:100%;border-collapse:collapse;font-size:10.5px;min-width:680px">
+                <thead>
+                  <tr style="text-align:left;color:var(--sub);font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.08em">
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Category</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Vendor</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Amount</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Status</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Δ vs. lowest</th>
+                  </tr>
+                </thead>
+                <tbody id="gc-pr-quote-compare-tbody">
+                  <tr><td colspan="5" class="gc-vqr-empty" style="padding:14px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No vendor quotes received yet. Add manual quote entries above to compare.</td></tr>
+                </tbody>
+              </table>
+            </div>
+
+            <!-- Pricing assumptions notes -->
+            <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;margin-bottom:12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--sub);margin-bottom:4px">Pricing Assumptions</div>
+              <textarea class="input" id="gc-pr-assumptions" rows="3" placeholder="Document every pricing assumption (escalation, labor mix, materials index, contingency rationale, vendor lead-time risk). All assumptions must be reviewed before bid submission." oninput="gcPricingSaveAssumptions()" style="width:100%"></textarea>
+            </div>
+          </section>
+
+          <!-- ─── Shared Human Review Required notice ─── -->
+          <div class="gc-vqr-human-review" id="gc-vqr-human-review" style="background:rgba(110,31,44,0.10);border:1px solid rgba(110,31,44,0.45);border-radius:var(--r2);padding:10px 12px;font-size:10.5px;line-height:1.55;color:var(--sub)">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text);margin-bottom:4px">Human Review Required</div>
+            SourceDeck does not submit bids or quotes. SourceDeck does not send vendor outreach. No quote request is sent automatically. All vendor entries, credential rows, risk notes, and pricing fields are manual. Pricing output is advisory and must be reviewed before bid submission. No bid is submitted to SAM.gov, PIEE, eBuy, GSA, agency portals, or email. Human approval required for every action.
+          </div>
+        </section>
         <!--
           ─────────────────────────────────────────────────────────────
           GovCon Pursuit Profile — manual-only setup/readiness card.
@@ -11717,6 +11898,261 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (window.toast) try { window.toast('Export Matrix placeholder — export bundle ships in Phase 22F. SourceDeck does not submit bids.', 'info'); } catch (e) {}
   };
   window.gcSolRender = renderAll;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderAll);
+  } else {
+    setTimeout(renderAll, 0);
+  }
+})();
+</script>
+<script>
+/* Phase 22D — Vendor Quote Room + Pricing Worksheet renderer.
+   Pure browser code. No network, no auto-send, no auto-submit, no
+   vendor outreach, no bid submission. "Requested manually" means the
+   operator requested the quote outside SourceDeck — SourceDeck does
+   not send the request. Pricing output is advisory; the operator must
+   review every assumption before bid submission. State is local-only
+   via window.localStorage. */
+(function(){
+  'use strict';
+  var VQR_KEY = 'sd.govcon.vendorQuotes.v1';
+  var PR_KEY  = 'sd.govcon.pricingWorksheet.v1';
+  function loadQuotes(){
+    try {
+      var raw = window.localStorage && window.localStorage.getItem(VQR_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+  function saveQuotes(arr){
+    try { window.localStorage && window.localStorage.setItem(VQR_KEY, JSON.stringify(arr)); }
+    catch (e) {}
+  }
+  function loadPricing(){
+    try {
+      var raw = window.localStorage && window.localStorage.getItem(PR_KEY);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+  function savePricing(obj){
+    try { window.localStorage && window.localStorage.setItem(PR_KEY, JSON.stringify(obj)); }
+    catch (e) {}
+  }
+  function $(id){ return document.getElementById(id); }
+  function safeText(s){ return String(s == null ? '' : s).replace(/[<>]/g, ''); }
+  function fmtUSD(n){
+    n = Number(n) || 0;
+    return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+  function setCount(id, n){
+    var v = $('gc-vqr-' + id + '-count');
+    var e = $('gc-vqr-' + id + '-empty');
+    if (v) v.textContent = String(n);
+    if (e) e.style.display = n === 0 ? 'block' : 'none';
+  }
+  function credentialFlags(o){
+    var keys = ['license','insurance','bonding','w9','sam','cage','clearance'];
+    var labels = { license:'License', insurance:'Insurance', bonding:'Bonding', w9:'W-9', sam:'SAM.gov', cage:'CAGE/UEI', clearance:'Clearance' };
+    var on = [], off = [];
+    for (var i = 0; i < keys.length; i++) {
+      var k = keys[i];
+      if (o && o.cred && o.cred[k]) on.push(labels[k]);
+      else off.push(labels[k]);
+    }
+    return { on: on, off: off };
+  }
+  function renderVqr(){
+    var arr = loadQuotes();
+    var receivedCount = 0, needsCount = 0, missingCount = 0;
+    for (var i = 0; i < arr.length; i++) {
+      var s = String(arr[i].status || '').toLowerCase();
+      if (s === 'received') receivedCount++;
+      if (s === 'needed' || s === 'requested manually') needsCount++;
+      if (s === 'missing' || s === 'expired') missingCount++;
+    }
+    setCount('needs', needsCount);
+    setCount('received', receivedCount);
+    setCount('missing', missingCount);
+    var body = $('gc-vqr-tbody');
+    if (body) {
+      if (!arr.length) {
+        body.innerHTML = '<tr><td colspan="7" class="gc-vqr-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No vendor quote needs added yet. Add a required trade, service, or supplier manually. SourceDeck does not send vendor outreach.</td></tr>';
+      } else {
+        var rows = [];
+        for (var j = 0; j < arr.length; j++) {
+          var o = arr[j];
+          var flags = credentialFlags(o);
+          rows.push('<tr style="border-top:1px solid var(--border2,rgba(255,255,255,0.05));font-family:\'Instrument Sans\',sans-serif">'
+            + '<td style="padding:7px 6px;color:var(--text)">' + safeText(o.category) + '</td>'
+            + '<td style="padding:7px 6px;color:var(--text)">' + safeText(o.vendor) + '</td>'
+            + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(o.contact) + (o.email ? ' · ' + safeText(o.email) : '') + (o.phone ? ' · ' + safeText(o.phone) : '') + '</td>'
+            + '<td style="padding:7px 6px;color:var(--text);font-family:\'Azeret Mono\',monospace">' + (o.amount ? fmtUSD(o.amount) : '—') + '</td>'
+            + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(o.status) + '</td>'
+            + '<td style="padding:7px 6px;color:var(--sub);font-size:10px">' + (flags.on.length ? safeText(flags.on.join(', ')) : '—') + (flags.off.length ? ' · <span style="color:var(--muted)">missing: ' + safeText(flags.off.join(', ')) + '</span>' : '') + '</td>'
+            + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(o.riskNotes) + '</td>'
+            + '</tr>');
+        }
+        body.innerHTML = rows.join('');
+      }
+    }
+    renderQuoteCompare(arr);
+  }
+  function renderQuoteCompare(arr){
+    var body = $('gc-pr-quote-compare-tbody');
+    if (!body) return;
+    var received = arr.filter(function(o){
+      var s = String(o.status || '').toLowerCase();
+      return s === 'received' && Number(o.amount) > 0;
+    });
+    if (!received.length) {
+      body.innerHTML = '<tr><td colspan="5" class="gc-vqr-empty" style="padding:14px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No vendor quotes received yet. Add manual quote entries above to compare.</td></tr>';
+      return;
+    }
+    // Determine lowest amount per category.
+    var lowest = {};
+    for (var i = 0; i < received.length; i++) {
+      var o = received[i];
+      var c = String(o.category || '').toLowerCase();
+      var a = Number(o.amount);
+      if (lowest[c] == null || a < lowest[c]) lowest[c] = a;
+    }
+    received.sort(function(a, b){ return String(a.category||'').localeCompare(String(b.category||'')) || (Number(a.amount) - Number(b.amount)); });
+    var rows = [];
+    for (var k = 0; k < received.length; k++) {
+      var q = received[k];
+      var lo = lowest[String(q.category || '').toLowerCase()];
+      var d = Number(q.amount) - (lo == null ? Number(q.amount) : lo);
+      rows.push('<tr style="border-top:1px solid var(--border2,rgba(255,255,255,0.05))">'
+        + '<td style="padding:7px 6px;color:var(--text)">' + safeText(q.category) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--text)">' + safeText(q.vendor) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--text);font-family:\'Azeret Mono\',monospace">' + fmtUSD(q.amount) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(q.status) + '</td>'
+        + '<td style="padding:7px 6px;color:' + (d > 0 ? 'var(--red,#8B1A2E)' : 'var(--green,#1E7A4E)') + ';font-family:\'Azeret Mono\',monospace">' + (d > 0 ? '+' : '') + fmtUSD(d) + '</td>'
+        + '</tr>');
+    }
+    body.innerHTML = rows.join('');
+  }
+  function num(id){
+    var el = $(id); if (!el) return 0;
+    var v = parseFloat(el.value);
+    return isFinite(v) && v >= 0 ? v : 0;
+  }
+  function renderPricing(){
+    var st = loadPricing();
+    // Restore fields from store on first render.
+    var fields = ['labor','materials','vendor','travel','equipment','overhead','profit','contingency','assumptions'];
+    for (var i = 0; i < fields.length; i++) {
+      var key = fields[i];
+      var el = $(key === 'assumptions' ? 'gc-pr-assumptions' : 'gc-pr-f-' + key);
+      if (el && st[key] != null && document.activeElement !== el) el.value = st[key];
+    }
+    gcPricingRecalc();
+  }
+  window.gcPricingRecalc = function(){
+    var labor      = num('gc-pr-f-labor');
+    var materials  = num('gc-pr-f-materials');
+    var vendor     = num('gc-pr-f-vendor');
+    var travel     = num('gc-pr-f-travel');
+    var equipment  = num('gc-pr-f-equipment');
+    var overheadPc = num('gc-pr-f-overhead');
+    var profitPc   = num('gc-pr-f-profit');
+    var contingPc  = num('gc-pr-f-contingency');
+    var direct = labor + materials + vendor + travel + equipment;
+    var overhead = direct * (overheadPc / 100);
+    var burdened = direct + overhead;
+    var contingency = burdened * (contingPc / 100);
+    var preProfit = burdened + contingency;
+    var profit = preProfit * (profitPc / 100);
+    var price = preProfit + profit;
+    var margin = price > 0 ? (profit / price) * 100 : 0;
+    var priceOut = $('gc-pr-out-price'); if (priceOut) priceOut.textContent = fmtUSD(price);
+    var marginOut = $('gc-pr-out-margin'); if (marginOut) marginOut.textContent = price > 0 ? margin.toFixed(1) + '%' : '—';
+    // Missing cost input warning
+    var missing = [];
+    if (labor === 0) missing.push('labor');
+    if (materials === 0 && equipment === 0) missing.push('materials/equipment');
+    if (overheadPc === 0) missing.push('overhead %');
+    if (profitPc === 0) missing.push('profit %');
+    var mw = $('gc-pr-missing-warn');
+    if (mw) {
+      if (missing.length) {
+        mw.style.display = 'block';
+        mw.innerHTML = '<strong>Missing cost inputs:</strong> ' + safeText(missing.join(', ')) + '. Pricing output is advisory until every cost line is reviewed.';
+      } else {
+        mw.style.display = 'none';
+        mw.innerHTML = '';
+      }
+    }
+    // Margin warning
+    var mgw = $('gc-pr-margin-warn');
+    if (mgw) {
+      if (price > 0 && margin < 5) {
+        mgw.style.display = 'block';
+        mgw.innerHTML = '<strong>Margin warning:</strong> estimated margin of ' + margin.toFixed(1) + '% is below 5%. Review pricing assumptions before bid submission.';
+      } else if (price > 0 && margin > 35) {
+        mgw.style.display = 'block';
+        mgw.innerHTML = '<strong>Margin sanity check:</strong> estimated margin of ' + margin.toFixed(1) + '% is unusually high. Verify pricing assumptions before bid submission.';
+      } else {
+        mgw.style.display = 'none';
+        mgw.innerHTML = '';
+      }
+    }
+    // Persist
+    var st = loadPricing();
+    st.labor = labor; st.materials = materials; st.vendor = vendor; st.travel = travel;
+    st.equipment = equipment; st.overhead = overheadPc; st.profit = profitPc; st.contingency = contingPc;
+    savePricing(st);
+  };
+  window.gcPricingSaveAssumptions = function(){
+    var el = $('gc-pr-assumptions'); if (!el) return;
+    var st = loadPricing();
+    st.assumptions = String(el.value || '');
+    savePricing(st);
+  };
+  window.gcVqrAddQuote = function(ev){
+    if (ev && ev.preventDefault) ev.preventDefault();
+    var form = (ev && ev.target) || $('gc-vqr-intake-form');
+    if (!form) return false;
+    function v(id){ var el = form.querySelector('#' + id) || $(id); return el ? String(el.value || '') : ''; }
+    function checked(id){ var el = $(id); return !!(el && el.checked); }
+    var category = v('gc-vqr-f-category').trim();
+    if (!category) return false;
+    var status = v('gc-vqr-f-status').trim() || 'Needed';
+    var amt = parseFloat(v('gc-vqr-f-amount'));
+    var quote = {
+      id: 'vq_' + (Date.now().toString(36)) + Math.floor(Math.random() * 1e6).toString(36),
+      category: category,
+      vendor: v('gc-vqr-f-vendor').trim(),
+      contact: v('gc-vqr-f-contact').trim(),
+      email: v('gc-vqr-f-email').trim(),
+      phone: v('gc-vqr-f-phone').trim(),
+      amount: isFinite(amt) && amt >= 0 ? amt : null,
+      status: status,
+      cred: {
+        license:   checked('gc-vqr-f-cred-license'),
+        insurance: checked('gc-vqr-f-cred-insurance'),
+        bonding:   checked('gc-vqr-f-cred-bonding'),
+        w9:        checked('gc-vqr-f-cred-w9'),
+        sam:       checked('gc-vqr-f-cred-sam'),
+        cage:      checked('gc-vqr-f-cred-cage'),
+        clearance: checked('gc-vqr-f-cred-clearance')
+      },
+      certNotes: v('gc-vqr-f-cert-notes').trim(),
+      riskNotes: v('gc-vqr-f-risk-notes').trim(),
+      createdAt: Date.now()
+    };
+    var arr = loadQuotes();
+    arr.push(quote);
+    saveQuotes(arr);
+    try { form.reset && form.reset(); } catch (e) {}
+    renderVqr();
+    if (window.toast) try { window.toast('Vendor quote row added. SourceDeck does not send vendor outreach.', 'ok'); } catch (e) {}
+    return false;
+  };
+  window.gcVqrRender = renderVqr;
+  window.gcPricingRender = renderPricing;
+  function renderAll(){ renderVqr(); renderPricing(); }
+  window.gcVendorPricingRender = renderAll;
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', renderAll);
   } else {
