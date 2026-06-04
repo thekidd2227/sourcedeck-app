@@ -137,12 +137,13 @@ test('12. "AI Generate" nav label is gone; renamed to a concrete workflow', () =
     'AI Lead Builder concrete nav label not found');
 });
 
-test('13. "System Flow" nav label renamed to "System Readiness"', () => {
-  // Nav button text must not still read "System Flow".
-  assert.ok(!/<button class="nav-btn"[^>]*data-tab="sysflow"[\s\S]*?>System Flow<\/button>/i.test(HTML),
-    'System Flow nav label still present — rename to System Readiness');
-  assert.ok(/>\s*System Readiness\s*</.test(HTML),
-    'System Readiness nav label not found');
+test('13. System Flow / System Readiness tab removed from primary nav (Phase 21F)', () => {
+  // Phase 21F removed the internal readiness tab entirely (it had no
+  // buyer-facing purpose). The nav button and pane must both be gone.
+  assert.ok(!/<button[^>]*\bdata-tab="sysflow"/.test(HTML),
+    'sysflow nav button still present — should be removed');
+  assert.ok(!/id="tab-sysflow"/.test(HTML),
+    'tab-sysflow pane still present — should be removed');
 });
 
 test('14. Renderer boot test still passes', () => {

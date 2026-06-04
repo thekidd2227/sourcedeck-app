@@ -30,7 +30,6 @@ Run this list end-to-end. Every line must be **GO** before recording starts.
 - [ ] **Leads** region select shows the 4 neutral options (`Select market…` / `United States (Nationwide)` / `Canada` / `United Kingdom` / `User-defined`).
 - [ ] **Ad Engine** title reads "Ad Engine" (not "Faceless Ad Engine"); 11 generic topic categories visible; 49 industries dropdown; 27 platforms dropdown; campaign placeholder reads "e.g. Q2 product launch".
 - [ ] **Daily Operating Rhythm** shows the empty-state copy "No operating rhythm yet…"
-- [ ] **Sysflow** Active Webhooks / Infrastructure / HTTP Standards all show empty states.
 - [ ] **AI Generate** target-profile placeholder is the generic copy ("Describe your ideal customer, location, offer, company size, pain point, and urgency…"); Geography select shows 5 neutral options; Industry Focus shows the broad list.
 - [ ] **Settings → IBM mode / watsonx readiness** panel reads "Click 'Run readiness check' to validate configuration." (No "watsonx live" wording anywhere.)
 - [ ] **Response Desk** pane renders; "Human approval required" section visible; "Draft only — not sent" audit-friendly line visible; **no Send Email / Auto-Send / Submit Quote button anywhere**.
@@ -66,7 +65,7 @@ Use this exact timing and screen-sequence. The verbatim narration lives in `docs
 | Time | Screen | Action | Source quote |
 |---|---|---|---|
 | 0:00 – 0:30 | (any screen; can be the SourceDeck title bar) | One-sentence positioning | 21A § A "0:00 – 0:30 — One-sentence positioning" |
-| 0:30 – 1:30 | Dashboard → Activity Feed → Sysflow | Show three empty-state screens in order; verbalize what is **not** there | 21A § A "0:30 – 1:30 — Default-state hygiene" |
+| 0:30 – 1:30 | Dashboard → Activity Feed | Show two empty-state screens in order; verbalize what is **not** there | 21A § A "0:30 – 1:30 — Default-state hygiene" |
 | 1:30 – 3:00 | Response Desk | Paste sample reply; click **Analyze reply**; walk the 8 output sections; point at no-Send-Email + Draft-only line | 21A § A "1:30 – 3:00 — Response Desk" |
 | 3:00 – 4:00 | GovCon → SAM Sprint | Point at plan-limit copy; mention CLI-only sprint | 21A § A "3:00 – 4:00 — SAM Opportunity Sprint" |
 | 4:00 – 5:00 | (any neutral SourceDeck pane) | Honest close + next-step ask | 21A § A "4:00 – 5:00 — Honest close" |
@@ -97,12 +96,13 @@ The same discipline — verbatim narration lives in 21A § B.
 
 The detailed shot list lives in `docs/demo/phase-21b-recording-shot-list.md`. The summary:
 
-- **Shots 1–4**: empty-state screens (Dashboard, Activity Feed, Leads region select, Sysflow infrastructure).
+- **Shots 1–4**: empty-state / default-state screens (desktop shell, Dashboard automation status, Activity Feed, Leads region select).
 - **Shots 5–7**: Ad Engine (title, topic dropdown, industry dropdown).
 - **Shots 8–10**: Response Desk (input panel, 8 output sections, no-Send-Email zoom).
-- **Shots 11–13**: GovCon SAM Sprint plan-limit copy + Setup Wizard steps 5–8.
-- **Shot 14**: watsonx readiness panel ("presence/status/remediation only" copy).
-- **Shot 15**: Phase 20G visual guard frame (a `.btn-gold` button rendered cool gold at default desktop width).
+- **Shot 11**: Daily Operating Rhythm empty state.
+- **Shot 12**: GovCon SAM Sprint plan-limit copy.
+- **Shot 13**: watsonx readiness panel ("presence/status/remediation only" copy).
+- **Shot 14**: Phase 20G visual guard frame (a `.btn-gold` button rendered cool gold at default desktop width).
 
 ---
 
