@@ -2146,6 +2146,109 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             </div>
           </div>
         </section>
+        <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 22C — Solicitation Workspace + Compliance Matrix
+             Buyer-facing solicitation triage surface. Manual paste/import
+             only. SourceDeck does not submit bids and does not auto-send
+             outreach. Every extracted requirement is a draft and requires
+             human review against the source document. No live SAM call,
+             no agency-portal submission, no email sent from this surface.
+             ═══════════════════════════════════════════════════════════════ -->
+        <section id="gc-sol-workspace" class="gc-sol-workspace" data-section="govcon-solicitation-workspace" style="margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+          <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Solicitation Workspace</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Section L · Section M · PWS/SOW · Required forms · Deadlines · Risks · Compliance matrix</div>
+            <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">Draft extraction — verify against source document. SourceDeck does not submit bids. All outputs require human review. No outreach is drafted, sent, or queued.</div>
+          </div>
+
+          <!-- Intake -->
+          <div class="gc-sol-intake" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">
+            <div style="display:grid;grid-template-columns:1fr;gap:10px">
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px">
+                <span>Linked opportunity (optional)</span>
+                <select class="select" id="gc-sol-opp-select">
+                  <option value="">— Not linked —</option>
+                </select>
+              </label>
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px">
+                <span>Paste solicitation text</span>
+                <textarea class="input" id="gc-sol-text" rows="6" placeholder="Paste solicitation PDF text here. Include Section L, Section M, PWS/SOW, required forms, deadlines, and risks. SourceDeck will run a local draft extraction. No text leaves this device."></textarea>
+              </label>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" class="btn btn-gold" onclick="gcSolExtract()">Extract Requirements</button>
+                <button type="button" class="btn btn-ghost" onclick="gcSolBuildMatrix()">Build Compliance Matrix</button>
+                <button type="button" class="btn btn-ghost" onclick="gcSolMarkReviewed()">Mark Requirement Reviewed</button>
+                <button type="button" class="btn btn-ghost" onclick="gcSolExportPlaceholder()">Export Matrix Placeholder</button>
+              </div>
+              <div style="font-size:10px;color:var(--muted);line-height:1.55">Manual extraction only. SourceDeck does not submit bids. All outputs require human review and verification against the source document.</div>
+            </div>
+          </div>
+
+          <!-- Output panels -->
+          <div class="gc-sol-panels" style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
+            <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Solicitation Summary</div>
+              <div id="gc-sol-summary"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation loaded yet. Paste solicitation text or add opportunity details manually.</div></div>
+            </div>
+            <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Section L — Instructions to Offerors</div>
+              <div id="gc-sol-section-l"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No Section L instructions extracted yet. Draft extraction — verify against source document.</div></div>
+            </div>
+            <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Section M — Evaluation Criteria</div>
+              <div id="gc-sol-section-m"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No Section M evaluation criteria extracted yet. Draft extraction — verify against source document.</div></div>
+            </div>
+            <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">PWS / SOW Requirements</div>
+              <div id="gc-sol-pws"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No PWS / SOW requirements extracted yet. Draft extraction — verify against source document.</div></div>
+            </div>
+            <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Required Forms / Attachments</div>
+              <div id="gc-sol-forms"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No required forms or attachments extracted yet. Draft extraction — verify against source document.</div></div>
+            </div>
+            <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Deadlines</div>
+              <div id="gc-sol-deadlines"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No deadlines extracted yet. Draft extraction — verify against source document.</div></div>
+            </div>
+            <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Risks / Deal Killers</div>
+              <div id="gc-sol-risks"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No risks or deal killers extracted yet. Draft extraction — verify against source document.</div></div>
+            </div>
+          </div>
+
+          <!-- Compliance matrix table -->
+          <div class="gc-sol-panel gc-sol-matrix" id="gc-sol-matrix" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px;overflow-x:auto">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Compliance Matrix</div>
+              <div style="font-size:10px;color:var(--muted)">Draft only — human review required for every row.</div>
+            </div>
+            <table id="gc-sol-matrix-table" style="width:100%;border-collapse:collapse;font-size:10.5px;min-width:920px">
+              <thead>
+                <tr style="text-align:left;color:var(--sub);font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.08em">
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Requirement ID</th>
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Source section/page</th>
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Requirement text</th>
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Mandatory / optional</th>
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Proposal section</th>
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Owner</th>
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Evidence needed</th>
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Status</th>
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Risk / deal-killer flag</th>
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Notes</th>
+                </tr>
+              </thead>
+              <tbody id="gc-sol-matrix-body">
+                <tr><td colspan="10" class="gc-sol-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No requirements extracted yet. Paste solicitation text and run extraction. SourceDeck does not submit bids. All outputs require human review.</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Human Review Required notice -->
+          <div class="gc-sol-human-review" style="background:rgba(110,31,44,0.10);border:1px solid rgba(110,31,44,0.45);border-radius:var(--r2);padding:10px 12px;font-size:10.5px;line-height:1.55;color:var(--sub)">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text);margin-bottom:4px">Human Review Required</div>
+            SourceDeck does not submit bids. All extraction outputs are draft and require human review against the source document. No outreach is drafted, sent, or queued by this surface. No bid is submitted to SAM.gov, PIEE, eBuy, GSA, agency portals, or email. Every advisory recommendation requires human approval before any further action.
+          </div>
+        </section>
         <!--
           ─────────────────────────────────────────────────────────────
           GovCon Pursuit Profile — manual-only setup/readiness card.
@@ -11367,6 +11470,257 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.addEventListener('DOMContentLoaded', gcCaptureRender);
   } else {
     setTimeout(gcCaptureRender, 0);
+  }
+})();
+</script>
+<script>
+/* Phase 22C — Solicitation Workspace + Compliance Matrix renderer.
+   Pure browser code. No network, no auto-send, no auto-submit, no
+   bid submission. Every extracted row is a DRAFT and requires human
+   review against the source document. SourceDeck does not submit
+   bids anywhere (SAM.gov, PIEE, eBuy, GSA, agency portals, email).
+   State is local-only via window.localStorage. */
+(function(){
+  'use strict';
+  var STORAGE_KEY = 'sd.govcon.solWorkspace.v1';
+  var CAPTURE_KEY = 'sd.govcon.captureBoard.v1';
+  function loadState(){
+    try {
+      var raw = window.localStorage && window.localStorage.getItem(STORAGE_KEY);
+      return raw ? JSON.parse(raw) : { summary: null, sections: {}, matrix: [] };
+    } catch (e) { return { summary: null, sections: {}, matrix: [] }; }
+  }
+  function saveState(s){
+    try { window.localStorage && window.localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); }
+    catch (e) {}
+  }
+  function loadOpps(){
+    try {
+      var raw = window.localStorage && window.localStorage.getItem(CAPTURE_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+  function safeText(s){ return String(s == null ? '' : s).replace(/[<>]/g, ''); }
+  function $(id){ return document.getElementById(id); }
+  function setHTML(id, html){ var el = $(id); if (el) el.innerHTML = html; }
+  function emptyDiv(msg){
+    return '<div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">'
+      + safeText(msg) + '</div>';
+  }
+  function listDiv(items, emptyMsg){
+    if (!items || !items.length) return emptyDiv(emptyMsg);
+    return '<ul style="margin:0;padding:0 0 0 16px;font-size:11px;color:var(--text);line-height:1.55">'
+      + items.map(function(t){ return '<li>' + safeText(t) + '</li>'; }).join('')
+      + '</ul>';
+  }
+  // ── Local extraction heuristics ────────────────────────────────────
+  // Pure draft extraction from user-pasted text. No external call.
+  function extractFromText(text){
+    var out = {
+      summary: null,
+      sectionL: [], sectionM: [], pws: [], forms: [],
+      deadlines: [], risks: []
+    };
+    if (!text || !String(text).trim()) return out;
+    var src = String(text);
+    var lines = src.split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean);
+    // Summary = first 2–3 non-empty lines, capped.
+    out.summary = lines.slice(0, 3).join(' ').slice(0, 480);
+    var SECTION_L_RE = /^(?:L\.?\s*\d+(?:\.\d+)*|Section\s+L\b)/i;
+    var SECTION_M_RE = /^(?:M\.?\s*\d+(?:\.\d+)*|Section\s+M\b)/i;
+    var PWS_RE       = /(PWS|SOW|Performance\s+Work\s+Statement|Statement\s+of\s+Work)/i;
+    var REQ_VERB_RE  = /\b(shall|must|will\s+provide|is\s+required|are\s+required|provide|submit|describe|address|demonstrate|deliver)\b/i;
+    var FORM_RE      = /\b(SF[-\s]?\d{1,4}[A-Z]?|DD[-\s]?Form|Attachment\s+\d+|Exhibit\s+[A-Z]|Appendix\s+[A-Z])\b/i;
+    var DEADLINE_RE  = /\b(due|deadline|Q\s*&\s*A|questions?\s+due|proposal\s+due|site\s+visit|intent\s+to\s+bid|industry\s+day)\b/i;
+    var RISK_RE      = /\b(insurance|bonding|security\s+clearance|background\s+check|site\s+visit|past\s+performance|small\s+business|set[-\s]?aside)\b/i;
+    var inL = false, inM = false, inPWS = false;
+    for (var i = 0; i < lines.length; i++) {
+      var line = lines[i];
+      if (SECTION_L_RE.test(line)) { inL = true; inM = false; inPWS = false; out.sectionL.push(line); continue; }
+      if (SECTION_M_RE.test(line)) { inM = true; inL = false; inPWS = false; out.sectionM.push(line); continue; }
+      if (PWS_RE.test(line) && !inL && !inM) { inPWS = true; out.pws.push(line); continue; }
+      if (inL && REQ_VERB_RE.test(line)) { out.sectionL.push(line); }
+      else if (inM && REQ_VERB_RE.test(line)) { out.sectionM.push(line); }
+      else if (inPWS && REQ_VERB_RE.test(line)) { out.pws.push(line); }
+      if (FORM_RE.test(line)) out.forms.push(line);
+      if (DEADLINE_RE.test(line)) out.deadlines.push(line);
+      if (RISK_RE.test(line)) out.risks.push(line);
+    }
+    function dedupe(arr){
+      var seen = {}, r = [];
+      for (var j = 0; j < arr.length; j++) {
+        var k = String(arr[j]).toLowerCase();
+        if (!seen[k]) { seen[k] = true; r.push(arr[j]); }
+      }
+      return r.slice(0, 60);
+    }
+    out.sectionL  = dedupe(out.sectionL);
+    out.sectionM  = dedupe(out.sectionM);
+    out.pws       = dedupe(out.pws);
+    out.forms     = dedupe(out.forms);
+    out.deadlines = dedupe(out.deadlines);
+    out.risks     = dedupe(out.risks);
+    return out;
+  }
+  function buildMatrixFromExtraction(ex){
+    var rows = [];
+    var n = 0;
+    function classifyMandatory(t){ return /\b(shall|must|is\s+required|are\s+required)\b/i.test(t) ? 'Mandatory' : 'Optional'; }
+    function classifyProposalSection(srcLabel){
+      if (/^L\b|Section\s+L/i.test(srcLabel)) return 'Volume I — Technical';
+      if (/^M\b|Section\s+M/i.test(srcLabel)) return 'Volume IV — Evaluation Alignment';
+      if (/PWS|SOW/i.test(srcLabel)) return 'Volume II — Management / PWS Response';
+      return 'TBD — operator assigns';
+    }
+    function classifyRisk(t){
+      var hits = (t.match(/\b(insurance|bonding|security\s+clearance|background\s+check|site\s+visit|past\s+performance)\b/ig) || []);
+      return hits.length ? 'Flagged: ' + hits.slice(0, 3).join(', ') : '—';
+    }
+    function add(sourceLabel, list){
+      for (var i = 0; i < list.length; i++) {
+        n++;
+        rows.push({
+          id: 'R-' + String(n).padStart(3, '0'),
+          source: sourceLabel,
+          text: String(list[i]).slice(0, 400),
+          mandatory: classifyMandatory(list[i]),
+          proposalSection: classifyProposalSection(sourceLabel),
+          owner: 'TBD — operator assigns',
+          evidence: 'TBD — operator assigns',
+          status: 'Draft — Not Reviewed',
+          risk: classifyRisk(list[i]),
+          notes: ''
+        });
+      }
+    }
+    add('Section L', ex.sectionL);
+    add('Section M', ex.sectionM);
+    add('PWS / SOW', ex.pws);
+    return rows;
+  }
+  function renderPanels(state){
+    if (!state || !state.sections) {
+      setHTML('gc-sol-summary',   emptyDiv('No solicitation loaded yet. Paste solicitation text or add opportunity details manually.'));
+      setHTML('gc-sol-section-l', emptyDiv('No Section L instructions extracted yet. Draft extraction — verify against source document.'));
+      setHTML('gc-sol-section-m', emptyDiv('No Section M evaluation criteria extracted yet. Draft extraction — verify against source document.'));
+      setHTML('gc-sol-pws',       emptyDiv('No PWS / SOW requirements extracted yet. Draft extraction — verify against source document.'));
+      setHTML('gc-sol-forms',     emptyDiv('No required forms or attachments extracted yet. Draft extraction — verify against source document.'));
+      setHTML('gc-sol-deadlines', emptyDiv('No deadlines extracted yet. Draft extraction — verify against source document.'));
+      setHTML('gc-sol-risks',     emptyDiv('No risks or deal killers extracted yet. Draft extraction — verify against source document.'));
+      return;
+    }
+    var s = state.sections;
+    setHTML('gc-sol-summary',
+      state.summary
+        ? '<div style="font-size:11px;color:var(--text);line-height:1.55">' + safeText(state.summary) + '</div>'
+          + '<div style="margin-top:6px;font-size:10px;color:var(--muted);font-style:italic">Draft extraction — verify against source document.</div>'
+        : emptyDiv('No solicitation loaded yet. Paste solicitation text or add opportunity details manually.')
+    );
+    setHTML('gc-sol-section-l', listDiv(s.sectionL,  'No Section L instructions extracted yet. Draft extraction — verify against source document.'));
+    setHTML('gc-sol-section-m', listDiv(s.sectionM,  'No Section M evaluation criteria extracted yet. Draft extraction — verify against source document.'));
+    setHTML('gc-sol-pws',       listDiv(s.pws,       'No PWS / SOW requirements extracted yet. Draft extraction — verify against source document.'));
+    setHTML('gc-sol-forms',     listDiv(s.forms,     'No required forms or attachments extracted yet. Draft extraction — verify against source document.'));
+    setHTML('gc-sol-deadlines', listDiv(s.deadlines, 'No deadlines extracted yet. Draft extraction — verify against source document.'));
+    setHTML('gc-sol-risks',     listDiv(s.risks,     'No risks or deal killers extracted yet. Draft extraction — verify against source document.'));
+  }
+  function renderMatrix(matrix){
+    var body = $('gc-sol-matrix-body');
+    if (!body) return;
+    if (!matrix || !matrix.length) {
+      body.innerHTML = '<tr><td colspan="10" class="gc-sol-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No requirements extracted yet. Paste solicitation text and run extraction. SourceDeck does not submit bids. All outputs require human review.</td></tr>';
+      return;
+    }
+    var rows = [];
+    for (var i = 0; i < matrix.length; i++) {
+      var r = matrix[i];
+      rows.push('<tr style="border-top:1px solid var(--border2,rgba(255,255,255,0.05));font-family:\'Instrument Sans\',sans-serif">'
+        + '<td style="padding:7px 6px;font-family:\'Azeret Mono\',monospace;color:var(--text)">' + safeText(r.id) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.source) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--text);max-width:300px">' + safeText(r.text) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.mandatory) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.proposalSection) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(r.owner) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(r.evidence) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.status) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.risk) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(r.notes) + '</td>'
+        + '</tr>');
+    }
+    body.innerHTML = rows.join('');
+  }
+  function renderOppDropdown(){
+    var sel = $('gc-sol-opp-select');
+    if (!sel) return;
+    var opps = loadOpps();
+    var prior = sel.value;
+    var opts = ['<option value="">— Not linked —</option>'];
+    for (var i = 0; i < opps.length; i++) {
+      var o = opps[i];
+      opts.push('<option value="' + safeText(o.id) + '">' + safeText(o.title || o.solicitationNumber || o.id) + '</option>');
+    }
+    sel.innerHTML = opts.join('');
+    if (prior) { try { sel.value = prior; } catch (e) {} }
+  }
+  function renderAll(){
+    var state = loadState();
+    renderOppDropdown();
+    renderPanels(state);
+    renderMatrix(state.matrix);
+  }
+  window.gcSolExtract = function(){
+    var ta = $('gc-sol-text');
+    var text = ta ? String(ta.value || '') : '';
+    if (!text.trim()) {
+      if (window.toast) try { window.toast('Paste solicitation text first — extraction is local and requires source text.', 'info'); } catch (e) {}
+      return;
+    }
+    var ex = extractFromText(text);
+    var state = loadState();
+    state.summary = ex.summary;
+    state.sections = {
+      sectionL: ex.sectionL, sectionM: ex.sectionM, pws: ex.pws,
+      forms: ex.forms, deadlines: ex.deadlines, risks: ex.risks
+    };
+    saveState(state);
+    renderPanels(state);
+    if (window.toast) try { window.toast('Draft extraction complete. Verify every row against the source document. Human review required.', 'ok'); } catch (e) {}
+  };
+  window.gcSolBuildMatrix = function(){
+    var state = loadState();
+    if (!state.sections || (!state.sections.sectionL && !state.sections.sectionM && !state.sections.pws)) {
+      if (window.toast) try { window.toast('Extract requirements first — paste solicitation text and run Extract Requirements.', 'info'); } catch (e) {}
+      return;
+    }
+    state.matrix = buildMatrixFromExtraction(state.sections);
+    saveState(state);
+    renderMatrix(state.matrix);
+    if (window.toast) try { window.toast('Compliance matrix built from draft extraction. Every row is draft and requires human review.', 'ok'); } catch (e) {}
+  };
+  window.gcSolMarkReviewed = function(){
+    var state = loadState();
+    if (!state.matrix || !state.matrix.length) {
+      if (window.toast) try { window.toast('No matrix rows yet — build the compliance matrix first.', 'info'); } catch (e) {}
+      return;
+    }
+    var idx = state.matrix.findIndex(function(r){ return r.status !== 'Reviewed'; });
+    if (idx < 0) {
+      if (window.toast) try { window.toast('All draft rows already marked reviewed.', 'ok'); } catch (e) {}
+      return;
+    }
+    state.matrix[idx].status = 'Reviewed';
+    saveState(state);
+    renderMatrix(state.matrix);
+    if (window.toast) try { window.toast('Row ' + state.matrix[idx].id + ' marked Reviewed. Human review responsibility belongs to the operator.', 'ok'); } catch (e) {}
+  };
+  window.gcSolExportPlaceholder = function(){
+    if (window.toast) try { window.toast('Export Matrix placeholder — export bundle ships in Phase 22F. SourceDeck does not submit bids.', 'info'); } catch (e) {}
+  };
+  window.gcSolRender = renderAll;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderAll);
+  } else {
+    setTimeout(renderAll, 0);
   }
 })();
 </script>
