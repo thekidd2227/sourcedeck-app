@@ -48,7 +48,7 @@ npm run release:check  # Pre-release privacy + parity gate
 | Revenue | Deal value tracking and revenue map |
 | Email Tracker | Outreach and reply monitoring |
 | Overdue | Action items past due date |
-| Reply Analyzer | AI-assisted reply classification |
+| Response Desk | Inbound reply triage, intent scoring, draft-only responses, and pipeline/task recommendations |
 | Ad Engine | Content and ad creation |
 | Daily Ops | Daily operations brief |
 | Socials | Social media content |
