@@ -2430,6 +2430,206 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             SourceDeck does not submit bids or quotes. SourceDeck does not send vendor outreach. No quote request is sent automatically. All vendor entries, credential rows, risk notes, and pricing fields are manual. Pricing output is advisory and must be reviewed before bid submission. No bid is submitted to SAM.gov, PIEE, eBuy, GSA, agency portals, or email. Human approval required for every action.
           </div>
         </section>
+        <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 22E — Past Performance Library + Capability Statement
+             Studio + Prime Partner Finder.
+             Buyer-facing proof / positioning / teaming triage surfaces.
+             Manual intake only. SourceDeck does not send capability
+             statements or outreach. SourceDeck does not send partner
+             outreach. SourceDeck does not submit bids or quotes. No
+             outreach is drafted, sent, or queued by these surfaces. No
+             bid or quote is submitted to SAM.gov, PIEE, eBuy, GSA, agency
+             portals, or email. All outputs are advisory and require human
+             review before any further action.
+             ═══════════════════════════════════════════════════════════════ -->
+        <section id="gc-pp-cs-pp" class="gc-pp-cs-pp" data-section="govcon-past-performance-capability-prime" style="margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+
+          <!-- ─── Past Performance Library ─── -->
+          <section id="gc-pp" class="gc-pp" data-section="govcon-past-performance-library" style="margin-bottom:18px">
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Past Performance Library</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Project · Agency · NAICS · PoP · Value · Role · CPARS · Evidence</div>
+              <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">Past performance suggestions are advisory and must be reviewed before proposal use. SourceDeck does not send capability statements or outreach. All entries are manual.</div>
+            </div>
+
+            <details class="gc-pp-intake" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">
+              <summary style="cursor:pointer;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:12.5px;color:var(--text)">Add a past performance record (manual entry)</summary>
+              <form id="gc-pp-intake-form" onsubmit="return gcPpAddRecord(event)" style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Project title</span><input class="input" id="gc-pp-f-title" type="text" required placeholder="e.g. IT modernization for example agency"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Agency / customer</span><input class="input" id="gc-pp-f-agency" type="text" placeholder="e.g. example federal agency"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>NAICS</span><input class="input" id="gc-pp-f-naics" type="text" placeholder="e.g. 541512"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Contract number</span><input class="input" id="gc-pp-f-contract" type="text" placeholder="e.g. operator-provided contract id"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Period of performance</span><input class="input" id="gc-pp-f-pop" type="text" placeholder="e.g. 2023-01 to 2025-12"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Contract value (USD)</span><input class="input" id="gc-pp-f-value" type="number" min="0" step="0.01" placeholder="0.00"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Role</span>
+                  <select class="select" id="gc-pp-f-role">
+                    <option value="Prime">Prime</option>
+                    <option value="Sub">Sub</option>
+                    <option value="Teaming Partner">Teaming Partner</option>
+                  </select>
+                </label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Scope summary</span><textarea class="input" id="gc-pp-f-scope" rows="2" placeholder="Brief operator-written scope summary"></textarea></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Relevance tags (comma-separated)</span><input class="input" id="gc-pp-f-tags" type="text" placeholder="e.g. cloud migration, identity, zero trust (operator-supplied tags)"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>CPARS / performance notes</span><textarea class="input" id="gc-pp-f-cpars" rows="2" placeholder="Operator-supplied CPARS rating notes — verify against source before proposal use"></textarea></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Evidence file notes</span><textarea class="input" id="gc-pp-f-evidence" rows="2" placeholder="Operator-supplied notes on supporting files (kept locally; no upload)"></textarea></label>
+                <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+                  <button type="submit" class="btn btn-gold">Add Past Performance Record</button>
+                  <button type="button" class="btn btn-ghost" onclick="gcPpRender()">Refresh</button>
+                </div>
+                <div style="grid-column:1/-1;font-size:10px;color:var(--muted);line-height:1.55;margin-top:4px">Manual intake only. Past performance suggestions are advisory and must be reviewed before proposal use. SourceDeck does not send capability statements or outreach.</div>
+              </form>
+            </details>
+
+            <div class="gc-pp-table-wrap" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;overflow-x:auto">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Past Performance Records</div>
+                <div style="font-size:10px;color:var(--muted)">Advisory — verify CPARS / performance notes against source before proposal use.</div>
+              </div>
+              <table id="gc-pp-table" style="width:100%;border-collapse:collapse;font-size:10.5px;min-width:820px">
+                <thead>
+                  <tr style="text-align:left;color:var(--sub);font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.08em">
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Project</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Agency / customer</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">NAICS</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">PoP</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Value</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Role</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">CPARS notes</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Evidence</th>
+                  </tr>
+                </thead>
+                <tbody id="gc-pp-tbody">
+                  <tr><td colspan="8" class="gc-pp-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No past performance records added yet. Add relevant projects manually. Past performance suggestions are advisory and must be reviewed before proposal use.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- ─── Capability Statement Studio ─── -->
+          <section id="gc-cs" class="gc-cs" data-section="govcon-capability-statement-studio" style="margin-bottom:18px">
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Capability Statement Studio</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Target agency · Solicitation · NAICS · Core capabilities · Differentiators · Past performance · Outline</div>
+              <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">Capability statement output is a draft. Review before sending. SourceDeck does not send capability statements or outreach.</div>
+            </div>
+
+            <div class="gc-cs-form" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:12px">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Target agency</span><input class="input" id="gc-cs-f-agency" type="text" placeholder="e.g. example federal agency" oninput="gcCsSave()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Target opportunity / solicitation number</span><input class="input" id="gc-cs-f-sol" type="text" placeholder="e.g. operator-provided sol number" oninput="gcCsSave()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Target NAICS</span><input class="input" id="gc-cs-f-naics" type="text" placeholder="e.g. 541512" oninput="gcCsSave()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Certifications / set-asides</span><input class="input" id="gc-cs-f-certs" type="text" placeholder="e.g. 8(a), SDVOSB, WOSB, HUBZone — operator confirms" oninput="gcCsSave()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Core capabilities (comma-separated)</span><input class="input" id="gc-cs-f-core" type="text" placeholder="e.g. cloud migration, identity, zero trust, data engineering" oninput="gcCsSave()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Differentiators (comma-separated)</span><input class="input" id="gc-cs-f-diff" type="text" placeholder="e.g. agency-specific experience, certified labor categories, regional presence" oninput="gcCsSave()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Relevant past performance (select from library)</span>
+                  <select class="select" id="gc-cs-f-pp-select" multiple size="4" onchange="gcCsSave()">
+                    <option value="" disabled>— Add a past performance record above to populate —</option>
+                  </select>
+                </label>
+                <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+                  <button type="button" class="btn btn-gold" onclick="gcCsBuildOutline()">Build Capability Statement Outline (draft)</button>
+                  <button type="button" class="btn btn-ghost" onclick="gcCsClearOutline()">Clear Outline</button>
+                </div>
+                <div style="grid-column:1/-1;font-size:10px;color:var(--muted);line-height:1.55;margin-top:4px">Outline is a draft. Review before sending. SourceDeck does not send capability statements or outreach. No external call.</div>
+              </div>
+            </div>
+
+            <div class="gc-cs-outline-wrap" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Tailored Capability Statement Outline (draft)</div>
+                <div style="font-size:10px;color:var(--muted)">Draft — review before sending. SourceDeck does not send capability statements or outreach.</div>
+              </div>
+              <div id="gc-cs-outline">
+                <div class="gc-cs-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No tailored capability statement outline generated yet. Fill in the target agency / NAICS / core capabilities and click "Build Capability Statement Outline (draft)". The output is a draft and must be reviewed before sending.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ─── Prime Partner Finder ─── -->
+          <section id="gc-ppf" class="gc-ppf" data-section="govcon-prime-partner-finder" style="margin-bottom:18px">
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Prime Partner Finder</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">NAICS · Agency · Location · Prime · Fit · Status · Teaming angle</div>
+              <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">Partner outreach is not sent from SourceDeck. "Contacted manually" means the user records outside activity. Human approval required for every action.</div>
+            </div>
+
+            <details class="gc-ppf-intake" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">
+              <summary style="cursor:pointer;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:12.5px;color:var(--text)">Add a prime partner row (manual entry — SourceDeck does not send partner outreach)</summary>
+              <form id="gc-ppf-intake-form" onsubmit="return gcPpfAddPartner(event)" style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Target NAICS</span><input class="input" id="gc-ppf-f-naics" type="text" placeholder="e.g. 541512"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Target agency</span><input class="input" id="gc-ppf-f-agency" type="text" placeholder="e.g. example federal agency"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Target location</span><input class="input" id="gc-ppf-f-location" type="text" placeholder="e.g. Huntsville, AL"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Prime name</span><input class="input" id="gc-ppf-f-prime" type="text" required placeholder="e.g. example prime — operator-supplied"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Partner status</span>
+                  <select class="select" id="gc-ppf-f-status">
+                    <option value="Research">Research</option>
+                    <option value="Shortlist">Shortlist</option>
+                    <option value="Contacted manually">Contacted manually (operator sent outside SourceDeck)</option>
+                    <option value="Interested">Interested</option>
+                    <option value="Not a fit">Not a fit</option>
+                    <option value="Follow up later">Follow up later</option>
+                  </select>
+                </label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Prime role / fit notes</span><textarea class="input" id="gc-ppf-f-fit" rows="2" placeholder="Operator-supplied fit notes (capabilities, set-aside coverage, capacity)"></textarea></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Contact notes</span><textarea class="input" id="gc-ppf-f-contact" rows="2" placeholder="Operator-supplied contact notes — SourceDeck does not send partner outreach"></textarea></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Teaming angle</span><textarea class="input" id="gc-ppf-f-angle" rows="2" placeholder="Operator-supplied teaming angle (what we bring, what they need)"></textarea></label>
+                <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+                  <button type="submit" class="btn btn-gold">Add Prime Partner Row</button>
+                  <button type="button" class="btn btn-ghost" onclick="gcPpfRender()">Refresh</button>
+                </div>
+                <div style="grid-column:1/-1;font-size:10px;color:var(--muted);line-height:1.55;margin-top:4px">Manual entry only. Partner outreach is not sent from SourceDeck. "Contacted manually" means the user records outside activity.</div>
+              </form>
+            </details>
+
+            <div class="gc-ppf-table-wrap" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;overflow-x:auto">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Prime Partner Rows</div>
+                <div style="font-size:10px;color:var(--muted)">Advisory — SourceDeck does not send partner outreach.</div>
+              </div>
+              <table id="gc-ppf-table" style="width:100%;border-collapse:collapse;font-size:10.5px;min-width:820px">
+                <thead>
+                  <tr style="text-align:left;color:var(--sub);font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.08em">
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Prime</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">NAICS</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Agency</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Location</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Status</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Fit notes</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Teaming angle</th>
+                  </tr>
+                </thead>
+                <tbody id="gc-ppf-tbody">
+                  <tr><td colspan="7" class="gc-pp-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No prime partner rows added yet. Add a candidate prime manually. Partner outreach is not sent from SourceDeck.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
+
+          <!-- ─── Incumbent / Recompete + Pre-RFP placeholders ─── -->
+          <div class="gc-pe-placeholders" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-bottom:14px">
+            <div class="gc-pp-placeholder" id="gc-incumbent-placeholder" data-section="govcon-incumbent-recompete-placeholder" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:4px">Incumbent / Recompete Intelligence</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px">Placeholder — wired in a later phase</div>
+              <div style="font-size:10.5px;color:var(--sub);line-height:1.55">No incumbent intelligence wired in this phase. Buyer review only. SourceDeck does not call agency portals from this surface. Human approval required.</div>
+            </div>
+            <div class="gc-pp-placeholder" id="gc-pre-rfp-placeholder" data-section="govcon-pre-rfp-capture-placeholder" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:4px">Pre-RFP Capture Tracker</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px">Placeholder — wired in a later phase</div>
+              <div style="font-size:10.5px;color:var(--sub);line-height:1.55">No pre-RFP capture flow wired in this phase. Buyer review only. SourceDeck does not send capture outreach. No agency-portal post.</div>
+            </div>
+            <div class="gc-pp-placeholder" id="gc-teaming-draft-placeholder" data-section="govcon-teaming-outreach-draft-placeholder" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:4px">Teaming Outreach Draft</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px">Placeholder — human-approved only</div>
+              <div style="font-size:10.5px;color:var(--sub);line-height:1.55">No teaming outreach is drafted, sent, or queued from this surface. Any future drafting will be advisory and human-approved only — SourceDeck does not auto-send teaming outreach.</div>
+            </div>
+          </div>
+
+          <!-- ─── Shared Human Review Required notice ─── -->
+          <div class="gc-pe-human-review" id="gc-pe-human-review" style="background:rgba(110,31,44,0.10);border:1px solid rgba(110,31,44,0.45);border-radius:var(--r2);padding:10px 12px;font-size:10.5px;line-height:1.55;color:var(--sub)">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text);margin-bottom:4px">Human Review Required</div>
+            SourceDeck does not submit bids or quotes. SourceDeck does not send capability statements or outreach. SourceDeck does not send partner outreach. No outreach is drafted, sent, or queued by these surfaces. No bid is submitted to SAM.gov, PIEE, eBuy, GSA, agency portals, or email. Past performance suggestions and capability statement outlines are advisory and require human review before proposal use. Human approval required for every action.
+          </div>
+        </section>
         <!--
           ─────────────────────────────────────────────────────────────
           GovCon Pursuit Profile — manual-only setup/readiness card.
@@ -12153,6 +12353,254 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.gcPricingRender = renderPricing;
   function renderAll(){ renderVqr(); renderPricing(); }
   window.gcVendorPricingRender = renderAll;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderAll);
+  } else {
+    setTimeout(renderAll, 0);
+  }
+})();
+</script>
+<script>
+/* Phase 22E — Past Performance Library + Capability Statement Studio
+   + Prime Partner Finder renderer.
+   Pure browser code. No network, no auto-send, no auto-submit, no
+   partner outreach, no bid submission. SourceDeck does not send
+   capability statements or outreach. "Contacted manually" means the
+   operator recorded outside activity — SourceDeck does not send the
+   contact. Every output is advisory and requires human review. State
+   is local-only via window.localStorage. */
+(function(){
+  'use strict';
+  var PP_KEY  = 'sd.govcon.pastPerformance.v1';
+  var CS_KEY  = 'sd.govcon.capabilityStatement.v1';
+  var PPF_KEY = 'sd.govcon.primePartners.v1';
+  function loadArr(key){
+    try {
+      var raw = window.localStorage && window.localStorage.getItem(key);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+  function saveArr(key, arr){
+    try { window.localStorage && window.localStorage.setItem(key, JSON.stringify(arr)); }
+    catch (e) {}
+  }
+  function loadObj(key){
+    try {
+      var raw = window.localStorage && window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : {};
+    } catch (e) { return {}; }
+  }
+  function saveObj(key, obj){
+    try { window.localStorage && window.localStorage.setItem(key, JSON.stringify(obj)); }
+    catch (e) {}
+  }
+  function $(id){ return document.getElementById(id); }
+  function safeText(s){ return String(s == null ? '' : s).replace(/[<>]/g, ''); }
+  function fmtUSD(n){
+    n = Number(n);
+    if (!isFinite(n) || n === 0) return '—';
+    return '$' + n.toFixed(0).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+  }
+  // ─── Past Performance Library ─────────────────────────────────
+  window.gcPpAddRecord = function(ev){
+    if (ev && ev.preventDefault) ev.preventDefault();
+    var form = (ev && ev.target) || $('gc-pp-intake-form');
+    if (!form) return false;
+    function v(id){ var el = form.querySelector('#' + id) || $(id); return el ? String(el.value || '') : ''; }
+    var title = v('gc-pp-f-title').trim();
+    if (!title) return false;
+    var amt = parseFloat(v('gc-pp-f-value'));
+    var rec = {
+      id: 'pp_' + (Date.now().toString(36)) + Math.floor(Math.random() * 1e6).toString(36),
+      title: title,
+      agency: v('gc-pp-f-agency').trim(),
+      naics: v('gc-pp-f-naics').trim(),
+      contract: v('gc-pp-f-contract').trim(),
+      pop: v('gc-pp-f-pop').trim(),
+      value: isFinite(amt) && amt >= 0 ? amt : null,
+      role: v('gc-pp-f-role').trim() || 'Prime',
+      scope: v('gc-pp-f-scope').trim(),
+      tags: v('gc-pp-f-tags').trim(),
+      cpars: v('gc-pp-f-cpars').trim(),
+      evidence: v('gc-pp-f-evidence').trim(),
+      createdAt: Date.now()
+    };
+    var arr = loadArr(PP_KEY);
+    arr.push(rec);
+    saveArr(PP_KEY, arr);
+    try { form.reset && form.reset(); } catch (e) {}
+    gcPpRender();
+    gcCsRefreshPpDropdown();
+    if (window.toast) try { window.toast('Past performance record added. Advisory — verify CPARS / performance notes against source before proposal use.', 'ok'); } catch (e) {}
+    return false;
+  };
+  window.gcPpRender = function(){
+    var arr = loadArr(PP_KEY);
+    var body = $('gc-pp-tbody');
+    if (!body) return;
+    if (!arr.length) {
+      body.innerHTML = '<tr><td colspan="8" class="gc-pp-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No past performance records added yet. Add relevant projects manually. Past performance suggestions are advisory and must be reviewed before proposal use.</td></tr>';
+      return;
+    }
+    var rows = [];
+    for (var i = 0; i < arr.length; i++) {
+      var r = arr[i];
+      rows.push('<tr style="border-top:1px solid var(--border2,rgba(255,255,255,0.05));font-family:\'Instrument Sans\',sans-serif">'
+        + '<td style="padding:7px 6px;color:var(--text)">' + safeText(r.title) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--text)">' + safeText(r.agency) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub);font-family:\'Azeret Mono\',monospace">' + safeText(r.naics) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.pop) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--text);font-family:\'Azeret Mono\',monospace">' + (r.value != null ? fmtUSD(r.value) : '—') + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.role) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(r.cpars) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(r.evidence) + '</td>'
+        + '</tr>');
+    }
+    body.innerHTML = rows.join('');
+  };
+  // ─── Capability Statement Studio ─────────────────────────────
+  function gcCsRefreshPpDropdown(){
+    var sel = $('gc-cs-f-pp-select');
+    if (!sel) return;
+    var arr = loadArr(PP_KEY);
+    var st = loadObj(CS_KEY);
+    var selected = Array.isArray(st.pp) ? st.pp : [];
+    if (!arr.length) {
+      sel.innerHTML = '<option value="" disabled>— Add a past performance record above to populate —</option>';
+      return;
+    }
+    var opts = [];
+    for (var i = 0; i < arr.length; i++) {
+      var r = arr[i];
+      var sel2 = selected.indexOf(r.id) >= 0 ? ' selected' : '';
+      var label = safeText(r.title) + (r.agency ? ' · ' + safeText(r.agency) : '') + (r.naics ? ' · NAICS ' + safeText(r.naics) : '');
+      opts.push('<option value="' + safeText(r.id) + '"' + sel2 + '>' + label + '</option>');
+    }
+    sel.innerHTML = opts.join('');
+  }
+  window.gcCsSave = function(){
+    var st = loadObj(CS_KEY);
+    st.agency = ($('gc-cs-f-agency') || {}).value || '';
+    st.sol    = ($('gc-cs-f-sol')    || {}).value || '';
+    st.naics  = ($('gc-cs-f-naics')  || {}).value || '';
+    st.certs  = ($('gc-cs-f-certs')  || {}).value || '';
+    st.core   = ($('gc-cs-f-core')   || {}).value || '';
+    st.diff   = ($('gc-cs-f-diff')   || {}).value || '';
+    var sel = $('gc-cs-f-pp-select');
+    if (sel) {
+      st.pp = Array.from(sel.selectedOptions || []).map(function(o){ return o.value; });
+    }
+    saveObj(CS_KEY, st);
+  };
+  window.gcCsBuildOutline = function(){
+    var st = loadObj(CS_KEY);
+    var agency = String(st.agency || '').trim();
+    var sol    = String(st.sol || '').trim();
+    var naics  = String(st.naics || '').trim();
+    var certs  = String(st.certs || '').trim();
+    var core   = String(st.core || '').trim();
+    var diff   = String(st.diff || '').trim();
+    var ppIds  = Array.isArray(st.pp) ? st.pp : [];
+    var ppArr  = loadArr(PP_KEY).filter(function(r){ return ppIds.indexOf(r.id) >= 0; });
+    var out = $('gc-cs-outline');
+    if (!out) return;
+    if (!agency && !naics && !core) {
+      out.innerHTML = '<div class="gc-cs-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">Add a target agency / NAICS / core capabilities first, then click "Build Capability Statement Outline (draft)".</div>';
+      return;
+    }
+    function listItems(csv){
+      return String(csv || '').split(/[,;]+/).map(function(s){ return s.trim(); }).filter(Boolean);
+    }
+    var coreList = listItems(core);
+    var diffList = listItems(diff);
+    var ppLines = ppArr.map(function(r){
+      return '<li><strong>' + safeText(r.title) + '</strong>' + (r.agency ? ' · ' + safeText(r.agency) : '') + (r.role ? ' · ' + safeText(r.role) : '') + (r.naics ? ' · NAICS ' + safeText(r.naics) : '') + (r.cpars ? '<br><span style="color:var(--muted);font-size:10px">CPARS notes (operator-verified): ' + safeText(r.cpars) + '</span>' : '') + '</li>';
+    });
+    var html = []
+      .concat('<div style="font-family:\'Instrument Sans\',sans-serif;font-size:11.5px;color:var(--text);line-height:1.65">')
+      .concat('<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:6px">Draft — review before sending. SourceDeck does not send capability statements or outreach.</div>')
+      .concat('<div><strong>Target agency:</strong> ' + (agency ? safeText(agency) : '<em>(operator-supplied)</em>') + '</div>')
+      .concat('<div><strong>Solicitation / opportunity:</strong> ' + (sol ? safeText(sol) : '<em>(operator-supplied)</em>') + '</div>')
+      .concat('<div><strong>Target NAICS:</strong> ' + (naics ? safeText(naics) : '<em>(operator-supplied)</em>') + '</div>')
+      .concat('<div><strong>Certifications / set-asides (operator confirms):</strong> ' + (certs ? safeText(certs) : '<em>(operator-supplied)</em>') + '</div>')
+      .concat(coreList.length ? '<div style="margin-top:8px"><strong>Core capabilities</strong><ul style="margin:4px 0 0 16px;padding:0">' + coreList.map(function(s){ return '<li>' + safeText(s) + '</li>'; }).join('') + '</ul></div>' : '')
+      .concat(diffList.length ? '<div style="margin-top:8px"><strong>Differentiators</strong><ul style="margin:4px 0 0 16px;padding:0">' + diffList.map(function(s){ return '<li>' + safeText(s) + '</li>'; }).join('') + '</ul></div>' : '')
+      .concat(ppLines.length ? '<div style="margin-top:8px"><strong>Relevant past performance</strong><ul style="margin:4px 0 0 16px;padding:0">' + ppLines.join('') + '</ul></div>' : '')
+      .concat('<div style="margin-top:10px;color:var(--muted);font-size:10px;font-style:italic">Draft outline. Capability statement output is a draft. Review before sending. SourceDeck does not send capability statements or outreach. Every claim above is operator-supplied — verify before proposal use.</div>')
+      .concat('</div>');
+    out.innerHTML = html.join('');
+  };
+  window.gcCsClearOutline = function(){
+    var out = $('gc-cs-outline');
+    if (!out) return;
+    out.innerHTML = '<div class="gc-cs-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No tailored capability statement outline generated yet. Fill in the target agency / NAICS / core capabilities and click "Build Capability Statement Outline (draft)". The output is a draft and must be reviewed before sending.</div>';
+  };
+  function gcCsRestore(){
+    var st = loadObj(CS_KEY);
+    var fields = { 'gc-cs-f-agency':'agency', 'gc-cs-f-sol':'sol', 'gc-cs-f-naics':'naics', 'gc-cs-f-certs':'certs', 'gc-cs-f-core':'core', 'gc-cs-f-diff':'diff' };
+    for (var id in fields) {
+      var el = $(id); if (el && st[fields[id]] != null && document.activeElement !== el) el.value = st[fields[id]];
+    }
+    gcCsRefreshPpDropdown();
+  }
+  // ─── Prime Partner Finder ────────────────────────────────────
+  window.gcPpfAddPartner = function(ev){
+    if (ev && ev.preventDefault) ev.preventDefault();
+    var form = (ev && ev.target) || $('gc-ppf-intake-form');
+    if (!form) return false;
+    function v(id){ var el = form.querySelector('#' + id) || $(id); return el ? String(el.value || '') : ''; }
+    var prime = v('gc-ppf-f-prime').trim();
+    if (!prime) return false;
+    var rec = {
+      id: 'ppf_' + (Date.now().toString(36)) + Math.floor(Math.random() * 1e6).toString(36),
+      prime: prime,
+      naics: v('gc-ppf-f-naics').trim(),
+      agency: v('gc-ppf-f-agency').trim(),
+      location: v('gc-ppf-f-location').trim(),
+      status: v('gc-ppf-f-status').trim() || 'Research',
+      fitNotes: v('gc-ppf-f-fit').trim(),
+      contactNotes: v('gc-ppf-f-contact').trim(),
+      teamingAngle: v('gc-ppf-f-angle').trim(),
+      createdAt: Date.now()
+    };
+    var arr = loadArr(PPF_KEY);
+    arr.push(rec);
+    saveArr(PPF_KEY, arr);
+    try { form.reset && form.reset(); } catch (e) {}
+    gcPpfRender();
+    if (window.toast) try { window.toast('Prime partner row added. Partner outreach is not sent from SourceDeck.', 'ok'); } catch (e) {}
+    return false;
+  };
+  window.gcPpfRender = function(){
+    var arr = loadArr(PPF_KEY);
+    var body = $('gc-ppf-tbody');
+    if (!body) return;
+    if (!arr.length) {
+      body.innerHTML = '<tr><td colspan="7" class="gc-pp-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No prime partner rows added yet. Add a candidate prime manually. Partner outreach is not sent from SourceDeck.</td></tr>';
+      return;
+    }
+    var rows = [];
+    for (var i = 0; i < arr.length; i++) {
+      var r = arr[i];
+      rows.push('<tr style="border-top:1px solid var(--border2,rgba(255,255,255,0.05));font-family:\'Instrument Sans\',sans-serif">'
+        + '<td style="padding:7px 6px;color:var(--text)">' + safeText(r.prime) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub);font-family:\'Azeret Mono\',monospace">' + safeText(r.naics) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.agency) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.location) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.status) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(r.fitNotes) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(r.teamingAngle) + '</td>'
+        + '</tr>');
+    }
+    body.innerHTML = rows.join('');
+  };
+  function renderAll(){
+    gcPpRender();
+    gcCsRestore();
+    gcPpfRender();
+  }
+  window.gcPePerformanceRender = renderAll;
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', renderAll);
   } else {
