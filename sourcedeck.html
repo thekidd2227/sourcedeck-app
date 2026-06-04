@@ -732,6 +732,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 </style>
 <!-- Response Desk deterministic classifier (UMD; same module used by test/response-desk.test.js) -->
 <script src="services/response-desk.js"></script>
+<!-- Default-state policy (industries, platforms, generic ad-topic categories, demo-mode gate) -->
+<script src="services/default-state-policy.js"></script>
 </head>
 <body>
 
@@ -995,12 +997,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           </div>
           <div class="card">
             <div class="sl">Automation Status</div>
-            <div class="kv"><span class="k">PROD-01 Assessment</span><span class="badge bgn">ACTIVE</span></div>
-            <div class="kv"><span class="k">PROD-02 Notion Sync</span><span class="badge bgn">ACTIVE</span></div>
-            <div class="kv"><span class="k">PROD-03 Instantly (4595758)</span><span class="badge bgn">ACTIVE</span></div>
-            <div class="kv"><span class="k">PROD-04 Reply Intel</span><span class="badge bgn">ACTIVE</span></div>
-            <div class="kv"><span class="k">PROD-05 Booking Brief</span><span class="badge bgn">ACTIVE</span></div>
-            <div class="kv"><span class="k">Warmup Score</span><span class="badge bgn">100/100</span></div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No automations active. Connect tools in Settings to populate this panel.</div>
           </div>
         </div>
       </div>
@@ -1022,50 +1019,11 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <option>High</option><option>Medium</option><option>Low</option>
           </select>
           <select class="select" id="lg-region" style="min-width:130px">
-            <option value="">Select Region to Generate</option>
-            <optgroup label="Priority Markets">
-              <option value="Washington DC">Washington DC</option>
-              <option value="NYC Metro">NYC Metro</option>
-              <option value="Maryland">Maryland</option>
-              <option value="New York">New York (Statewide)</option>
-              <option value="Mid-Atlantic">Mid-Atlantic (DC,VA,MD,PA,DE,NJ)</option>
-              <option value="East Coast">Entire East Coast</option>
-              <option value="United States">United States (National)</option>
-            </optgroup>
-            <optgroup label="Spanish Caribbean">
-              <option value="Puerto Rico">Puerto Rico</option>
-              <option value="Dominican Republic">Dominican Republic</option>
-              <option value="Cuba">Cuba</option>
-              <option value="Jamaica">Jamaica</option>
-              <option value="Spanish Caribbean">Spanish Caribbean (All)</option>
-            </optgroup>
-            <optgroup label="Mexico">
-              <option value="Mexico City">Mexico City</option>
-              <option value="Monterrey">Monterrey</option>
-              <option value="Guadalajara">Guadalajara</option>
-              <option value="Mexico">Mexico (All)</option>
-            </optgroup>
-            <optgroup label="Colombia">
-              <option value="Bogotá">Bogotá</option>
-              <option value="Medellín">Medellín</option>
-              <option value="Cartagena">Cartagena</option>
-              <option value="Colombia">Colombia (All)</option>
-            </optgroup>
-            <optgroup label="Canada">
-              <option value="Toronto / GTA">Toronto / GTA</option>
-              <option value="Vancouver">Vancouver</option>
-              <option value="Montreal">Montreal</option>
-              <option value="Canada">Canada (All)</option>
-            </optgroup>
-            <optgroup label="South Africa">
-              <option value="Johannesburg">Johannesburg</option>
-              <option value="Cape Town">Cape Town</option>
-              <option value="South Africa">South Africa (All)</option>
-            </optgroup>
-            <optgroup label="United Kingdom">
-              <option value="London">London</option>
-              <option value="Greater London">Greater London</option>
-            </optgroup>
+            <option value="">Select market…</option>
+            <option value="United States">United States (Nationwide)</option>
+            <option value="Canada">Canada</option>
+            <option value="United Kingdom">United Kingdom</option>
+            <option value="user-defined">User-defined (specify in target profile)</option>
           </select>
           <select class="select" id="lg-count" style="width:70px">
             <option value="20">20</option>
@@ -1282,7 +1240,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <!-- ═══════ AD ENGINE ═══════ -->
     <div class="tab-pane" id="tab-content">
       <div class="pane-hdr">
-        <div><div class="pane-title"><span class="brief-head">Faceless Ad Engine</span></div><div class="pane-sub">Image · Video · Combo — brand content production</div></div>
+        <div><div class="pane-title"><span class="brief-head">Ad Engine</span></div><div class="pane-sub">Image · Video · Combo — brand content production</div></div>
       </div>
       <div class="pane-body">
         <div class="mode-toggle">
@@ -1298,90 +1256,57 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 <div class="form-group">
                   <label class="label">Topic / Angle</label>
                   <select class="select" id="cc-topic" style="width:100%">
-                    <option value="">Select topic...</option>
-                    <optgroup label="── Diagnosis-First Families (20) ──">
-                      <option>Operational Waste Exposé</option>
-                      <option>Anti-Automation Manifesto</option>
-                      <option>Diagnostic Stories</option>
-                      <option>Blueprint Before Build</option>
-                      <option>Manual Handoff Autopsies</option>
-                      <option>Revenue Leakage Math</option>
-                      <option>No Source of Truth</option>
-                      <option>Accountability Gap Series</option>
-                      <option>Firefighting vs Systems Thinking</option>
-                      <option>The Cost of Clarity</option>
-                      <option>Operator POV</option>
-                      <option>Diagnosis in the Wild</option>
-                      <option>Phased Execution</option>
-                      <option>Property Management Diagnostic</option>
-                      <option>Service Business Diagnostic</option>
-                      <option>Government Contractor Diagnostic</option>
-                      <option>Caribbean & LatAm Operator Diagnostic</option>
-                      <option>Founder/Owner Trap Series</option>
-                      <option>Certifications in Context</option>
-                      <option>Triage Call Invitations</option>
-                    </optgroup>
-                    <optgroup label="── SourceDeck (GovCon Opportunity Intelligence) ──">
-                      <option>Bad-Fit Opportunity Chase</option>
-                      <option>RFP Deadline Slip</option>
-                      <option>Win-Rate Blind Spot</option>
-                      <option>Pipeline Ghost Deals</option>
-                      <option>Follow-Up Leakage</option>
-                      <option>Subcontractor Match Failure</option>
-                      <option>Capture Cost Overrun</option>
-                      <option>Margin Erosion on Wins</option>
-                      <option>Proposal Assembly Chaos</option>
-                      <option>SAM.gov Signal Noise</option>
-                      <option>Past-Performance Gap</option>
-                      <option>Pricing Guesswork</option>
-                      <option>Deal Stage Drift</option>
-                      <option>Capture-to-Proposal Handoff Break</option>
-                      <option>Recompete Surprise</option>
-                      <option>Set-Aside Mismatch</option>
-                      <option>Proof Gap in Proposals</option>
-                      <option>Post-Award Execution Risk</option>
-                    </optgroup>
-                    <optgroup label="── MedPilot (Ophthalmology & Specialty) ──">
-                      <option>Claim Denial Drift</option>
-                      <option>Prior-Auth Bottleneck</option>
-                      <option>Documentation Bottleneck</option>
-                      <option>Coding Mismatch</option>
-                      <option>Physician Overload</option>
-                      <option>Referral Breakdown</option>
-                      <option>No-Show Revenue Leakage</option>
-                      <option>Manual Handoff in Clinical Workflow</option>
-                      <option>RCM Revenue Leakage</option>
-                      <option>Automation vs Manual Clinical Workflow</option>
-                      <option>Shared-Care Coordination Failure</option>
-                      <option>ASC Charting Friction</option>
-                      <option>Regulatory Quality Reporting Blind Spots</option>
-                      <option>Patient Portal Drop-Off</option>
-                      <option>Multi-Location Scheduling Strain</option>
-                      <option>Imaging and Layered-Drawing Workflow Drag</option>
-                      <option>EPCS / Prescription Workflow Delay</option>
-                      <option>Audit-Risk Documentation Gaps</option>
-                    </optgroup>
-                    <optgroup label="── Legacy Topics ──">
-                      <option>Chaos vs Control</option>
-                      <option>Before/After Operational Transformation</option>
-                      <option>GovCon Backend Failure</option>
-                      <option>Staffing Firm Intake Bottleneck</option>
-                    </optgroup>
+                    <option value="">Select topic or generate from profile…</option>
+                    <option>Awareness</option>
+                    <option>Lead generation</option>
+                    <option>Educational</option>
+                    <option>Offer</option>
+                    <option>Retargeting</option>
+                    <option>Testimonial</option>
+                    <option>Seasonal</option>
+                    <option>Recruiting</option>
+                    <option>Brand authority</option>
+                    <option>Product/service explainer</option>
+                    <option>Other</option>
                   </select>
+                  <div style="font-size:9.5px;color:var(--muted);margin-top:4px;line-height:1.45">Topics are generated from your industry, platform, offer, audience, goal, and notes.</div>
                 </div>
                 <div class="form-group">
                   <label class="label">Target Industry</label>
                   <select class="select" id="cc-ind" style="width:100%">
-                    <option>All Industries</option><option>Property Management</option>
-                    <option>Staffing Agencies</option><option>Government Contractors</option>
-                    <option>Facilities / Maintenance</option><option>HVAC / Plumbing / Electrical</option>
+                    <option value="">All / Mixed</option>
+                    <option>Property Management</option><option>Real Estate</option><option>Construction</option>
+                    <option>Facilities Management</option><option>Home Services</option><option>Healthcare</option>
+                    <option>Dental</option><option>Ophthalmology</option><option>Optometry</option>
+                    <option>Medical Billing</option><option>Legal Services</option><option>Accounting</option>
+                    <option>Insurance</option><option>Financial Services</option><option>Staffing Agencies</option>
+                    <option>Recruiting</option><option>Government Contractors</option><option>Nonprofits</option>
+                    <option>Education</option><option>Coaching / Consulting</option><option>SaaS</option>
+                    <option>IT Services</option><option>Cybersecurity</option><option>Managed Services</option>
+                    <option>E-commerce</option><option>Retail</option><option>Restaurants</option>
+                    <option>Hospitality</option><option>Travel</option><option>Automotive</option>
+                    <option>Transportation / Logistics</option><option>Cleaning / Janitorial</option>
+                    <option>Landscaping</option><option>HVAC / Plumbing / Electrical</option><option>Roofing</option>
+                    <option>Fitness</option><option>Beauty / Wellness</option><option>Events</option>
+                    <option>Entertainment</option><option>Media / Creative</option><option>Manufacturing</option>
+                    <option>Distribution</option><option>Agriculture</option><option>Security Services</option>
+                    <option>Senior Care</option><option>Childcare</option><option>Pet Services</option>
+                    <option>Professional Services</option><option>Local Services</option><option>Other</option>
                   </select>
                 </div>
                 <div style="display:flex;gap:9px">
                   <div class="form-group" style="flex:1">
                     <label class="label">Platform</label>
                     <select class="select" id="cc-plat" style="width:100%">
-                      <option>Instagram</option><option>LinkedIn</option><option>Facebook</option><option>Multi-Platform</option>
+                      <option>Instagram</option><option>Facebook</option><option>LinkedIn</option>
+                      <option>TikTok</option><option>YouTube</option><option>YouTube Shorts</option>
+                      <option>X / Twitter</option><option>Threads</option><option>Pinterest</option>
+                      <option>Snapchat</option><option>Reddit</option><option>Quora</option>
+                      <option>Google Business Profile</option><option>Google Ads</option><option>Meta Ads</option>
+                      <option>LinkedIn Ads</option><option>TikTok Ads</option><option>YouTube Ads</option>
+                      <option>Email</option><option>SMS</option><option>Blog / SEO</option>
+                      <option>Landing Page</option><option>Podcast</option><option>Webinar</option>
+                      <option>Marketplace</option><option>Multi-Platform</option><option>Other</option>
                     </select>
                   </div>
                   <div class="form-group" id="cc-img-count-wrap" style="display:none;flex:1">
@@ -1393,7 +1318,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 </div>
                 <div class="form-group">
                   <label class="label">Campaign / Offer Tag</label>
-                  <input class="input" id="cc-campaign" placeholder="e.g. NYC PM Q2 2026">
+                  <input class="input" id="cc-campaign" placeholder="e.g. Q2 product launch">
                 </div>
                 <div class="form-group">
                   <label class="label">Additional Notes</label>
@@ -1442,10 +1367,10 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div><div class="pane-title"><span class="brief-head">Daily Operating Rhythm</span></div><div class="pane-sub" id="do-date">Checklist — reset daily</div></div>
         <div class="pane-actions">
           <select class="select" id="do-day" onchange="renderDailyOps()">
-            <option value="1">Day 1 — Outreach + Replies</option>
-            <option value="2">Day 2 — Follow-Up + Content</option>
-            <option value="3">Day 3 — Pipeline + Proposals</option>
-            <option value="4">Day 4 — Revenue + Cleanup</option>
+            <option value="1">Day 1</option>
+            <option value="2">Day 2</option>
+            <option value="3">Day 3</option>
+            <option value="4">Day 4</option>
           </select>
           <button class="btn btn-ghost" onclick="clearChecks()">↺ Reset</button>
           <button class="btn btn-ghost" onclick="openTab('content')">+ Create Content</button>
@@ -1455,26 +1380,18 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <div class="grid-2">
           <div>
             <div class="card mb-14">
-              <div class="card-title" id="do-day-title" style="color:var(--gold2)">Day 1 — Outreach + Replies</div>
-              <div id="do-checklist"></div>
+              <div class="card-title" id="do-day-title" style="color:var(--gold2)">Day 1</div>
+              <div id="do-checklist"><div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No operating rhythm yet. Add tasks, connect workflows, or ask AI to generate a daily rhythm from your goals.</div></div>
             </div>
           </div>
           <div>
             <div class="card mb-14">
               <div class="card-title" style="color:var(--blue)">Weekly Rhythm</div>
-              <div class="kv"><span class="k">Monday 8AM</span><span class="v">Pipeline review + weekly digest</span></div>
-              <div class="kv"><span class="k">Tuesday 10AM</span><span class="v">Content angle email → build Canva post</span></div>
-              <div class="kv"><span class="k">Wednesday</span><span class="v">Proposal + follow-up sweep</span></div>
-              <div class="kv"><span class="k">Thursday</span><span class="v">Reel or second carousel post</span></div>
-              <div class="kv"><span class="k">Friday</span><span class="v">Revenue review + Notion stage updates</span></div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No weekly rhythm yet. Generate from your goals or add your own.</div>
             </div>
             <div class="card">
-              <div class="card-title" style="color:var(--purple)">Operator Escalation Rules</div>
-              <div class="kv"><span class="k">Reply Intent = Interested</span><span class="v">Book within 1 hour</span></div>
-              <div class="kv"><span class="k">>7 days in Contacted</span><span class="v">Follow-up or mark nurture</span></div>
-              <div class="kv"><span class="k">Proposal sent >5 days</span><span class="v">Alert — call or close</span></div>
-              <div class="kv"><span class="k">No email on High Priority</span><span class="v">Research before this week ends</span></div>
-              <div class="kv"><span class="k">Reply = Not Interested</span><span class="v">Nurture 30 days or lost</span></div>
+              <div class="card-title" style="color:var(--purple)">Escalation Rules</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No escalation rules configured. Define your own follow-up triggers and time windows.</div>
             </div>
           </div>
         </div>
@@ -1508,21 +1425,13 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         </div>
         <div class="grid-3">
           <div class="card"><div class="sl">Active Webhooks</div>
-            <div class="kv"><span class="k">PROD-01 Assessment</span><span class="v" style="font-size:9px"></span></div>
-            <div class="kv"><span class="k">PROD-05 Booking</span><span class="v" style="font-size:9px">ti5tlit9s9ir0sr1vha7vqjyemcuvlnq</span></div>
-            <div class="kv"><span class="k">LCC Booking</span><span class="v" style="font-size:9px">jpu2xjxufd8x7yt3qnsk9ntxd0ns77jk</span></div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No webhooks active. Connect tools in Settings to populate this panel.</div>
           </div>
           <div class="card"><div class="sl">Infrastructure</div>
-            <div class="kv"><span class="k">Airtable Base</span><span class="v">appXXXXXXXXXXXXXXX</span></div>
-            <div class="kv"><span class="k">Notion Leads DB</span><span class="v" style="font-size:9px;color:var(--muted)">Not connected</span></div>
-            <div class="kv"><span class="k">Instantly Campaign</span><span class="v" style="font-size:9px;color:var(--muted)">Not configured</span></div>
-            <div class="kv"><span class="k">Gmail Connection</span><span class="v">8125092</span></div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No integrations configured. Set integrations in Settings.</div>
           </div>
           <div class="card"><div class="sl">HTTP Standards</div>
-            <div class="kv"><span class="k">bodyType</span><span class="badge bgn">raw</span></div>
-            <div class="kv"><span class="k">contentType</span><span class="badge bgn">application/json</span></div>
-            <div class="kv"><span class="k">bodyType = application/json</span><span class="badge br">NEVER</span></div>
-            <div class="kv"><span class="k">Orphan module fix</span><span class="v">scenarios_create fresh</span></div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No HTTP standards published.</div>
           </div>
         </div>
       </div>
@@ -1637,7 +1546,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               <div style="display:flex;flex-direction:column;gap:11px">
                 <div class="form-group">
                   <label class="label">Describe Your Ideal Lead *</label>
-                  <textarea class="textarea" id="ag-prompt" style="min-height:100px" placeholder="Example: Healthcare / medical billing practices in NYC with 5-50 employees, struggling with claim denials and AR over 90 days. Looking for practices billing $500K+ monthly."></textarea>
+                  <textarea class="textarea" id="ag-prompt" style="min-height:100px" placeholder="Describe your ideal customer, location, offer, company size, pain point, and urgency…"></textarea>
                 </div>
                 <div style="display:flex;gap:9px">
                   <div class="form-group" style="flex:1">
@@ -1652,139 +1561,36 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                   <div class="form-group" style="flex:1">
                     <label class="label">Geography</label>
                     <select class="select" id="ag-geo" style="width:100%">
-                      <optgroup label="New York">
-                        <option value="NYC Metro">NYC Metro</option>
-                        <option value="Manhattan">Manhattan</option>
-                        <option value="Bronx">Bronx</option>
-                        <option value="Brooklyn">Brooklyn</option>
-                        <option value="Queens">Queens</option>
-                        <option value="Staten Island">Staten Island</option>
-                        <option value="Long Island">Long Island</option>
-                        <option value="Westchester">Westchester</option>
-                      </optgroup>
-                      <optgroup label="Mid-Atlantic">
-                        <option value="New Jersey">New Jersey</option>
-                        <option value="DMV">DMV</option>
-                        <option value="Washington DC">Washington DC</option>
-                        <option value="Maryland">Maryland</option>
-                        <option value="Virginia">Virginia</option>
-                        <option value="Philadelphia">Philadelphia</option>
-                      </optgroup>
-                      <optgroup label="Southeast">
-                        <option value="Atlanta Metro">Atlanta Metro</option>
-                        <option value="Charlotte Metro">Charlotte Metro</option>
-                        <option value="Miami / South Florida">Miami / South Florida</option>
-                        <option value="Orlando">Orlando</option>
-                        <option value="Tampa">Tampa</option>
-                      </optgroup>
-                      <optgroup label="Northeast">
-                        <option value="Boston">Boston</option>
-                      </optgroup>
-                      <optgroup label="Texas">
-                        <option value="Dallas-Fort Worth">Dallas-Fort Worth</option>
-                        <option value="Houston">Houston</option>
-                        <option value="Austin">Austin</option>
-                        <option value="San Antonio">San Antonio</option>
-                      </optgroup>
-                      <optgroup label="Midwest">
-                        <option value="Chicago Metro">Chicago Metro</option>
-                        <option value="Denver">Denver</option>
-                      </optgroup>
-                      <optgroup label="West Coast">
-                        <option value="Los Angeles">Los Angeles</option>
-                        <option value="Inland Empire">Inland Empire</option>
-                        <option value="Orange County">Orange County</option>
-                        <option value="San Diego">San Diego</option>
-                        <option value="Bay Area">Bay Area</option>
-                        <option value="Sacramento">Sacramento</option>
-                        <option value="Seattle">Seattle</option>
-                      </optgroup>
-                      <optgroup label="Southwest">
-                        <option value="Phoenix">Phoenix</option>
-                        <option value="Las Vegas">Las Vegas</option>
-                      </optgroup>
-                      <optgroup label="Canada">
-                        <option value="Canada">Canada (All)</option>
-                        <option value="Toronto / GTA">Toronto / GTA</option>
-                        <option value="Vancouver">Vancouver</option>
-                        <option value="Montreal">Montreal</option>
-                        <option value="Calgary">Calgary</option>
-                        <option value="Ottawa">Ottawa</option>
-                        <option value="Edmonton">Edmonton</option>
-                        <option value="Winnipeg">Winnipeg</option>
-                        <option value="Halifax">Halifax</option>
-                      </optgroup>
-                      <optgroup label="Spanish Caribbean">
-                        <option value="Spanish Caribbean">Spanish Caribbean (All)</option>
-                        <option value="Puerto Rico">Puerto Rico</option>
-                        <option value="Dominican Republic">Dominican Republic</option>
-                        <option value="Santo Domingo">Santo Domingo</option>
-                        <option value="Santiago (DR)">Santiago (DR)</option>
-                        <option value="Punta Cana">Punta Cana</option>
-                        <option value="Cuba">Cuba</option>
-                        <option value="Havana">Havana</option>
-                        <option value="Jamaica">Jamaica</option>
-                        <option value="Kingston">Kingston</option>
-                        <option value="Trinidad &amp; Tobago">Trinidad &amp; Tobago</option>
-                        <option value="Aruba">Aruba</option>
-                        <option value="Curacao">Curacao</option>
-                      </optgroup>
-                      <optgroup label="Mexico">
-                        <option value="Mexico">Mexico (All)</option>
-                        <option value="Mexico City">Mexico City</option>
-                        <option value="Monterrey">Monterrey</option>
-                        <option value="Guadalajara">Guadalajara</option>
-                        <option value="Cancún">Cancún</option>
-                        <option value="Tijuana">Tijuana</option>
-                        <option value="Puebla">Puebla</option>
-                        <option value="Mérida">Mérida</option>
-                      </optgroup>
-                      <optgroup label="Colombia">
-                        <option value="Colombia">Colombia (All)</option>
-                        <option value="Bogotá">Bogotá</option>
-                        <option value="Medellín">Medellín</option>
-                        <option value="Cali">Cali</option>
-                        <option value="Barranquilla">Barranquilla</option>
-                        <option value="Cartagena">Cartagena</option>
-                        <option value="Bucaramanga">Bucaramanga</option>
-                        <option value="Pereira">Pereira</option>
-                      </optgroup>
-                      <optgroup label="United Kingdom">
-                        <option value="London">London</option>
-                        <option value="Greater London">Greater London</option>
-                        <option value="Manchester">Manchester</option>
-                        <option value="Birmingham UK">Birmingham UK</option>
-                        <option value="Leeds">Leeds</option>
-                        <option value="Edinburgh">Edinburgh</option>
-                      </optgroup>
-                      <optgroup label="South Africa">
-                        <option value="South Africa">South Africa (All)</option>
-                        <option value="Johannesburg">Johannesburg</option>
-                        <option value="Cape Town">Cape Town</option>
-                        <option value="Durban">Durban</option>
-                        <option value="Pretoria">Pretoria</option>
-                        <option value="Port Elizabeth">Port Elizabeth</option>
-                      </optgroup>
-                      <optgroup label="Scope">
-                        <option value="National (US)">National (US)</option>
-                        <option value="Multi-Region">Multi-Region</option>
-                        <option value="Global">Global</option>
-                      </optgroup>
+                      <option value="">Select market…</option>
+                      <option value="Nationwide">Nationwide</option>
+                      <option value="United States">United States</option>
+                      <option value="Canada">Canada</option>
+                      <option value="United Kingdom">United Kingdom</option>
+                      <option value="user-defined">User-defined (specify in target profile)</option>
                     </select>
+                    <!-- Removed pre-loaded operator-specific geographies. See
+                         services/default-state-policy.js for the policy. -->
                   </div>
                 </div>
                 <div class="form-group">
                   <label class="label">Industry Focus</label>
                   <select class="select" id="ag-industry" style="width:100%">
                     <option value="">Any / Mixed</option>
-                    <option>Healthcare / Medical Billing</option>
-                    <option>Government Contractor / GovCon</option>
-                    <option>Property / Facilities Management</option>
-                    <option>Staffing / Workforce</option>
-                    <option>Service Business</option>
-                    <option>Professional Services</option>
-                    <option>E-commerce / Online Business</option>
-                    <option>AI / Automation Agency</option>
+                    <option>Property Management</option><option>Real Estate</option><option>Construction</option>
+                    <option>Facilities Management</option><option>Home Services</option><option>Healthcare</option>
+                    <option>Dental</option><option>Medical Billing</option><option>Legal Services</option>
+                    <option>Accounting</option><option>Insurance</option><option>Financial Services</option>
+                    <option>Staffing Agencies</option><option>Recruiting</option><option>Government Contractors</option>
+                    <option>Nonprofits</option><option>Education</option><option>Coaching / Consulting</option>
+                    <option>SaaS</option><option>IT Services</option><option>Cybersecurity</option>
+                    <option>Managed Services</option><option>E-commerce</option><option>Retail</option>
+                    <option>Restaurants</option><option>Hospitality</option><option>Automotive</option>
+                    <option>Transportation / Logistics</option><option>Cleaning / Janitorial</option>
+                    <option>Landscaping</option><option>HVAC / Plumbing / Electrical</option><option>Roofing</option>
+                    <option>Fitness</option><option>Beauty / Wellness</option><option>Manufacturing</option>
+                    <option>Distribution</option><option>Security Services</option><option>Senior Care</option>
+                    <option>Childcare</option><option>Pet Services</option><option>Professional Services</option>
+                    <option>Local Services</option><option>Other</option>
                   </select>
                 </div>
                 <div style="display:flex;gap:8px">
@@ -1861,8 +1667,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                   <input class="input" id="s-instantly" value="" placeholder="Your Instantly campaign ID">
                 </div>
                 <div class="form-group">
-                  <label class="label">Assessment Webhook (PROD-01-v2)</label>
-                  <input class="input" id="s-asswh" value="" readonly style="opacity:0.6">
+                  <label class="label">Assessment Webhook</label>
+                  <input class="input" id="s-asswh" value="" placeholder="https://your-endpoint/assessment" readonly style="opacity:0.6">
                 </div>
               </div>
             </div>
@@ -1870,20 +1676,11 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div>
             <div class="card mb-14">
               <div class="sl">System Identifiers</div>
-              <div class="kv"><span class="k">Airtable Base</span><span class="v">appXXXXXXXXXXXXXXX</span></div>
-              <div class="kv"><span class="k">Leads Table</span><span class="v" style="color:var(--muted)">Set via Settings</span></div>
-              <div class="kv"><span class="k">Audit Intake Table</span><span class="v" style="color:var(--muted)">Set via Settings</span></div>
-              <div class="kv"><span class="k">Notion Leads DB</span><span class="v" style="font-size:9px;color:var(--muted)">Not connected</span></div>
-              <div class="kv"><span class="k">Gmail Connection</span><span class="v">8125092</span></div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No system identifiers configured. Set integrations in Settings.</div>
             </div>
             <div class="card mb-14">
-              <div class="sl">Automation Path Confirmed</div>
-              <div style="display:flex;flex-direction:column;gap:8px;padding:4px 0">
-                <div style="display:flex;align-items:center;gap:8px;font-size:11px"><span class="badge bgn">1</span><span style="color:var(--sub)"><strong>Airtable</strong> — system of record, intake layer</span></div>
-                <div style="display:flex;align-items:center;gap:8px;font-size:11px"><span class="badge bb">2</span><span style="color:var(--sub)"><strong>Notion</strong> — structured pipeline, command layer (PROD-02, 15min)</span></div>
-                <div style="display:flex;align-items:center;gap:8px;font-size:11px"><span class="badge bp">3</span><span style="color:var(--sub)"><strong>Instantly</strong> — outbound execution (PROD-03, campaign (set in Settings))</span></div>
-                <div style="display:flex;align-items:center;gap:8px;font-size:11px"><span class="badge bw">4</span><span style="color:var(--sub)"><strong>Reply / Booking</strong> — PROD-04 reply intel → PROD-05 booking brief</span></div>
-              </div>
+              <div class="sl">Automation Path</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No automation path defined. Connect tools in Settings to populate this panel.</div>
             </div>
             <div class="card">
               <div class="sl">Save Status</div>
@@ -2817,7 +2614,7 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
             </div>
             <div style="grid-column:1/-1">
               <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Locations / Offices</label>
-              <textarea class="input" id="cl-locations" rows="3" placeholder="One location per line — e.g.&#10;Main Office — 123 Main St, Bronx, NY&#10;Satellite — 456 Oak Ave, Yonkers, NY" oninput="clinicalConfigChanged()" style="resize:vertical;font-family:'Instrument Sans',sans-serif;font-size:12px;line-height:1.5"></textarea>
+              <textarea class="input" id="cl-locations" rows="3" placeholder="One location per line — e.g.&#10;Main Office — Street, City, State&#10;Satellite — Street, City, State" oninput="clinicalConfigChanged()" style="resize:vertical;font-family:'Instrument Sans',sans-serif;font-size:12px;line-height:1.5"></textarea>
             </div>
             <div>
               <label style="font-size:11px;color:var(--muted);display:block;margin-bottom:4px">Transcription Provider</label>
@@ -3566,7 +3363,7 @@ function isApprovedNaicsMatch(org){
 // DEFAULT PRODUCTION FLOW — Apollo-backed
 async function generateLeadsApollo(){
   const prompt = document.getElementById('ag-prompt')?.value?.trim() || '';
-  const geo = document.getElementById('ag-geo')?.value || 'NYC Metro';
+  const geo = document.getElementById('ag-geo')?.value || '';
   const btn = document.getElementById('ag-btn');
   const st = document.getElementById('ag-status');
   const prog = document.getElementById('ag-progress');
@@ -3577,8 +3374,9 @@ async function generateLeadsApollo(){
   if(st) st.innerHTML = '<span class="wh wh-load">⏳ Searching Apollo.io for verified companies...</span>';
   if(prog) prog.style.display = 'block';
 
-  const geoMap = {'NYC Metro':'New York, New York, United States','National':'United States',
-    'Washington DC':'Washington, District of Columbia, United States','Maryland':'Maryland, United States'};
+  // Neutral mapping for Apollo lookups. Falls through to the user-selected
+  // value when the dropdown choice doesn't need translation.
+  const geoMap = {'Nationwide':'United States','United States':'United States','Canada':'Canada','United Kingdom':'United Kingdom'};
   const apolloGeo = geoMap[geo] || geo;
   const baseKW = ['property management','facilities management','building management'];
   if(prompt) baseKW.push(...prompt.toLowerCase().split(/[,;]+/).map(s=>s.trim()).filter(Boolean).slice(0,3));
@@ -5426,13 +5224,11 @@ function renderDashboard(){
 
 function renderActivityFeed(){
   const feed=document.getElementById('activity-feed');if(!feed)return;
-  const events=actLog.length>0?actLog:[
-    {ico:'🚀',col:'var(--green)',msg:'PROD-03 processed 3 leads → Contacted',time:'Today'},
-    {ico:'✓',col:'var(--gold2)',msg:'PROD-02 synced leads to Notion pipeline',time:'Today'},
-    {ico:'📧',col:'var(--blue)',msg:'Campaign Day 0 sequence active — 30/day',time:'Today'},
-    {ico:'🔧',col:'var(--warn)',msg:'LCC v4 FINAL initialized',time:'Today'},
-  ];
-  feed.innerHTML=events.map(e=>`<div class="feed-item"><div class="feed-icon" style="color:${e.col}">${e.ico}</div><div><div class="feed-text">${e.msg}</div><div class="feed-time">${e.time}</div></div></div>`).join('');
+  if(!actLog||actLog.length===0){
+    feed.innerHTML='<div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No activity yet.</div>';
+    return;
+  }
+  feed.innerHTML=actLog.map(e=>`<div class="feed-item"><div class="feed-icon" style="color:${e.col}">${e.ico}</div><div><div class="feed-text">${e.msg}</div><div class="feed-time">${e.time}</div></div></div>`).join('');
 }
 
 // ─── LEAD GENERATOR — REGIONAL GENERATION + PUSH ───
@@ -7947,71 +7743,31 @@ async function triggerBooking(){
 }
 
 // ─── DAILY OPS ───
-const DAILY_CHECKLISTS={
-  1:[
-    {t:'Check Gmail for PROD-04 reply alerts',tag:'Revenue'},
-    {t:'Open LCC → Replied leads → analyze in Response Desk',tag:'Revenue'},
-    {t:'Send booking links to all Interested replies (1hr SLA)',tag:'Revenue'},
-    {t:'Check Overdue tab → leads >7 days in Contacted',tag:'Revenue'},
-    {t:'Review Today\'s Priorities panel top 3 items',tag:'Revenue'},
-    {t:'Check Airtable for any new Assessment form submissions',tag:'Leads'},
-    {t:'Qualify New leads → set Status=Qualified',tag:'Leads'},
-    {t:'Confirm PROD-03 is showing status = ACTIVE',tag:'System'},
-    {t:'Verify last PROD-03 execution had 0 errors',tag:'System'},
-    {t:'Log any wins or replies in Activity Feed',tag:'Revenue'},
-  ],
-  2:[
-    {t:'Check Gmail for any overnight replies or booking confirmations',tag:'Revenue'},
-    {t:'Review overdue leads — mark Nurture or follow-up',tag:'Revenue'},
-    {t:'Check Day 5 follow-up leads — any late-stage hot ones?',tag:'Revenue'},
-    {t:'Go to Ad Engine — generate one content piece',tag:'Content'},
-    {t:'Open Canva AI and create visual from prompt',tag:'Content'},
-    {t:'Schedule or post content to Instagram',tag:'Content'},
-    {t:'Review Instantly warm-up score (must stay 100/100)',tag:'System'},
-    {t:'Add new enriched leads to Airtable if research done',tag:'Leads'},
-    {t:'Check PROD-02 last exec — verify Notion sync working',tag:'System'},
-    {t:'Update Next Action dates for any stale pipeline leads',tag:'Revenue'},
-  ],
-  3:[
-    {t:'Check Gmail — any proposal follow-up needed?',tag:'Revenue'},
-    {t:'Review Revenue tab — identify deals aging >5 days in Proposal Sent',tag:'Revenue'},
-    {t:'Call or email any >5 day Proposal Sent leads immediately',tag:'Revenue'},
-    {t:'Identify 2-3 leads ready for Proposal Drafting stage',tag:'Revenue'},
-    {t:'Draft or update proposal for top deal in pipeline',tag:'Revenue'},
-    {t:'Check Discovery Booked leads — prep pre-call brief',tag:'Revenue'},
-    {t:'Trigger PROD-05 for any ready-to-book leads',tag:'System'},
-    {t:'Research email for top no-email leads',tag:'Leads'},
-    {t:'Check LinkedIn for any InMail replies or profile views',tag:'Leads'},
-    {t:'Update Notion pipeline stages for any moved deals',tag:'System'},
-  ],
-  4:[
-    {t:'Full pipeline review — update all Current Stage fields',tag:'Revenue'},
-    {t:'Calculate weekly pipeline value vs last week',tag:'Revenue'},
-    {t:'Review wins/losses this week — update revenue tracking',tag:'Revenue'},
-    {t:'Clean up Airtable — archive irrelevant leads',tag:'System'},
-    {t:'Delete or disable any redundant Make.com scenarios',tag:'System'},
-    {t:'Generate second content piece for the week if below 2 posts',tag:'Content'},
-    {t:'Verify all 5 PROD scenarios showing ACTIVE and 0 errors',tag:'System'},
-    {t:'Export Airtable contacts list — back up if needed',tag:'System'},
-    {t:'Review and confirm assessment form is working (test submission)',tag:'System'},
-    {t:'Set next week\'s top 3 revenue-focused priorities in LCC',tag:'Revenue'},
-  ],
-};
+// User-driven rhythm. Empty by default; populated only from user-supplied
+// tasks (window.userDailyOps[day]) or AI generation against the user's
+// stated goals. No operator/demo content preloads here.
+const DAILY_CHECKLISTS={1:[],2:[],3:[],4:[]};
 function renderDailyOps(){
   const day=parseInt(document.getElementById('do-day')?.value||'1');
-  const items=DAILY_CHECKLISTS[day]||[];
+  const userOps=(window.userDailyOps&&window.userDailyOps[day])||[];
+  const items=userOps.length?userOps:DAILY_CHECKLISTS[day];
   const title=document.getElementById('do-day-title');
-  const opts=['Day 1 — Outreach + Replies','Day 2 — Follow-Up + Content','Day 3 — Pipeline + Proposals','Day 4 — Revenue + Cleanup'];
-  if(title)title.textContent=opts[day-1];
+  if(title)title.textContent='Day '+day;
   const cl=document.getElementById('do-checklist');
-  if(cl)cl.innerHTML=items.map((item,i)=>{
-    const k=`d${day}_${i}`;const done=checkState[k]||false;const tagC=item.tag==='Revenue'?'bg':item.tag==='Content'?'bp':item.tag==='Leads'?'bb':'bw';
-    return`<div class="check-item ${done?'done':''}" onclick="toggleCheck('${k}',this)">
-      <div class="check-box">${done?'✓':''}</div>
-      <div class="check-text">${item.t}</div>
-      <span class="check-tag"><span class="badge ${tagC}">${item.tag}</span></span>
-    </div>`;
-  }).join('');
+  if(cl){
+    if(!items||!items.length){
+      cl.innerHTML='<div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No operating rhythm yet. Add tasks, connect workflows, or ask AI to generate a daily rhythm from your goals.</div>';
+    } else {
+      cl.innerHTML=items.map((item,i)=>{
+        const k=`d${day}_${i}`;const done=checkState[k]||false;const tagC=item.tag==='Revenue'?'bg':item.tag==='Content'?'bp':item.tag==='Leads'?'bb':'bw';
+        return`<div class="check-item ${done?'done':''}" onclick="toggleCheck('${k}',this)">
+          <div class="check-box">${done?'✓':''}</div>
+          <div class="check-text">${item.t}</div>
+          <span class="check-tag"><span class="badge ${tagC}">${item.tag}</span></span>
+        </div>`;
+      }).join('');
+    }
+  }
   const dt=document.getElementById('do-date');if(dt)dt.textContent=new Date().toLocaleDateString('en-US',{weekday:'long',month:'short',day:'numeric'});
 }
 function toggleCheck(k,el){
