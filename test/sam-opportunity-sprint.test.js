@@ -255,7 +255,10 @@ test('profile drives score: same opp scores differently under different profiles
 
 console.log('\n--- buildQueryPlan ---');
 test('buildQueryPlan unions operator NAICS with lane-derived NAICS and adds keywords', () => {
-  const profile = fixtureProfile();
+  // Use a paid plan so the union is not capped by the free-plan NAICS limit.
+  // This test isolates union behavior (operator NAICS + lane-derived NAICS +
+  // keywords); the entitlement cap is exercised separately below.
+  const profile = fixtureProfile({ subscription: { plan: 'paid' } });
   const plan = buildQueryPlan(profile, NOW_MS);
   assert.ok(plan.naics.includes('561720'));
   assert.ok(plan.naics.includes('238320'));
@@ -375,8 +378,8 @@ test('normalizePlan: known plans pass through (case-insensitive)', () => {
     assert.strictEqual(normalizePlan(p.toUpperCase()).plan, p);
   }
 });
-test('PLAN_LIMITS: free is 3, all paid tiers are Infinity', () => {
-  assert.strictEqual(PLAN_LIMITS.free.max_naics_codes, 3);
+test('PLAN_LIMITS: free is 1, all paid tiers are Infinity', () => {
+  assert.strictEqual(PLAN_LIMITS.free.max_naics_codes, 1);
   assert.strictEqual(PLAN_LIMITS.free.is_paid, false);
   for (const p of ['paid', 'pro', 'team', 'enterprise']) {
     assert.strictEqual(PLAN_LIMITS[p].max_naics_codes, Infinity);
@@ -388,11 +391,11 @@ test('getSamSprintEntitlement accepts a profile and resolves plan', () => {
   assert.strictEqual(ent.plan, 'pro');
   assert.strictEqual(ent.is_paid, true);
 });
-test('applyNaicsLimit: free plan caps to first 3 NAICS, lists blocked', () => {
+test('applyNaicsLimit: free plan caps to first 1 NAICS, lists blocked', () => {
   const ent = getSamSprintEntitlement('free');
   const out = applyNaicsLimit({ target_naics: ['1', '2', '3', '4', '5'] }, ent);
-  assert.deepStrictEqual(out.allowed_naics, ['1', '2', '3']);
-  assert.deepStrictEqual(out.blocked_naics, ['4', '5']);
+  assert.deepStrictEqual(out.allowed_naics, ['1']);
+  assert.deepStrictEqual(out.blocked_naics, ['2', '3', '4', '5']);
   assert.strictEqual(out.naics_limit_applied, true);
 });
 test('applyNaicsLimit: paid plan returns all NAICS, nothing blocked', () => {
@@ -404,10 +407,12 @@ test('applyNaicsLimit: paid plan returns all NAICS, nothing blocked', () => {
 });
 test('describeNaicsLimit phrases honestly for free under-limit and over-limit', () => {
   const free = getSamSprintEntitlement('free');
-  const under = describeNaicsLimit(free, 2, 2);
-  const over  = describeNaicsLimit(free, 7, 3);
+  // Under-limit case: operator configured exactly 1 NAICS (the cap).
+  const under = describeNaicsLimit(free, 1, 1);
+  // Over-limit case: operator configured 7 NAICS but free caps to 1.
+  const over  = describeNaicsLimit(free, 7, 1);
   assert.ok(/within limit/i.test(under), `expected within-limit phrasing, got: ${under}`);
-  assert.ok(/4 withheld/i.test(over) && /searching 3 of 7/i.test(over), `expected honest phrasing, got: ${over}`);
+  assert.ok(/6 withheld/i.test(over) && /searching 1 of 7/i.test(over), `expected honest phrasing, got: ${over}`);
 });
 
 console.log('\n--- pursuit profile subscription normalization ---');
@@ -428,20 +433,20 @@ test('paid plan in profile yields is_paid=true', () => {
 });
 
 console.log('\n--- buildQueryPlan respects entitlement ---');
-test('buildQueryPlan caps NAICS to 3 for free plan and records blocked codes', () => {
+test('buildQueryPlan caps NAICS to 1 for free plan and records blocked codes', () => {
   const { profile } = normalizePursuitProfile({
     target_naics: ['238320', '561720', '561210', '561790', '541611', '541618', '541930'],
     service_lanes: {}, // no lanes so lane-derived NAICS stay empty
     subscription: { plan: 'free' },
   });
   const plan = buildQueryPlan(profile, NOW_MS);
-  assert.strictEqual(plan.naics.length, 3);
-  assert.deepStrictEqual(plan.naics, ['238320', '561720', '561210']);
+  assert.strictEqual(plan.naics.length, 1);
+  assert.deepStrictEqual(plan.naics, ['238320']);
   assert.strictEqual(plan.entitlement.plan, 'free');
   assert.strictEqual(plan.entitlement.naics_limit_applied, true);
-  assert.strictEqual(plan.entitlement.allowed_naics_count, 3);
+  assert.strictEqual(plan.entitlement.allowed_naics_count, 1);
   assert.strictEqual(plan.entitlement.requested_naics_count, 7);
-  assert.deepStrictEqual(plan.entitlement.blocked_naics_codes, ['561790', '541611', '541618', '541930']);
+  assert.deepStrictEqual(plan.entitlement.blocked_naics_codes, ['561720', '561210', '561790', '541611', '541618', '541930']);
 });
 test('buildQueryPlan keeps all NAICS for paid plan', () => {
   const { profile } = normalizePursuitProfile({
@@ -476,8 +481,8 @@ asyncTest('runSprint surfaces entitlement metadata on the result', async () => {
   assert.strictEqual(r.entitlement.plan, 'free');
   assert.strictEqual(r.entitlement.is_paid, false);
   assert.strictEqual(r.entitlement.naics_limit_applied, true);
-  assert.strictEqual(r.entitlement.allowed_naics_count, 3);
-  assert.deepStrictEqual(r.entitlement.blocked_naics_codes, ['4', '5']);
+  assert.strictEqual(r.entitlement.allowed_naics_count, 1);
+  assert.deepStrictEqual(r.entitlement.blocked_naics_codes, ['2', '3', '4', '5']);
   assert.strictEqual(r.query_metadata.entitlement.plan, 'free');
   assert.strictEqual(r.manual_review_required, true);
 });
@@ -497,11 +502,12 @@ asyncTest('runSprint does NOT call SAM for blocked free-plan NAICS', async () =>
     samService: fakeService,
     now: () => NOW_MS,
   });
-  // Only the first 3 NAICS should have been queried; 444/555 must not appear.
+  // Only the first NAICS should have been queried; 222/333/444/555 must not appear.
   const naicsCalledSet = new Set(calls);
-  assert.ok(naicsCalledSet.has('111') && naicsCalledSet.has('222') && naicsCalledSet.has('333'));
-  assert.strictEqual(naicsCalledSet.has('444'), false, 'blocked NAICS 444 was queried');
-  assert.strictEqual(naicsCalledSet.has('555'), false, 'blocked NAICS 555 was queried');
+  assert.ok(naicsCalledSet.has('111'), 'expected NAICS 111 to be queried');
+  for (const blocked of ['222', '333', '444', '555']) {
+    assert.strictEqual(naicsCalledSet.has(blocked), false, `blocked NAICS ${blocked} was queried`);
+  }
 });
 
 asyncTest('runSprint surfaces entitlement even on not_configured exit (no key)', async () => {
@@ -514,7 +520,7 @@ asyncTest('runSprint surfaces entitlement even on not_configured exit (no key)',
   assert.ok(r.entitlement);
   assert.strictEqual(r.entitlement.plan, 'free');
   assert.strictEqual(r.entitlement.naics_limit_applied, true);
-  assert.strictEqual(r.entitlement.allowed_naics_count, 3);
+  assert.strictEqual(r.entitlement.allowed_naics_count, 1);
   assert.strictEqual(r.manual_review_required, true);
 });
 
