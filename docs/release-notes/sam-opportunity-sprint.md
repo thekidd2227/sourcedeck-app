@@ -4,6 +4,8 @@
 
 Adds the SAM Opportunity Sprint service and CLI to SourceDeck's GovCon stack. Personalizes SAM.gov opportunity scoring through a new GovCon Pursuit Profile so rankings reflect the operator's goal, capacity, geography, certifications, and risk filters.
 
+This UI/docs follow-up clarifies plan-limit copy in the manual-only GovCon workspace card and docs. It does not add live SAM execution, payment processing, pricing changes, or email sending.
+
 ## What's new
 
 - `services/govcon/govcon-pursuit-profile.js` — schema, defaults, normalization, secret stripping for the new Pursuit Profile.
@@ -11,6 +13,14 @@ Adds the SAM Opportunity Sprint service and CLI to SourceDeck's GovCon stack. Pe
 - `scripts/sam-opportunity-sprint.js` — CLI that loads the profile, reads `SAM_GOV_API_KEY` from the environment, exits safely with `not_configured` when the key is missing, and writes four reports to `./reports/` otherwise.
 - `test/sam-opportunity-sprint.test.js` — 28 tests covering profile normalization, dedupe, label thresholds, profile-driven scoring, geo / capacity / certification effects, hard-stop risk flags, missing-contact handling, top-10 draft cap, draft safety, and no-secret-leakage.
 - Docs: `docs/features/sam-opportunity-sprint.md`, `docs/audits/sam-opportunity-sprint-implementation-audit.md`, this release note.
+
+## Plan access
+
+- SAM Opportunity Sprint is available to all users.
+- Free users can search up to 3 NAICS codes per sprint.
+- Paid users can search all configured / available NAICS codes.
+- The plan limit applies to active query execution, not saved GovCon Pursuit Profile preferences.
+- Reports identify which configured NAICS were searched and which were withheld by plan limit.
 
 ## Why the Pursuit Profile is required
 
@@ -22,12 +32,13 @@ The same SAM.gov opportunity scores differently for different operators — that
 
 - `SAM_GOV_API_KEY` is loaded from `process.env` only. Never stored in the profile. Never echoed to logs. Never serialized into report payloads. A guard test asserts this.
 - Outreach is **draft-only**. Every draft carries `draft_only: true`, `auto_send: false`, `manual_approval_required: true`. There is no transport binding.
+- Human approval remains required before outreach. The sprint does not auto-send emails, submit quotes, or contact agencies.
 - Blocked phrases (`guaranteed award`, `guaranteed savings`, `we guarantee`, `award-winning`, `preferred vendor of`, etc.) are scrubbed from generated subjects and bodies.
 - No claims of guaranteed award, guaranteed revenue, or guaranteed response are made by this feature.
 - No changes to watsonx runtime probe logic.
 - No changes to macOS signing / notarization logic.
 - No changes to release evidence generation.
-- No changes to `sourcedeck.html` (PR #43 owns the UI surface; sprint UI ships in a follow-up PR).
+- `sourcedeck.html` changes are static copy only. No live run button, `fetch` handler, payment link, or email transport is added.
 - No `.env` files were touched. No secrets were committed.
 
 ## Compatibility
@@ -62,9 +73,8 @@ If the key is not configured the script exits 0 with a `not_configured` message 
 
 ## Follow-ups
 
-1. UI surface in the SourceDeck GovCon workspace (after PR #43 merges and `sourcedeck.html` ownership returns).
-2. Optional `electron-store` persistence for the Pursuit Profile so Settings can edit it (intentionally not in this PR to avoid touching `main.js` / `services/config.js`).
-3. Optional unification of the sprint draft writer with `services/govcon/email-compliance.js` once that module accepts Pursuit Profile fields.
+1. Optional `electron-store` persistence for the Pursuit Profile so Settings can edit it (intentionally not in this PR to avoid touching `main.js` / `services/config.js`).
+2. Optional unification of the sprint draft writer with `services/govcon/email-compliance.js` once that module accepts Pursuit Profile fields.
 
 ## Known limitations
 
