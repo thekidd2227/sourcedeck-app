@@ -774,44 +774,61 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 <div class="app-body">
   <!-- SIDEBAR -->
   <div class="sidebar">
-    <div class="nav-section">
+    <!-- ═══════════════════════════════════════════════════════════════
+         PHASE 23C — GovCon Primary Navigation
+         GovCon section moved to the top of the sidebar so a buyer's
+         first sidebar eye-fixation lands on GovCon. Every commercial
+         tab below remains reachable (no tab removed; no pane orphaned;
+         no keyboard navigation broken). A "Show All Tools" toggle
+         expands a collapsed view if the operator wants to compress
+         non-GovCon sections during a buyer demo.
+         ═══════════════════════════════════════════════════════════════ -->
+    <div class="nav-section" id="nav-section-govcon-primary" data-section="govcon-primary-nav">
+      <div class="nav-label">GovCon Capture OS</div>
+      <button class="nav-btn active" data-tab="govcon"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><path d="M3 10h18"/><path d="M3 18h18"/><path d="M5 6h14l1 4H4l1-4z"/><rect x="3" y="18" width="18" height="3" rx="1"/></svg></span>GovCon</button>
+      <button class="nav-btn" data-tab="outreach"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span>Outreach</button>
+      <button class="nav-btn" data-tab="primes"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 17l5-5-5-5"/><path d="M8 7l-5 5 5 5"/><path d="M14 4l-4 16"/></svg></span>Prime Partners</button>
+    </div>
+    <!-- Phase 23C: Show All Tools toggle — defaults to expanded so
+         every commercial tab remains visible by default; an operator
+         can collapse non-GovCon sections for a buyer demo. The toggle
+         only flips visibility classes; it never removes a tab from the
+         DOM and never breaks keyboard navigation. -->
+    <div class="nav-section" id="nav-section-show-tools-toggle" data-section="govcon-show-all-tools-toggle">
+      <button type="button" class="nav-btn" id="gc-show-all-tools-btn" data-tools-collapsed="false" onclick="gcToggleAllTools()" style="font-size:10.5px;color:var(--sub);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:0.08em">Other business tools — <span id="gc-show-all-tools-state">Shown</span></button>
+    </div>
+    <div class="nav-section" id="nav-section-operations" data-other-business-tools>
 
-      <div class="nav-label">Operations</div>
+      <div class="nav-label">Other business tools · Operations</div>
       <button class="nav-btn" data-tab="cmd"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>Command Center</button>
-      <button class="nav-btn active" data-tab="dashboard"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>Dashboard</button>
+      <button class="nav-btn" data-tab="dashboard"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>Dashboard</button>
       <button class="nav-btn" data-tab="leads"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Lead Generator</button>
       <button class="nav-btn" data-tab="revenue"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Revenue</button>
       <button class="nav-btn" data-tab="email"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>Email Tracker</button>
     </div>
-    <div class="nav-section">
-      <div class="nav-label">Alerts</div>
+    <div class="nav-section" data-other-business-tools>
+      <div class="nav-label">Other business tools · Alerts</div>
       <button class="nav-btn" data-tab="overdue" id="overdue-nav"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>Overdue <span class="nav-badge" id="oc">0</span></button>
       <button class="nav-btn" data-tab="reply"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Response Desk</button>
     </div>
-    <div class="nav-section">
-      <div class="nav-label">Workflow</div>
+    <div class="nav-section" data-other-business-tools>
+      <div class="nav-label">Other business tools · Workflow</div>
       <button class="nav-btn" data-tab="content"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></span>Ad Engine</button>
       <button class="nav-btn" data-tab="dailyops"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>Daily Ops</button>
       <button class="nav-btn" data-tab="socials"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>Socials</button>
     </div>
-    <div class="nav-section">
-      <div class="nav-label">Tools</div>
+    <div class="nav-section" data-other-business-tools>
+      <div class="nav-label">Other business tools · Tools</div>
       <button class="nav-btn" data-tab="createlead"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>Create Lead</button>
       <button class="nav-btn" data-tab="aigenerate"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span>AI Lead Builder</button>
       <button class="nav-btn" data-tab="settings"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Settings</button>
     </div>
-    <div class="nav-section">
-      <div class="nav-label">Client</div>
+    <div class="nav-section" data-other-business-tools>
+      <div class="nav-label">Other business tools · Client</div>
       <button class="nav-btn" data-tab="delivery"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Client Delivery</button>
     </div>
-    <div class="nav-section">
-      <div class="nav-label">GovCon</div>
-      <button class="nav-btn" data-tab="govcon"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><path d="M3 10h18"/><path d="M3 18h18"/><path d="M5 6h14l1 4H4l1-4z"/><rect x="3" y="18" width="18" height="3" rx="1"/></svg></span>GovCon</button>
-      <button class="nav-btn" data-tab="outreach"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span>Outreach</button>
-      <button class="nav-btn" data-tab="primes"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 17l5-5-5-5"/><path d="M8 7l-5 5 5 5"/><path d="M14 4l-4 16"/></svg></span>Prime Partners</button>
-    </div>
-    <div class="nav-section">
-      <div class="nav-label">Intelligence</div>
+    <div class="nav-section" data-other-business-tools>
+      <div class="nav-label">Other business tools · Intelligence</div>
       <button class="nav-btn" data-tab="command"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>Command</button>
       <button class="nav-btn" data-tab="opportunities"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>Opportunities</button>
       <button class="nav-btn" data-tab="dealwork"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>Deal Workspace</button>
@@ -823,7 +840,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
          shown when a capability is enabled via the capability card or
          operator provisioning. Clinical/EHR mode is the first capability. -->
     <div class="nav-section" id="nav-capabilities" style="display:none">
-      <div class="nav-label">Healthcare</div>
+      <div class="nav-label">Other business tools · Healthcare</div>
       <button class="nav-btn" data-tab="clinical"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>Clinical / EHR</button>
     </div>
   </div>
@@ -911,7 +928,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     </div>
 
     <!-- ═══════ DASHBOARD ═══════ -->
-    <div class="tab-pane active" id="tab-dashboard">
+    <div class="tab-pane" id="tab-dashboard">
       <div class="pane-hdr">
         <div>
           <div class="pane-title"><span class="brief-head">Command Dashboard</span></div>
@@ -2001,7 +2018,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       </div>
     </div>
 
-    <div class="tab-pane" id="tab-govcon">
+    <div class="tab-pane active" id="tab-govcon">
       <div class="pane-hdr">
         <div><div class="pane-title"><span class="brief-head">GovCon Pipeline</span></div><div class="pane-sub" id="gc-count">Federal opportunities · SAM.gov</div></div>
         <div class="pane-actions" style="flex-wrap:wrap;gap:7px">
@@ -10399,11 +10416,14 @@ applyBrandOverlay();
 
 // ─── INIT ───
 document.addEventListener('DOMContentLoaded',()=>{
-  let tab='dashboard';
-  try{tab=localStorage.getItem('lcc_active_tab')||'dashboard';}catch(e){}
-  // Fall back to dashboard if the persisted tab no longer exists (e.g. a
+  // Phase 23C — GovCon Capture OS is the primary buyer-demo experience.
+  // Cold open defaults to the GovCon pane; previously chosen tabs persist
+  // via localStorage and continue to override on subsequent boots.
+  let tab='govcon';
+  try{tab=localStorage.getItem('lcc_active_tab')||'govcon';}catch(e){}
+  // Fall back to GovCon if the persisted tab no longer exists (e.g. a
   // removed pane).
-  if(!document.getElementById('tab-'+tab))tab='dashboard';
+  if(!document.getElementById('tab-'+tab))tab='govcon';
   if(typeof refreshWorkspaceCredentialStatus==='function')refreshWorkspaceCredentialStatus().then(()=>renderWorkspaceReadinessBanner());
   else if(typeof renderWorkspaceReadinessBanner==='function')renderWorkspaceReadinessBanner();
   openTab(tab);
@@ -13392,6 +13412,41 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.addEventListener('DOMContentLoaded', init);
   } else {
     setTimeout(init, 0);
+  }
+})();
+</script>
+<script>
+/* Phase 23C — GovCon Primary Navigation: "Show All Tools" toggle.
+   Collapses every nav-section labeled "Other business tools" so the
+   sidebar visually demotes the commercial-CRM groups during a buyer
+   demo. Does NOT remove any nav button. Does NOT orphan any pane.
+   Operator clicks the toggle to expand the commercial groups again.
+   Default: expanded (Shown). Pure browser code; no network. */
+(function(){
+  'use strict';
+  function getSections(){
+    return Array.from(document.querySelectorAll('.nav-section[data-other-business-tools]'));
+  }
+  function applyState(collapsed){
+    var sections = getSections();
+    for (var i = 0; i < sections.length; i++) {
+      sections[i].style.display = collapsed ? 'none' : '';
+    }
+    var btn = document.getElementById('gc-show-all-tools-btn');
+    if (btn) btn.setAttribute('data-tools-collapsed', collapsed ? 'true' : 'false');
+    var state = document.getElementById('gc-show-all-tools-state');
+    if (state) state.textContent = collapsed ? 'Hidden' : 'Shown';
+  }
+  window.gcToggleAllTools = function(){
+    var btn = document.getElementById('gc-show-all-tools-btn');
+    var nowCollapsed = !(btn && btn.getAttribute('data-tools-collapsed') === 'true');
+    applyState(nowCollapsed);
+  };
+  // Default = expanded so every commercial tab is visible on cold open.
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', function(){ applyState(false); });
+  } else {
+    setTimeout(function(){ applyState(false); }, 0);
   }
 })();
 </script>
