@@ -3038,7 +3038,7 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
 <div class="overlay" id="bk-ov" onclick="if(event.target===this)closeBK()">
   <div class="slide-panel">
     <div class="sp-hdr">
-      <div><div class="sp-name">Book Discovery Call</div><div class="sp-sub">POST → PROD-05 webhook</div></div>
+      <div><div class="sp-name">Book Discovery Call</div><div class="sp-sub">Booking review — no email sent automatically</div></div>
       <button class="x-btn" onclick="closeBK()">✕</button>
     </div>
     <div class="sp-body">
@@ -6388,7 +6388,7 @@ async function lgPushOne(l){
   fields['flduXC5gSMmGY8Byv']=new Date().toISOString().split('T')[0];
   // Stamp the fingerprint on the Leads record too (forward index)
   fields['fldU74UtvdhcmpRlt'] = fingerprint;
-  // If corroboration passed, populate validation proof fields so PROD-03 will pick it up
+  // If corroboration passed, populate validation proof fields for the downstream outreach step to pick up
   if(lane === 'verified-email'){
     fields['fld7R3OGzfSXvgXYH'] = 'https://'+domain;  // Validation Source URL
     fields['fld3fuoKuDjVGQ5Y0'] = new Date().toISOString();  // Validation Timestamp
@@ -6602,7 +6602,7 @@ async function renderCmd(){
     const rows=[];
     if (failed>0) rows.push({p:'failed',w:'Failed automation runs',sub:failed+' event(s) in sd_events store',meta:'-24h',own:'System'});
     const stale = leads.filter(l=>(l.fields.Status||'')==='Synced to Notion').length;
-    if (stale>0) rows.push({p:'warning',w:'Synced-to-Notion leads awaiting PROD-03',sub:stale+' records match the filter',meta:'queue',own:'Auto'});
+    if (stale>0) rows.push({p:'warning',w:'Synced leads awaiting outreach',sub:stale+' records match the filter',meta:'queue',own:'Auto'});
     if (clicks && !starts) rows.push({p:'wait-internal',w:'Pricing clicks without checkout start',sub:clicks+' intent signals not yet converted',meta:'live',own:'Revenue'});
     if (starts>paid.length) rows.push({p:'wait-client',w:'Checkouts started but not completed',sub:(starts-paid.length)+' abandoned sessions',meta:'live',own:'Revenue'});
     if (rows.length===0) {
@@ -7838,15 +7838,15 @@ function clearChecks(){checkState={};renderDailyOps();toast('Checklist reset','o
 // ─── SYSTEM FLOW ───
 function renderFlow(){
   const steps=[
-    {n:1,t:'Assessment Form',d:'[your assessment URL] → inbound webhook → Airtable New + Gmail alert'},
-    {n:2,t:'Qualification',d:'Operator reviews → Status=Qualified in Airtable'},
-    {n:3,t:'Notion Sync (Auto)',d:'PROD-02 15min → M3 writeback → Synced to Notion → Notion record created (dedup)'},
-    {n:4,t:'Instantly Insert (Auto)',d:'PROD-03 4595758 15min → Campaign insert (ID set in Settings) → Status=Contacted or Duplicate - Instantly'},
-    {n:5,t:'Outreach Delivered',d:'[your sender inbox] → Day 0 / Day 5 / Day 12 sequence'},
-    {n:6,t:'Reply Analysis (Auto)',d:'PROD-04 15min → GPT-4o → Airtable AI fields + Gmail alert'},
-    {n:7,t:'Booking Triggered',d:'PROD-05 webhook → pre-call brief → booking link emailed to prospect'},
-    {n:8,t:'Discovery Call',d:'30-min Google Meet → Notion outcome → proposal or nurture'},
-    {n:9,t:'Close',d:'Stage=Won · Status=Done · Invoice sent · Onboarding begins',done:true},
+    {n:1,t:'Assessment Form',d:'New intake is received and queued for review.'},
+    {n:2,t:'Qualification',d:'Records are reviewed and qualified before any outreach.'},
+    {n:3,t:'CRM Sync',d:'Qualified records can sync to your connected workspace when configured.'},
+    {n:4,t:'Outreach Queue',d:'Approved prospects can be prepared for outreach review when configured.'},
+    {n:5,t:'Outreach Delivered',d:'Approved outreach is delivered on your configured schedule.'},
+    {n:6,t:'Reply Review',d:'Imported replies are classified and turned into draft-only next actions.'},
+    {n:7,t:'Booking Review',d:'Qualified booking signals can create follow-up tasks when configured.'},
+    {n:8,t:'Discovery Call',d:'A scheduled discovery call routes to a proposal or nurture path.'},
+    {n:9,t:'Close',d:'Won deals move to invoicing and onboarding.',done:true},
   ];
   const el=document.getElementById('flow-steps');
   if(el)el.innerHTML=steps.map(s=>`
