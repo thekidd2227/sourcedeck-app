@@ -224,7 +224,10 @@ const GENERIC_AD_TOPIC_CATEGORIES = Object.freeze([
   'Other'
 ]);
 
-const _api = {
+// Unique internal name so this file can be loaded as a classic <script>
+// alongside services/response-desk.js (which also defines a top-level
+// `_api`) without an "Identifier already declared" collision.
+const _defaultStateApi = {
   isDemoMode,
   assertNoOperatorSeedData,
   sanitizeDefaultUserState,
@@ -234,5 +237,5 @@ const _api = {
   SOCIAL_CONTENT_PLATFORMS,
   GENERIC_AD_TOPIC_CATEGORIES
 };
-if (typeof module !== 'undefined' && module.exports) module.exports = _api;
-if (typeof window !== 'undefined') window.SDDefaultState = _api;
+if (typeof module !== 'undefined' && module.exports) module.exports = _defaultStateApi;
+if (typeof window !== 'undefined') window.SDDefaultState = _defaultStateApi;

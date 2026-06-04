@@ -6970,7 +6970,7 @@ async function rdSaveToCRM(){
   try{
     const r=await sdAirtableFetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}/${rid}`,{method:'PATCH',body:JSON.stringify(payload)});
     if(st)st.textContent=r.ok?'✓ Analysis saved to CRM/Airtable · no email sent':'✗ Save error '+r.status;
-    if(typeof toast==='function')toast(r.ok?'CRM updated: '+rid:'Save error','+(r.ok?'ok':'err'));
+    if(typeof toast==='function')toast(r.ok?'CRM updated: '+rid:'Save error',r.ok?'ok':'err');
   }catch(e){
     if(st)st.textContent='✗ Network error';
   }
