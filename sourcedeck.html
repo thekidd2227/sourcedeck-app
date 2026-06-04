@@ -2630,6 +2630,157 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             SourceDeck does not submit bids or quotes. SourceDeck does not send capability statements or outreach. SourceDeck does not send partner outreach. No outreach is drafted, sent, or queued by these surfaces. No bid is submitted to SAM.gov, PIEE, eBuy, GSA, agency portals, or email. Past performance suggestions and capability statement outlines are advisory and require human review before proposal use. Human approval required for every action.
           </div>
         </section>
+        <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 22F — Submission Readiness Gate + Human-Approved
+             Package Export. Closes the GovCon capture workflow with a
+             pre-submission readiness control surface and an internal-
+             review package preview. SourceDeck does not submit bids,
+             quotes, or government responses. SourceDeck does not submit,
+             upload, email, or transmit this package. Package export
+             prepares internal review materials only. The user must
+             complete official submission outside SourceDeck. No bid is
+             submitted to SAM.gov, PIEE, eBuy, GSA, agency portals, or
+             email. Human approval required for every action.
+             ═══════════════════════════════════════════════════════════════ -->
+        <section id="gc-sub-gate" class="gc-sub-gate" data-section="govcon-submission-readiness-gate" style="margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+
+          <!-- ─── Submission Readiness Gate ─── -->
+          <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Submission Readiness Gate</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Score · Status · Checklist · Compliance · Pricing · Vendors · Past performance · Capability · Forms · Risks · Human approval · Package</div>
+            <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">No submission package prepared yet. Complete solicitation, compliance, pricing, and proof sections first. SourceDeck does not submit bids, quotes, or government responses. Final submission requires human review and action outside SourceDeck.</div>
+          </div>
+
+          <!-- Score + Status -->
+          <div class="gc-sub-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px">
+            <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Submission Readiness Score (advisory)</div>
+              <div id="gc-sub-score" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0%</div>
+              <div style="font-size:10px;color:var(--muted)">Advisory only. Score reflects local checklist completion. SourceDeck does not submit bids, quotes, or government responses.</div>
+            </div>
+            <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Readiness Status</div>
+              <div id="gc-sub-status" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">Not Ready</div>
+              <div style="font-size:10px;color:var(--muted)">"Ready for Human Review" appears only when every required item is Reviewed and none are Blocked. Final action happens outside SourceDeck.</div>
+            </div>
+            <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Final Package Status</div>
+              <div id="gc-sub-package-status" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">No package prepared</div>
+              <div style="font-size:10px;color:var(--muted)">SourceDeck does not submit, upload, email, or transmit this package.</div>
+            </div>
+          </div>
+
+          <!-- Submission Checklist -->
+          <div class="gc-sub-checklist-wrap" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px;overflow-x:auto">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Submission Package Checklist</div>
+              <div style="font-size:10px;color:var(--muted)">Default = Not started. No fake completion. Human approval required for every item.</div>
+            </div>
+            <table id="gc-sub-checklist-table" style="width:100%;border-collapse:collapse;font-size:10.5px;min-width:680px">
+              <thead>
+                <tr style="text-align:left;color:var(--sub);font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.08em">
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">#</th>
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Checklist item</th>
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Status</th>
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Notes</th>
+                </tr>
+              </thead>
+              <tbody id="gc-sub-checklist-body">
+                <tr><td colspan="4" class="gc-sub-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">Checklist initializing… (defaults to Not started; SourceDeck does not auto-complete items)</td></tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Section status summary (rolled up from earlier 22B/22C/22D/22E surfaces) -->
+          <div class="gc-sub-status-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px">
+            <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Compliance Matrix Status</div>
+              <div id="gc-sub-compliance-status" style="font-size:11px;color:var(--text);margin:4px 0">Not started</div>
+            </div>
+            <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Pricing Worksheet Status</div>
+              <div id="gc-sub-pricing-status" style="font-size:11px;color:var(--text);margin:4px 0">Not started</div>
+            </div>
+            <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Vendor Quote Status</div>
+              <div id="gc-sub-vendor-status" style="font-size:11px;color:var(--text);margin:4px 0">Not started</div>
+            </div>
+            <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Past Performance Status</div>
+              <div id="gc-sub-pp-status" style="font-size:11px;color:var(--text);margin:4px 0">Not started</div>
+            </div>
+            <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Capability Statement Status</div>
+              <div id="gc-sub-cs-status" style="font-size:11px;color:var(--text);margin:4px 0">Not started</div>
+            </div>
+            <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Forms / Attachments Status</div>
+              <div id="gc-sub-forms-status" style="font-size:11px;color:var(--text);margin:4px 0">Not started</div>
+            </div>
+            <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Risk / Deal-Killer Status</div>
+              <div id="gc-sub-risk-status" style="font-size:11px;color:var(--text);margin:4px 0">Not started</div>
+            </div>
+            <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Human Approval Status</div>
+              <div id="gc-sub-approval-status" style="font-size:11px;color:var(--text);margin:4px 0">Not recorded</div>
+            </div>
+          </div>
+
+          <!-- ─── Human-Approved Package Export ─── -->
+          <section id="gc-pkg-export" class="gc-pkg-export" data-section="govcon-human-approved-package-export" style="margin-bottom:14px">
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Human-Approved Package Export</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Package name · Solicitation · Notes · Included sections · Preview</div>
+              <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">Package export prepares internal review materials only. SourceDeck does not submit, upload, email, or transmit this package. The user must complete official submission outside SourceDeck.</div>
+            </div>
+
+            <div class="gc-pkg-form" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:12px">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Package name</span><input class="input" id="gc-pkg-f-name" type="text" placeholder="e.g. operator-named internal review package" oninput="gcPkgSave()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Solicitation number</span><input class="input" id="gc-pkg-f-sol" type="text" placeholder="e.g. operator-supplied sol number" oninput="gcPkgSave()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Export notes</span><textarea class="input" id="gc-pkg-f-notes" rows="2" placeholder="Operator-written internal review notes" oninput="gcPkgSave()"></textarea></label>
+                <div style="grid-column:1/-1;display:grid;grid-template-columns:1fr;gap:6px;margin-top:4px">
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--sub)">Included sections</div>
+                  <div style="display:flex;flex-wrap:wrap;gap:10px;font-size:10.5px;color:var(--sub)">
+                    <label><input type="checkbox" id="gc-pkg-inc-opp" checked onchange="gcPkgSave()"> Opportunity summary</label>
+                    <label><input type="checkbox" id="gc-pkg-inc-sol" checked onchange="gcPkgSave()"> Solicitation extraction</label>
+                    <label><input type="checkbox" id="gc-pkg-inc-compliance" checked onchange="gcPkgSave()"> Compliance matrix</label>
+                    <label><input type="checkbox" id="gc-pkg-inc-pricing" checked onchange="gcPkgSave()"> Pricing worksheet</label>
+                    <label><input type="checkbox" id="gc-pkg-inc-vendor" checked onchange="gcPkgSave()"> Vendor quote table</label>
+                    <label><input type="checkbox" id="gc-pkg-inc-pp" checked onchange="gcPkgSave()"> Past performance records</label>
+                    <label><input type="checkbox" id="gc-pkg-inc-cs" checked onchange="gcPkgSave()"> Capability statement outline</label>
+                    <label><input type="checkbox" id="gc-pkg-inc-ppf" checked onchange="gcPkgSave()"> Prime partner notes</label>
+                    <label><input type="checkbox" id="gc-pkg-inc-risk" checked onchange="gcPkgSave()"> Risk log</label>
+                    <label><input type="checkbox" id="gc-pkg-inc-checklist" checked onchange="gcPkgSave()"> Submission checklist</label>
+                  </div>
+                </div>
+                <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+                  <button type="button" class="btn btn-gold" onclick="gcPkgBuildPreview()">Build Package Preview</button>
+                  <button type="button" class="btn btn-ghost" onclick="gcPkgExportPlaceholder()">Export Package Placeholder</button>
+                  <button type="button" class="btn btn-ghost" onclick="gcPkgClearPreview()">Clear Preview</button>
+                </div>
+                <div style="grid-column:1/-1;font-size:10px;color:var(--muted);line-height:1.55;margin-top:4px">Package export prepares internal review materials only. SourceDeck does not submit, upload, email, or transmit this package. No portal upload. No email attachment. No SAM/PIEE/eBuy/GSA interaction. The user must complete official submission outside SourceDeck.</div>
+              </div>
+            </div>
+
+            <div class="gc-pkg-preview-wrap" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Internal Review Package Preview (local only)</div>
+                <div style="font-size:10px;color:var(--muted)">Local preview only — SourceDeck does not submit, upload, email, or transmit.</div>
+              </div>
+              <div id="gc-pkg-preview">
+                <div class="gc-sub-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No package preview generated yet. Fill in the package name / solicitation / notes, choose included sections, and click "Build Package Preview". The output is a local internal review preview only — SourceDeck does not submit, upload, email, or transmit this package.</div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ─── Shared Human Review Required notice ─── -->
+          <div class="gc-sub-human-review" id="gc-sub-human-review" style="background:rgba(110,31,44,0.10);border:1px solid rgba(110,31,44,0.45);border-radius:var(--r2);padding:10px 12px;font-size:10.5px;line-height:1.55;color:var(--sub)">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text);margin-bottom:4px">Human Review Required</div>
+            SourceDeck does not submit bids, quotes, or government responses. SourceDeck does not submit, upload, email, or transmit this package. No portal upload. No email attachment. No SAM / PIEE / eBuy / GSA interaction from this surface. Submission readiness scoring is advisory and reflects local checklist completion only. The user must complete official submission outside SourceDeck. Human approval required for every action.
+          </div>
+        </section>
         <!--
           ─────────────────────────────────────────────────────────────
           GovCon Pursuit Profile — manual-only setup/readiness card.
@@ -12601,6 +12752,355 @@ document.addEventListener('DOMContentLoaded',()=>{
     gcPpfRender();
   }
   window.gcPePerformanceRender = renderAll;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', renderAll);
+  } else {
+    setTimeout(renderAll, 0);
+  }
+})();
+</script>
+<script>
+/* Phase 22F — Submission Readiness Gate + Human-Approved Package
+   Export renderer. Pure browser code. No network, no auto-send, no
+   auto-submit, no portal upload, no email transmission, no bid /
+   quote / government-response submission. Readiness scoring is
+   advisory and reflects local checklist completion only. Package
+   export prepares internal review materials only; SourceDeck does
+   not submit, upload, email, or transmit this package. The user
+   must complete official submission outside SourceDeck. State is
+   local-only via window.localStorage. */
+(function(){
+  'use strict';
+  var SUB_KEY = 'sd.govcon.submissionReadiness.v1';
+  var PKG_KEY = 'sd.govcon.packageExport.v1';
+  // Upstream phase keys (read-only — never written by this surface).
+  var CAPTURE_KEY = 'sd.govcon.captureBoard.v1';
+  var SOL_KEY    = 'sd.govcon.solWorkspace.v1';
+  var VQR_KEY    = 'sd.govcon.vendorQuotes.v1';
+  var PR_KEY     = 'sd.govcon.pricingWorksheet.v1';
+  var PP_KEY     = 'sd.govcon.pastPerformance.v1';
+  var CS_KEY     = 'sd.govcon.capabilityStatement.v1';
+  var PPF_KEY    = 'sd.govcon.primePartners.v1';
+  function loadObj(key){
+    try {
+      var raw = window.localStorage && window.localStorage.getItem(key);
+      return raw ? JSON.parse(raw) : null;
+    } catch (e) { return null; }
+  }
+  function loadArr(key){
+    var v = loadObj(key);
+    return Array.isArray(v) ? v : [];
+  }
+  function saveObj(key, obj){
+    try { window.localStorage && window.localStorage.setItem(key, JSON.stringify(obj)); }
+    catch (e) {}
+  }
+  function $(id){ return document.getElementById(id); }
+  function safeText(s){ return String(s == null ? '' : s).replace(/[<>]/g, ''); }
+  var CHECKLIST_ITEMS = [
+    { id: 'solicitation_reviewed',     label: 'Solicitation reviewed' },
+    { id: 'deadlines_reviewed',        label: 'Deadlines reviewed' },
+    { id: 'qa_amendments_reviewed',    label: 'Q&A / amendments reviewed' },
+    { id: 'compliance_matrix_reviewed',label: 'Compliance matrix reviewed' },
+    { id: 'required_forms_identified', label: 'Required forms identified' },
+    { id: 'proposal_sections_mapped',  label: 'Proposal sections mapped' },
+    { id: 'pricing_worksheet_reviewed',label: 'Pricing worksheet reviewed' },
+    { id: 'vendor_quotes_reviewed',    label: 'Vendor quotes reviewed' },
+    { id: 'past_performance_selected', label: 'Past performance selected' },
+    { id: 'capability_statement_reviewed',label: 'Capability statement reviewed' },
+    { id: 'prime_teaming_reviewed',    label: 'Prime / teaming notes reviewed' },
+    { id: 'risk_notes_reviewed',       label: 'Risk notes reviewed' },
+    { id: 'final_human_approval_recorded',label: 'Final human approval recorded' }
+  ];
+  var STATUSES = ['Not started', 'In progress', 'Reviewed', 'Blocked'];
+  var STATUS_WEIGHT = { 'Reviewed': 1, 'In progress': 0.5, 'Not started': 0, 'Blocked': 0 };
+  function defaultState(){
+    var checklist = {};
+    var notes = {};
+    for (var i = 0; i < CHECKLIST_ITEMS.length; i++) {
+      checklist[CHECKLIST_ITEMS[i].id] = 'Not started';
+      notes[CHECKLIST_ITEMS[i].id] = '';
+    }
+    return { checklist: checklist, notes: notes };
+  }
+  function loadState(){
+    var s = loadObj(SUB_KEY);
+    if (!s || typeof s !== 'object' || !s.checklist) return defaultState();
+    // Merge with default so new items aren't missing.
+    var base = defaultState();
+    for (var k in base.checklist) {
+      if (s.checklist && STATUSES.indexOf(s.checklist[k]) >= 0) base.checklist[k] = s.checklist[k];
+      if (s.notes && typeof s.notes[k] === 'string') base.notes[k] = s.notes[k];
+    }
+    return base;
+  }
+  function saveState(s){ saveObj(SUB_KEY, s); }
+  // Upstream "status" descriptions for the section status grid.
+  function complianceStatus(){
+    var sol = loadObj(SOL_KEY);
+    if (!sol || !sol.matrix || !sol.matrix.length) return 'Not started';
+    var n = sol.matrix.length, reviewed = 0;
+    for (var i = 0; i < n; i++) if (sol.matrix[i] && sol.matrix[i].status === 'Reviewed') reviewed++;
+    return reviewed === n ? 'Reviewed (' + reviewed + '/' + n + ')'
+         : reviewed > 0    ? 'In progress (' + reviewed + '/' + n + ')'
+                            : 'Draft only (' + n + ' rows; 0 reviewed)';
+  }
+  function pricingStatus(){
+    var p = loadObj(PR_KEY);
+    if (!p) return 'Not started';
+    var hasAny = false;
+    for (var k in p) {
+      if (k === 'assumptions') continue;
+      var v = Number(p[k]);
+      if (isFinite(v) && v > 0) { hasAny = true; break; }
+    }
+    return hasAny ? 'In progress' : 'Not started';
+  }
+  function vendorStatus(){
+    var arr = loadArr(VQR_KEY);
+    if (!arr.length) return 'Not started';
+    var received = 0;
+    for (var i = 0; i < arr.length; i++) {
+      var s = String(arr[i].status || '').toLowerCase();
+      if (s === 'received') received++;
+    }
+    return received > 0 ? 'In progress (' + received + ' received / ' + arr.length + ' rows)'
+                        : 'In progress (' + arr.length + ' rows; 0 received)';
+  }
+  function ppStatus(){
+    var arr = loadArr(PP_KEY);
+    if (!arr.length) return 'Not started';
+    return 'In progress (' + arr.length + ' records)';
+  }
+  function csStatus(){
+    var s = loadObj(CS_KEY);
+    if (!s) return 'Not started';
+    var hasAny = (s.agency || s.sol || s.naics || s.core || s.diff);
+    return hasAny ? 'In progress' : 'Not started';
+  }
+  function formsStatus(){
+    var sol = loadObj(SOL_KEY);
+    if (!sol || !sol.sections || !sol.sections.forms || !sol.sections.forms.length) return 'Not started';
+    return 'In progress (' + sol.sections.forms.length + ' forms identified)';
+  }
+  function riskStatus(){
+    var sol = loadObj(SOL_KEY);
+    if (!sol || !sol.sections || !sol.sections.risks || !sol.sections.risks.length) return 'Not started';
+    return 'In progress (' + sol.sections.risks.length + ' risk lines)';
+  }
+  function approvalStatus(state){
+    return state.checklist.final_human_approval_recorded === 'Reviewed' ? 'Recorded' : 'Not recorded';
+  }
+  function computeReadiness(state){
+    var total = 0, sum = 0, blocked = false;
+    for (var i = 0; i < CHECKLIST_ITEMS.length; i++) {
+      var st = state.checklist[CHECKLIST_ITEMS[i].id] || 'Not started';
+      total += 1;
+      sum += (STATUS_WEIGHT[st] || 0);
+      if (st === 'Blocked') blocked = true;
+    }
+    var score = total > 0 ? Math.round((sum / total) * 100) : 0;
+    var allReviewed = true;
+    for (var j = 0; j < CHECKLIST_ITEMS.length; j++) {
+      if (state.checklist[CHECKLIST_ITEMS[j].id] !== 'Reviewed') { allReviewed = false; break; }
+    }
+    var finalApproval = state.checklist.final_human_approval_recorded === 'Reviewed';
+    var status;
+    if (blocked) status = 'Not Ready';
+    else if (allReviewed && finalApproval) status = 'Ready for Human Review';
+    else if (score >= 25) status = 'Needs Review';
+    else status = 'Not Ready';
+    return { score: score, status: status, blocked: blocked };
+  }
+  function renderChecklist(state){
+    var body = $('gc-sub-checklist-body');
+    if (!body) return;
+    var rows = [];
+    for (var i = 0; i < CHECKLIST_ITEMS.length; i++) {
+      var item = CHECKLIST_ITEMS[i];
+      var st = state.checklist[item.id] || 'Not started';
+      var opts = STATUSES.map(function(s){
+        var sel = s === st ? ' selected' : '';
+        return '<option value="' + s + '"' + sel + '>' + s + '</option>';
+      }).join('');
+      var note = String(state.notes[item.id] || '');
+      rows.push('<tr style="border-top:1px solid var(--border2,rgba(255,255,255,0.05));font-family:\'Instrument Sans\',sans-serif">'
+        + '<td style="padding:7px 6px;color:var(--muted);font-family:\'Azeret Mono\',monospace">' + (i + 1) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--text)">' + safeText(item.label) + '</td>'
+        + '<td style="padding:7px 6px"><select class="select" data-sub-item="' + item.id + '" onchange="gcSubSetStatus(this)" style="font-size:11px">' + opts + '</select></td>'
+        + '<td style="padding:7px 6px"><input class="input" type="text" data-sub-note="' + item.id + '" value="' + safeText(note) + '" oninput="gcSubSetNote(this)" placeholder="Operator notes (optional)" style="font-size:11px;width:100%"></td>'
+        + '</tr>');
+    }
+    body.innerHTML = rows.join('');
+  }
+  function renderStatusGrid(state){
+    var fields = {
+      'gc-sub-compliance-status': complianceStatus(),
+      'gc-sub-pricing-status':    pricingStatus(),
+      'gc-sub-vendor-status':     vendorStatus(),
+      'gc-sub-pp-status':         ppStatus(),
+      'gc-sub-cs-status':         csStatus(),
+      'gc-sub-forms-status':      formsStatus(),
+      'gc-sub-risk-status':       riskStatus(),
+      'gc-sub-approval-status':   approvalStatus(state)
+    };
+    for (var id in fields) {
+      var el = $(id); if (el) el.textContent = fields[id];
+    }
+  }
+  function renderSummary(state){
+    var r = computeReadiness(state);
+    var score = $('gc-sub-score'); if (score) score.textContent = r.score + '%';
+    var statusEl = $('gc-sub-status'); if (statusEl) statusEl.textContent = r.status;
+    var pkgState = loadObj(PKG_KEY) || {};
+    var pkgEl = $('gc-sub-package-status');
+    if (pkgEl) pkgEl.textContent = (pkgState && pkgState.lastPreviewAt) ? 'Preview generated locally' : 'No package prepared';
+  }
+  function renderAll(){
+    var state = loadState();
+    renderChecklist(state);
+    renderStatusGrid(state);
+    renderSummary(state);
+    gcPkgRestore();
+  }
+  window.gcSubSetStatus = function(sel){
+    var id = sel && sel.getAttribute('data-sub-item');
+    if (!id) return;
+    var state = loadState();
+    if (STATUSES.indexOf(sel.value) < 0) return;
+    state.checklist[id] = sel.value;
+    saveState(state);
+    renderStatusGrid(state);
+    renderSummary(state);
+  };
+  window.gcSubSetNote = function(inp){
+    var id = inp && inp.getAttribute('data-sub-note');
+    if (!id) return;
+    var state = loadState();
+    state.notes[id] = String(inp.value || '');
+    saveState(state);
+  };
+  window.gcSubRender = renderAll;
+  // ─── Human-Approved Package Export ────────────────────────────
+  function pkgState(){ return loadObj(PKG_KEY) || {}; }
+  function pkgSetState(s){ saveObj(PKG_KEY, s || {}); }
+  window.gcPkgSave = function(){
+    var st = pkgState();
+    st.name  = ($('gc-pkg-f-name')  || {}).value || '';
+    st.sol   = ($('gc-pkg-f-sol')   || {}).value || '';
+    st.notes = ($('gc-pkg-f-notes') || {}).value || '';
+    st.included = {
+      opp:        !!($('gc-pkg-inc-opp')        && $('gc-pkg-inc-opp').checked),
+      sol:        !!($('gc-pkg-inc-sol')        && $('gc-pkg-inc-sol').checked),
+      compliance: !!($('gc-pkg-inc-compliance') && $('gc-pkg-inc-compliance').checked),
+      pricing:    !!($('gc-pkg-inc-pricing')    && $('gc-pkg-inc-pricing').checked),
+      vendor:     !!($('gc-pkg-inc-vendor')     && $('gc-pkg-inc-vendor').checked),
+      pp:         !!($('gc-pkg-inc-pp')         && $('gc-pkg-inc-pp').checked),
+      cs:         !!($('gc-pkg-inc-cs')         && $('gc-pkg-inc-cs').checked),
+      ppf:        !!($('gc-pkg-inc-ppf')        && $('gc-pkg-inc-ppf').checked),
+      risk:       !!($('gc-pkg-inc-risk')       && $('gc-pkg-inc-risk').checked),
+      checklist:  !!($('gc-pkg-inc-checklist')  && $('gc-pkg-inc-checklist').checked)
+    };
+    pkgSetState(st);
+  };
+  function gcPkgRestore(){
+    var st = pkgState();
+    if (!st) return;
+    var nameEl = $('gc-pkg-f-name'); if (nameEl && st.name != null && document.activeElement !== nameEl) nameEl.value = st.name;
+    var solEl  = $('gc-pkg-f-sol');  if (solEl  && st.sol  != null && document.activeElement !== solEl)  solEl.value  = st.sol;
+    var notesEl= $('gc-pkg-f-notes');if (notesEl&& st.notes!= null && document.activeElement !== notesEl)notesEl.value= st.notes;
+    var inc = st.included || {};
+    var map = ['opp','sol','compliance','pricing','vendor','pp','cs','ppf','risk','checklist'];
+    for (var i = 0; i < map.length; i++) {
+      var k = map[i];
+      var el = $('gc-pkg-inc-' + k);
+      if (el && typeof inc[k] === 'boolean') el.checked = inc[k];
+    }
+  }
+  window.gcPkgClearPreview = function(){
+    var out = $('gc-pkg-preview');
+    if (!out) return;
+    out.innerHTML = '<div class="gc-sub-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No package preview generated yet. Fill in the package name / solicitation / notes, choose included sections, and click "Build Package Preview". The output is a local internal review preview only — SourceDeck does not submit, upload, email, or transmit this package.</div>';
+    var st = pkgState();
+    delete st.lastPreviewAt;
+    pkgSetState(st);
+    renderSummary(loadState());
+  };
+  window.gcPkgBuildPreview = function(){
+    var st = pkgState();
+    gcPkgSave(); // capture latest form values
+    st = pkgState();
+    var inc = st.included || {};
+    var lines = ['<div style="font-family:\'Instrument Sans\',sans-serif;font-size:11.5px;color:var(--text);line-height:1.65">'];
+    lines.push('<div style="font-family:\'IBM Plex Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-bottom:6px">Internal review package preview — local only. SourceDeck does not submit, upload, email, or transmit this package.</div>');
+    lines.push('<div><strong>Package name:</strong> ' + (st.name ? safeText(st.name) : '<em>(operator-supplied)</em>') + '</div>');
+    lines.push('<div><strong>Solicitation:</strong> ' + (st.sol ? safeText(st.sol) : '<em>(operator-supplied)</em>') + '</div>');
+    if (st.notes) lines.push('<div><strong>Notes:</strong> ' + safeText(st.notes) + '</div>');
+    function bullet(label, count){
+      lines.push('<div style="margin-top:6px"><strong>' + safeText(label) + ':</strong> ' + safeText(count) + '</div>');
+    }
+    if (inc.opp) {
+      var opps = loadArr(CAPTURE_KEY);
+      bullet('Opportunity summary (Phase 22B)', opps.length + ' opportunit' + (opps.length === 1 ? 'y' : 'ies'));
+    }
+    if (inc.sol) {
+      var sol = loadObj(SOL_KEY);
+      var sections = sol && sol.sections ? sol.sections : {};
+      var n = (sections.sectionL || []).length + (sections.sectionM || []).length + (sections.pws || []).length;
+      bullet('Solicitation extraction (Phase 22C)', n + ' extracted lines');
+    }
+    if (inc.compliance) {
+      var sol2 = loadObj(SOL_KEY);
+      var m = sol2 && Array.isArray(sol2.matrix) ? sol2.matrix.length : 0;
+      bullet('Compliance matrix (Phase 22C)', m + ' rows');
+    }
+    if (inc.pricing) {
+      var p = loadObj(PR_KEY) || {};
+      var any = false;
+      for (var k in p) { if (k !== 'assumptions' && Number(p[k]) > 0) { any = true; break; } }
+      bullet('Pricing worksheet (Phase 22D)', any ? 'fields present' : 'no cost inputs entered');
+    }
+    if (inc.vendor) {
+      var vqr = loadArr(VQR_KEY);
+      bullet('Vendor quote table (Phase 22D)', vqr.length + ' rows');
+    }
+    if (inc.pp) {
+      var pp = loadArr(PP_KEY);
+      bullet('Past performance records (Phase 22E)', pp.length + ' records');
+    }
+    if (inc.cs) {
+      var cs = loadObj(CS_KEY);
+      bullet('Capability statement outline (Phase 22E)', cs ? 'draft saved (advisory)' : 'no draft saved');
+    }
+    if (inc.ppf) {
+      var ppf = loadArr(PPF_KEY);
+      bullet('Prime partner notes (Phase 22E)', ppf.length + ' rows');
+    }
+    if (inc.risk) {
+      var sol3 = loadObj(SOL_KEY);
+      var risks = sol3 && sol3.sections && Array.isArray(sol3.sections.risks) ? sol3.sections.risks.length : 0;
+      bullet('Risk log (Phase 22C)', risks + ' lines');
+    }
+    if (inc.checklist) {
+      var state = loadState();
+      var reviewed = 0, total = CHECKLIST_ITEMS.length;
+      for (var i = 0; i < CHECKLIST_ITEMS.length; i++) {
+        if (state.checklist[CHECKLIST_ITEMS[i].id] === 'Reviewed') reviewed++;
+      }
+      bullet('Submission checklist', reviewed + '/' + total + ' items Reviewed');
+    }
+    lines.push('<div style="margin-top:10px;color:var(--muted);font-size:10px;font-style:italic">Internal review preview only. SourceDeck does not submit, upload, email, or transmit this package. The user must complete official submission outside SourceDeck. No bid, quote, or government response is submitted by this surface. Human approval required for every action.</div>');
+    lines.push('</div>');
+    var out = $('gc-pkg-preview'); if (out) out.innerHTML = lines.join('');
+    // Mark previewedAt (NOT submittedAt — never that).
+    st.lastPreviewAt = 'local-only';
+    pkgSetState(st);
+    renderSummary(loadState());
+    if (window.toast) try { window.toast('Internal review package preview built locally. SourceDeck does not submit, upload, email, or transmit this package.', 'ok'); } catch (e) {}
+  };
+  window.gcPkgExportPlaceholder = function(){
+    if (window.toast) try { window.toast('Export Package placeholder — internal review materials only. SourceDeck does not submit, upload, email, or transmit this package. Final submission happens outside SourceDeck.', 'info'); } catch (e) {}
+  };
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', renderAll);
   } else {
