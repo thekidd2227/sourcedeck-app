@@ -129,17 +129,7 @@ This shot is the highest-stakes proof in the recording. If a Send Email button i
 - Weekly Rhythm card reads **"No weekly rhythm yet. Generate from your goals or add your own."**
 - Escalation Rules card reads **"No escalation rules configured. Define your own follow-up triggers and time windows."**
 
-## Shot 12 — Sysflow Active Webhooks / Infrastructure / HTTP Standards (15-min only)
-
-**Use:** proof-of-clean default state.
-**View:** Sysflow tab with the three sysflow cards in frame side-by-side.
-**Hold time:** 4 seconds.
-**Verify before capture:**
-- All three cards show their respective empty-state messages.
-- No `PROD-01 Assessment`, `PROD-05 Booking`, `LCC Booking` rows.
-- No `appXXXXXXXXXXXXXXX`, `8125092`, `4595758`, `ti5tlit9...`, `jpu2xj...` IDs.
-
-## Shot 13 — GovCon SAM Sprint plan limit copy (5-min and 15-min)
+## Shot 12 — GovCon SAM Sprint plan limit copy (5-min and 15-min)
 
 **Use:** prove the Free=1 / paid=many entitlement.
 **View:** zoom on the SAM Sprint panel where the plan-limit copy lives.
@@ -148,7 +138,7 @@ This shot is the highest-stakes proof in the recording. If a Send Email button i
 - Panel copy reads **"Free users: 1 NAICS per sprint. Paid users: all configured NAICS codes."**
 - No live SAM.gov call initiated during the recording.
 
-## Shot 14 — watsonx readiness panel (15-min only)
+## Shot 13 — watsonx readiness panel (15-min only)
 
 **Use:** prove the presence/status/remediation-only wording.
 **View:** Settings → IBM mode → watsonx readiness sub-panel.
@@ -158,7 +148,7 @@ This shot is the highest-stakes proof in the recording. If a Send Email button i
 - Helper copy reads **"watsonx credentials are stored securely and are not exposed back to the interface."**
 - **No** "watsonx live" wording anywhere in frame.
 
-## Shot 15 — `.btn-gold` regression guard frame (5-min and 15-min)
+## Shot 14 — `.btn-gold` regression guard frame (5-min and 15-min)
 
 **Use:** prove Phase 20G visual guard.
 **View:** any view that contains a `.btn-gold` button rendered at default desktop width (e.g., the Generate Leads button on the AI Generate pane, or the "Analyze reply" button on Response Desk).

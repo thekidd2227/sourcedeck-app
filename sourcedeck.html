@@ -793,7 +793,6 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <button class="nav-btn" data-tab="content"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></span>Ad Engine</button>
       <button class="nav-btn" data-tab="dailyops"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>Daily Ops</button>
       <button class="nav-btn" data-tab="socials"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>Socials</button>
-      <button class="nav-btn" data-tab="sysflow"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/></svg></span>System Readiness</button>
     </div>
     <div class="nav-section">
       <div class="nav-label">Tools</div>
@@ -1435,29 +1434,6 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         </div>
       </div>
     </div>
-
-    <!-- ═══════ SYSTEM FLOW ═══════ -->
-    <div class="tab-pane" id="tab-sysflow">
-      <div class="pane-hdr"><div><div class="pane-title"><span class="brief-head">System Readiness</span></div><div class="pane-sub">Connections, webhooks, and readiness checks — empty until configured</div></div></div>
-      <div class="pane-body">
-        <div class="card mb-14">
-          <div class="sl">9-Stage Revenue Pipeline</div>
-          <div id="flow-steps"></div>
-        </div>
-        <div class="grid-3">
-          <div class="card"><div class="sl">Active Webhooks</div>
-            <div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No webhooks active. Connect tools in Settings to populate this panel.</div>
-          </div>
-          <div class="card"><div class="sl">Infrastructure</div>
-            <div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No integrations configured. Set integrations in Settings.</div>
-          </div>
-          <div class="card"><div class="sl">HTTP Standards</div>
-            <div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No HTTP standards published.</div>
-          </div>
-        </div>
-      </div>
-    </div>
-
 
     <!-- ═══ CREATE LEAD ═══ -->
     <div class="tab-pane" id="tab-createlead">
@@ -5090,7 +5066,6 @@ function openTab(t){
   if(t==='email'&&typeof renderEmailTracker==='function')renderEmailTracker();
   if(t==='revenue'&&typeof renderRevenue==='function')renderRevenue();
   if(t==='cmd'&&typeof renderCmd==='function')renderCmd();
-  if(t==='sysflow'&&typeof renderFlow==='function')renderFlow();
   if(t==='dailyops'&&typeof renderDailyOps==='function')renderDailyOps();
   if(t==='delivery'&&typeof fetchDeliveryFromAirtable==='function'){if(!_delLoaded)fetchDeliveryFromAirtable().then(()=>renderDelivery());else renderDelivery();}
   if(t==='govcon'&&typeof fetchGovconFromAirtable==='function'){if(!gcLoaded)fetchGovconFromAirtable();else renderGovcon();}
@@ -7835,26 +7810,10 @@ function toggleCheck(k,el){
 }
 function clearChecks(){checkState={};renderDailyOps();toast('Checklist reset','ok');}
 
-// ─── SYSTEM FLOW ───
-function renderFlow(){
-  const steps=[
-    {n:1,t:'Assessment Form',d:'New intake is received and queued for review.'},
-    {n:2,t:'Qualification',d:'Records are reviewed and qualified before any outreach.'},
-    {n:3,t:'CRM Sync',d:'Qualified records can sync to your connected workspace when configured.'},
-    {n:4,t:'Outreach Queue',d:'Approved prospects can be prepared for outreach review when configured.'},
-    {n:5,t:'Outreach Delivered',d:'Approved outreach is delivered on your configured schedule.'},
-    {n:6,t:'Reply Review',d:'Imported replies are classified and turned into draft-only next actions.'},
-    {n:7,t:'Booking Review',d:'Qualified booking signals can create follow-up tasks when configured.'},
-    {n:8,t:'Discovery Call',d:'A scheduled discovery call routes to a proposal or nurture path.'},
-    {n:9,t:'Close',d:'Won deals move to invoicing and onboarding.',done:true},
-  ];
-  const el=document.getElementById('flow-steps');
-  if(el)el.innerHTML=steps.map(s=>`
-    <div style="display:flex;gap:14px;padding:11px 0;border-bottom:1px solid var(--border2);align-items:flex-start">
-      <div style="width:26px;height:26px;border-radius:50%;background:${s.done?'var(--green)':'linear-gradient(135deg,var(--gold),#a87800)'};color:${s.done?'#fff':'#000'};display:flex;align-items:center;justify-content:center;font-weight:800;font-size:11px;flex-shrink:0;margin-top:2px;font-family:'Syne',sans-serif">${s.done?'✓':s.n}</div>
-      <div><div style="font-size:12px;font-weight:600;margin-bottom:2px">${s.t}</div><div style="font-size:10px;color:var(--muted)">${s.d}</div></div>
-    </div>`).join('');
-}
+// ─── (removed in Phase 21F) ───
+// The internal readiness/admin pipeline view was removed — it had no
+// buyer-facing purpose. openTab no longer dispatches to it and its pane no
+// longer exists.
 
 // ─── GOVCON PIPELINE — AIRTABLE-BACKED ───
 const GC_TBL='tblWWWWWWWWWWWWWWW';
@@ -9645,6 +9604,9 @@ applyBrandOverlay();
 document.addEventListener('DOMContentLoaded',()=>{
   let tab='dashboard';
   try{tab=localStorage.getItem('lcc_active_tab')||'dashboard';}catch(e){}
+  // Fall back to dashboard if the persisted tab no longer exists (e.g. a
+  // removed pane).
+  if(!document.getElementById('tab-'+tab))tab='dashboard';
   if(typeof refreshWorkspaceCredentialStatus==='function')refreshWorkspaceCredentialStatus().then(()=>renderWorkspaceReadinessBanner());
   else if(typeof renderWorkspaceReadinessBanner==='function')renderWorkspaceReadinessBanner();
   openTab(tab);
@@ -10219,7 +10181,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     'Email Tracker': 'Seguimiento de correo',
     'Overdue': 'Vencidos', 'Response Desk': 'Mesa de respuesta',
     'Ad Engine': 'Motor de anuncios', 'Daily Ops': 'Operaciones diarias',
-    'Socials': 'Redes sociales', 'System Flow': 'Flujo del sistema',
+    'Socials': 'Redes sociales',
     'Create Lead': 'Crear lead', 'AI Generate': 'Generación con IA',
     'Settings': 'Configuración', 'Client Delivery': 'Entrega al cliente',
     'GovCon': 'GovCon', 'Command': 'Comando',
