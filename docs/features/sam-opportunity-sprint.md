@@ -15,6 +15,15 @@ Runs a focused 7-day or 30-day sweep of SAM.gov active solicitations, scopes the
 
 Outreach is **draft-only**. The tool never sends an email and never schedules one.
 
+## Plan access and NAICS coverage
+
+SAM Opportunity Sprint is available to all users.
+
+- Free users can search up to 3 NAICS codes per sprint.
+- Paid users can search all configured / available NAICS codes for broader sprint searches.
+- The plan limit applies to active query execution only. It does not remove, overwrite, or limit saved GovCon Pursuit Profile NAICS preferences.
+- Reports must disclose which configured NAICS were searched and which were withheld by plan limit.
+
 ## Why the GovCon Pursuit Profile is required
 
 Generic NAICS-based scoring tells you which opportunities *exist* — not which ones *you* should pursue. SAM Opportunity Sprint refuses to rank without a profile, because the same RFQ scores very differently for:
@@ -105,19 +114,22 @@ npm run sam:sprint
 
 - **Top-10 draft cap**: the operator's `output_preference.top_draft_count` is clamped to [1, 10]. Drafts beyond rank 10 are not produced.
 - **Manual approval required**: every draft carries `draft_only: true`, `auto_send: false`, `manual_approval_required: true`.
+- **Plan-limit disclosure**: free plan reports identify searched NAICS and configured NAICS withheld by plan limit.
 - **Blocked phrases**: `"guaranteed award"`, `"guaranteed savings"`, `"guaranteed ROI"`, `"guaranteed response"`, `"we guarantee"`, `"award-winning"`, `"preferred vendor of"` are filtered from every generated subject and body.
 - **No compliance overclaim**: drafts use only the certifications named in the operator's profile; nothing is inferred or borrowed from the opportunity record.
 
 ## Limitations
 
-- This release ships the service, scorer, CLI, tests, and docs. UI integration into the SourceDeck GovCon workspace will land in a follow-up PR once Phase 20F (PR #43) merges and `sourcedeck.html` ownership returns.
+- The SourceDeck GovCon workspace includes a manual-only SAM Opportunity Sprint card with plan-limit, profile-completeness, report-disclosure, and human-approval copy. It does not run the sprint from the UI.
 - Reports are written to `./reports/` and are intentionally not committed; the operator decides whether to share or archive them.
 - The score is decision support, not a guaranteed award predictor. Operators must apply judgement before any outreach.
+- Scoring remains profile-driven. Incomplete profile data lowers ranking confidence even when NAICS coverage is available.
 
 ## What this is not
 
 - Not an auto-bidder.
 - Not an auto-sender.
+- Not an email sending system; human approval remains required before any outreach.
 - Not a Buffer/social-posting workflow.
 - Not a guarantee of award, revenue, or response.
 - Not a replacement for the deeper bid-fit analysis in `services/govcon/middleman-fit.js` (the sprint scorer is the fast, lane-aware first pass; middleman-fit is the deep dive after a target is selected).

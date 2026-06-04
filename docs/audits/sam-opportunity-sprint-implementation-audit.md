@@ -15,9 +15,19 @@
 | What new files were required? | `services/govcon/govcon-pursuit-profile.js`, `services/govcon/sam-opportunity-sprint.js`, `scripts/sam-opportunity-sprint.js`, `test/sam-opportunity-sprint.test.js`, three doc files. |
 | What must NOT be duplicated? | The SAM.gov API client (use `createSamSearchService`); the deep middleman-fit analyzer (sprint does not replace it); the email-compliance hard guards (sprint mirrors the safety posture but does not bypass it). |
 
-## Why no UI work in this PR
+## UI/docs-only follow-up
 
-PR #43 (`feat/phase-20f-troubleshooting-release-evidence-visual-system`) owns `sourcedeck.html` right now. The SAM Opportunity Sprint UI surface (an action card on the GovCon workspace, the result columns, the profile-incomplete notice) will land in a follow-up PR after #43 merges. The service / CLI / tests / docs ship today so the capture logic can be reviewed independently of the visual system.
+This follow-up updates the existing manual-only SAM Opportunity Sprint card in `sourcedeck.html` plus docs copy. It does not change service logic, CLI behavior, tests, package metadata, live execution, pricing, payment processing, or email transport.
+
+## Plan access and NAICS limit
+
+The sprint is accessible to all users.
+
+- Free users can search up to 3 NAICS codes per sprint.
+- Paid users can search all configured / available NAICS codes.
+- The limit applies to active query execution, not saved GovCon Pursuit Profile preferences.
+- Reports must disclose which configured NAICS were searched and which were withheld by plan limit.
+- Paid plan copy may describe broader NAICS coverage, but must not change pricing numbers or introduce payment processing in this UI/docs pass.
 
 ## Stash discipline
 
@@ -26,13 +36,14 @@ Two stashes were left untouched per operator instruction:
 - `stash@{0}` — *"WIP on feat/govcon-setup-wizard: 037a459 feat(ui): SoHo x DC Power redesign"*
 - `stash@{1}` — *"WIP: GovCon Capture OS + credential boundary"* — touches `services/govcon/sam-search.js` and `sourcedeck.html` among other files.
 
-This PR avoids `sam-search.js` mutations and avoids `sourcedeck.html` entirely. Stash@{1}'s in-flight edits can be applied and merged later without conflicting with the new sprint files (they are wholly new paths).
+This PR avoids `sam-search.js` mutations and edits `sourcedeck.html` only for static SAM Sprint UI copy. Stash@{1}'s in-flight edits must still be reviewed separately if applied later.
 
 A local safety pointer was created: `backup/stale-design-token-2ceb175`. It was **not pushed**.
 
 ## Scoring model — design notes
 
 - **Profile-first**: the scorer takes `profile` and `opp`; it does not have a "no-profile" default mode that produces high scores. With a default-but-empty profile, geography and lane checks contribute zero or even negative score, naturally pushing rankings down toward Archive / Review until the operator configures.
+- **Plan-aware query scope**: plan limits determine how many configured NAICS are actively searched during a sprint. They do not change the saved Pursuit Profile and do not make scoring generic; scoring remains profile-driven.
 - **Hard stops via risk flags**: clearance language and excluded geography raise `risk_flags` with `severity: 'hard_stop'` or `penalty`. A single `hard_stop` flag forces the bid/no-bid recommendation to NO-BID regardless of headline score.
 - **Capacity dimension**: the sprint enforces the operator's `max_response_time_hours` against the opportunity's deadline. A 24-hour-deadline RFQ does not score Pursue for an operator who can't quote inside 24 hours, even if every other dimension matches.
 - **Past performance**: separate dimension so an operator who declares "no relevant past performance in this lane" still sees the opp ranked, but without the +4/+3 boost.
@@ -45,20 +56,18 @@ A local safety pointer was created: `backup/stale-design-token-2ceb175`. It was 
 - A test (`runSprint never embeds the api key in the result`) asserts that a known secret value cannot leak into the returned object.
 - All generated email drafts carry `draft_only: true`, `auto_send: false`, `manual_approval_required: true`. The CLI never sends and there is no transport binding.
 - `safe()` filter scrubs blocked phrases (`guaranteed award`, `we guarantee`, `award-winning`, `preferred vendor of`, etc.) from subject and body.
+- Human approval remains required before outreach. No auto-send email path is introduced.
+- The feature makes no guaranteed award or revenue claim.
 - No changes to watsonx runtime probe, signing/notarization, or release evidence logic.
 
 ## Files changed
 
-- `services/govcon/govcon-pursuit-profile.js` (new)
-- `services/govcon/sam-opportunity-sprint.js` (new)
-- `scripts/sam-opportunity-sprint.js` (new)
-- `test/sam-opportunity-sprint.test.js` (new)
-- `docs/features/sam-opportunity-sprint.md` (new)
-- `docs/audits/sam-opportunity-sprint-implementation-audit.md` (new — this file)
-- `docs/release-notes/sam-opportunity-sprint.md` (new)
-- `package.json` — `scripts` block extended with `sam:sprint` and `test` extended to include the new test file. No dependencies added.
+- `sourcedeck.html` — static SAM Sprint plan-limit / profile / manual-approval / report disclosure copy.
+- `docs/features/sam-opportunity-sprint.md` — plan access, NAICS limit, report disclosure, safety copy.
+- `docs/audits/sam-opportunity-sprint-implementation-audit.md` — this UI/docs-only scope note.
+- `docs/release-notes/sam-opportunity-sprint.md` — plan access and safety note.
 
-Forbidden files were **not** touched: `sourcedeck.html`, `main.js`, `preload.js`, `api/index.js`, `services/config.js`, `scripts/release-check.js`. No `package-lock.json` changes (no `npm install` was run).
+Forbidden files were **not** touched: `services/**`, `scripts/**`, `test/**`, `package.json`, `package-lock.json`, `.env*`, `main.js`, `preload.js`, `api/index.js`, `services/config.js`. No `npm install` was run.
 
 ## Validation
 
