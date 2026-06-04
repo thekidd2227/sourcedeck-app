@@ -2156,6 +2156,96 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           Find opportunities → score fit → prepare draft outreach → identify prime partners → review and approve.
           <span style="display:block;margin-top:5px;color:var(--muted)">Drafts only. Human approval required. Follow solicitation instructions and communication windows.</span>
         </div>
+        <!--
+          ─────────────────────────────────────────────────────────────
+          SAM Opportunity Sprint — manual-only action / report-viewer
+          card. Pure information surface: there is no live Run button,
+          no email transport, no Buffer wiring. Operators run the
+          sprint via the CLI (`npm run sam:sprint`) and review the
+          generated reports under ./reports/. See
+          docs/features/sam-opportunity-sprint.md for the full feature
+          spec. Scoring is driven by the GovCon Pursuit Profile in
+          services/govcon/govcon-pursuit-profile.js.
+          ─────────────────────────────────────────────────────────────
+        -->
+        <section class="sam-sprint-card" aria-labelledby="sam-sprint-title" style="margin-bottom:16px;padding:14px 16px;border:1px solid rgba(176,138,60,0.30);border-radius:var(--r2);background:linear-gradient(145deg,rgba(176,138,60,0.06),rgba(23,32,51,0.05));font-size:12px;line-height:1.55;color:var(--sub)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+            <div>
+              <div id="sam-sprint-title" style="font:700 13px/1.3 'Instrument Sans',sans-serif;color:var(--text);letter-spacing:0.01em">SAM Opportunity Sprint</div>
+              <div style="margin-top:3px;font:600 9.5px/1.3 'Azeret Mono',monospace;color:var(--gold2,#c9941a);letter-spacing:0.1em;text-transform:uppercase">7-day · 30-day pulse · profile-driven scoring</div>
+            </div>
+            <div style="font:600 9.5px/1.3 'Azeret Mono',monospace;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase">Manual-only · drafts only</div>
+          </div>
+
+          <div class="sam-sprint-profile-notice" style="margin-bottom:12px;padding:9px 11px;border-left:3px solid var(--gold2,#c9941a);background:rgba(23,32,51,0.40);border-radius:4px;color:var(--text);font-size:11.5px">
+            Scoring is based on your GovCon Pursuit Profile. Complete your goal, NAICS, service lanes, geography, certifications, capacity, risk filters, and past performance before relying on rankings.
+          </div>
+
+          <div class="sam-sprint-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:12px">
+            <div class="sam-sprint-summary" style="padding:9px 10px;border:1px solid var(--border);border-radius:6px;background:var(--panel2,#0f1e32)">
+              <div style="font:700 9px/1.3 'Azeret Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:5px">Target NAICS (defaults)</div>
+              <div style="color:var(--text);font-size:11px;line-height:1.5">238320 · 561720 · 561210 · 561790 · 541611 · 541618 · 541930</div>
+              <div style="margin-top:4px;color:var(--muted);font-size:10px">Painting · Janitorial · Facilities Support · Other Bldg Svcs · Admin Mgmt Consulting · Other Mgmt Consulting · Translation</div>
+            </div>
+            <div class="sam-sprint-summary" style="padding:9px 10px;border:1px solid var(--border);border-radius:6px;background:var(--panel2,#0f1e32)">
+              <div style="font:700 9px/1.3 'Azeret Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:5px">Service lanes</div>
+              <div style="color:var(--text);font-size:11px;line-height:1.5">Painting · Janitorial · Facility Turnover · Punch-List · Facilities Support · Admin Consulting · Translation · Staffing · Sub Management</div>
+              <div style="margin-top:4px;color:var(--muted);font-size:10px">Operator selects lanes in the Pursuit Profile.</div>
+            </div>
+            <div class="sam-sprint-summary" style="padding:9px 10px;border:1px solid var(--border);border-radius:6px;background:var(--panel2,#0f1e32)">
+              <div style="font:700 9px/1.3 'Azeret Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:5px">Certifications · Geography</div>
+              <div style="color:var(--text);font-size:11px;line-height:1.5">SDVOSB · VOSB · HUBZone · MBE · DBE · SBE · WOSB · 8(a) · Small Business</div>
+              <div style="margin-top:4px;color:var(--muted);font-size:10px">Primary states + national_allowed + excluded_states drive geography scoring.</div>
+            </div>
+          </div>
+
+          <div class="sam-sprint-labels" style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px">
+            <div style="padding:8px 9px;border:1px solid rgba(63,185,80,0.30);border-radius:6px;background:rgba(63,185,80,0.05)">
+              <div style="font:700 9px/1.3 'Azeret Mono',monospace;color:#3fb950;letter-spacing:0.1em;text-transform:uppercase">Pursue Immediately</div>
+              <div style="margin-top:3px;color:var(--muted);font-size:10px">Score ≥ 90 · BID</div>
+            </div>
+            <div style="padding:8px 9px;border:1px solid rgba(201,148,26,0.30);border-radius:6px;background:rgba(201,148,26,0.05)">
+              <div style="font:700 9px/1.3 'Azeret Mono',monospace;color:var(--gold2,#c9941a);letter-spacing:0.1em;text-transform:uppercase">Strong Outreach Target</div>
+              <div style="margin-top:3px;color:var(--muted);font-size:10px">Score 75–89 · prepare capability + quote</div>
+            </div>
+            <div style="padding:8px 9px;border:1px solid rgba(26,111,168,0.30);border-radius:6px;background:rgba(26,111,168,0.05)">
+              <div style="font:700 9px/1.3 'Azeret Mono',monospace;color:var(--blue2,#1a6fa8);letter-spacing:0.1em;text-transform:uppercase">Review / Possible Quote</div>
+              <div style="margin-top:3px;color:var(--muted);font-size:10px">Score 60–74 · review before action</div>
+            </div>
+            <div style="padding:8px 9px;border:1px solid rgba(255,255,255,0.08);border-radius:6px;background:rgba(255,255,255,0.02)">
+              <div style="font:700 9px/1.3 'Azeret Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase">Archive</div>
+              <div style="margin-top:3px;color:var(--muted);font-size:10px">Score &lt; 60 · skip</div>
+            </div>
+          </div>
+
+          <div class="sam-sprint-reports" style="margin-bottom:12px">
+            <div style="font:700 9.5px/1.3 'Azeret Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:6px">Generated report paths</div>
+            <ul style="margin:0;padding:0;list-style:none;display:grid;grid-template-columns:1fr 1fr;gap:4px 14px">
+              <li style="font:600 11px/1.4 'Azeret Mono',monospace;color:var(--text)"><code>reports/sam-opportunity-sprint.json</code></li>
+              <li style="font:600 11px/1.4 'Azeret Mono',monospace;color:var(--text)"><code>reports/sam-opportunity-sprint.md</code></li>
+              <li style="font:600 11px/1.4 'Azeret Mono',monospace;color:var(--text)"><code>reports/sam-outreach-targets.csv</code></li>
+              <li style="font:600 11px/1.4 'Azeret Mono',monospace;color:var(--text)"><code>reports/sam-email-drafts.md</code></li>
+            </ul>
+            <div style="margin-top:6px;color:var(--muted);font-size:10.5px">Reports are written locally and are not committed by default. The operator decides whether to keep, share, or archive them.</div>
+          </div>
+
+          <div class="sam-sprint-drafts-notice" style="margin-bottom:10px;padding:9px 11px;border:1px solid rgba(248,81,73,0.25);border-radius:6px;background:rgba(248,81,73,0.04);color:var(--text);font-size:11.5px">
+            <div style="font-weight:700;margin-bottom:3px">Top-10 email drafts</div>
+            Email drafts are generated for review only. SourceDeck does not send outreach, submit quotes, or contact agencies without human approval.
+          </div>
+
+          <div class="sam-sprint-cli" style="margin-bottom:10px;padding:9px 11px;border:1px dashed var(--border);border-radius:6px;background:rgba(0,0,0,0.18)">
+            <div style="font:700 9px/1.3 'Azeret Mono',monospace;color:var(--muted);letter-spacing:0.1em;text-transform:uppercase;margin-bottom:5px">Run from terminal (manual)</div>
+            <code style="display:block;font:600 11px/1.5 'Azeret Mono',monospace;color:var(--text);white-space:pre-wrap">export SAM_GOV_API_KEY=...   # value supplied by operator; never paste into chat
+npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
+            <div style="margin-top:6px;color:var(--muted);font-size:10px">The CLI loads <code>SAM_GOV_API_KEY</code> from the process environment only. If the key is missing, the script exits safely with a <code>not_configured</code> notice and makes no network calls.</div>
+          </div>
+
+          <div class="sam-sprint-footer" style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;color:var(--muted);font-size:10px">
+            <div>Feature spec: <code>docs/features/sam-opportunity-sprint.md</code></div>
+            <div>Release notes: <code>docs/release-notes/sam-opportunity-sprint.md</code></div>
+          </div>
+        </section>
         <!-- KPIs -->
         <div class="grid-4 mb-20" id="gc-kpis">
           <div class="kpi gold-kpi kpi-glow-gold"><div class="kpi-val" id="gc-total">0</div><div class="kpi-label">Total Opps</div></div>
