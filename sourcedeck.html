@@ -631,6 +631,33 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 /* GovCon workspace banners — civic brass + ink-navy retint (no copy change) */
 #tab-govcon .workspace-readiness{border-color:rgba(176,138,60,0.30);background:linear-gradient(145deg,rgba(176,138,60,0.06),rgba(23,32,51,0.05))}
 #tab-govcon .gc-setup-banner{border-color:rgba(23,32,51,0.45);background:linear-gradient(145deg,rgba(23,32,51,0.10),rgba(176,138,60,0.05))}
+
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 20E — ONBOARDING + SETTINGS + AI READINESS — Civic Atelier polish
+   ═══════════════════════════════════════════════════════════════
+   Scoped accent refinements applied ONLY inside:
+     - #govcon-wizard (GovCon Setup Wizard — onboarding / operating-profile)
+     - #tab-settings  (Settings tab — including the IBM/watsonx readiness panel)
+   The dark ground is preserved. Operating-profile capture flow, AI provider
+   logic, watsonx readiness probe behavior, and all readiness/claim copy are
+   unchanged. Global --gold/--gold2/--goldb aliases are NOT repointed;
+   .btn-gold remains cool gold everywhere — inside these scopes and on every
+   other screen. No body markup, no inline styles, no JS edited. */
+
+/* GovCon Setup Wizard — civic-ledger labels + brass note rail */
+#govcon-wizard .gcwiz-hdr{border-bottom-color:rgba(176,138,60,0.18)}
+#govcon-wizard .gcwiz-ftr{border-top-color:rgba(176,138,60,0.18)}
+#govcon-wizard .gcwiz-progress{color:var(--sd-text-secondary)}
+#govcon-wizard .gcwiz-field label{color:var(--sd-text-secondary)}
+#govcon-wizard .gcwiz-note{border-left-color:var(--sd-brass-gold);background:rgba(23,32,51,0.40)}
+#govcon-wizard .gcwiz-status.saved{color:var(--sd-success-green)}
+#govcon-wizard .gcwiz-status.missing{color:var(--sd-text-secondary)}
+
+/* Settings tab — section labels, KPI labels, workspace-readiness retint */
+#tab-settings .sl{color:var(--sd-text-secondary)}
+#tab-settings .sl::before{background:var(--sd-brass-gold)}
+#tab-settings .kpi-label{color:var(--sd-text-secondary)}
+#tab-settings .workspace-readiness{border-color:rgba(176,138,60,0.30);background:linear-gradient(145deg,rgba(176,138,60,0.06),rgba(23,32,51,0.05))}
 </style>
 </head>
 <body>
