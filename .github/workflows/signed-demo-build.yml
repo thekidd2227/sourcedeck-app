@@ -1,0 +1,224 @@
+# Phase 23E — Signed Demo Build Readiness (manual workflow only).
+#
+# Purpose
+#   Produce a signed-demo *candidate* macOS build for internal review
+#   when (and only when) all required signing + notarization secrets
+#   are present in the GitHub repository secrets store.
+#
+# Hard rules baked into this workflow
+#   - Trigger is `workflow_dispatch` only. This workflow MUST NOT run
+#     on `push`, `pull_request`, schedules, or release events. The
+#     existing `build-release.yml` is the publish path for tagged
+#     releases — this workflow is a separate, manual demo-readiness
+#     path that NEVER publishes.
+#   - No secret values are ever echoed or printed. Required secrets
+#     are referenced only via the `${{ secrets.* }}` context and
+#     passed to `electron-builder` through the process environment.
+#     Presence checks use `secrets.X != ''` only — the values never
+#     reach a shell command line.
+#   - electron-builder is invoked WITHOUT `--publish`, so no public
+#     release artifact is uploaded to GitHub Releases or any update
+#     channel. The DMG/zip output is attached to this workflow run
+#     as a workflow-scoped artifact named `signed-demo-candidate-*`.
+#   - Every artifact label in this workflow uses the phrase
+#     "signed-demo candidate". The workflow itself does not assert
+#     that SourceDeck is "signed and notarized" — that wording is
+#     reserved for the release-check / release-evidence gates after
+#     they verify codesign, spctl, stapler, and the evidence report.
+#
+# Required GitHub repository secrets (configure in repo Settings →
+# Secrets and variables → Actions). All five must be set for the
+# build step to run; missing any will short-circuit safely without
+# attempting a signed build:
+#   - CSC_LINK                       # signing certificate (base64 .p12 URL or path)
+#   - CSC_KEY_PASSWORD               # certificate password
+#   - APPLE_ID                       # notarization Apple ID
+#   - APPLE_APP_SPECIFIC_PASSWORD    # notarization app-specific password
+#   - APPLE_TEAM_ID                  # Apple developer team ID
+
+name: Signed Demo Build Readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirm_internal_review_only:
+        description: 'Type "internal-review" to confirm: this run produces a signed-demo candidate for internal review only, NOT a public release.'
+        required: true
+        default: ''
+
+# Minimum-privilege token. No write-to-releases.
+permissions:
+  contents: read
+
+# Prevent overlapping manual runs.
+concurrency:
+  group: phase-23e-signed-demo-build
+  cancel-in-progress: false
+
+jobs:
+  # ── 1. Gate ──────────────────────────────────────────────────────
+  # Validates operator confirmation, runs the cross-platform tests,
+  # the privacy gate, and the strict signing-readiness check.
+  # Does NOT touch the signing secrets — it only confirms they are
+  # *defined* in the secret store before we spin up a macOS runner.
+  gate:
+    name: Pre-build gates
+    runs-on: ubuntu-latest
+    outputs:
+      have_signing_secrets: ${{ steps.secrets-presence.outputs.have_signing_secrets }}
+    steps:
+      - name: Confirm internal-review-only intent
+        env:
+          CONFIRM: ${{ inputs.confirm_internal_review_only }}
+        run: |
+          if [ "$CONFIRM" != "internal-review" ]; then
+            echo "::error::Operator did not confirm internal-review-only. Re-run with confirm_internal_review_only=internal-review."
+            exit 1
+          fi
+          echo "Confirmed: this is an internal-review signed-demo candidate, not a public release."
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run full test suite
+        run: npm test
+
+      - name: Privacy + release gate (no --publish)
+        run: node scripts/release-check.js
+
+      - name: macOS signing & notarization readiness (strict)
+        # CLI never prints a secret value (presence-only).
+        env:
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: npm run release:mac-signing-readiness:strict
+
+      # Presence-only check. Outputs a boolean. We never echo a value.
+      - name: Check signing-secret presence (no values printed)
+        id: secrets-presence
+        env:
+          HAVE_CSC_LINK: ${{ secrets.CSC_LINK != '' }}
+          HAVE_CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD != '' }}
+          HAVE_APPLE_ID: ${{ secrets.APPLE_ID != '' }}
+          HAVE_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD != '' }}
+          HAVE_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID != '' }}
+        run: |
+          if [ "$HAVE_CSC_LINK" = "true" ] \
+             && [ "$HAVE_CSC_KEY_PASSWORD" = "true" ] \
+             && [ "$HAVE_APPLE_ID" = "true" ] \
+             && [ "$HAVE_APPLE_APP_SPECIFIC_PASSWORD" = "true" ] \
+             && [ "$HAVE_APPLE_TEAM_ID" = "true" ]; then
+            echo "All five signing/notarization secrets are present."
+            echo "have_signing_secrets=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::warning::One or more required signing/notarization secrets are not configured. Build job will fail-safe."
+            echo "have_signing_secrets=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  # ── 2. Build (macOS, signed-demo candidate) ──────────────────────
+  # Runs only when all five secrets are present AND the gate passed.
+  # Produces a DMG/zip workflow artifact for INTERNAL review only.
+  # NEVER calls `electron-builder --publish` — no GitHub Release is
+  # created and no update channel is touched.
+  build:
+    name: macOS signed-demo candidate build
+    needs: gate
+    if: needs.gate.outputs.have_signing_secrets == 'true'
+    runs-on: macos-latest
+    steps:
+      - name: Fail safely if secrets vanished between jobs
+        env:
+          HAVE_CSC_LINK: ${{ secrets.CSC_LINK != '' }}
+          HAVE_CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD != '' }}
+          HAVE_APPLE_ID: ${{ secrets.APPLE_ID != '' }}
+          HAVE_APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD != '' }}
+          HAVE_APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID != '' }}
+        run: |
+          if [ "$HAVE_CSC_LINK" != "true" ] \
+             || [ "$HAVE_CSC_KEY_PASSWORD" != "true" ] \
+             || [ "$HAVE_APPLE_ID" != "true" ] \
+             || [ "$HAVE_APPLE_APP_SPECIFIC_PASSWORD" != "true" ] \
+             || [ "$HAVE_APPLE_TEAM_ID" != "true" ]; then
+            echo "::error::One or more required signing/notarization secrets are missing on the build runner. Aborting; no signed-demo candidate produced."
+            exit 1
+          fi
+
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Re-run privacy gate on macOS runner (defense-in-depth)
+        run: node scripts/release-check.js
+
+      - name: Build signed-demo candidate (electron-builder, NO --publish)
+        env:
+          # Secrets are passed only through process env; never echoed.
+          CSC_LINK: ${{ secrets.CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+          # Force electron-builder to never reach for a different
+          # signing identity than the one CSC_LINK provides.
+          CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+        run: npx electron-builder --mac
+
+      - name: Post-build release-check (no --publish)
+        # Verifies codesign on the freshly built .app via the existing
+        # release-check script. Reports honestly; does not assert
+        # signed/notarized completion on its own.
+        run: node scripts/release-check.js
+
+      - name: Generate release-evidence report (strict)
+        run: npm run release:evidence:strict
+
+      - name: Upload signed-demo candidate (workflow artifact only)
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-demo-candidate-mac-${{ github.run_id }}
+          path: |
+            dist/*.dmg
+            dist/*.zip
+            dist/latest-mac.yml
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: Upload release-evidence report
+        uses: actions/upload-artifact@v4
+        with:
+          name: signed-demo-candidate-evidence-${{ github.run_id }}
+          path: |
+            reports/release-evidence/*.md
+            reports/release-evidence/*.json
+          if-no-files-found: warn
+          retention-days: 7
+
+      - name: Summary (no secrets in summary)
+        run: |
+          echo "## Signed Demo Build Readiness — run ${{ github.run_id }}" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Artifact: **signed-demo candidate** (internal review only)" >> "$GITHUB_STEP_SUMMARY"
+          echo "- Publish: **NOT published**. No GitHub Release was created. No update channel was touched." >> "$GITHUB_STEP_SUMMARY"
+          echo "- Verification chain: signing-readiness strict → electron-builder --mac → release-check → release:evidence:strict" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "Before describing this run as a \"signed and notarized release\", verify the evidence artifact reports codesign PASS + spctl accept + stapler validate + signed verified. Until then, treat as: signed-demo candidate, not a public release." >> "$GITHUB_STEP_SUMMARY"
