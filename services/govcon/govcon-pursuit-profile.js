@@ -352,11 +352,202 @@ const LANE_TO_KEYWORDS = Object.freeze({
   other:                       [],
 });
 
+// -----------------------------------------------------------------------------
+// Profile completeness / readiness scoring.
+// -----------------------------------------------------------------------------
+//
+// The sprint runner already exposes a boolean `isComplete`. This block adds
+// a richer view used by the CLI summary, sprint result payload, and UI:
+//
+//   - percent (0-100)
+//   - readiness_label: 'incomplete' | 'usable' | 'strong' | 'ready'
+//   - missing_fields: short field-key list
+//   - warnings: human-readable strings
+//
+// HARD RULES
+//   - The default profile must score below 'ready'. The label is the public
+//     signal to operators that scoring is preliminary until they configure.
+//   - Manual review remains forced true (the profile normalizer enforces this).
+//   - No secrets are ever included in the summary; we only look at structural
+//     completeness signals, not at credential-looking fields.
+
+const REQUIRED_PROFILE_FIELDS = Object.freeze([
+  // key, label, predicate(profile) => boolean
+  { key: 'company_name', label: 'Company name',
+    weight: 10,
+    predicate: (p) => !!(p && p.business_identity && p.business_identity.company_name) },
+  { key: 'certifications_or_none', label: 'Certifications (or explicit “none”)',
+    weight: 10,
+    predicate: (p) => {
+      const certs = (p && p.business_identity && p.business_identity.certifications) || [];
+      const unrestrictedOk = !!(p && p.setaside_preferences && p.setaside_preferences.unrestricted_allowed);
+      return certs.length > 0 || unrestrictedOk;
+    }},
+  { key: 'target_naics', label: 'At least one target NAICS',
+    weight: 12,
+    predicate: (p) => Array.isArray(p && p.target_naics) && p.target_naics.length > 0 },
+  { key: 'service_lanes', label: 'At least one active service lane',
+    weight: 12,
+    predicate: (p) => p && p.service_lanes && Object.values(p.service_lanes).some(Boolean) },
+  { key: 'geography', label: 'Primary geography or national_allowed',
+    weight: 10,
+    predicate: (p) => {
+      const g = (p && p.geography) || {};
+      return (Array.isArray(g.primary_states) && g.primary_states.length > 0)
+        || g.national_allowed === true
+        || g.remote_friendly === true;
+    }},
+  { key: 'contract_goal', label: 'Contract goal (name or 30/90-day revenue target)',
+    weight: 8,
+    predicate: (p) => {
+      const c = (p && p.contract_goal) || {};
+      return !!(c.goal_name || c.target_revenue_30_days || c.target_revenue_90_days);
+    }},
+  { key: 'response_capacity', label: 'Response capacity (max_response_time_hours)',
+    weight: 8,
+    predicate: (p) => {
+      const c = (p && p.capacity) || {};
+      // Default profile sets 72; treat that as not-yet-customized but still
+      // count it as configured because it's a real number that affects scoring.
+      return typeof c.max_response_time_hours === 'number' && c.max_response_time_hours > 0;
+    }},
+  { key: 'subcontractor_capacity', label: 'Subcontractor capacity decision',
+    weight: 6,
+    predicate: (p) => {
+      const c = (p && p.capacity) || {};
+      // Either operator can self-perform, has a sub network, or explicitly
+      // declared they need a partner. Default false-on-all is not configured.
+      return c.can_perform_directly === true
+        || c.subcontractor_network_available === true
+        || c.requires_partner_for_field_work === true;
+    }},
+  { key: 'risk_filters', label: 'Risk filters configured',
+    weight: 8,
+    predicate: (p) => {
+      const r = (p && p.risk_filters) || {};
+      // Defaults set most avoid_* flags to true plus minimum_margin_percent=15,
+      // which IS a customization. Only call this missing if the entire block
+      // is empty.
+      return Object.keys(r).length > 0;
+    }},
+  { key: 'past_performance', label: 'Past performance status declared',
+    weight: 8,
+    predicate: (p) => {
+      const pp = (p && p.past_performance) || {};
+      return pp.has_relevant_past_performance === true
+        || (Array.isArray(pp.notable_contracts) && pp.notable_contracts.length > 0)
+        || pp.has_relevant_past_performance === false; // explicit "none" still counts
+    }},
+  { key: 'sprint_window', label: 'Sprint output preference',
+    weight: 4,
+    predicate: (p) => {
+      const o = (p && p.output_preference) || {};
+      return SPRINT_WINDOWS.includes(Number(o.sprint_window_days));
+    }},
+  { key: 'manual_review_required', label: 'Manual review required (locked on)',
+    weight: 4,
+    predicate: (p) => !!(p && p.output_preference && p.output_preference.manual_review_required === true) },
+]);
+
+function getRequiredProfileFields() {
+  return REQUIRED_PROFILE_FIELDS.map((f) => Object.freeze({ key: f.key, label: f.label, weight: f.weight }));
+}
+
+function calculateProfileCompleteness(profile) {
+  const p = profile || {};
+  const results = REQUIRED_PROFILE_FIELDS.map((f) => ({
+    key: f.key,
+    label: f.label,
+    weight: f.weight,
+    satisfied: !!f.predicate(p),
+  }));
+  const total = REQUIRED_PROFILE_FIELDS.reduce((s, f) => s + f.weight, 0);
+  const earned = results.reduce((s, r) => s + (r.satisfied ? r.weight : 0), 0);
+  const percent = total ? Math.round((earned / total) * 100) : 0;
+
+  const missing = results.filter((r) => !r.satisfied).map((r) => ({ key: r.key, label: r.label }));
+
+  // Default profile has SOME satisfied predicates (response_capacity has 72h
+  // default, sprint_window has 30-day default, manual_review_required is
+  // locked on, risk_filters block is populated). We REQUIRE the operator to
+  // actively configure the "hard" identity/goal/lane/geo/cert fields before
+  // we promote them out of 'incomplete'.
+  const hardKeys = ['company_name', 'target_naics', 'service_lanes', 'geography', 'contract_goal'];
+  const hardSatisfied = hardKeys.filter((k) => results.find((r) => r.key === k && r.satisfied)).length;
+
+  let readiness_label;
+  if (hardSatisfied < 3) readiness_label = 'incomplete';
+  else if (hardSatisfied === 3) readiness_label = 'usable';
+  else if (hardSatisfied === 4) readiness_label = 'strong';
+  else readiness_label = (percent >= 90) ? 'ready' : 'strong';
+
+  // Belt-and-suspenders: default profile should never be 'ready'.
+  if (readiness_label === 'ready' && !p.business_identity?.company_name) {
+    readiness_label = 'incomplete';
+  }
+
+  const complete = readiness_label === 'ready';
+  return Object.freeze({
+    complete,
+    percent,
+    readiness_label,
+    missing_fields: Object.freeze(missing),
+    satisfied_count: results.filter((r) => r.satisfied).length,
+    total_field_count: results.length,
+    earned_points: earned,
+    total_points: total,
+  });
+}
+
+function getProfileSetupWarnings(profile) {
+  const completeness = calculateProfileCompleteness(profile);
+  const warnings = [];
+  if (completeness.readiness_label === 'incomplete') {
+    warnings.push('Profile is incomplete. SAM Sprint rankings are preliminary until you configure identity, goal, NAICS, lanes, and geography.');
+  } else if (completeness.readiness_label === 'usable') {
+    warnings.push('Profile is usable but not strong. Rankings will personalize, but key dimensions are still missing — see missing_fields.');
+  }
+  if (profile && profile.output_preference && profile.output_preference.manual_review_required !== true) {
+    warnings.push('Manual review is locked on regardless of profile setting; all outreach remains human-gated.');
+  }
+  return warnings;
+}
+
+// Summarize a profile for UI display. Never returns secrets and never returns
+// fields that could be misread as compliance claims by themselves.
+function summarizeProfileForUi(profile) {
+  const p = profile || {};
+  const bi = p.business_identity || {};
+  const cg = p.contract_goal || {};
+  const sub = p.subscription || {};
+  const completeness = calculateProfileCompleteness(p);
+  return Object.freeze({
+    company_name: bi.company_name || '',
+    certifications: Object.freeze((bi.certifications || []).slice()),
+    target_naics_count: Array.isArray(p.target_naics) ? p.target_naics.length : 0,
+    active_service_lanes: Object.entries(p.service_lanes || {}).filter(([, v]) => v === true).map(([k]) => k),
+    primary_states: Object.freeze(((p.geography || {}).primary_states || []).slice()),
+    national_allowed: !!(p.geography && p.geography.national_allowed),
+    remote_friendly: !!(p.geography && p.geography.remote_friendly),
+    goal_name: cg.goal_name || '',
+    urgency_level: cg.urgency_level || 'pipeline_building',
+    plan: sub.plan || 'free',
+    is_paid: !!sub.is_paid,
+    sprint_window_days: (p.output_preference || {}).sprint_window_days || 30,
+    manual_review_required: true,
+    completeness,
+  });
+}
+
 module.exports = Object.freeze({
   defaultPursuitProfile,
   normalizePursuitProfile,
   mergeProfile,           // exported for tests
   stripSecrets,           // exported for tests
+  calculateProfileCompleteness,
+  getRequiredProfileFields,
+  getProfileSetupWarnings,
+  summarizeProfileForUi,
   DEFAULT_TARGET_NAICS,
   SERVICE_LANES,
   URGENCY_LEVELS,

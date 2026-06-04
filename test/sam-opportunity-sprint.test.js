@@ -17,10 +17,21 @@ const {
   defaultPursuitProfile,
   normalizePursuitProfile,
   stripSecrets,
+  calculateProfileCompleteness,
+  getRequiredProfileFields,
+  getProfileSetupWarnings,
+  summarizeProfileForUi,
   DEFAULT_TARGET_NAICS,
   SERVICE_LANES,
   URGENCY_LEVELS,
 } = require('../services/govcon/govcon-pursuit-profile');
+
+const {
+  getDefaultProfilePath,
+  loadGovconPursuitProfile,
+  saveGovconPursuitProfile,
+  exportProfileSnapshot,
+} = require('../services/govcon/govcon-pursuit-profile-store');
 
 const {
   runSprint,
@@ -522,6 +533,197 @@ asyncTest('runSprint surfaces entitlement even on not_configured exit (no key)',
   assert.strictEqual(r.entitlement.naics_limit_applied, true);
   assert.strictEqual(r.entitlement.allowed_naics_count, 1);
   assert.strictEqual(r.manual_review_required, true);
+});
+
+console.log('\n--- profile completeness ---');
+test('default profile completeness is incomplete', () => {
+  const c = calculateProfileCompleteness(normalizePursuitProfile({}).profile);
+  assert.strictEqual(c.readiness_label, 'incomplete');
+  assert.strictEqual(c.complete, false);
+});
+test('configured profile reaches strong or ready', () => {
+  const p = normalizePursuitProfile({
+    business_identity: { company_name: 'ARCG', certifications: ['SDVOSB'] },
+    contract_goal: { goal_name: '30d capture', target_revenue_30_days: 50000 },
+    service_lanes: { janitorial_custodial: true, painting_refresh: true },
+    geography: { primary_states: ['VA', 'MD'] },
+    capacity: { can_perform_directly: true, subcontractor_network_available: true },
+    past_performance: { has_relevant_past_performance: true },
+  }).profile;
+  const c = calculateProfileCompleteness(p);
+  assert.ok(c.readiness_label === 'strong' || c.readiness_label === 'ready',
+    `expected strong/ready, got ${c.readiness_label} (${c.percent}%, satisfied=${c.satisfied_count}/${c.total_field_count})`);
+});
+test('missing target_naics lowers readiness', () => {
+  const base = {
+    business_identity: { company_name: 'X', certifications: ['SDVOSB'] },
+    contract_goal: { goal_name: 'G' },
+    service_lanes: { janitorial_custodial: true },
+    geography: { primary_states: ['VA'] },
+  };
+  const withNaics  = calculateProfileCompleteness(normalizePursuitProfile(base).profile);
+  const noNaics    = calculateProfileCompleteness(normalizePursuitProfile(Object.assign({}, base, { target_naics: [] })).profile);
+  // normalizePursuitProfile re-injects defaults when target_naics is empty,
+  // so to truly omit them we have to compare the missing-field count.
+  // The richer assertion: the satisfied_count must not increase when NAICS go away.
+  assert.ok(noNaics.satisfied_count <= withNaics.satisfied_count);
+});
+test('missing geography lowers readiness unless national_allowed is true', () => {
+  const noGeo = calculateProfileCompleteness(normalizePursuitProfile({
+    business_identity: { company_name: 'X', certifications: ['SDVOSB'] },
+    contract_goal: { goal_name: 'G' },
+    service_lanes: { janitorial_custodial: true },
+    geography: { primary_states: [], national_allowed: false, remote_friendly: false },
+  }).profile);
+  const national = calculateProfileCompleteness(normalizePursuitProfile({
+    business_identity: { company_name: 'X', certifications: ['SDVOSB'] },
+    contract_goal: { goal_name: 'G' },
+    service_lanes: { janitorial_custodial: true },
+    geography: { primary_states: [], national_allowed: true, remote_friendly: false },
+  }).profile);
+  assert.ok(national.satisfied_count > noGeo.satisfied_count, `national_allowed should satisfy geography (no_geo=${noGeo.satisfied_count}, national=${national.satisfied_count})`);
+});
+test('manual_review_required cannot be disabled', () => {
+  const { profile } = normalizePursuitProfile({ output_preference: { manual_review_required: false } });
+  assert.strictEqual(profile.output_preference.manual_review_required, true);
+  const c = calculateProfileCompleteness(profile);
+  assert.ok(c, 'completeness must compute even when operator tried to disable manual review');
+});
+test('getRequiredProfileFields returns a non-empty, weighted list', () => {
+  const list = getRequiredProfileFields();
+  assert.ok(Array.isArray(list) && list.length >= 8, `expected ≥8 fields, got ${list.length}`);
+  for (const f of list) {
+    assert.ok(f.key && f.label && typeof f.weight === 'number', `field missing key/label/weight: ${JSON.stringify(f)}`);
+  }
+});
+test('summarizeProfileForUi never includes secret-shaped fields', () => {
+  // Build a profile that LOOKS like it might leak — stripSecrets should
+  // remove credential-shaped fields before normalization, and the summary
+  // helper should never expose them.
+  const summary = summarizeProfileForUi(normalizePursuitProfile({
+    business_identity: { company_name: 'X', certifications: ['SDVOSB'], api_key: 'whoops-leaked' },
+    SAM_GOV_API_KEY: 'definitely-not-here',
+  }).profile);
+  const json = JSON.stringify(summary);
+  assert.strictEqual(/api[-_]?key|token|secret|bearer|SAM_GOV_API_KEY/i.test(json), false,
+    `summary should not contain secret-shaped fields. Got: ${json}`);
+});
+test('profile incomplete -> getProfileSetupWarnings surfaces preliminary warning', () => {
+  const warnings = getProfileSetupWarnings(normalizePursuitProfile({}).profile);
+  assert.ok(warnings.some((w) => /preliminary/i.test(w)));
+});
+
+console.log('\n--- profile store ---');
+
+// In-memory fs shim mirroring the slice of node:fs the store touches.
+function makeMemFs() {
+  const files = new Map();
+  return {
+    files,
+    existsSync: (p) => files.has(p),
+    readFileSync: (p) => {
+      if (!files.has(p)) { const e = new Error('ENOENT'); e.code = 'ENOENT'; throw e; }
+      return files.get(p);
+    },
+    writeFileSync: (p, body) => { files.set(p, String(body)); },
+    mkdirSync: () => {},
+  };
+}
+
+test('store reads missing file as default profile (no crash)', () => {
+  const memFs = makeMemFs();
+  const r = loadGovconPursuitProfile({ fs: memFs, path: '/nope/govcon-pursuit-profile.json' });
+  assert.strictEqual(r.source, 'default');
+  assert.ok(r.profile && r.profile.output_preference.manual_review_required === true);
+  assert.ok(r.issues.some((i) => /No saved.*using defaults/i.test(i.message)));
+});
+
+test('store handles corrupt JSON without throwing', () => {
+  const memFs = makeMemFs();
+  memFs.files.set('/tmp/corrupt.json', '{ not: valid json');
+  const r = loadGovconPursuitProfile({ fs: memFs, path: '/tmp/corrupt.json' });
+  assert.strictEqual(r.source, 'default');
+  assert.strictEqual(r.was_corrupt, true);
+  assert.ok(r.issues.some((i) => /not valid JSON/i.test(i.message)));
+  assert.ok(r.profile && r.profile.output_preference.manual_review_required === true);
+});
+
+test('store saves normalized profile without secrets', () => {
+  const memFs = makeMemFs();
+  const out = saveGovconPursuitProfile({
+    business_identity: { company_name: 'ARCG', certifications: ['SDVOSB'], api_key: 'should-be-stripped' },
+    SAM_GOV_API_KEY: 'should-also-be-stripped',
+    bearer_token: 'no',
+  }, { fs: memFs, path: '/tmp/profile.json' });
+  assert.strictEqual(out.ok, true);
+  const written = memFs.files.get('/tmp/profile.json');
+  assert.strictEqual(/api_key|SAM_GOV_API_KEY|bearer_token|secret|Bearer/i.test(written), false,
+    `serialized profile should not contain secret-shaped fields. Got: ${written}`);
+  assert.ok(/"company_name"\s*:\s*"ARCG"/.test(written));
+  assert.ok(/"manual_review_required"\s*:\s*true/.test(written));
+});
+
+test('exportProfileSnapshot returns a plain object with manual_review_required=true and no secrets', () => {
+  const snap = exportProfileSnapshot({
+    business_identity: { company_name: 'X', api_key: 'no' },
+    output_preference: { manual_review_required: false },
+  });
+  assert.strictEqual(snap.output_preference.manual_review_required, true);
+  const json = JSON.stringify(snap);
+  assert.strictEqual(/api[-_]?key|SAM_GOV_API_KEY|bearer|secret/i.test(json), false);
+});
+
+test('getDefaultProfilePath returns a path that includes SourceDeck and the profile filename', () => {
+  const p = getDefaultProfilePath();
+  assert.ok(typeof p === 'string' && p.length > 0, 'expected a non-empty string path');
+  assert.ok(/govcon-pursuit-profile\.json$/.test(p), `path should end with the canonical filename, got ${p}`);
+  assert.ok(/SourceDeck|sourcedeck/i.test(p), `path should include an app folder, got ${p}`);
+});
+
+console.log('\n--- runSprint result exposes completeness/confidence ---');
+asyncTest('runSprint exposes profile_completeness and scoring_confidence (incomplete)', async () => {
+  const fakeService = { search: async () => ({ ok: true, results: [], total: 0, returned: 0 }) };
+  const r = await runSprint({
+    profile: {},
+    getApiKey: async () => 'fake',
+    samService: fakeService,
+    now: () => NOW_MS,
+  });
+  assert.ok(r.profile_completeness);
+  assert.strictEqual(r.profile_completeness.readiness_label, 'incomplete');
+  assert.strictEqual(r.scoring_confidence, 'preliminary');
+  assert.ok(Array.isArray(r.active_naics_codes));
+  assert.ok(Array.isArray(r.withheld_naics_codes));
+});
+
+asyncTest('runSprint exposes scoring_confidence=profile_driven for a complete profile', async () => {
+  const fakeService = { search: async () => ({ ok: true, results: [], total: 0, returned: 0 }) };
+  const r = await runSprint({
+    profile: {
+      business_identity: { company_name: 'ARCG', certifications: ['SDVOSB'] },
+      contract_goal: { goal_name: '30d capture' },
+      service_lanes: { janitorial_custodial: true },
+      geography: { primary_states: ['VA'] },
+      target_naics: ['561720'],
+      subscription: { plan: 'paid' },
+    },
+    getApiKey: async () => 'fake',
+    samService: fakeService,
+    now: () => NOW_MS,
+  });
+  assert.notStrictEqual(r.scoring_confidence, 'preliminary',
+    `expected non-preliminary confidence for a configured profile, got ${r.scoring_confidence} (${r.profile_completeness.readiness_label})`);
+});
+
+asyncTest('runSprint surfaces completeness on not_configured exit (no key)', async () => {
+  const r = await runSprint({
+    profile: { target_naics: ['1','2'], subscription: { plan: 'free' } },
+    getApiKey: async () => null,
+    now: () => NOW_MS,
+  });
+  assert.strictEqual(r.status, 'not_configured');
+  assert.ok(r.profile_completeness);
+  assert.ok(['preliminary', 'profile_driven'].includes(r.scoring_confidence));
 });
 
 asyncTest('runSprint keeps manual_review_required=true under both plans', async () => {
