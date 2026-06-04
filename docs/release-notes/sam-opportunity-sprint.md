@@ -17,7 +17,7 @@ This UI/docs follow-up clarifies plan-limit copy in the manual-only GovCon works
 ## Plan access
 
 - SAM Opportunity Sprint is available to all users.
-- Free users can search up to 3 NAICS codes per sprint.
+- Free users can search 1 NAICS code per sprint.
 - Paid users can search all configured / available NAICS codes.
 - The plan limit applies to active query execution, not saved GovCon Pursuit Profile preferences.
 - Reports identify which configured NAICS were searched and which were withheld by plan limit.
@@ -88,7 +88,7 @@ If the key is not configured the script exits 0 with a `not_configured` message 
 
 SAM Opportunity Sprint is accessible to all users. A per-plan limit now applies to the number of NAICS codes searched per sprint:
 
-- **Free plan: up to 3 NAICS codes per sprint.**
+- **Free plan: 1 NAICS code per sprint.**
 - **Paid plans (paid, pro, team, enterprise): all configured/available NAICS codes.**
 
 Rules:

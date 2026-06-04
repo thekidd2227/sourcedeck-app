@@ -23,7 +23,7 @@ This follow-up updates the existing manual-only SAM Opportunity Sprint card in `
 
 The sprint is accessible to all users.
 
-- Free users can search up to 3 NAICS codes per sprint.
+- Free users can search 1 NAICS code per sprint.
 - Paid users can search all configured / available NAICS codes.
 - The limit applies to active query execution, not saved GovCon Pursuit Profile preferences.
 - Reports must disclose which configured NAICS were searched and which were withheld by plan limit.
@@ -99,7 +99,7 @@ Added Free vs Paid NAICS access enforcement to SAM Opportunity Sprint. **Entitle
 
 - **The saved `profile.target_naics` is never mutated.** The cap is computed in `buildQueryPlan` and only the active query set is shortened. Re-running with a paid plan immediately exposes all codes.
 - **The cap also covers lane-derived NAICS additions.** If a free user has 2 saved NAICS and enables 4 lanes, the union is still capped at 3.
-- **Honest messaging.** `describeNaicsLimit` always says "searching 3 of N — (N-3) withheld by free-plan limit" rather than silently dropping codes.
+- **Honest messaging.** `describeNaicsLimit` always says "searching 1 of N — (N-1) withheld by free-plan limit" rather than silently dropping codes.
 - **Blocked codes do not trigger SAM queries.** Confirmed by the test `runSprint does NOT call SAM for blocked free-plan NAICS`.
 - **No payment plumbing.** No Stripe, no billing IDs, no pricing page updates. The plan name comes from `profile.subscription.plan` (or the `SAM_SPRINT_PLAN` env override) — it does not represent verified payment status.
 
