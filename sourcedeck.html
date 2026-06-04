@@ -2041,6 +2041,111 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           Find opportunities → score fit → prepare draft outreach → identify prime partners → review and approve.
           <span style="display:block;margin-top:5px;color:var(--muted)">Drafts only. Human approval required. Follow solicitation instructions and communication windows.</span>
         </div>
+        <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 22B — GovCon Capture Command Center
+             Buyer-facing GovCon operating surface. Manual intake only.
+             SourceDeck does not auto-submit bids and does not auto-send
+             outreach. Every recommendation is advisory; human approval
+             required. No live SAM call from this surface.
+             ═══════════════════════════════════════════════════════════════ -->
+        <section id="gc-capture-cc" class="gc-capture-cc" data-section="govcon-capture-command-center" style="margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+          <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">GovCon Capture Command Center</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Active pursuits · Deadlines · Q&amp;A · Bid/No-Bid · Vendor needs · Proposal status · Human approval required</div>
+            <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">Manual intake only. SourceDeck does not auto-submit bids and does not auto-send outreach. Every recommendation is advisory and requires human approval.</div>
+          </div>
+
+          <!-- 8 stat cards -->
+          <div class="gc-cc-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px">
+            <div class="gc-cc-card" data-cc="active-pursuits" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Active Pursuits</div>
+              <div id="gc-cc-active-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
+              <div id="gc-cc-active-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No active pursuits yet. Run a SAM Sprint or add an opportunity manually.</div>
+            </div>
+            <div class="gc-cc-card" data-cc="deadlines" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Deadlines This Week</div>
+              <div id="gc-cc-deadlines-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
+              <div id="gc-cc-deadlines-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No deadlines tracked yet. Add a solicitation or import opportunity details.</div>
+            </div>
+            <div class="gc-cc-card" data-cc="qa" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Q&amp;A / Amendment Watch</div>
+              <div id="gc-cc-qa-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
+              <div id="gc-cc-qa-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No Q&amp;A windows or amendment watches tracked yet. Add a solicitation to begin.</div>
+            </div>
+            <div class="gc-cc-card" data-cc="bidnobid" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Bid/No-Bid Review</div>
+              <div id="gc-cc-bidnobid-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
+              <div id="gc-cc-bidnobid-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No pursuits awaiting bid/no-bid review. Recommendations are advisory and require human approval.</div>
+            </div>
+            <div class="gc-cc-card" data-cc="solready" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Solicitation Readiness</div>
+              <div id="gc-cc-solready-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
+              <div id="gc-cc-solready-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation workspaces prepared yet. The Solicitation Workspace ships in Phase 22C.</div>
+            </div>
+            <div class="gc-cc-card" data-cc="vendor" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Vendor / Subcontractor Needs</div>
+              <div id="gc-cc-vendor-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
+              <div id="gc-cc-vendor-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No vendor quotes requested. Vendor outreach requires human approval.</div>
+            </div>
+            <div class="gc-cc-card" data-cc="proposal" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Proposal Package Status</div>
+              <div id="gc-cc-proposal-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
+              <div id="gc-cc-proposal-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No submission package prepared. SourceDeck does not auto-submit bids.</div>
+            </div>
+            <div class="gc-cc-card" data-cc="approval" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Human Approval Required</div>
+              <div id="gc-cc-approval-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
+              <div id="gc-cc-approval-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No pending approvals. Human approval required for every outreach, quote, and submission action.</div>
+            </div>
+          </div>
+
+          <!-- Manual opportunity intake -->
+          <details class="gc-cc-intake" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">
+            <summary style="cursor:pointer;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:12.5px;color:var(--text)">Add an opportunity manually (no live SAM call)</summary>
+            <form id="gc-cc-intake-form" onsubmit="return gcCaptureAddOpportunity(event)" style="margin-top:10px;display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Opportunity title</span><input class="input" id="gc-cc-f-title" type="text" required placeholder="e.g. IT modernization services"></label>
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Solicitation number</span><input class="input" id="gc-cc-f-sol" type="text" placeholder="e.g. W912DY-26-R-0001"></label>
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Agency</span><input class="input" id="gc-cc-f-agency" type="text" placeholder="e.g. Department of the Army"></label>
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Office</span><input class="input" id="gc-cc-f-office" type="text" placeholder="e.g. USACE Huntsville"></label>
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>NAICS</span><input class="input" id="gc-cc-f-naics" type="text" placeholder="e.g. 541512"></label>
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Set-aside</span><input class="input" id="gc-cc-f-setaside" type="text" placeholder="e.g. 8(a), SDVOSB, WOSB, HUBZone"></label>
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Due date</span><input class="input" id="gc-cc-f-due" type="date"></label>
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Q&amp;A due date</span><input class="input" id="gc-cc-f-qna" type="date"></label>
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Place of performance</span><input class="input" id="gc-cc-f-place" type="text" placeholder="e.g. Huntsville, AL"></label>
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Estimated value</span><input class="input" id="gc-cc-f-value" type="text" placeholder="e.g. $1.2M"></label>
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Link / source URL</span><input class="input" id="gc-cc-f-url" type="url" placeholder="https://sam.gov/opp/..."></label>
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Notes</span><textarea class="input" id="gc-cc-f-notes" rows="3" placeholder="Capture notes — incumbents, partners, evaluation criteria..."></textarea></label>
+              <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+                <button type="submit" class="btn btn-gold">Add to Capture Board</button>
+                <button type="button" class="btn btn-ghost" onclick="gcCaptureRunBidNoBid()">Run Bid/No-Bid Review</button>
+                <button type="button" class="btn btn-ghost" onclick="gcCaptureExtractDeadlines()">Extract Deadlines</button>
+                <button type="button" class="btn btn-ghost" onclick="gcCaptureSolicitationPlaceholder()">Prepare Solicitation Workspace</button>
+              </div>
+              <div style="grid-column:1/-1;font-size:10px;color:var(--muted);line-height:1.55;margin-top:4px">Manual intake only. SourceDeck does not auto-submit bids and does not auto-send outreach. Every recommendation is advisory and requires human approval. Follow solicitation instructions and communication windows.</div>
+            </form>
+          </details>
+
+          <!-- Bid/No-Bid overview (advisory) -->
+          <div class="gc-cc-bidnobid" id="gc-cc-bidnobid" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Bid/No-Bid Review</div>
+              <select class="select" id="gc-cc-bidnobid-select" onchange="gcCaptureRenderBidNoBid()" style="font-size:11px">
+                <option value="">Select an opportunity…</option>
+              </select>
+            </div>
+            <div id="gc-cc-bidnobid-out">
+              <div class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">Add an opportunity to see fit analysis. Recommendations are advisory and require human approval. SourceDeck does not auto-submit bids.</div>
+            </div>
+          </div>
+
+          <!-- Deadline / Q&A Calendar -->
+          <div class="gc-cc-calendar" id="gc-cc-calendar" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text);margin-bottom:8px">Deadline + Q&amp;A Calendar</div>
+            <div id="gc-cc-calendar-list">
+              <div class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No deadlines tracked yet. Add a solicitation or import opportunity details.</div>
+            </div>
+          </div>
+        </section>
         <!--
           ─────────────────────────────────────────────────────────────
           GovCon Pursuit Profile — manual-only setup/readiness card.
@@ -11060,6 +11165,209 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.openPpfModal       = openPpfModal;
   window.closePpfModal      = closePpfModal;
 
+})();
+</script>
+<script>
+/* Phase 22B — GovCon Capture Command Center renderer.
+   Pure browser code. No network, no auto-send, no auto-submit.
+   Local-only state in window.localStorage. Every recommendation
+   is advisory; human approval required before any outreach,
+   quote request, or submission action. */
+(function(){
+  'use strict';
+  var STORAGE_KEY = 'sd.govcon.captureBoard.v1';
+  function loadOpps(){
+    try {
+      var raw = window.localStorage && window.localStorage.getItem(STORAGE_KEY);
+      var arr = raw ? JSON.parse(raw) : [];
+      return Array.isArray(arr) ? arr : [];
+    } catch (e) { return []; }
+  }
+  function saveOpps(arr){
+    try { window.localStorage && window.localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+    catch (e) {}
+  }
+  function withinDays(daysFrom, dateStr){
+    if (!dateStr) return false;
+    var t = Date.parse(dateStr);
+    if (isNaN(t)) return false;
+    var diff = t - Date.now();
+    return diff >= -86400000 && diff <= daysFrom * 86400000;
+  }
+  function safeText(s){ return String(s == null ? '' : s).replace(/[<>]/g, ''); }
+  function setCount(id, n){
+    var v = document.getElementById('gc-cc-' + id + '-count');
+    var e = document.getElementById('gc-cc-' + id + '-empty');
+    if (v) v.textContent = String(n);
+    if (e) e.style.display = n === 0 ? 'block' : 'none';
+  }
+  function isActiveStatus(o){
+    return o && (o.status === 'active' || o.status === 'review' || o.status === 'team' || o.status === 'sub');
+  }
+  function gcCaptureRender(){
+    var opps = loadOpps();
+    setCount('active', opps.filter(isActiveStatus).length);
+    setCount('deadlines', opps.filter(function(o){ return withinDays(7, o && o.dueDate); }).length);
+    setCount('qa', opps.filter(function(o){ return withinDays(7, o && o.qnaDate) || (o && o.amendmentWatch); }).length);
+    setCount('bidnobid', opps.filter(function(o){ return !o.bidDecision || o.bidDecision === 'review'; }).length);
+    setCount('solready', opps.filter(function(o){ return o.solicitationNumber && (o.solicitationReady || o.complianceMatrixReady); }).length);
+    setCount('vendor', opps.filter(function(o){ return o.needsVendor || o.needsSub; }).length);
+    setCount('proposal', opps.filter(function(o){ return o.proposalReady; }).length);
+    setCount('approval', opps.filter(function(o){ return o.pendingApproval; }).length);
+    renderBidNoBidDropdown(opps);
+    renderCalendar(opps);
+  }
+  function renderBidNoBidDropdown(opps){
+    var sel = document.getElementById('gc-cc-bidnobid-select');
+    if (!sel) return;
+    var prior = sel.value;
+    var options = ['<option value="">Select an opportunity…</option>'];
+    for (var i = 0; i < opps.length; i++) {
+      var o = opps[i];
+      var label = safeText(o.title || o.solicitationNumber || o.id);
+      options.push('<option value="' + safeText(o.id) + '">' + label + '</option>');
+    }
+    sel.innerHTML = options.join('');
+    if (prior) { try { sel.value = prior; } catch (e) {} }
+  }
+  function bnRow(label, value, helper){
+    return '<div style="display:grid;grid-template-columns:160px 110px 1fr;gap:8px;padding:6px 0;border-bottom:1px solid var(--border2,rgba(255,255,255,0.05));font-size:11px">'
+      + '<div style="color:var(--sub)">' + safeText(label) + '</div>'
+      + '<div style="color:var(--text);font-family:\'Azeret Mono\',monospace">' + safeText(value) + '</div>'
+      + '<div style="color:var(--muted)">' + safeText(helper) + '</div>'
+      + '</div>';
+  }
+  function classifyDeadlineRisk(daysToDue){
+    if (daysToDue == null) return 'unknown';
+    if (daysToDue < 7) return 'high';
+    if (daysToDue < 21) return 'medium';
+    return 'low';
+  }
+  function recommend(deadlineRisk, naicsMatch, setAsideMatch, needsVendor){
+    if (deadlineRisk === 'high') return 'Watch';
+    if (naicsMatch && setAsideMatch && !needsVendor) return 'Bid';
+    if (naicsMatch && needsVendor) return 'Team';
+    if (!naicsMatch && setAsideMatch) return 'Sub';
+    if (!naicsMatch && !setAsideMatch) return 'Kill';
+    return 'Watch';
+  }
+  function renderBidNoBidOut(){
+    var sel = document.getElementById('gc-cc-bidnobid-select');
+    var out = document.getElementById('gc-cc-bidnobid-out');
+    if (!sel || !out) return;
+    var id = sel.value;
+    if (!id) {
+      out.innerHTML = '<div class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">Add an opportunity to see fit analysis. Recommendations are advisory and require human approval. SourceDeck does not auto-submit bids.</div>';
+      return;
+    }
+    var opps = loadOpps();
+    var opp = null;
+    for (var i = 0; i < opps.length; i++) { if (opps[i].id === id) { opp = opps[i]; break; } }
+    if (!opp) {
+      out.innerHTML = '<div class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">Opportunity not found.</div>';
+      return;
+    }
+    var dueT = opp.dueDate ? Date.parse(opp.dueDate) : NaN;
+    var daysToDue = isNaN(dueT) ? null : Math.round((dueT - Date.now()) / 86400000);
+    var deadlineRisk = classifyDeadlineRisk(daysToDue);
+    var naicsMatch = !!opp.naics;
+    var setAsideMatch = !!opp.setAside;
+    var needsVendor = !!(opp.needsVendor || opp.needsSub);
+    var reco = recommend(deadlineRisk, naicsMatch, setAsideMatch, needsVendor);
+    var rows = [
+      bnRow('Fit score', '—', 'Advisory only — populated when the Pursuit Profile completes.'),
+      bnRow('Deadline risk', deadlineRisk, daysToDue == null ? 'Set a due date in the intake form.' : String(daysToDue) + ' day(s) to due.'),
+      bnRow('NAICS match', naicsMatch ? 'set' : 'missing', opp.naics ? safeText(opp.naics) : 'Add NAICS in the intake form.'),
+      bnRow('Set-aside match', setAsideMatch ? 'set' : 'missing', opp.setAside ? safeText(opp.setAside) : 'Add set-aside in the intake form.'),
+      bnRow('Past performance fit', '—', 'Wires to Past Performance Library in Phase 22E.'),
+      bnRow('Vendor dependency', needsVendor ? 'flagged' : 'none', 'Vendor outreach requires human approval.'),
+      bnRow('Pricing complexity', '—', 'Pricing Worksheet ships in Phase 22D.'),
+      bnRow('Compliance risk', '—', 'Compliance Matrix Builder ships in Phase 22C.')
+    ];
+    out.innerHTML = '<div>' + rows.join('') + '</div>'
+      + '<div style="margin-top:10px;font-size:11px;color:var(--text);font-family:\'Instrument Sans\',sans-serif">'
+      + 'Recommendation: <strong>' + safeText(reco) + '</strong>'
+      + ' <span style="color:var(--muted)">(advisory; human approval required; SourceDeck does not auto-submit bids and does not auto-send outreach)</span>'
+      + '</div>';
+  }
+  function renderCalendar(opps){
+    var list = document.getElementById('gc-cc-calendar-list');
+    if (!list) return;
+    var items = [];
+    for (var i = 0; i < opps.length; i++) {
+      var o = opps[i];
+      if (o && o.dueDate) items.push({ d: o.dueDate, t: o.title || o.solicitationNumber || o.id, k: 'Proposal due' });
+      if (o && o.qnaDate) items.push({ d: o.qnaDate, t: o.title || o.solicitationNumber || o.id, k: 'Q&A due' });
+    }
+    if (!items.length) {
+      list.innerHTML = '<div class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No deadlines tracked yet. Add a solicitation or import opportunity details.</div>';
+      return;
+    }
+    items.sort(function(a, b){ return Date.parse(a.d) - Date.parse(b.d); });
+    var rows = items.map(function(it){
+      return '<div style="display:grid;grid-template-columns:130px 130px 1fr;gap:10px;padding:6px 0;border-bottom:1px solid var(--border2,rgba(255,255,255,0.05));font-size:11px">'
+        + '<div style="color:var(--text);font-family:\'Azeret Mono\',monospace">' + safeText(it.d) + '</div>'
+        + '<div style="color:var(--sub);font-family:\'IBM Plex Mono\',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.1em;align-self:center">' + safeText(it.k) + '</div>'
+        + '<div style="color:var(--sub)">' + safeText(it.t) + '</div>'
+        + '</div>';
+    });
+    list.innerHTML = rows.join('');
+  }
+  window.gcCaptureAddOpportunity = function(ev){
+    if (ev && ev.preventDefault) ev.preventDefault();
+    var form = ev && ev.target ? ev.target : document.getElementById('gc-cc-intake-form');
+    if (!form) return false;
+    function val(id){
+      var el = form.querySelector('#' + id) || document.getElementById(id);
+      return el ? String(el.value || '') : '';
+    }
+    var title = val('gc-cc-f-title').trim();
+    if (!title) return false;
+    var opp = {
+      id: 'op_' + (Date.now().toString(36)) + Math.floor(Math.random() * 1e6).toString(36),
+      title: title,
+      solicitationNumber: val('gc-cc-f-sol').trim(),
+      agency: val('gc-cc-f-agency').trim(),
+      office: val('gc-cc-f-office').trim(),
+      naics: val('gc-cc-f-naics').trim(),
+      setAside: val('gc-cc-f-setaside').trim(),
+      dueDate: val('gc-cc-f-due'),
+      qnaDate: val('gc-cc-f-qna'),
+      place: val('gc-cc-f-place').trim(),
+      estimatedValue: val('gc-cc-f-value').trim(),
+      sourceUrl: val('gc-cc-f-url').trim(),
+      notes: val('gc-cc-f-notes').trim(),
+      status: 'active',
+      bidDecision: 'review',
+      pendingApproval: true,
+      createdAt: Date.now()
+    };
+    var opps = loadOpps();
+    opps.push(opp);
+    saveOpps(opps);
+    if (form && form.reset) try { form.reset(); } catch (e) {}
+    gcCaptureRender();
+    if (window.toast) try { window.toast('Opportunity added to Capture Board. Human approval still required for outreach and submission.', 'ok'); } catch (e) {}
+    return false;
+  };
+  window.gcCaptureRunBidNoBid = function(){
+    var el = document.getElementById('gc-cc-bidnobid');
+    if (el && el.scrollIntoView) try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+  };
+  window.gcCaptureExtractDeadlines = function(){
+    var el = document.getElementById('gc-cc-calendar');
+    if (el && el.scrollIntoView) try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+  };
+  window.gcCaptureSolicitationPlaceholder = function(){
+    if (window.toast) try { window.toast('Solicitation Workspace placeholder — Phase 22C ships the full surface.', 'info'); } catch (e) {}
+  };
+  window.gcCaptureRenderBidNoBid = renderBidNoBidOut;
+  window.gcCaptureRender = gcCaptureRender;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', gcCaptureRender);
+  } else {
+    setTimeout(gcCaptureRender, 0);
+  }
 })();
 </script>
 </body>
