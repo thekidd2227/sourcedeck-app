@@ -658,6 +658,45 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 #tab-settings .sl::before{background:var(--sd-brass-gold)}
 #tab-settings .kpi-label{color:var(--sd-text-secondary)}
 #tab-settings .workspace-readiness{border-color:rgba(176,138,60,0.30);background:linear-gradient(145deg,rgba(176,138,60,0.06),rgba(23,32,51,0.05))}
+
+/* ═══════════════════════════════════════════════════════════════
+   PHASE 20F — TROUBLESHOOTING + RELEASE EVIDENCE — Civic Atelier diagnostic ledger
+   ═══════════════════════════════════════════════════════════════
+   The in-app diagnostic / readiness surface is the shared
+   `.workspace-readiness` banner (rendered inside the Command Center,
+   Dashboard, GovCon, and Settings tabs from the same template). This
+   block applies Civic Atelier "diagnostic ledger" polish to the inner
+   readiness-item ledger (.wr-*) ONLY:
+     - Cormorant italic finding labels (editorial finding titles)
+     - Civic-ledger raised contrast for sub-text and descriptions
+     - Stone/brass-tinted ledger separators
+     - Oxblood severity rule on .wr-badge.critical
+     - Brass-light info badge (replaces saturated blue for civic restraint)
+   Container-level rules from Phase 20D (#tab-govcon .workspace-readiness)
+   and Phase 20E (#tab-settings .workspace-readiness) are preserved
+   verbatim. Global --gold/--gold2/--goldb aliases are NOT repointed;
+   .btn-gold remains cool gold everywhere. Diagnostic logic, release-
+   evidence generation, signing/notarization probes, watsonx readiness
+   probe behavior, and ALL finding/severity/copy text are unchanged.
+   The CLI report templates under reports/** are not touched. No body
+   markup, no inline styles, no JavaScript edited. */
+
+/* Readiness banner — civic-ledger inner hairlines (brass + stone) */
+.wr-head{border-bottom-color:rgba(176,138,60,0.18)}
+.wr-item{border-top-color:rgba(176,138,60,0.10)}
+
+/* Sub-text and per-item descriptions — civic-ledger raised contrast */
+.wr-sub{color:var(--sd-text-secondary)}
+.wr-desc{color:var(--sd-text-secondary)}
+
+/* Per-finding label — Cormorant italic editorial finding title */
+.wr-label{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:13.5px;letter-spacing:-0.005em}
+
+/* Oxblood severity rule — critical badge only (civic authority warning) */
+.wr-badge.critical{background:rgba(110,31,44,0.16);color:#E5B0B8;border-color:rgba(110,31,44,0.55)}
+
+/* Brass-light info badge — replaces saturated blue for editorial restraint */
+.wr-badge.info{background:rgba(176,138,60,0.10);color:var(--sd-brass-gold-light);border-color:rgba(176,138,60,0.30)}
 </style>
 </head>
 <body>
