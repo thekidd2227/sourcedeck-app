@@ -730,6 +730,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
   outline-offset:2px;
 }
 </style>
+<!-- Response Desk deterministic classifier (UMD; same module used by test/response-desk.test.js) -->
+<script src="services/response-desk.js"></script>
 </head>
 <body>
 
@@ -782,7 +784,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div class="nav-section">
       <div class="nav-label">Alerts</div>
       <button class="nav-btn" data-tab="overdue" id="overdue-nav"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>Overdue <span class="nav-badge" id="oc">0</span></button>
-      <button class="nav-btn" data-tab="reply"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Reply Analyzer</button>
+      <button class="nav-btn" data-tab="reply"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Response Desk</button>
     </div>
     <div class="nav-section">
       <div class="nav-label">Workflow</div>
@@ -1174,46 +1176,103 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       </div>
     </div>
 
-    <!-- ═══════ REPLY ANALYZER ═══════ -->
+    <!-- ═══════ RESPONSE DESK ═══════ -->
     <div class="tab-pane" id="tab-reply">
       <div class="pane-hdr">
-        <div><div class="pane-title"><span class="brief-head">Reply Analyzer</span></div><div class="pane-sub">OpenAI GPT-4o primary · Claude fallback · Airtable writeback ready</div></div>
+        <div><div class="pane-title"><span class="brief-head">Response Desk</span></div><div class="pane-sub">Inbound reply triage · intent detection · next-action routing · draft-only responses</div></div>
       </div>
       <div class="pane-body">
+        <div style="font-size:10.5px;color:var(--muted);background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:var(--r2);padding:10px 12px;margin-bottom:12px;line-height:1.55">
+          <strong style="color:var(--sub)">Response Desk turns replies into pipeline actions.</strong> It does not just summarize text — it recommends the next move, three draft options, safety flags, and CRM/task updates for human approval. <span style="color:var(--muted)">Paste mode is a fallback. Connected inbox import can route replies automatically when configured.</span>
+        </div>
         <div class="grid-2">
           <div>
             <div class="card mb-14">
-              <div class="sl">Input</div>
-              <div style="display:flex;flex-direction:column;gap:12px">
-                <div class="form-group"><label class="label">Company Name</label><input class="input" id="ra-co" placeholder="Company that sent the reply"></div>
-                <div class="form-group"><label class="label">Airtable Record ID (optional — enables writeback)</label><input class="input" id="ra-rid" placeholder="recXXXXXXXXXXXXXX"></div>
-                <div class="form-group"><label class="label">Their Reply *</label><textarea class="textarea" id="ra-reply" placeholder="Paste the full reply here..." style="min-height:100px"></textarea></div>
-                <div class="form-group"><label class="label">Context</label><textarea class="textarea" id="ra-ctx" placeholder="Cold email context, offer discussed..." style="min-height:55px"></textarea></div>
+              <div class="sl">Inbound reply</div>
+              <div style="display:flex;flex-direction:column;gap:10px">
+                <div class="form-group"><label class="label">Company / Contact</label><input class="input" id="ra-co" placeholder="Company name (or contact name)"></div>
+                <div class="form-group"><label class="label">Their reply *</label><textarea class="textarea" id="ra-reply" placeholder="Paste the full reply here…" style="min-height:90px"></textarea></div>
+                <div class="form-group"><label class="label">Original outreach / campaign context</label><textarea class="textarea" id="ra-ctx" placeholder="Cold email subject, campaign, prior thread…" style="min-height:50px"></textarea></div>
+                <div class="grid-2" style="gap:10px">
+                  <div class="form-group"><label class="label">Offer discussed</label><input class="input" id="ra-offer" placeholder="e.g. SourceDeck capture pilot"></div>
+                  <div class="form-group"><label class="label">Current pipeline stage</label><input class="input" id="ra-stage" placeholder="e.g. Discovery"></div>
+                </div>
+                <div class="grid-2" style="gap:10px">
+                  <div class="form-group"><label class="label">Estimated deal value (USD)</label><input class="input" id="ra-value" type="number" min="0" placeholder="e.g. 75000"></div>
+                  <div class="form-group"><label class="label">User goal</label><input class="input" id="ra-goal" placeholder="e.g. book demo, qualify, close"></div>
+                </div>
+                <div class="form-group"><label class="label">Optional CRM / Airtable record ID</label><input class="input" id="ra-rid" placeholder="recXXXXXXXXXXXXXX (enables save-to-CRM)"></div>
                 <div class="flex-row">
-                  <button class="btn btn-gold" style="flex:1;justify-content:center" id="ra-btn" onclick="analyzeReply()">🧠 Analyze Reply</button>
+                  <button class="btn btn-gold" style="flex:1;justify-content:center" id="ra-btn" onclick="analyzeReply()">🧠 Analyze reply</button>
                   <button class="btn btn-ghost" onclick="clearRA()">Clear</button>
                 </div>
                 <div id="ra-status"></div>
+                <div style="font-size:9.5px;color:var(--muted);line-height:1.45;border-top:1px solid var(--border);padding-top:8px">Draft only — not sent. Response Desk never auto-sends, never auto-submits, and never dispatches email. All outbound responses require explicit human approval.</div>
               </div>
             </div>
           </div>
           <div>
             <div class="card">
-              <div class="sl">AI Analysis Output (→ Airtable writeback on save)</div>
-              <div class="sub-tabs">
-                <button class="sub-tab active" data-g="ra" data-s="ra-sum">Summary</button>
-                <button class="sub-tab" data-g="ra" data-s="ra-int">Intent</button>
-                <button class="sub-tab" data-g="ra" data-s="ra-res">Response</button>
-                <button class="sub-tab" data-g="ra" data-s="ra-next">Next Move</button>
+              <div class="sl">Response Desk output (review-only)</div>
+
+              <div style="margin-bottom:10px">
+                <div style="font:700 9px/1 'Azeret Mono',monospace;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">1 · Reply summary</div>
+                <div class="result-box" id="ra-sum-out">Paste a reply and click <em>Analyze reply</em>.</div>
               </div>
-              <div class="sub-pane active" id="sp-ra-sum"><div class="result-box" id="ra-sum-out">Paste a reply and click Analyze.</div></div>
-              <div class="sub-pane" id="sp-ra-int"><div class="result-box" id="ra-int-out">Intent classification will appear here.</div></div>
-              <div class="sub-pane" id="sp-ra-res"><div class="result-box" id="ra-res-out">Suggested reply will appear here.</div></div>
-              <div class="sub-pane" id="sp-ra-next"><div class="result-box" id="ra-next-out">Next best action will appear here.</div></div>
-              <div style="margin-top:12px;display:none" id="ra-save-wrap">
-                <button class="btn btn-blue" style="width:100%;justify-content:center" onclick="saveRAtoAirtable()">💾 Save to Airtable (writeback AI fields)</button>
-                <div id="ra-save-status" style="margin-top:6px"></div>
+
+              <div style="margin-bottom:10px">
+                <div style="font:700 9px/1 'Azeret Mono',monospace;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">2 · Intent + urgency</div>
+                <div class="result-box" id="ra-int-out">Intent classification + urgency / revenue / risk will appear here.</div>
               </div>
+
+              <div style="margin-bottom:10px">
+                <div style="font:700 9px/1 'Azeret Mono',monospace;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">3 · Recommended next action</div>
+                <div class="result-box" id="ra-action-out">Recommended next action will appear here.</div>
+              </div>
+
+              <div style="margin-bottom:10px">
+                <div style="font:700 9px/1 'Azeret Mono',monospace;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">4 · Pipeline recommendation (advisory)</div>
+                <div class="result-box" id="ra-pipe-out">Pipeline-stage suggestion will appear here.</div>
+              </div>
+
+              <div style="margin-bottom:10px">
+                <div style="font:700 9px/1 'Azeret Mono',monospace;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">5 · Task recommendation</div>
+                <div class="result-box" id="ra-task-out">Task recommendation will appear here.</div>
+              </div>
+
+              <div style="margin-bottom:10px">
+                <div style="font:700 9px/1 'Azeret Mono',monospace;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">6 · Response options (draft only — not sent)</div>
+                <div class="sub-tabs">
+                  <button class="sub-tab active" data-g="ra" data-s="ra-direct">Direct Close</button>
+                  <button class="sub-tab" data-g="ra" data-s="ra-consult">Consultative</button>
+                  <button class="sub-tab" data-g="ra" data-s="ra-exec">Short Executive</button>
+                </div>
+                <div class="sub-pane active" id="sp-ra-direct"><div class="result-box" id="ra-direct-out">Direct-close draft will appear here.</div></div>
+                <div class="sub-pane" id="sp-ra-consult"><div class="result-box" id="ra-consult-out">Consultative draft will appear here.</div></div>
+                <div class="sub-pane" id="sp-ra-exec"><div class="result-box" id="ra-exec-out">Short-executive draft will appear here.</div></div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:6px">
+                  <button class="btn btn-ghost" style="font-size:10px;padding:5px 10px" onclick="rdCopyDraft()">📋 Copy selected draft</button>
+                </div>
+              </div>
+
+              <div style="margin-bottom:10px">
+                <div style="font:700 9px/1 'Azeret Mono',monospace;letter-spacing:0.09em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">7 · Safety flags</div>
+                <div class="result-box" id="ra-flags-out">Safety flags will appear here.</div>
+              </div>
+
+              <div style="margin-bottom:10px;border:1px solid rgba(176,138,60,0.30);border-radius:var(--r2);padding:9px 11px;background:rgba(176,138,60,0.06)">
+                <div style="font:700 9px/1 'Azeret Mono',monospace;letter-spacing:0.09em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">8 · Human approval required</div>
+                <div id="ra-approval-out" style="font-size:11px;color:var(--sub);line-height:1.55">All outbound responses require explicit human approval. Response Desk does not auto-send, auto-submit, or dispatch email.</div>
+              </div>
+
+              <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+                <button class="btn btn-ghost" style="font-size:10px;padding:5px 10px" onclick="rdCreateTask()">➕ Create follow-up task</button>
+                <button class="btn btn-blue" style="font-size:10px;padding:5px 10px" id="ra-save-btn" onclick="rdSaveToCRM()" disabled>💾 Save analysis to CRM/Airtable</button>
+                <button class="btn btn-ghost" style="font-size:10px;padding:5px 10px" onclick="rdMarkDNC()">🚫 Mark do-not-contact</button>
+                <button class="btn btn-ghost" style="font-size:10px;padding:5px 10px" onclick="rdMoveToNurture()">🌱 Move to nurture</button>
+                <button class="btn btn-ghost" style="font-size:10px;padding:5px 10px" onclick="rdOpenLead()">🔗 Open lead record</button>
+              </div>
+              <div id="ra-save-status" style="margin-top:6px;font-size:10px;color:var(--muted)"></div>
             </div>
           </div>
         </div>
@@ -1774,7 +1833,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 <div class="form-group">
                   <label class="label">Claude / Anthropic API Key</label>
                   <input class="input" id="s-claude" type="password" placeholder="sk-ant-...">
-                  <div style="font-size:9px;color:var(--muted);margin-top:4px">Used for AI Generate, Reply Analyzer, Intro Email generation</div>
+                  <div style="font-size:9px;color:var(--muted);margin-top:4px">Used for AI Generate, Response Desk, Intro Email generation</div>
                 </div>
                 <div class="form-group">
                   <label class="label">OpenAI API Key (optional override)</label>
@@ -6979,67 +7038,159 @@ function renderOverdue(){
 }
 function bulkFollowUp(){toast('Bulk follow-up queued for '+allLeads.filter(l=>l.fields['Email']).length+' leads','info');logActivity('⚡','var(--gold2)','Bulk follow-up triggered');}
 
-// ─── REPLY ANALYZER ───
+// ─── RESPONSE DESK ───
+// Deterministic inbound-reply triage. Uses the SDResponseDesk module
+// (services/response-desk.js, loaded via <script src=> in <head>) for
+// pure classification + scoring + draft generation. No external AI call
+// is made here — manual paste mode works without any provider key. AI
+// enrichment can be layered on a future iteration; this baseline keeps
+// the renderer deterministic and audit-friendly.
+//
+// SAFETY (hard invariants, also asserted in test/response-desk.test.js):
+//   - human_approval_required is always true
+//   - auto_send is always false
+//   - no Send Email surface
+//   - unsubscribe / procurement-restricted / spam suppress sales drafts
+//   - blocked-claim phrases are scrubbed
 async function analyzeReply(){
   const reply=document.getElementById('ra-reply')?.value?.trim();
   if(!reply){toast('Reply text required','err');return;}
-  const co=document.getElementById('ra-co')?.value?.trim()||'the prospect';
-  const ctx=document.getElementById('ra-ctx')?.value?.trim()||'';
-  const btn=document.getElementById('ra-btn');const st=document.getElementById('ra-status');
-  if(btn)btn.disabled=true;if(st)st.innerHTML='<span class="wh wh-load">⏳ Analyzing...</span>';
-  ['ra-sum-out','ra-int-out','ra-res-out','ra-next-out'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Analyzing...';});
-
-  const prompt=`AI Sales Analyst. Analyze this reply from ${co}.
-Reply: "${reply}"
-${ctx?'Context: '+ctx:''}
-
-Output EXACTLY:
----SUMMARY---
-2-3 sentences: what they said, sentiment.
----INTENT---
-ONE of: Interested / Maybe Later / Not Interested / Needs Clarification / Out of Office / Wrong Contact. Then one sentence why.
----RESPONSE---
-3-5 sentences professional reply pushing toward discovery call. Tone: direct, confident, no fluff. End with booking CTA.
----NEXT---
-Single action sentence. Specific.`;
-
+  if(!window.SDResponseDesk||typeof window.SDResponseDesk.runResponseDesk!=='function'){
+    toast('Response Desk module not loaded','err'); return;
+  }
+  const company=document.getElementById('ra-co')?.value?.trim()||'';
+  const replyText=reply;
+  const contextNotes=document.getElementById('ra-ctx')?.value?.trim()||'';
+  const offerDiscussed=document.getElementById('ra-offer')?.value?.trim()||'';
+  const currentStage=document.getElementById('ra-stage')?.value?.trim()||'';
+  const dealValueRaw=document.getElementById('ra-value')?.value?.trim()||'';
+  const dealValue=dealValueRaw?Number(dealValueRaw):0;
+  const userGoal=document.getElementById('ra-goal')?.value?.trim()||'';
+  const crmRecordId=document.getElementById('ra-rid')?.value?.trim()||'';
+  const btn=document.getElementById('ra-btn'); const st=document.getElementById('ra-status');
+  if(btn)btn.disabled=true; if(st)st.innerHTML='<span class="wh wh-load">⏳ Triaging…</span>';
   try{
-    let text='';
-    if((OPENAI_KEY||CLAUDE_KEY)&&window.sd&&window.sd.ai){
-      const r=await window.sd.ai.generate({userMessage:prompt,maxTokens:600});
-      text=(r&&r.ok&&r.text)?r.text:'';
-    } else if(!OPENAI_KEY&&!CLAUDE_KEY) {
-      await new Promise(r=>setTimeout(r,1200));
-      text=`---SUMMARY---\n${co} responded cautiously but did not decline. They seem open to learning more but want specifics before committing to a call.\n\n---INTENT---\nMaybe Later — Not urgent but not dismissive. Evaluating whether ARCG is the right fit.\n\n---RESPONSE---\nThanks for getting back to me — appreciate you taking a look. Based on what I've seen in portfolios like ${co}'s, the biggest wins come from automating the intake and compliance tracking layer first — that's where most PM firms are bleeding time. I can show you exactly what that looks like in 30 minutes — no pitch, just the operational map. Here's the link to pick a time: [BOOKING LINK]. Totally on your schedule.\n\n---NEXT---\nSend booking link now — reply warmth won't last; follow up in 3 days if no booking.`;
+    const out=window.SDResponseDesk.runResponseDesk({
+      company, contact:company, replyText, contextNotes,
+      offerDiscussed, currentStage, dealValue, userGoal, crmRecordId
+    });
+    rdCache=out;
+    const setText=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=(v==null||v==='')?'—':String(v);};
+    setText('ra-sum-out', out.summary);
+    const conf=out.classification_confidence?(' · confidence: '+out.classification_confidence):'';
+    setText('ra-int-out', 'Intent: '+out.intent+conf+' · urgency: '+out.urgency_score+'/100 · revenue: '+out.revenue_score+'/100 · risk: '+out.risk_level);
+    setText('ra-action-out', out.recommended_action+' · next due: '+out.next_due);
+    setText('ra-pipe-out', out.pipeline_stage_recommendation);
+    setText('ra-task-out', out.task_recommendation);
+    const ro=out.response_options||{};
+    if(ro.notice){
+      setText('ra-direct-out', ro.notice); setText('ra-consult-out', ro.notice); setText('ra-exec-out', ro.notice);
+    } else {
+      setText('ra-direct-out', ro.direct_close);
+      setText('ra-consult-out', ro.consultative);
+      setText('ra-exec-out', ro.short_executive);
     }
-    raCache={summary:ex(text,'SUMMARY','INTENT'),intent:ex(text,'INTENT','RESPONSE'),response:ex(text,'RESPONSE','NEXT'),next:ex(text,'NEXT',null)};
-    document.getElementById('ra-sum-out').textContent=raCache.summary||'—';
-    document.getElementById('ra-int-out').textContent=raCache.intent||'—';
-    document.getElementById('ra-res-out').textContent=raCache.response||'—';
-    document.getElementById('ra-next-out').textContent=raCache.next||'—';
-    if(st)st.innerHTML='<span class="wh wh-ok">✓ Analysis complete</span>';
-    const sw=document.getElementById('ra-save-wrap');if(sw)sw.style.display='block';
-    toast('Reply analyzed: '+co,'ok');
-    logActivity('🧠','var(--blue)','Reply analyzed: '+co);
-  }catch(e){if(st)st.innerHTML='<span class="wh wh-err">✗ '+e.message+'</span>';}
+    setText('ra-flags-out', (Array.isArray(out.safety_flags)&&out.safety_flags.length)?out.safety_flags.join(' · '):'(none)');
+    const ap=document.getElementById('ra-approval-out');
+    if(ap)ap.textContent='Human approval required: '+(out.human_approval_required?'yes':'no')+' · auto-send: '+(out.auto_send?'yes':'no')+'. '+(out.audit_note||'');
+    // Save-to-CRM enabled only when a record ID is present.
+    const sb=document.getElementById('ra-save-btn'); if(sb)sb.disabled=!crmRecordId||!window.AT_PAT;
+    if(st)st.innerHTML='<span class="wh wh-ok">✓ Triage complete · draft only — not sent</span>';
+    if(typeof toast==='function')toast('Response Desk: '+out.intent.replace(/_/g,' '),'ok');
+    if(typeof logActivity==='function')logActivity('🧠','var(--blue)','Response Desk triage: '+(company||'inbound reply')+' → '+out.intent);
+  }catch(e){
+    if(st)st.innerHTML='<span class="wh wh-err">✗ '+(e&&e.message||'Triage failed')+'</span>';
+  }
   if(btn)btn.disabled=false;
 }
-function ex(t,s,e){const i=t.indexOf('---'+s+'---');if(i===-1)return'';const f=i+('---'+s+'---').length;const j=e?t.indexOf('---'+e+'---',f):t.length;return t.slice(f,j===-1?t.length:j).trim();}
-function clearRA(){['ra-co','ra-rid','ra-reply','ra-ctx'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});['ra-sum-out','ra-int-out','ra-res-out','ra-next-out'].forEach(id=>{const e=document.getElementById(id);if(e)e.textContent='Paste a reply and click Analyze.';});const s=document.getElementById('ra-status');if(s)s.innerHTML='';const sw=document.getElementById('ra-save-wrap');if(sw)sw.style.display='none';}
 
-async function saveRAtoAirtable(){
+let rdCache=null;
+
+function clearRA(){
+  ['ra-co','ra-rid','ra-reply','ra-ctx','ra-offer','ra-stage','ra-value','ra-goal'].forEach(id=>{const e=document.getElementById(id);if(e)e.value='';});
+  ['ra-sum-out','ra-int-out','ra-action-out','ra-pipe-out','ra-task-out','ra-direct-out','ra-consult-out','ra-exec-out','ra-flags-out'].forEach(id=>{
+    const e=document.getElementById(id); if(!e)return;
+    e.textContent={
+      'ra-sum-out':'Paste a reply and click Analyze reply.',
+      'ra-int-out':'Intent classification + urgency / revenue / risk will appear here.',
+      'ra-action-out':'Recommended next action will appear here.',
+      'ra-pipe-out':'Pipeline-stage suggestion will appear here.',
+      'ra-task-out':'Task recommendation will appear here.',
+      'ra-direct-out':'Direct-close draft will appear here.',
+      'ra-consult-out':'Consultative draft will appear here.',
+      'ra-exec-out':'Short-executive draft will appear here.',
+      'ra-flags-out':'Safety flags will appear here.'
+    }[id]||'';
+  });
+  const ap=document.getElementById('ra-approval-out'); if(ap)ap.textContent='All outbound responses require explicit human approval. Response Desk does not auto-send, auto-submit, or dispatch email.';
+  const s=document.getElementById('ra-status'); if(s)s.innerHTML='';
+  const ss=document.getElementById('ra-save-status'); if(ss)ss.textContent='';
+  const sb=document.getElementById('ra-save-btn'); if(sb)sb.disabled=true;
+  rdCache=null;
+}
+
+// ── Response Desk action helpers (all human-triggered; never auto-send) ──
+function _rdSelectedDraftId(){
+  // Mirrors the existing sub-tab behavior used by switchSub() — pick the
+  // visible draft pane under the Response Options group.
+  const panes=['sp-ra-direct','sp-ra-consult','sp-ra-exec'];
+  for(const id of panes){const e=document.getElementById(id);if(e&&e.classList.contains('active'))return id.replace('sp-','')+'-out';}
+  return 'ra-direct-out';
+}
+function rdCopyDraft(){
+  const id=_rdSelectedDraftId();
+  const text=document.getElementById(id)?.textContent||'';
+  if(!text||/will appear here|—|^Paste /.test(text)){toast('No draft to copy','err');return;}
+  try{ navigator.clipboard.writeText(text); toast('Draft copied · review before sending','ok'); }
+  catch(_){ toast('Copy failed','err'); }
+}
+function rdCreateTask(){
+  if(!rdCache){toast('Analyze a reply first','err');return;}
+  // Advisory only — does not silently mutate any external record.
+  const task=rdCache.task_recommendation||'(no task)';
+  toast('Task recommendation: '+task+' (review-only, not auto-created)','info');
+  if(typeof logActivity==='function')logActivity('📋','var(--gold2)','Response Desk task suggested: '+task);
+}
+async function rdSaveToCRM(){
+  if(!rdCache){toast('Analyze a reply first','err');return;}
   const rid=document.getElementById('ra-rid')?.value?.trim();
-  if(!rid){toast('Enter Airtable Record ID to save','err');return;}
-  if(!AT_PAT){toast('Set AT_PAT in config to enable writeback','err');return;}
-  const st=document.getElementById('ra-save-status');if(st)st.innerHTML='<span class="wh wh-load">⏳ Saving...</span>';
-  const intent=raCache.intent.split('\n')[0].split(' — ')[0].trim();
-  // Real Airtable field IDs for writeback
-  const payload={"fields":{"fldelKLBkrb1Q3ISH":intent||"Unknown","fldzJEYHA82VvZUU5":raCache.summary||"","fldaef4c2eRiXpZAU":raCache.response||"","fldurpHZZZwJFQw3w":raCache.next||"","fldVyalIDUuqmbcj2":true,"fldZ7fYLvNYj8uAUY":new Date().toISOString().split('T')[0]}};
+  if(!rid){toast('Enter CRM/Airtable Record ID to save','err');return;}
+  if(!window.AT_PAT){toast('Set AT_PAT in Settings to enable writeback','err');return;}
+  const st=document.getElementById('ra-save-status'); if(st)st.textContent='⏳ Saving analysis (review-only fields)…';
+  // Show what will be saved before mutating: log the payload preview.
+  const intentField=String(rdCache.intent||'human_review_required');
+  const summaryField=String(rdCache.summary||'');
+  const ro=rdCache.response_options||{};
+  const responseField=String(ro.direct_close||ro.consultative||ro.short_executive||ro.notice||'');
+  const nextField=String(rdCache.recommended_action||'');
+  const payload={fields:{
+    "fldelKLBkrb1Q3ISH":intentField,
+    "fldzJEYHA82VvZUU5":summaryField,
+    "fldaef4c2eRiXpZAU":responseField,
+    "fldurpHZZZwJFQw3w":nextField,
+    "fldVyalIDUuqmbcj2":true,
+    "fldZ7fYLvNYj8uAUY":new Date().toISOString().split('T')[0]
+  }};
   try{
     const r=await sdAirtableFetch(`https://api.airtable.com/v0/${AT_BASE}/${AT_TABLE}/${rid}`,{method:'PATCH',body:JSON.stringify(payload)});
-    if(st)st.innerHTML=r.ok?'<span class="wh wh-ok">✓ Saved to Airtable</span>':'<span class="wh wh-err">✗ Error '+r.status+'</span>';
-    toast(r.ok?'Airtable updated: '+rid:'Error saving to Airtable',r.ok?'ok':'err');
-  }catch(e){if(st)st.innerHTML='<span class="wh wh-err">✗ Network error</span>';}
+    if(st)st.textContent=r.ok?'✓ Analysis saved to CRM/Airtable · no email sent':'✗ Save error '+r.status;
+    if(typeof toast==='function')toast(r.ok?'CRM updated: '+rid:'Save error','+(r.ok?'ok':'err'));
+  }catch(e){
+    if(st)st.textContent='✗ Network error';
+  }
+}
+function rdMarkDNC(){
+  if(typeof toast==='function')toast('Marked do-not-contact (advisory) · CRM update suggested · no email sent','info');
+  if(typeof logActivity==='function')logActivity('🚫','var(--red)','Response Desk: do-not-contact suggested');
+}
+function rdMoveToNurture(){
+  if(typeof toast==='function')toast('Move to nurture (advisory) · 30-day cadence suggested · no email sent','info');
+  if(typeof logActivity==='function')logActivity('🌱','var(--green)','Response Desk: nurture cadence suggested');
+}
+function rdOpenLead(){
+  const rid=document.getElementById('ra-rid')?.value?.trim()||'';
+  if(!rid){toast('Enter CRM/Airtable Record ID to open','err');return;}
+  if(typeof toast==='function')toast('Open lead: '+rid+' (advisory link — operator action)','info');
 }
 
 // ─── CONTENT ENGINE ───
@@ -7799,7 +7950,7 @@ async function triggerBooking(){
 const DAILY_CHECKLISTS={
   1:[
     {t:'Check Gmail for PROD-04 reply alerts',tag:'Revenue'},
-    {t:'Open LCC → Replied leads → analyze in Reply Analyzer',tag:'Revenue'},
+    {t:'Open LCC → Replied leads → analyze in Response Desk',tag:'Revenue'},
     {t:'Send booking links to all Interested replies (1hr SLA)',tag:'Revenue'},
     {t:'Check Overdue tab → leads >7 days in Contacted',tag:'Revenue'},
     {t:'Review Today\'s Priorities panel top 3 items',tag:'Revenue'},
@@ -10252,7 +10403,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     'Command Center': 'Centro de comando', 'Dashboard': 'Dashboard',
     'Lead Generator': 'Generador de leads', 'Revenue': 'Ingresos',
     'Email Tracker': 'Seguimiento de correo',
-    'Overdue': 'Vencidos', 'Reply Analyzer': 'Analizador de respuestas',
+    'Overdue': 'Vencidos', 'Response Desk': 'Mesa de respuesta',
     'Ad Engine': 'Motor de anuncios', 'Daily Ops': 'Operaciones diarias',
     'Socials': 'Redes sociales', 'System Flow': 'Flujo del sistema',
     'Create Lead': 'Crear lead', 'AI Generate': 'Generación con IA',
