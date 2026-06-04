@@ -2042,6 +2042,33 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <span style="display:block;margin-top:5px;color:var(--muted)">Drafts only. Human approval required. Follow solicitation instructions and communication windows.</span>
         </div>
         <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 23A — GovCon Demo Mode + Sample Data Loader
+             Buyer-demo polish. Sample data is clearly labeled as
+             SAMPLE / DEMO ONLY and writes to the existing Phase 22B-22F
+             localStorage keys with redactable placeholder values. No
+             real agency / vendor / CPARS / award data. No bid, quote,
+             or government-response submission. No portal upload. No
+             email transmission. The user must clear sample data and
+             replace with their own before any proposal use.
+             ═══════════════════════════════════════════════════════════════ -->
+        <section id="gc-demo-mode" class="gc-demo-mode" data-section="govcon-demo-mode" style="margin-bottom:14px;border:1px solid var(--border);border-radius:var(--r2);padding:11px 13px;background:var(--panel3,#0E2040)">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+            <div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">GovCon Mode · Demo Controls</div>
+              <div id="gc-demo-state" style="font-family:'Instrument Sans',sans-serif;font-size:12px;color:var(--text);margin-top:2px">Demo data not loaded. Working with operator-entered data only.</div>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap">
+              <button type="button" class="btn btn-ghost" id="gc-demo-load-btn" onclick="gcDemoLoadSample()">Load Sample GovCon Demo Data</button>
+              <button type="button" class="btn btn-ghost" id="gc-demo-clear-btn" onclick="gcDemoClearSample()">Clear Sample Demo Data</button>
+            </div>
+          </div>
+          <div id="gc-demo-banner" class="gc-demo-banner" hidden style="background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.45);border-radius:var(--r2);padding:8px 11px;font-size:10.5px;line-height:1.55;color:var(--sub);margin-top:6px">
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--warn,#C4820A);font-weight:700;margin-bottom:3px">SAMPLE DEMO DATA — Replace before proposal use</div>
+            <div>The GovCon workspace below is currently populated with operator-loaded SAMPLE / DEMO ONLY data. No row reflects a real agency, real solicitation, real vendor, real CPARS rating, real submission status, or real award. SourceDeck does not submit bids, quotes, or government responses. The user must clear sample data and replace with their own before any proposal use.</div>
+          </div>
+          <div style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:5px">Demo data is local only. No external call. No bid, quote, or government-response submission. No portal upload. No email transmission. Sample rows are clearly labeled "SAMPLE", "Demo only", or "Replace before proposal use".</div>
+        </section>
+        <!-- ═══════════════════════════════════════════════════════════════
              PHASE 22B — GovCon Capture Command Center
              Buyer-facing GovCon operating surface. Manual intake only.
              SourceDeck does not auto-submit bids and does not auto-send
@@ -2083,9 +2110,9 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               <div id="gc-cc-solready-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation workspaces prepared yet. The Solicitation Workspace ships in Phase 22C.</div>
             </div>
             <div class="gc-cc-card" data-cc="vendor" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
-              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Vendor / Subcontractor Needs</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Vendor Needs (capture board)</div>
               <div id="gc-cc-vendor-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
-              <div id="gc-cc-vendor-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No vendor quotes requested. Vendor outreach requires human approval.</div>
+              <div id="gc-cc-vendor-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">Capture-board count of opportunities flagged as needing a vendor or subcontractor. Detailed vendor quote rows live in the Vendor Quote Room below. Vendor outreach requires human approval.</div>
             </div>
             <div class="gc-cc-card" data-cc="proposal" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Proposal Package Status</div>
@@ -2470,6 +2497,16 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 </label>
                 <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Scope summary</span><textarea class="input" id="gc-pp-f-scope" rows="2" placeholder="Brief operator-written scope summary"></textarea></label>
                 <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Relevance tags (comma-separated)</span><input class="input" id="gc-pp-f-tags" type="text" placeholder="e.g. cloud migration, identity, zero trust (operator-supplied tags)"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>CPARS rating (operator-supplied)</span>
+                  <select class="select" id="gc-pp-f-cpars-rating">
+                    <option value="Not entered">Not entered</option>
+                    <option value="Exceptional">Exceptional</option>
+                    <option value="Very Good">Very Good</option>
+                    <option value="Satisfactory">Satisfactory</option>
+                    <option value="Marginal">Marginal</option>
+                    <option value="Unsatisfactory">Unsatisfactory</option>
+                  </select>
+                </label>
                 <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>CPARS / performance notes</span><textarea class="input" id="gc-pp-f-cpars" rows="2" placeholder="Operator-supplied CPARS rating notes — verify against source before proposal use"></textarea></label>
                 <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Evidence file notes</span><textarea class="input" id="gc-pp-f-evidence" rows="2" placeholder="Operator-supplied notes on supporting files (kept locally; no upload)"></textarea></label>
                 <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
@@ -2655,12 +2692,12 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div class="gc-sub-summary" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px">
             <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Submission Readiness Score (advisory)</div>
-              <div id="gc-sub-score" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0%</div>
-              <div style="font-size:10px;color:var(--muted)">Advisory only. Score reflects local checklist completion. SourceDeck does not submit bids, quotes, or government responses.</div>
+              <div id="gc-sub-score" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">—%</div>
+              <div style="font-size:10px;color:var(--muted)">Advisory only. Shows "—%" until you start the checklist. Score reflects local checklist completion. SourceDeck does not submit bids, quotes, or government responses.</div>
             </div>
             <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Readiness Status</div>
-              <div id="gc-sub-status" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">Not Ready</div>
+              <div id="gc-sub-status" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">No package started</div>
               <div style="font-size:10px;color:var(--muted)">"Ready for Human Review" appears only when every required item is Reviewed and none are Blocked. Final action happens outside SourceDeck.</div>
             </div>
             <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
@@ -11994,7 +12031,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (el && el.scrollIntoView) try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
   };
   window.gcCaptureSolicitationPlaceholder = function(){
-    if (window.toast) try { window.toast('Solicitation Workspace placeholder — Phase 22C ships the full surface.', 'info'); } catch (e) {}
+    if (window.toast) try { window.toast('Open the Solicitation Workspace below to extract instructions, requirements, deadlines, risks, and a compliance matrix.', 'info'); } catch (e) {}
+    var el = document.getElementById('gc-sol-workspace'); if (el && el.scrollIntoView) try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
   };
   window.gcCaptureRenderBidNoBid = renderBidNoBidOut;
   window.gcCaptureRender = gcCaptureRender;
@@ -12573,6 +12611,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       role: v('gc-pp-f-role').trim() || 'Prime',
       scope: v('gc-pp-f-scope').trim(),
       tags: v('gc-pp-f-tags').trim(),
+      cparsRating: (v('gc-pp-f-cpars-rating') || 'Not entered').trim(),
       cpars: v('gc-pp-f-cpars').trim(),
       evidence: v('gc-pp-f-evidence').trim(),
       createdAt: Date.now()
@@ -12948,13 +12987,31 @@ document.addEventListener('DOMContentLoaded',()=>{
       var el = $(id); if (el) el.textContent = fields[id];
     }
   }
+  function isUntouched(state){
+    // Untouched = every checklist item is 'Not started' AND every notes field is empty.
+    for (var i = 0; i < CHECKLIST_ITEMS.length; i++) {
+      var id = CHECKLIST_ITEMS[i].id;
+      if ((state.checklist[id] || 'Not started') !== 'Not started') return false;
+      if (state.notes[id] && String(state.notes[id]).trim()) return false;
+    }
+    return true;
+  }
   function renderSummary(state){
-    var r = computeReadiness(state);
-    var score = $('gc-sub-score'); if (score) score.textContent = r.score + '%';
-    var statusEl = $('gc-sub-status'); if (statusEl) statusEl.textContent = r.status;
     var pkgState = loadObj(PKG_KEY) || {};
     var pkgEl = $('gc-sub-package-status');
-    if (pkgEl) pkgEl.textContent = (pkgState && pkgState.lastPreviewAt) ? 'Preview generated locally' : 'No package prepared';
+    var score = $('gc-sub-score');
+    var statusEl = $('gc-sub-status');
+    if (isUntouched(state)) {
+      // No interaction yet — show neutral empty-state instead of a failed-looking 0% / Not Ready.
+      if (score)    score.textContent    = '—%';
+      if (statusEl) statusEl.textContent = 'No package started';
+      if (pkgEl)    pkgEl.textContent    = (pkgState && pkgState.lastPreviewAt) ? 'Preview generated locally' : 'No package prepared';
+      return;
+    }
+    var r = computeReadiness(state);
+    if (score)    score.textContent    = r.score + '%';
+    if (statusEl) statusEl.textContent = r.status;
+    if (pkgEl)    pkgEl.textContent    = (pkgState && pkgState.lastPreviewAt) ? 'Preview generated locally' : 'No package prepared';
   }
   function renderAll(){
     var state = loadState();
@@ -13105,6 +13162,216 @@ document.addEventListener('DOMContentLoaded',()=>{
     document.addEventListener('DOMContentLoaded', renderAll);
   } else {
     setTimeout(renderAll, 0);
+  }
+})();
+</script>
+<script>
+/* Phase 23A — GovCon Demo Mode + Sample Data Loader.
+   Pure browser code. No network, no auto-send, no auto-submit, no
+   portal upload, no email transmission. Sample data writes to existing
+   Phase 22B-22F localStorage keys with redactable placeholder values
+   that are visibly labeled "SAMPLE", "Demo only", or "Replace before
+   proposal use". No real agency, vendor, CPARS, award, submission
+   status, or solicitation data is implied. Operator must clear sample
+   data and replace with their own before any proposal use. */
+(function(){
+  'use strict';
+  var FLAG_KEY      = 'sd.govcon.demoMode.v1';
+  var CAPTURE_KEY   = 'sd.govcon.captureBoard.v1';
+  var SOL_KEY       = 'sd.govcon.solWorkspace.v1';
+  var VQR_KEY       = 'sd.govcon.vendorQuotes.v1';
+  var PP_KEY        = 'sd.govcon.pastPerformance.v1';
+  var PPF_KEY       = 'sd.govcon.primePartners.v1';
+  var CS_KEY        = 'sd.govcon.capabilityStatement.v1';
+  var SUB_KEY       = 'sd.govcon.submissionReadiness.v1';
+  function load(key){ try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
+  function save(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
+  function isDemoActive(){ var f = load(FLAG_KEY); return !!(f && f.active); }
+  function setBanner(active){
+    var banner = document.getElementById('gc-demo-banner');
+    var state  = document.getElementById('gc-demo-state');
+    if (banner) banner.hidden = !active;
+    if (state)  state.textContent = active
+      ? 'SAMPLE DEMO DATA loaded. Every row is operator-loaded SAMPLE / DEMO ONLY data. Clear before proposal use.'
+      : 'Demo data not loaded. Working with operator-entered data only.';
+  }
+  function buildSampleCaptureBoard(){
+    return [{
+      id: 'op_sample_demo_001',
+      title: 'SAMPLE — Demo Only Opportunity (Replace before proposal use)',
+      solicitationNumber: 'SAMPLE-SOL-DEMO-0001',
+      agency: 'Sample Agency (Demo Only)',
+      office: 'Sample Office — Demo only',
+      naics: '541512',
+      setAside: 'Demo only',
+      dueDate: '',
+      qnaDate: '',
+      place: 'Sample place — Demo only',
+      estimatedValue: 'Sample value — Demo only',
+      sourceUrl: '',
+      notes: 'SAMPLE / DEMO ONLY — Replace before proposal use. Not a real opportunity.',
+      status: 'active',
+      bidDecision: 'review',
+      pendingApproval: true,
+      needsVendor: true,
+      createdAt: Date.now()
+    }];
+  }
+  function buildSampleSolWorkspace(){
+    return {
+      summary: 'SAMPLE solicitation summary — Demo only. Replace before proposal use. Not a real solicitation excerpt.',
+      sections: {
+        sectionL: [
+          'L.1 (Sample — Demo only) Offerors shall submit Volume I Technical not to exceed 25 pages.',
+          'L.2 (Sample — Demo only) Offerors must provide past performance citations for three contracts.'
+        ],
+        sectionM: [
+          'M.1 (Sample — Demo only) Technical Approach is most important factor; weighting is illustrative only.',
+          'M.2 (Sample — Demo only) Past Performance is second most important factor; for illustration only.'
+        ],
+        pws: [
+          'PWS 1.1 (Sample — Demo only) Contractor shall provide demo-only sample task. Replace before proposal use.'
+        ],
+        forms: [
+          'Attachment 1 (Sample — Demo only): SF-33 placeholder — verify against the actual solicitation.'
+        ],
+        deadlines: [
+          'Proposal due (Sample — Demo only): set actual date per the real solicitation before any submission.',
+          'Q&A due (Sample — Demo only): set actual date per the real solicitation.'
+        ],
+        risks: [
+          'Insurance (Sample — Demo only): verify carrier limits against the real solicitation.',
+          'Past performance (Sample — Demo only): verify CPARS against the real source.'
+        ]
+      },
+      matrix: [
+        { id: 'R-001', source: 'Section L', text: 'SAMPLE — Demo only: page-limit requirement (illustrative).', mandatory: 'Mandatory', proposalSection: 'Volume I — Technical', owner: 'TBD — operator assigns', evidence: 'TBD — operator assigns', status: 'Draft — Not Reviewed', risk: '—', notes: 'Sample — Demo only' },
+        { id: 'R-002', source: 'Section M', text: 'SAMPLE — Demo only: evaluation factor weighting (illustrative).', mandatory: 'Optional', proposalSection: 'Volume IV — Evaluation Alignment', owner: 'TBD — operator assigns', evidence: 'TBD — operator assigns', status: 'Draft — Not Reviewed', risk: '—', notes: 'Sample — Demo only' },
+        { id: 'R-003', source: 'PWS / SOW', text: 'SAMPLE — Demo only: demo-only PWS task (replace before proposal use).', mandatory: 'Mandatory', proposalSection: 'Volume II — Management / PWS Response', owner: 'TBD — operator assigns', evidence: 'TBD — operator assigns', status: 'Draft — Not Reviewed', risk: '—', notes: 'Sample — Demo only' }
+      ]
+    };
+  }
+  function buildSampleVendorQuotes(){
+    return [{
+      id: 'vq_sample_demo_001',
+      category: 'Sample — Demo only category',
+      vendor: 'Sample Vendor LLC (Demo Only)',
+      contact: 'Sample Contact (Demo Only)',
+      email: 'operator-replace-before-use@example.invalid',
+      phone: '',
+      amount: 0,
+      status: 'Requested manually',
+      cred: { license:false, insurance:false, bonding:false, w9:false, sam:false, cage:false, clearance:false },
+      certNotes: 'SAMPLE / DEMO ONLY — verify all certifications against vendor source before proposal use.',
+      riskNotes: 'SAMPLE / DEMO ONLY — replace risk notes before proposal use.',
+      createdAt: Date.now()
+    }];
+  }
+  function buildSamplePastPerformance(){
+    return [{
+      id: 'pp_sample_demo_001',
+      title: 'SAMPLE Past Performance Project — Demo Only',
+      agency: 'Sample Agency (Demo Only)',
+      naics: '541512',
+      contract: 'SAMPLE-CONTRACT-DEMO-0001',
+      pop: '2024-01 to 2025-12 (Sample — Demo only)',
+      value: 0,
+      role: 'Prime',
+      scope: 'SAMPLE scope summary — Demo only. Replace before proposal use.',
+      tags: 'sample, demo only',
+      cparsRating: 'Not entered',
+      cpars: 'SAMPLE / DEMO ONLY — operator must verify CPARS rating against source before proposal use.',
+      evidence: 'SAMPLE evidence notes — Demo only.',
+      createdAt: Date.now()
+    }];
+  }
+  function buildSamplePrimePartners(){
+    return [{
+      id: 'ppf_sample_demo_001',
+      prime: 'Sample Prime Co. (Demo Only)',
+      naics: '541512',
+      agency: 'Sample Agency (Demo Only)',
+      location: 'Sample location — Demo only',
+      status: 'Research',
+      fitNotes: 'SAMPLE fit notes — Demo only.',
+      contactNotes: 'SAMPLE — SourceDeck does not send partner outreach. Demo only.',
+      teamingAngle: 'SAMPLE teaming angle — Demo only.',
+      createdAt: Date.now()
+    }];
+  }
+  function buildSampleCapabilityStatement(){
+    return {
+      agency: 'Sample Agency (Demo Only)',
+      sol:    'SAMPLE-SOL-DEMO-0001',
+      naics:  '541512',
+      certs:  'Sample — Demo only',
+      core:   'sample core capability (demo only), sample core capability (demo only)',
+      diff:   'sample differentiator (demo only), sample differentiator (demo only)',
+      pp:     ['pp_sample_demo_001']
+    };
+  }
+  function buildSampleSubmissionState(){
+    // NOT all reviewed — show partial progress only. Final approval stays "Not started".
+    return {
+      checklist: {
+        solicitation_reviewed:        'Reviewed',
+        deadlines_reviewed:           'In progress',
+        qa_amendments_reviewed:       'Not started',
+        compliance_matrix_reviewed:   'In progress',
+        required_forms_identified:    'Not started',
+        proposal_sections_mapped:     'Not started',
+        pricing_worksheet_reviewed:   'Not started',
+        vendor_quotes_reviewed:       'Not started',
+        past_performance_selected:    'In progress',
+        capability_statement_reviewed:'Not started',
+        prime_teaming_reviewed:       'Not started',
+        risk_notes_reviewed:          'Not started',
+        final_human_approval_recorded:'Not started'
+      },
+      notes: {
+        solicitation_reviewed:      'SAMPLE — Demo only: replace with real review notes.',
+        compliance_matrix_reviewed: 'SAMPLE — Demo only: draft only.'
+      }
+    };
+  }
+  window.gcDemoLoadSample = function(){
+    save(CAPTURE_KEY, buildSampleCaptureBoard());
+    save(SOL_KEY,     buildSampleSolWorkspace());
+    save(VQR_KEY,     buildSampleVendorQuotes());
+    save(PP_KEY,      buildSamplePastPerformance());
+    save(PPF_KEY,     buildSamplePrimePartners());
+    save(CS_KEY,      buildSampleCapabilityStatement());
+    save(SUB_KEY,     buildSampleSubmissionState());
+    save(FLAG_KEY,    { active: true, loadedAt: 'local-only' });
+    setBanner(true);
+    // Re-render every phase surface.
+    if (typeof window.gcCaptureRender    === 'function') try { window.gcCaptureRender();    } catch (e) {}
+    if (typeof window.gcSolRender        === 'function') try { window.gcSolRender();        } catch (e) {}
+    if (typeof window.gcVendorPricingRender === 'function') try { window.gcVendorPricingRender(); } catch (e) {}
+    if (typeof window.gcPePerformanceRender === 'function') try { window.gcPePerformanceRender(); } catch (e) {}
+    if (typeof window.gcSubRender        === 'function') try { window.gcSubRender();        } catch (e) {}
+    if (window.toast) try { window.toast('SAMPLE / DEMO ONLY data loaded. Replace before proposal use. SourceDeck does not submit bids, quotes, or government responses.', 'info'); } catch (e) {}
+  };
+  window.gcDemoClearSample = function(){
+    // Remove the phase-22 workflow store keys + the demo flag.
+    [CAPTURE_KEY, SOL_KEY, VQR_KEY, PP_KEY, PPF_KEY, CS_KEY, SUB_KEY, FLAG_KEY].forEach(function(k){
+      try { localStorage.removeItem(k); } catch (e) {}
+    });
+    setBanner(false);
+    if (typeof window.gcCaptureRender    === 'function') try { window.gcCaptureRender();    } catch (e) {}
+    if (typeof window.gcSolRender        === 'function') try { window.gcSolRender();        } catch (e) {}
+    if (typeof window.gcVendorPricingRender === 'function') try { window.gcVendorPricingRender(); } catch (e) {}
+    if (typeof window.gcPePerformanceRender === 'function') try { window.gcPePerformanceRender(); } catch (e) {}
+    if (typeof window.gcSubRender        === 'function') try { window.gcSubRender();        } catch (e) {}
+    if (window.toast) try { window.toast('Sample demo data cleared. Working with operator-entered data only.', 'ok'); } catch (e) {}
+  };
+  function init(){
+    setBanner(isDemoActive());
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    setTimeout(init, 0);
   }
 })();
 </script>
