@@ -19,7 +19,7 @@ Outreach is **draft-only**. The tool never sends an email and never schedules on
 
 SAM Opportunity Sprint is available to all users.
 
-- Free users can search up to 3 NAICS codes per sprint.
+- Free users can search 1 NAICS code per sprint.
 - Paid users can search all configured / available NAICS codes for broader sprint searches.
 - The plan limit applies to active query execution only. It does not remove, overwrite, or limit saved GovCon Pursuit Profile NAICS preferences.
 - Reports must disclose which configured NAICS were searched and which were withheld by plan limit.
@@ -65,16 +65,16 @@ SAM Opportunity Sprint is accessible to all users. The sprint applies a per-plan
 
 | Plan | Max NAICS per sprint |
 |---|---|
-| free | **3** |
+| free | **1** |
 | paid · pro · team · enterprise | unrestricted |
 
 Rules:
-- **Free plan caps the active query set to the first 3 entries of the operator's configured `target_naics`.** The operator's saved profile is never mutated; the cap applies only to the sprint that is about to run.
+- **Free plan caps the active query set to the first entry of the operator's configured `target_naics`.** The operator's saved profile is never mutated; the cap applies only to the sprint that is about to run.
 - **Paid plans (paid, pro, team, enterprise) run all configured NAICS.**
 - Unknown or missing plan defaults to **free** and a warning is surfaced in `profile_issues`.
 - Every sprint result includes an `entitlement` block on the top-level result and inside `query_metadata.entitlement`, with: `plan`, `is_paid`, `max_naics_codes`, `naics_limit_applied`, `requested_naics_count`, `allowed_naics_count`, `blocked_naics_codes`, and a human-readable `message`.
 - Markdown reports show a **Profile Assumptions — Plan Entitlement** section listing which NAICS were searched and which were withheld by the free-plan limit.
-- CLI summary prints, for free over-limit profiles: `Free plan: searching 3 of N configured NAICS codes. (N-3) withheld by free-plan limit.`
+- CLI summary prints, for free over-limit profiles: `Free plan: searching 1 of N configured NAICS codes. (N-1) withheld by free-plan limit.`
 - For testing without changing your profile, set `SAM_SPRINT_PLAN=paid` (or `free`) in the environment.
 
 **This is entitlement enforcement only — not payment processing.** SourceDeck does not charge, collect billing information, or promise contract awards or revenue.
@@ -93,22 +93,49 @@ If the key is missing, the script exits 0 with status `not_configured` and print
 The Pursuit Profile can be supplied via:
 
 1. `--profile=/path/to/profile.json` flag, or
-2. `reports/govcon-pursuit-profile.json`, or
-3. `govcon-pursuit-profile.json` in the repo root, or
-4. defaults from `services/govcon/govcon-pursuit-profile.js` (preliminary mode).
+2. `SAM_SPRINT_PROFILE_PATH=/path/to/profile.json` env var, or
+3. `reports/govcon-pursuit-profile.json`, or
+4. `govcon-pursuit-profile.json` in the repo root, or
+5. the canonical user-app-data location returned by `getDefaultProfilePath()` (`~/Library/Application Support/SourceDeck/govcon-pursuit-profile.json` on macOS, `%APPDATA%\SourceDeck\` on Windows, `$XDG_DATA_HOME/sourcedeck/` on Linux), or
+6. defaults from `services/govcon/govcon-pursuit-profile.js` (preliminary mode).
+
+The profile store lives in `services/govcon/govcon-pursuit-profile-store.js` and exposes `loadGovconPursuitProfile`, `saveGovconPursuitProfile`, `exportProfileSnapshot`. It is **JSON-only**, has no database dependency, strips secret-shaped fields before save, refuses to write any payload that still contains a `SAM_GOV_API_KEY`-shaped value, treats missing files as defaults, and treats corrupt JSON as defaults plus a warning (never crashes the caller).
+
+## Profile readiness and scoring confidence
+
+Every sprint run exposes a `profile_completeness` block and a top-level `scoring_confidence` field:
+
+| readiness_label | scoring_confidence | meaning |
+|---|---|---|
+| `incomplete` | `preliminary` | Identity / goal / NAICS / lanes / geography are missing. Rankings are decision support but not personalized. |
+| `usable` | `profile_driven` | Three of the five hard fields are populated. Rankings personalize but key dimensions are still missing. |
+| `strong` | `profile_driven` | Four of the five hard fields are populated. Rankings are reliable; one dimension still needs attention. |
+| `ready` | `profile_driven` | All hard fields plus most optional fields are populated. Full profile-driven scoring. |
+
+The CLI prints the readiness label, percent, and missing-field count on every run (including the safe `not_configured` exit). The Markdown report includes a **Profile Completeness** section that lists every missing field by `key` and `label`.
+
+`scoring_confidence: 'preliminary'` is the operator's signal to set up the profile before acting on rankings.
 
 ## Running
 
 ```bash
-# Default — 30-day window, defaults profile
+# Default — 30-day window, default profile + default profile path
 node scripts/sam-opportunity-sprint.js
 
-# Custom profile
+# Custom profile path via flag
 node scripts/sam-opportunity-sprint.js --profile=./my-profile.json
 
-# npm script (if added)
+# Custom profile path via env
+SAM_SPRINT_PROFILE_PATH=./my-profile.json node scripts/sam-opportunity-sprint.js
+
+# Override plan for testing without changing the saved profile
+SAM_SPRINT_PLAN=paid node scripts/sam-opportunity-sprint.js
+
+# npm script
 npm run sam:sprint
 ```
+
+> Reports are only generated when `SAM_GOV_API_KEY` is configured. The `not_configured` exit still prints the plan + readiness summary so the operator can verify their profile / plan choice without spending an API call.
 
 ## Output discipline
 

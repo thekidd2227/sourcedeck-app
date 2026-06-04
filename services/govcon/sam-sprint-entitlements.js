@@ -20,7 +20,7 @@
 // unrestricted by design — the goal is to keep paid users out of the
 // way of their own query, not to police them.
 const PLAN_LIMITS = Object.freeze({
-  free:        { is_paid: false, max_naics_codes: 3 },
+  free:        { is_paid: false, max_naics_codes: 1 },
   paid:        { is_paid: true,  max_naics_codes: Infinity },
   pro:         { is_paid: true,  max_naics_codes: Infinity },
   team:        { is_paid: true,  max_naics_codes: Infinity },
@@ -110,7 +110,7 @@ function applyNaicsLimit(profile, entitlement) {
 
 // Human-readable description suitable for CLI summaries, markdown
 // report assumptions, and UI captions. Always honest about the limit:
-// free users are told "searching 3 of X" not "we filtered some out for
+// free users are told "searching 1 of X" not "we filtered some out for
 // you".
 function describeNaicsLimit(entitlement, requestedCount, allowedCount) {
   const req = Number(requestedCount) || 0;

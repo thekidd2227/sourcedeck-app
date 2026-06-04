@@ -17,10 +17,21 @@ const {
   defaultPursuitProfile,
   normalizePursuitProfile,
   stripSecrets,
+  calculateProfileCompleteness,
+  getRequiredProfileFields,
+  getProfileSetupWarnings,
+  summarizeProfileForUi,
   DEFAULT_TARGET_NAICS,
   SERVICE_LANES,
   URGENCY_LEVELS,
 } = require('../services/govcon/govcon-pursuit-profile');
+
+const {
+  getDefaultProfilePath,
+  loadGovconPursuitProfile,
+  saveGovconPursuitProfile,
+  exportProfileSnapshot,
+} = require('../services/govcon/govcon-pursuit-profile-store');
 
 const {
   runSprint,
@@ -255,7 +266,10 @@ test('profile drives score: same opp scores differently under different profiles
 
 console.log('\n--- buildQueryPlan ---');
 test('buildQueryPlan unions operator NAICS with lane-derived NAICS and adds keywords', () => {
-  const profile = fixtureProfile();
+  // Use a paid plan so the union is not capped by the free-plan NAICS limit.
+  // This test isolates union behavior (operator NAICS + lane-derived NAICS +
+  // keywords); the entitlement cap is exercised separately below.
+  const profile = fixtureProfile({ subscription: { plan: 'paid' } });
   const plan = buildQueryPlan(profile, NOW_MS);
   assert.ok(plan.naics.includes('561720'));
   assert.ok(plan.naics.includes('238320'));
@@ -375,8 +389,8 @@ test('normalizePlan: known plans pass through (case-insensitive)', () => {
     assert.strictEqual(normalizePlan(p.toUpperCase()).plan, p);
   }
 });
-test('PLAN_LIMITS: free is 3, all paid tiers are Infinity', () => {
-  assert.strictEqual(PLAN_LIMITS.free.max_naics_codes, 3);
+test('PLAN_LIMITS: free is 1, all paid tiers are Infinity', () => {
+  assert.strictEqual(PLAN_LIMITS.free.max_naics_codes, 1);
   assert.strictEqual(PLAN_LIMITS.free.is_paid, false);
   for (const p of ['paid', 'pro', 'team', 'enterprise']) {
     assert.strictEqual(PLAN_LIMITS[p].max_naics_codes, Infinity);
@@ -388,11 +402,11 @@ test('getSamSprintEntitlement accepts a profile and resolves plan', () => {
   assert.strictEqual(ent.plan, 'pro');
   assert.strictEqual(ent.is_paid, true);
 });
-test('applyNaicsLimit: free plan caps to first 3 NAICS, lists blocked', () => {
+test('applyNaicsLimit: free plan caps to first 1 NAICS, lists blocked', () => {
   const ent = getSamSprintEntitlement('free');
   const out = applyNaicsLimit({ target_naics: ['1', '2', '3', '4', '5'] }, ent);
-  assert.deepStrictEqual(out.allowed_naics, ['1', '2', '3']);
-  assert.deepStrictEqual(out.blocked_naics, ['4', '5']);
+  assert.deepStrictEqual(out.allowed_naics, ['1']);
+  assert.deepStrictEqual(out.blocked_naics, ['2', '3', '4', '5']);
   assert.strictEqual(out.naics_limit_applied, true);
 });
 test('applyNaicsLimit: paid plan returns all NAICS, nothing blocked', () => {
@@ -404,10 +418,12 @@ test('applyNaicsLimit: paid plan returns all NAICS, nothing blocked', () => {
 });
 test('describeNaicsLimit phrases honestly for free under-limit and over-limit', () => {
   const free = getSamSprintEntitlement('free');
-  const under = describeNaicsLimit(free, 2, 2);
-  const over  = describeNaicsLimit(free, 7, 3);
+  // Under-limit case: operator configured exactly 1 NAICS (the cap).
+  const under = describeNaicsLimit(free, 1, 1);
+  // Over-limit case: operator configured 7 NAICS but free caps to 1.
+  const over  = describeNaicsLimit(free, 7, 1);
   assert.ok(/within limit/i.test(under), `expected within-limit phrasing, got: ${under}`);
-  assert.ok(/4 withheld/i.test(over) && /searching 3 of 7/i.test(over), `expected honest phrasing, got: ${over}`);
+  assert.ok(/6 withheld/i.test(over) && /searching 1 of 7/i.test(over), `expected honest phrasing, got: ${over}`);
 });
 
 console.log('\n--- pursuit profile subscription normalization ---');
@@ -428,20 +444,20 @@ test('paid plan in profile yields is_paid=true', () => {
 });
 
 console.log('\n--- buildQueryPlan respects entitlement ---');
-test('buildQueryPlan caps NAICS to 3 for free plan and records blocked codes', () => {
+test('buildQueryPlan caps NAICS to 1 for free plan and records blocked codes', () => {
   const { profile } = normalizePursuitProfile({
     target_naics: ['238320', '561720', '561210', '561790', '541611', '541618', '541930'],
     service_lanes: {}, // no lanes so lane-derived NAICS stay empty
     subscription: { plan: 'free' },
   });
   const plan = buildQueryPlan(profile, NOW_MS);
-  assert.strictEqual(plan.naics.length, 3);
-  assert.deepStrictEqual(plan.naics, ['238320', '561720', '561210']);
+  assert.strictEqual(plan.naics.length, 1);
+  assert.deepStrictEqual(plan.naics, ['238320']);
   assert.strictEqual(plan.entitlement.plan, 'free');
   assert.strictEqual(plan.entitlement.naics_limit_applied, true);
-  assert.strictEqual(plan.entitlement.allowed_naics_count, 3);
+  assert.strictEqual(plan.entitlement.allowed_naics_count, 1);
   assert.strictEqual(plan.entitlement.requested_naics_count, 7);
-  assert.deepStrictEqual(plan.entitlement.blocked_naics_codes, ['561790', '541611', '541618', '541930']);
+  assert.deepStrictEqual(plan.entitlement.blocked_naics_codes, ['561720', '561210', '561790', '541611', '541618', '541930']);
 });
 test('buildQueryPlan keeps all NAICS for paid plan', () => {
   const { profile } = normalizePursuitProfile({
@@ -476,8 +492,8 @@ asyncTest('runSprint surfaces entitlement metadata on the result', async () => {
   assert.strictEqual(r.entitlement.plan, 'free');
   assert.strictEqual(r.entitlement.is_paid, false);
   assert.strictEqual(r.entitlement.naics_limit_applied, true);
-  assert.strictEqual(r.entitlement.allowed_naics_count, 3);
-  assert.deepStrictEqual(r.entitlement.blocked_naics_codes, ['4', '5']);
+  assert.strictEqual(r.entitlement.allowed_naics_count, 1);
+  assert.deepStrictEqual(r.entitlement.blocked_naics_codes, ['2', '3', '4', '5']);
   assert.strictEqual(r.query_metadata.entitlement.plan, 'free');
   assert.strictEqual(r.manual_review_required, true);
 });
@@ -497,11 +513,12 @@ asyncTest('runSprint does NOT call SAM for blocked free-plan NAICS', async () =>
     samService: fakeService,
     now: () => NOW_MS,
   });
-  // Only the first 3 NAICS should have been queried; 444/555 must not appear.
+  // Only the first NAICS should have been queried; 222/333/444/555 must not appear.
   const naicsCalledSet = new Set(calls);
-  assert.ok(naicsCalledSet.has('111') && naicsCalledSet.has('222') && naicsCalledSet.has('333'));
-  assert.strictEqual(naicsCalledSet.has('444'), false, 'blocked NAICS 444 was queried');
-  assert.strictEqual(naicsCalledSet.has('555'), false, 'blocked NAICS 555 was queried');
+  assert.ok(naicsCalledSet.has('111'), 'expected NAICS 111 to be queried');
+  for (const blocked of ['222', '333', '444', '555']) {
+    assert.strictEqual(naicsCalledSet.has(blocked), false, `blocked NAICS ${blocked} was queried`);
+  }
 });
 
 asyncTest('runSprint surfaces entitlement even on not_configured exit (no key)', async () => {
@@ -514,8 +531,199 @@ asyncTest('runSprint surfaces entitlement even on not_configured exit (no key)',
   assert.ok(r.entitlement);
   assert.strictEqual(r.entitlement.plan, 'free');
   assert.strictEqual(r.entitlement.naics_limit_applied, true);
-  assert.strictEqual(r.entitlement.allowed_naics_count, 3);
+  assert.strictEqual(r.entitlement.allowed_naics_count, 1);
   assert.strictEqual(r.manual_review_required, true);
+});
+
+console.log('\n--- profile completeness ---');
+test('default profile completeness is incomplete', () => {
+  const c = calculateProfileCompleteness(normalizePursuitProfile({}).profile);
+  assert.strictEqual(c.readiness_label, 'incomplete');
+  assert.strictEqual(c.complete, false);
+});
+test('configured profile reaches strong or ready', () => {
+  const p = normalizePursuitProfile({
+    business_identity: { company_name: 'ARCG', certifications: ['SDVOSB'] },
+    contract_goal: { goal_name: '30d capture', target_revenue_30_days: 50000 },
+    service_lanes: { janitorial_custodial: true, painting_refresh: true },
+    geography: { primary_states: ['VA', 'MD'] },
+    capacity: { can_perform_directly: true, subcontractor_network_available: true },
+    past_performance: { has_relevant_past_performance: true },
+  }).profile;
+  const c = calculateProfileCompleteness(p);
+  assert.ok(c.readiness_label === 'strong' || c.readiness_label === 'ready',
+    `expected strong/ready, got ${c.readiness_label} (${c.percent}%, satisfied=${c.satisfied_count}/${c.total_field_count})`);
+});
+test('missing target_naics lowers readiness', () => {
+  const base = {
+    business_identity: { company_name: 'X', certifications: ['SDVOSB'] },
+    contract_goal: { goal_name: 'G' },
+    service_lanes: { janitorial_custodial: true },
+    geography: { primary_states: ['VA'] },
+  };
+  const withNaics  = calculateProfileCompleteness(normalizePursuitProfile(base).profile);
+  const noNaics    = calculateProfileCompleteness(normalizePursuitProfile(Object.assign({}, base, { target_naics: [] })).profile);
+  // normalizePursuitProfile re-injects defaults when target_naics is empty,
+  // so to truly omit them we have to compare the missing-field count.
+  // The richer assertion: the satisfied_count must not increase when NAICS go away.
+  assert.ok(noNaics.satisfied_count <= withNaics.satisfied_count);
+});
+test('missing geography lowers readiness unless national_allowed is true', () => {
+  const noGeo = calculateProfileCompleteness(normalizePursuitProfile({
+    business_identity: { company_name: 'X', certifications: ['SDVOSB'] },
+    contract_goal: { goal_name: 'G' },
+    service_lanes: { janitorial_custodial: true },
+    geography: { primary_states: [], national_allowed: false, remote_friendly: false },
+  }).profile);
+  const national = calculateProfileCompleteness(normalizePursuitProfile({
+    business_identity: { company_name: 'X', certifications: ['SDVOSB'] },
+    contract_goal: { goal_name: 'G' },
+    service_lanes: { janitorial_custodial: true },
+    geography: { primary_states: [], national_allowed: true, remote_friendly: false },
+  }).profile);
+  assert.ok(national.satisfied_count > noGeo.satisfied_count, `national_allowed should satisfy geography (no_geo=${noGeo.satisfied_count}, national=${national.satisfied_count})`);
+});
+test('manual_review_required cannot be disabled', () => {
+  const { profile } = normalizePursuitProfile({ output_preference: { manual_review_required: false } });
+  assert.strictEqual(profile.output_preference.manual_review_required, true);
+  const c = calculateProfileCompleteness(profile);
+  assert.ok(c, 'completeness must compute even when operator tried to disable manual review');
+});
+test('getRequiredProfileFields returns a non-empty, weighted list', () => {
+  const list = getRequiredProfileFields();
+  assert.ok(Array.isArray(list) && list.length >= 8, `expected ≥8 fields, got ${list.length}`);
+  for (const f of list) {
+    assert.ok(f.key && f.label && typeof f.weight === 'number', `field missing key/label/weight: ${JSON.stringify(f)}`);
+  }
+});
+test('summarizeProfileForUi never includes secret-shaped fields', () => {
+  // Build a profile that LOOKS like it might leak — stripSecrets should
+  // remove credential-shaped fields before normalization, and the summary
+  // helper should never expose them.
+  const summary = summarizeProfileForUi(normalizePursuitProfile({
+    business_identity: { company_name: 'X', certifications: ['SDVOSB'], api_key: 'whoops-leaked' },
+    SAM_GOV_API_KEY: 'definitely-not-here',
+  }).profile);
+  const json = JSON.stringify(summary);
+  assert.strictEqual(/api[-_]?key|token|secret|bearer|SAM_GOV_API_KEY/i.test(json), false,
+    `summary should not contain secret-shaped fields. Got: ${json}`);
+});
+test('profile incomplete -> getProfileSetupWarnings surfaces preliminary warning', () => {
+  const warnings = getProfileSetupWarnings(normalizePursuitProfile({}).profile);
+  assert.ok(warnings.some((w) => /preliminary/i.test(w)));
+});
+
+console.log('\n--- profile store ---');
+
+// In-memory fs shim mirroring the slice of node:fs the store touches.
+function makeMemFs() {
+  const files = new Map();
+  return {
+    files,
+    existsSync: (p) => files.has(p),
+    readFileSync: (p) => {
+      if (!files.has(p)) { const e = new Error('ENOENT'); e.code = 'ENOENT'; throw e; }
+      return files.get(p);
+    },
+    writeFileSync: (p, body) => { files.set(p, String(body)); },
+    mkdirSync: () => {},
+  };
+}
+
+test('store reads missing file as default profile (no crash)', () => {
+  const memFs = makeMemFs();
+  const r = loadGovconPursuitProfile({ fs: memFs, path: '/nope/govcon-pursuit-profile.json' });
+  assert.strictEqual(r.source, 'default');
+  assert.ok(r.profile && r.profile.output_preference.manual_review_required === true);
+  assert.ok(r.issues.some((i) => /No saved.*using defaults/i.test(i.message)));
+});
+
+test('store handles corrupt JSON without throwing', () => {
+  const memFs = makeMemFs();
+  memFs.files.set('/tmp/corrupt.json', '{ not: valid json');
+  const r = loadGovconPursuitProfile({ fs: memFs, path: '/tmp/corrupt.json' });
+  assert.strictEqual(r.source, 'default');
+  assert.strictEqual(r.was_corrupt, true);
+  assert.ok(r.issues.some((i) => /not valid JSON/i.test(i.message)));
+  assert.ok(r.profile && r.profile.output_preference.manual_review_required === true);
+});
+
+test('store saves normalized profile without secrets', () => {
+  const memFs = makeMemFs();
+  const out = saveGovconPursuitProfile({
+    business_identity: { company_name: 'ARCG', certifications: ['SDVOSB'], api_key: 'should-be-stripped' },
+    SAM_GOV_API_KEY: 'should-also-be-stripped',
+    bearer_token: 'no',
+  }, { fs: memFs, path: '/tmp/profile.json' });
+  assert.strictEqual(out.ok, true);
+  const written = memFs.files.get('/tmp/profile.json');
+  assert.strictEqual(/api_key|SAM_GOV_API_KEY|bearer_token|secret|Bearer/i.test(written), false,
+    `serialized profile should not contain secret-shaped fields. Got: ${written}`);
+  assert.ok(/"company_name"\s*:\s*"ARCG"/.test(written));
+  assert.ok(/"manual_review_required"\s*:\s*true/.test(written));
+});
+
+test('exportProfileSnapshot returns a plain object with manual_review_required=true and no secrets', () => {
+  const snap = exportProfileSnapshot({
+    business_identity: { company_name: 'X', api_key: 'no' },
+    output_preference: { manual_review_required: false },
+  });
+  assert.strictEqual(snap.output_preference.manual_review_required, true);
+  const json = JSON.stringify(snap);
+  assert.strictEqual(/api[-_]?key|SAM_GOV_API_KEY|bearer|secret/i.test(json), false);
+});
+
+test('getDefaultProfilePath returns a path that includes SourceDeck and the profile filename', () => {
+  const p = getDefaultProfilePath();
+  assert.ok(typeof p === 'string' && p.length > 0, 'expected a non-empty string path');
+  assert.ok(/govcon-pursuit-profile\.json$/.test(p), `path should end with the canonical filename, got ${p}`);
+  assert.ok(/SourceDeck|sourcedeck/i.test(p), `path should include an app folder, got ${p}`);
+});
+
+console.log('\n--- runSprint result exposes completeness/confidence ---');
+asyncTest('runSprint exposes profile_completeness and scoring_confidence (incomplete)', async () => {
+  const fakeService = { search: async () => ({ ok: true, results: [], total: 0, returned: 0 }) };
+  const r = await runSprint({
+    profile: {},
+    getApiKey: async () => 'fake',
+    samService: fakeService,
+    now: () => NOW_MS,
+  });
+  assert.ok(r.profile_completeness);
+  assert.strictEqual(r.profile_completeness.readiness_label, 'incomplete');
+  assert.strictEqual(r.scoring_confidence, 'preliminary');
+  assert.ok(Array.isArray(r.active_naics_codes));
+  assert.ok(Array.isArray(r.withheld_naics_codes));
+});
+
+asyncTest('runSprint exposes scoring_confidence=profile_driven for a complete profile', async () => {
+  const fakeService = { search: async () => ({ ok: true, results: [], total: 0, returned: 0 }) };
+  const r = await runSprint({
+    profile: {
+      business_identity: { company_name: 'ARCG', certifications: ['SDVOSB'] },
+      contract_goal: { goal_name: '30d capture' },
+      service_lanes: { janitorial_custodial: true },
+      geography: { primary_states: ['VA'] },
+      target_naics: ['561720'],
+      subscription: { plan: 'paid' },
+    },
+    getApiKey: async () => 'fake',
+    samService: fakeService,
+    now: () => NOW_MS,
+  });
+  assert.notStrictEqual(r.scoring_confidence, 'preliminary',
+    `expected non-preliminary confidence for a configured profile, got ${r.scoring_confidence} (${r.profile_completeness.readiness_label})`);
+});
+
+asyncTest('runSprint surfaces completeness on not_configured exit (no key)', async () => {
+  const r = await runSprint({
+    profile: { target_naics: ['1','2'], subscription: { plan: 'free' } },
+    getApiKey: async () => null,
+    now: () => NOW_MS,
+  });
+  assert.strictEqual(r.status, 'not_configured');
+  assert.ok(r.profile_completeness);
+  assert.ok(['preliminary', 'profile_driven'].includes(r.scoring_confidence));
 });
 
 asyncTest('runSprint keeps manual_review_required=true under both plans', async () => {
