@@ -744,7 +744,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div class="logo-mark"><img src="sourcedeck-logo.png" alt="SourceDeck" onerror="this.parentElement.textContent='S'"></div>
     <div>
       <div class="brand-name" id="brand-name-el">SourceDeck</div>
-      <div class="brand-ver">Intelligence Platform</div>
+      <div class="brand-ver" id="brand-ver-el">GovCon Capture OS</div>
     </div>
   </div>
   <div class="topbar-sep"></div>
@@ -2035,6 +2035,26 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div class="pane-body">
         <!-- First-time GovCon setup banner (state-only; no certification claims) -->
         <div id="govcon-setup-banner" hidden></div>
+        <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 23B — GovCon Mode Indicator
+             A visible indicator that this is the GovCon capture workflow.
+             Does not hide or reorder other tabs (those remain accessible
+             in the sidebar) — only frames the GovCon tab as the
+             buyer-facing demo surface. No safety-posture change. No
+             auto-send, no auto-submit, no portal upload, no email
+             transmission. SourceDeck does not submit bids, quotes, or
+             government responses.
+             ═══════════════════════════════════════════════════════════════ -->
+        <section id="gc-mode-indicator" class="gc-mode-indicator" data-section="govcon-mode-indicator" style="margin-bottom:12px;border:1px solid rgba(176,138,60,0.30);border-radius:var(--r2);padding:10px 13px;background:linear-gradient(145deg,rgba(176,138,60,0.06),rgba(23,32,51,0.05))">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <div>
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text);line-height:1.15">GovCon Mode — Capture OS workflow</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub);margin-top:2px">Active surface · Capture → Solicitation → Vendor + Pricing → Proof + Teaming → Submission readiness</div>
+            </div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:3px 7px;font-weight:700">GovCon</div>
+          </div>
+          <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:6px">Other business tools (Lead Generator, Email Tracker, Ad Engine, Socials, Clinical/EHR, etc.) remain available in the sidebar but this demo focuses on the GovCon capture workflow. SourceDeck does not submit bids, quotes, or government responses; no outreach is sent automatically; human approval is required for every action.</div>
+        </section>
         <!-- Outreach OS journey + safety microcopy (coherence helper) -->
         <div class="gc-os-helper" style="margin-bottom:14px;padding:10px 13px;border:1px solid var(--border);border-radius:var(--r2);background:var(--panel3,#0E2040);font-size:11px;line-height:1.55;color:var(--sub)">
           <div style="font-weight:700;color:var(--text);margin-bottom:3px">GovCon Outreach OS</div>
