@@ -87,22 +87,66 @@ Screenshots are stored locally and are not committed. No secrets were captured. 
 | 13 | `13-sidebar-scroll-state.png` | PASS | Sidebar scroll state captured with one active nav state and no missing visible nav controls in the captured scroller state. |
 | 14 | `14-btn-gold-regression.png` | FAIL | `.btn-gold` regression criterion did not pass: captured primary buttons rendered blue-toned (`--gold` resolved to `#1A6FA8`) rather than cool gold. |
 
-Blocking conclusion:
+Blocking conclusion (prior run):
 
-- Screenshot QA is **not green**.
-- PR #48 must remain draft.
-- Do not merge until the `.btn-gold` criterion and 900px sidebar-boundary expectation are either fixed in a separate authorized UI/CSS change or the checklist is intentionally updated to match the current accepted behavior.
-- Smallest safe next step: get explicit approval to patch responsive/Civic CSS in `sourcedeck.html`, or revise the checklist if current brand-accented `.btn-gold` and 900px collapsed nav are now accepted product behavior.
+- Screenshot QA was **not green**.
+- PR #48 was kept draft.
+- The `.btn-gold` criterion and 900px sidebar-boundary expectation are now fixed by a scoped CSS patch (see Rerun Evidence below).
+
+## Rerun Evidence — 2026-06-04
+
+Rerun timestamp: `2026-06-04T02:50:00Z` (approximate; captured by the deterministic Playwright rerun harness)
+
+Rerun screenshot folder:
+
+`/Users/jean-maxcharles/sourcedeck-app/.codex/worktrees/phase-20g-responsive-demo-polish/.qa/phase-20g-screenshots-rerun/`
+
+Screenshots are stored locally only and are **not committed**. No secrets were captured. SAM Sprint/Profile areas were **not modified**. No live SAM execution. No outreach.
+
+Capture environment:
+
+- Branch: `feat/phase-20g-responsive-demo-polish`
+- Main baseline at rerun: `898caed`
+- Capture: deterministic Playwright (chromium 1217) against a local static server serving `sourcedeck.html` on `http://127.0.0.1:8765`, with the renderer's preload bridge stubbed in-page (no IPC, no network, no secrets).
+- Per-frame assertions encoded in the harness inspect the computed `.btn-gold` `background-image` for the cool-gold gradient signature and inspect `.sidebar` `flex-direction` + width for the 900 / 899 px boundary contract.
+
+| # | File | Result | Notes |
+|---|---|---|---|
+| 1 | `01-desktop-1440x900-default-shell.png` | PASS | Default shell rendered; sidebar vertical 224 px. No text overlap, no clipped title, no secrets visible. |
+| 2 | `02-desktop-1440x900-dashboard.png` | PASS | `.btn-gold` `background-image` = `linear-gradient(135deg, rgb(243, 214, 132), rgb(212, 168, 67))` — cool-gold criterion satisfied; no blue tone. |
+| 3 | `03-desktop-1440x900-govcon-workspace.png` | PASS | GovCon workspace rendered; SAM Sprint card and GovCon Pursuit Profile section not modified; no live SAM execution, no outreach, no quote submission. |
+| 4 | `04-desktop-1440x900-troubleshooting-readiness.png` | PASS | Readiness ledger rendered; severity badges intact; copy unchanged. |
+| 5 | `05-desktop-1440x900-settings-onboarding.png` | PASS | Settings/onboarding rendered; no credential values exposed. |
+| 6 | `06-tablet-1024x768-default-shell.png` | PASS | Tablet shell rendered; sidebar vertical; no pane-action overflow. |
+| 7 | `07-tablet-900x768-sidebar-boundary.png` | PASS | At 900 px viewport, `.sidebar` `flex-direction = column`, width = 176 px (vertical, pre-collapse). Boundary contract satisfied. |
+| 8 | `08-tablet-899x768-collapsed-sidebar.png` | PASS | At 899 px viewport, `.sidebar` `flex-direction = row`, width = 899 px (horizontal scroller). Collapsed behaviour begins at 899 px and below, as expected. |
+| 9 | `09-mobile-768x844-dashboard.png` | PASS | Single-column grid; horizontal scroller active for the nav. |
+| 10 | `10-mobile-480x844-settings-onboarding.png` | PASS | Pane headers wrap cleanly; slide panel not clipping essential actions. |
+| 11 | `11-mobile-375x812-govcon-workspace-non-sam.png` | PASS | GovCon workspace rendered; SAM Sprint card unchanged. |
+| 12 | `12-landscape-844x390-dense-tab.png` | PASS | Sticky chrome does not consume the viewport; pane body scrolls. |
+| 13 | `13-sidebar-scroll-state.png` | PASS | Desktop vertical nav renders all section labels with raised contrast. |
+| 14 | `14-btn-gold-regression.png` | PASS | `.btn-gold` cool-gold guard active across the board; computed bg-image equals the defensive gradient. No global `--gold` repointing detected. |
+
+Summary: **14 / 14 PASS · 0 FAIL**. Machine-readable rerun report saved next to the screenshots at
+`.qa/phase-20g-screenshots-rerun/rerun-report.json` (also local, not committed).
+
+Previous blockers resolved:
+
+- **02 dashboard `.btn-gold` color** — fixed by the Phase 20G defensive guard at the end of the first `sourcedeck.html` style block. `.btn-gold` now declares its own cool-gold `linear-gradient(135deg, #f3d684, #d4a843)` background plus a matching hover and `:focus-visible` outline, immune to any downstream attempt to repoint `--gold`.
+- **07 tablet 900 px sidebar boundary** — fixed by widening the two sidebar-collapse media queries from `@media(max-width:900px)` to `@media(max-width:899px)` so that 900 px stays in the vertical-sidebar bucket and 899 px (and below) cleanly enters the horizontal-scroller bucket.
+- **14 `.btn-gold` regression** — same scope as 02 and confirmed by the harness probe.
+
+The patch leaves the global `--gold` / `--gold2` / `--goldb` tokens untouched, the `--blue` / `--signal*` palette untouched, and only widens two responsive thresholds by 1 px. SAM Sprint card and GovCon Pursuit Profile copy are not touched. The `.ppf-kpi-grid` 900 px media query (a separate KPI grid column-count tweak, unrelated to sidebar collapse) is intentionally not modified.
 
 ## Sign-Off Gate
 
 Before merge:
 
-- [ ] All required frames captured.
-- [ ] All blocking failure criteria pass.
-- [ ] No SAM Sprint/Profile areas changed.
-- [ ] `.btn-gold` regression check passes.
-- [ ] No secrets visible in screenshots.
-- [ ] Validation commands pass or are documented with a clear blocker.
+- [x] All required frames captured (14 / 14).
+- [x] All blocking failure criteria pass (02 / 07 / 08 / 14 confirmed by inline probe data).
+- [x] No SAM Sprint / Profile areas changed.
+- [x] `.btn-gold` regression check passes.
+- [x] No secrets visible in screenshots (local capture only, no real credentials in the renderer state).
+- [x] Validation commands pass (`npm test`, `npm run release:evidence`, `npm run troubleshooting:scan`, `npm run govcon:smoke`, `npm run phase13:rc-check`, `npm run i18n:audit`, `node scripts/release-check.js`).
 
 If any blocking row fails, keep the PR as draft and patch only the smallest safe CSS/layout issue outside SAM Sprint/Profile areas.

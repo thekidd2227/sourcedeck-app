@@ -67,18 +67,34 @@ Operator screenshot capture is still required before promoting the draft PR. Thi
 
 ## Risk assessment
 
-Risk is low because this phase does not edit runtime code or renderer markup. The primary remaining risk is visual: an operator still needs to capture desktop, tablet, mobile, sidebar, dashboard, GovCon, troubleshooting/release evidence, onboarding/settings, and `.btn-gold` regression frames before merge.
+Risk is low because this phase does not edit runtime JavaScript or renderer markup. After the initial 14-frame screenshot QA flagged a `.btn-gold` color regression and the 900 px sidebar boundary, a minimal scoped CSS patch was applied (see below) and the rerun passed 14 / 14.
+
+## Screenshot QA blocker fix (2026-06-04)
+
+The initial screenshot QA recorded three blocking frames:
+
+- `02-desktop-1440x900-dashboard.png` — `.btn-gold` cool-gold criterion did not hold.
+- `07-tablet-900x768-sidebar-boundary.png` — 900 px rendered collapsed horizontal nav while the checklist expected pre-collapse / sidebar-boundary behaviour.
+- `14-btn-gold-regression.png` — `.btn-gold` rendered blue-toned; `--gold` was reported as resolving to `#1A6FA8`.
+
+The CSS patch applied to `sourcedeck.html`:
+
+1. **`.btn-gold` defensive cool-gold lock.** A scoped guard rule appended to the end of the first `<style>` block declares `.btn-gold` (rest), `.btn-gold:hover`, and `.btn-gold:focus-visible` with hardcoded gradient values (`linear-gradient(135deg, #f3d684, #d4a843)` and `linear-gradient(135deg, #f5dc94, #dcb255)` for hover) plus `border-color: rgba(243, 214, 132, 0.52)` and `color: #080b10`. The underlying `--gold` / `--gold2` / `--goldb` tokens, the `--blue` / `--signal*` palette, and every other selector are intentionally left untouched. The guard ensures the primary action button stays cool gold even if a downstream stylesheet, inline style, or future scoped rule attempts to repoint `--gold`.
+2. **900 / 899 px sidebar boundary clarification.** The two sidebar-collapse media queries are widened from `@media(max-width:900px)` to `@media(max-width:899px)`. At 900 px the sidebar remains the vertical desktop column (pre-collapse). At 899 px and below the sidebar switches to the horizontal scroller. The unrelated `.ppf-kpi-grid` 900 px column-count tweak is intentionally not modified.
+
+Rerun harness: deterministic Playwright (chromium 1217) against a local static server, with per-frame computed-style assertions for `.btn-gold` background and `.sidebar` `flex-direction`. Result: 14 / 14 PASS. Screenshots stored locally at `.qa/phase-20g-screenshots-rerun/`. Nothing in `.qa/`, `reports/`, or any generated artifact is committed.
 
 ## Safety confirmations
 
 - No product logic changed.
 - No runtime JavaScript changed.
-- No CSS changed.
-- No SAM Sprint files changed.
+- Renderer markup unchanged. Only three minimal CSS changes inside `sourcedeck.html`: one defensive `.btn-gold` guard rule at the end of the first style block, plus two `@media(max-width:900px)` → `@media(max-width:899px)` threshold updates and their adjacent comments.
+- No SAM Sprint files changed. No SAM Sprint card or GovCon Pursuit Profile copy modified.
+- No live SAM execution. No outreach sent. No quote submission.
 - No claims added.
 - No pricing changed.
 - No payment behavior changed.
 - No email behavior changed.
-- No generated reports committed.
-- No `.env` files touched.
+- No generated reports committed. No screenshots committed.
+- No `.env` files touched. No secrets captured.
 - Stashes untouched.

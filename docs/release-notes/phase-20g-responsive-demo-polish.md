@@ -48,6 +48,16 @@ Run before PR handoff:
 - `npm run i18n:audit`
 - `node scripts/release-check.js`
 
+## Screenshot QA blocker fix (2026-06-04)
+
+The 14-frame screenshot QA initially failed on three frames:
+`02-desktop-1440x900-dashboard.png` (cool-gold criterion), `07-tablet-900x768-sidebar-boundary.png` (boundary expected pre-collapse), and `14-btn-gold-regression.png` (`.btn-gold` rendered blue-toned with `--gold` resolving to `#1A6FA8`). A minimal scoped CSS patch in `sourcedeck.html` addresses both blockers:
+
+- Defensive `.btn-gold` cool-gold lock — a scoped guard rule appended to the end of the first `<style>` block declares `.btn-gold`, `.btn-gold:hover`, and `.btn-gold:focus-visible` with hardcoded gradient values (`linear-gradient(135deg, #f3d684, #d4a843)`, hover `linear-gradient(135deg, #f5dc94, #dcb255)`, border `rgba(243, 214, 132, 0.52)`, text `#080b10`). The underlying `--gold` / `--gold2` / `--goldb` tokens and the `--blue` / `--signal*` palette are intentionally not repointed.
+- 900 / 899 px sidebar boundary clarified — both sidebar-collapse media queries widened from `@media(max-width:900px)` to `@media(max-width:899px)` so that 900 px keeps the vertical desktop sidebar (boundary) and 899 px and below cleanly enter the horizontal-scroller bucket. The unrelated `.ppf-kpi-grid` 900 px column-count tweak is intentionally not modified.
+
+Rerun harness: deterministic Playwright (chromium 1217) against a local static server serving `sourcedeck.html`, with per-frame computed-style assertions for `.btn-gold` `background-image` and `.sidebar` `flex-direction`. Result: **14 / 14 PASS**. Screenshots stored locally under `.qa/phase-20g-screenshots-rerun/` and are **not committed**. No secrets captured. SAM Sprint card and GovCon Pursuit Profile copy were not touched. No live SAM execution. No outreach. No generated reports committed.
+
 ## Merge note
 
-Keep the PR draft until screenshot QA is captured and attached. Do not merge over active SAM Sprint/Profile UX work without confirming there is no `sourcedeck.html` collision.
+This PR is now ready: 14-frame screenshot QA rerun is 14 / 14 PASS, all validation gates green, no SAM Sprint files changed, no generated reports or screenshots committed, no stashes touched.
