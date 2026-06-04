@@ -48,15 +48,23 @@ test('Submission Readiness Gate section exists', () => {
 // 2. Submission readiness score exists.
 test('submission readiness score surface exists', () => {
   assert.ok(/id="gc-sub-score"/.test(HTML), 'gc-sub-score surface missing');
-  // Default = "0%"
-  assert.ok(/id="gc-sub-score"[^>]*>0%</.test(HTML), 'default score should render 0%');
+  // Phase 23A polish: default = "—%" (em-dash) until the operator starts the
+  // checklist. The older "0%" baseline read as a failed score on cold open;
+  // the polished default avoids that perception. computeReadiness still
+  // returns the numeric score once any item is touched. Accept either.
+  assert.ok(/id="gc-sub-score"[^>]*>(?:—%|0%)</.test(HTML),
+    'default score should render "—%" (Phase 23A polish) or "0%" (Phase 22F baseline)');
 });
 
 // 3. Readiness status exists.
 test('readiness status surface exists', () => {
   assert.ok(/id="gc-sub-status"/.test(HTML), 'gc-sub-status surface missing');
-  // Default = "Not Ready"
-  assert.ok(/id="gc-sub-status"[^>]*>Not Ready</.test(HTML), 'default readiness status should render Not Ready');
+  // Phase 23A polish: default = "No package started" until any checklist
+  // interaction. Once any item is touched, the renderer transitions through
+  // "Not Ready" / "Needs Review" / "Ready for Human Review" per Phase 22F.
+  // Accept either.
+  assert.ok(/id="gc-sub-status"[^>]*>(?:No package started|Not Ready)</.test(HTML),
+    'default readiness status should render "No package started" (Phase 23A polish) or "Not Ready" (Phase 22F baseline)');
 });
 
 // 4. Required document checklist exists.
