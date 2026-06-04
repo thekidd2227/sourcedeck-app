@@ -71,3 +71,33 @@ Forbidden files were **not** touched: `sourcedeck.html`, `main.js`, `preload.js`
 1. UI surface on GovCon workspace (after PR #43 merges).
 2. Optional unification of sprint draft path with `services/govcon/email-compliance.js` once the Pursuit Profile is plumbed into email-compliance.
 3. Optional persistence layer for the Pursuit Profile (`electron-store` integration); kept out of this PR to avoid touching `main.js` / `services/config.js`.
+
+---
+
+## Phase — SAM Sprint Entitlements
+
+Added Free vs Paid NAICS access enforcement to SAM Opportunity Sprint. **Entitlement enforcement only — no payment processing, no billing IDs, no pricing-page changes.**
+
+### Files
+
+- `services/govcon/sam-sprint-entitlements.js` (new) — `PLAN_LIMITS`, `KNOWN_PLANS`, `normalizePlan`, `getSamSprintEntitlement`, `applyNaicsLimit`, `describeNaicsLimit`.
+- `services/govcon/govcon-pursuit-profile.js` — added `subscription: { plan, is_paid, source }` block to the default profile and normalization via the entitlements module's `normalizePlan`. Falls back to `free` on any error rather than crashing the profile load.
+- `services/govcon/sam-opportunity-sprint.js` — `buildQueryPlan` now applies the NAICS cap via `applyNaicsLimit` and freezes an `entitlement` block on the plan; `runSprint` computes the entitlement preview once and surfaces it on `query_metadata.entitlement` and the top-level `entitlement` field, on BOTH the `ran` and `not_configured` branches.
+- `scripts/sam-opportunity-sprint.js` — accepts optional `SAM_SPRINT_PLAN=free|paid|pro|team|enterprise` env override (never a credential), prints the plan + entitlement summary even on `not_configured` exit, and adds a "Profile Assumptions — Plan Entitlement" section to the markdown report.
+- `test/sam-opportunity-sprint.test.js` — 18 new tests covering normalization, plan limits, NAICS cap behavior, saved-profile preservation, blocked-NAICS query-suppression (the sprint does NOT call SAM for blocked codes), entitlement metadata on results, not-configured passthrough, and manual_review_required preservation across all plans.
+
+### Design discipline
+
+- **The saved `profile.target_naics` is never mutated.** The cap is computed in `buildQueryPlan` and only the active query set is shortened. Re-running with a paid plan immediately exposes all codes.
+- **The cap also covers lane-derived NAICS additions.** If a free user has 2 saved NAICS and enables 4 lanes, the union is still capped at 3.
+- **Honest messaging.** `describeNaicsLimit` always says "searching 3 of N — (N-3) withheld by free-plan limit" rather than silently dropping codes.
+- **Blocked codes do not trigger SAM queries.** Confirmed by the test `runSprint does NOT call SAM for blocked free-plan NAICS`.
+- **No payment plumbing.** No Stripe, no billing IDs, no pricing page updates. The plan name comes from `profile.subscription.plan` (or the `SAM_SPRINT_PLAN` env override) — it does not represent verified payment status.
+
+### Out of scope (intentional)
+
+- No changes to `sourcedeck.html` (Agent 1 branch).
+- No changes to `main.js`, `preload.js`, `api/index.js`, `services/config.js`, `scripts/release-check.js`.
+- No `package.json` script changes, no new dependencies.
+- No payment processing, no billing flows, no pricing page changes.
+- No watsonx / signing / release-evidence / Vercel logic changes.

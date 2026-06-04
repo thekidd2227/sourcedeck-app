@@ -71,3 +71,35 @@ If the key is not configured the script exits 0 with a `not_configured` message 
 - Reports are written to `./reports/` and are intentionally not committed. The operator decides whether to keep them.
 - This release is decision support, not a guaranteed award predictor.
 - The sprint scorer is a fast first-pass keyed off the Pursuit Profile. The deeper `services/govcon/middleman-fit.js` analyzer remains the canonical bid-fit deep dive.
+
+---
+
+## Update — SAM Sprint Entitlements (Free vs Paid NAICS access)
+
+SAM Opportunity Sprint is accessible to all users. A per-plan limit now applies to the number of NAICS codes searched per sprint:
+
+- **Free plan: up to 3 NAICS codes per sprint.**
+- **Paid plans (paid, pro, team, enterprise): all configured/available NAICS codes.**
+
+Rules:
+- The limit affects **query execution**, not saved profile preferences. Your `target_naics` list is preserved exactly as you saved it.
+- Generated reports include an explicit `entitlement` block showing which NAICS were searched and which were withheld by the free-plan limit.
+- CLI prints the entitlement summary on every run (including the safe `not_configured` exit) and never prints secrets.
+- For local testing without changing your profile, export `SAM_SPRINT_PLAN=paid` or `SAM_SPRINT_PLAN=free` in your shell.
+- SourceDeck does not process payments and does not promise contract awards, revenue, or bid success.
+- Outreach remains **manual-only**. No emails are sent automatically. Human approval remains required.
+
+### Changed files
+
+- `services/govcon/sam-sprint-entitlements.js` (new)
+- `services/govcon/govcon-pursuit-profile.js` (adds `subscription` block + normalization)
+- `services/govcon/sam-opportunity-sprint.js` (caps active NAICS query set, surfaces entitlement metadata)
+- `scripts/sam-opportunity-sprint.js` (accepts `SAM_SPRINT_PLAN` env override, prints entitlement summary, adds plan section to markdown report)
+- `test/sam-opportunity-sprint.test.js` (+18 tests)
+- `docs/features/sam-opportunity-sprint.md`, `docs/audits/sam-opportunity-sprint-implementation-audit.md`, this release note.
+
+### Not changed
+
+- `sourcedeck.html` (Agent 1 branch — no UI changes in this PR)
+- `package.json` (no new scripts, no new dependencies)
+- Pricing page, payment processing, watsonx, signing, release-evidence, Vercel logic
