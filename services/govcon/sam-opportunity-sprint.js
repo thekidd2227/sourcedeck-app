@@ -27,6 +27,11 @@ const {
   LANE_TO_KEYWORDS,
   SPRINT_WINDOWS,
 } = require('./govcon-pursuit-profile');
+const {
+  getSamSprintEntitlement,
+  applyNaicsLimit,
+  describeNaicsLimit,
+} = require('./sam-sprint-entitlements');
 
 const SCORING_MODEL_VERSION = '1.0.0-sprint';
 
@@ -56,7 +61,8 @@ function bidNoBidRecommendation(score, riskFlags) {
 // Query plan generation — derived from the pursuit profile.
 // -----------------------------------------------------------------------------
 
-function buildQueryPlan(profile, nowMs) {
+function buildQueryPlan(profile, nowMs, options) {
+  const opts = options || {};
   const window = Number(profile.output_preference.sprint_window_days);
   const rdlfrom = new Date(nowMs);
   const rdlto = new Date(nowMs + window * 86400000);
@@ -65,9 +71,28 @@ function buildQueryPlan(profile, nowMs) {
     .filter(([, on]) => on === true)
     .map(([lane]) => lane);
 
-  const naicsSet = new Set(profile.target_naics || []);
+  // Resolve entitlement. Free plans cap the active NAICS query set; the
+  // saved target_naics on the profile is never mutated.
+  const entitlement = opts.entitlement || getSamSprintEntitlement(profile);
+  const naicsLimit = applyNaicsLimit(profile, entitlement);
+
+  // Start from the operator's ALLOWED NAICS (after the plan cap), then
+  // union in lane-derived NAICS hints. Lane-derived hints are also
+  // subject to the cap so a free user with 3 NAICS + 4 lanes does not
+  // sneak past the limit via lane expansion.
+  const naicsSet = new Set(naicsLimit.allowed_naics);
   for (const lane of activeLanes) {
     for (const code of (LANE_TO_NAICS[lane] || [])) naicsSet.add(code);
+  }
+  let naics = [...naicsSet];
+  const blockedFromLanes = [];
+  if (Number.isFinite(entitlement.max_naics_codes) && naics.length > entitlement.max_naics_codes) {
+    const cap = Math.max(0, Math.floor(entitlement.max_naics_codes));
+    const trimmed = naics.slice(0, cap);
+    for (const code of naics.slice(cap)) {
+      if (!naicsLimit.blocked_naics.includes(code)) blockedFromLanes.push(code);
+    }
+    naics = trimmed;
   }
 
   const keywordSet = new Set([
@@ -83,9 +108,11 @@ function buildQueryPlan(profile, nowMs) {
      'management consulting', 'translation', 'interpreting'].forEach((k) => keywordSet.add(k));
   }
 
-  const naics = [...naicsSet];
   const keywords = [...keywordSet];
   const primaryStates = (profile.geography.primary_states || []).slice();
+
+  const blockedNaics = [...new Set([...naicsLimit.blocked_naics, ...blockedFromLanes])];
+  const naicsLimitApplied = naicsLimit.naics_limit_applied || blockedFromLanes.length > 0;
 
   return Object.freeze({
     window,
@@ -94,6 +121,18 @@ function buildQueryPlan(profile, nowMs) {
     naics,
     keywords,
     primaryStates,
+    entitlement: Object.freeze({
+      plan: entitlement.plan,
+      is_paid: entitlement.is_paid,
+      max_naics_codes: entitlement.max_naics_codes === Infinity ? null : entitlement.max_naics_codes,
+      naics_limit_applied: naicsLimitApplied,
+      requested_naics_count: naicsLimit.requested_count,
+      allowed_naics_count: naics.length,
+      blocked_naics_codes: Object.freeze(blockedNaics.slice()),
+      plan_warning: entitlement.plan_warning,
+      plan_normalized_from: entitlement.plan_normalized_from,
+      message: describeNaicsLimit(entitlement, naicsLimit.requested_count, naics.length),
+    }),
   });
 }
 
@@ -502,6 +541,13 @@ async function runSprint(opts) {
   let apiKey = null;
   try { apiKey = await getApiKey(); } catch (_) { apiKey = null; }
 
+  // Resolve entitlement once; we surface it in both the not_configured
+  // and the ran branches so the operator/UI can show the plan limit
+  // even when SAM isn't queried.
+  const entitlement = getSamSprintEntitlement(profile);
+  const previewPlan = buildQueryPlan(profile, nowMs, { entitlement });
+  const entitlementMetadata = previewPlan.entitlement;
+
   if (!apiKey) {
     return Object.freeze({
       ok: true,
@@ -510,12 +556,24 @@ async function runSprint(opts) {
       profile_snapshot: profile,
       profile_issues: issues,
       profile_complete: isComplete,
-      query_metadata: null,
+      query_metadata: Object.freeze({
+        window_days: previewPlan.window,
+        naics_queried: [],
+        naics_planned: previewPlan.naics,
+        keywords_queried: [],
+        states_queried: [],
+        rdlfrom: previewPlan.rdlfrom.toISOString(),
+        rdlto:   previewPlan.rdlto.toISOString(),
+        entitlement: entitlementMetadata,
+      }),
+      entitlement: entitlementMetadata,
       scoring_model_version: SCORING_MODEL_VERSION,
       generated_at: new Date(nowMs).toISOString(),
       raw_count: 0,
       unique_count: 0,
       scored_opportunities: [],
+      email_drafts: [],
+      manual_review_required: true,
       errors: [],
     });
   }
@@ -526,7 +584,9 @@ async function runSprint(opts) {
     now: () => nowMs,
   }));
 
-  const plan = buildQueryPlan(profile, nowMs);
+  // Re-use the same plan we just previewed so the entitlement metadata
+  // and the actual query set match exactly.
+  const plan = previewPlan;
   const { records: raw, errors } = await runSprintQueries(samService, plan);
   const deduped = dedupeRecords(raw);
 
@@ -554,7 +614,9 @@ async function runSprint(opts) {
       states_queried: plan.primaryStates,
       rdlfrom: plan.rdlfrom.toISOString(),
       rdlto:   plan.rdlto.toISOString(),
+      entitlement: entitlementMetadata,
     }),
+    entitlement: entitlementMetadata,
     scoring_model_version: SCORING_MODEL_VERSION,
     generated_at: new Date(nowMs).toISOString(),
     raw_count: raw.length,

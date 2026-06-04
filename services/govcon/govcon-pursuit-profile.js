@@ -151,6 +151,15 @@ function defaultPursuitProfile() {
       top_draft_count: 10,
       manual_review_required: true,  // MUST default true
     },
+    // Subscription / entitlement context. This is metadata only — the
+    // SAM Sprint reads it to apply the Free vs Paid NAICS limit. It is
+    // NOT a payment record. No billing IDs, no credentials, no tokens.
+    // See services/govcon/sam-sprint-entitlements.js.
+    subscription: {
+      plan: 'free',           // one of KNOWN_PLANS
+      is_paid: false,
+      source: 'local_profile',
+    },
   };
 }
 
@@ -222,6 +231,37 @@ function normalizePursuitProfile(input) {
   // Top draft count cap.
   const top = Number(merged.output_preference.top_draft_count) || 10;
   merged.output_preference.top_draft_count = Math.max(1, Math.min(top, 10));
+
+  // Subscription / plan. We normalize through the entitlements module
+  // so the profile and the sprint runner agree on what "free" / "paid"
+  // mean. Lazy-required to avoid a circular dependency if the
+  // entitlements module ever decides to look at profile fields.
+  try {
+    const { normalizePlan } = require('./sam-sprint-entitlements');
+    const sub = merged.subscription || {};
+    const { plan, normalized_from, warning } = normalizePlan(sub.plan);
+    if (warning) {
+      issues.push({
+        level: 'warning',
+        field: 'subscription.plan',
+        message: warning,
+      });
+    }
+    merged.subscription = {
+      plan,
+      is_paid: plan !== 'free',
+      source: sub.source || 'local_profile',
+    };
+    // We record what we normalized FROM so the UI/CLI can show the
+    // operator-supplied value back without losing context.
+    if (normalized_from && normalized_from !== plan) {
+      merged.subscription.normalized_from = normalized_from;
+    }
+  } catch (_) {
+    // If for any reason the entitlements module is unavailable, fall
+    // back to a free default rather than crashing the profile load.
+    merged.subscription = { plan: 'free', is_paid: false, source: (merged.subscription && merged.subscription.source) || 'local_profile' };
+  }
 
   // Urgency.
   if (!URGENCY_LEVELS.includes(merged.contract_goal.urgency_level)) {

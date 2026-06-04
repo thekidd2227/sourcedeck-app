@@ -50,6 +50,26 @@ A hard-stop risk flag forces the bid/no-bid recommendation to `NO-BID` regardles
 - 60-74  → **Review / Possible Quote**
 - below 60 → **Archive**
 
+## Plan entitlement (Free vs Paid)
+
+SAM Opportunity Sprint is accessible to all users. The sprint applies a per-plan limit on the number of NAICS codes that can be queried in a single run:
+
+| Plan | Max NAICS per sprint |
+|---|---|
+| free | **3** |
+| paid · pro · team · enterprise | unrestricted |
+
+Rules:
+- **Free plan caps the active query set to the first 3 entries of the operator's configured `target_naics`.** The operator's saved profile is never mutated; the cap applies only to the sprint that is about to run.
+- **Paid plans (paid, pro, team, enterprise) run all configured NAICS.**
+- Unknown or missing plan defaults to **free** and a warning is surfaced in `profile_issues`.
+- Every sprint result includes an `entitlement` block on the top-level result and inside `query_metadata.entitlement`, with: `plan`, `is_paid`, `max_naics_codes`, `naics_limit_applied`, `requested_naics_count`, `allowed_naics_count`, `blocked_naics_codes`, and a human-readable `message`.
+- Markdown reports show a **Profile Assumptions — Plan Entitlement** section listing which NAICS were searched and which were withheld by the free-plan limit.
+- CLI summary prints, for free over-limit profiles: `Free plan: searching 3 of N configured NAICS codes. (N-3) withheld by free-plan limit.`
+- For testing without changing your profile, set `SAM_SPRINT_PLAN=paid` (or `free`) in the environment.
+
+**This is entitlement enforcement only — not payment processing.** SourceDeck does not charge, collect billing information, or promise contract awards or revenue.
+
 ## Configuration
 
 `SAM_GOV_API_KEY` is read **only from the process environment**. It is never stored in the Pursuit Profile, never logged, never embedded in any report payload. To configure:

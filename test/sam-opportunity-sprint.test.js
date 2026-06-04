@@ -33,6 +33,15 @@ const {
   LABELS,
 } = require('../services/govcon/sam-opportunity-sprint');
 
+const {
+  PLAN_LIMITS,
+  KNOWN_PLANS,
+  normalizePlan,
+  getSamSprintEntitlement,
+  applyNaicsLimit,
+  describeNaicsLimit,
+} = require('../services/govcon/sam-sprint-entitlements');
+
 let passed = 0, failed = 0;
 function test(name, fn) {
   try { fn(); passed++; console.log('  ✅ ' + name); }
@@ -347,6 +356,184 @@ test('email drafts are draft_only with manual_approval_required=true', () => {
   assert.strictEqual(d.draft_only, true);
   assert.strictEqual(d.auto_send, false);
   assert.strictEqual(d.manual_approval_required, true);
+});
+
+console.log('\n--- sam-sprint-entitlements ---');
+test('normalizePlan: missing/null/empty defaults to free', () => {
+  assert.strictEqual(normalizePlan(null).plan, 'free');
+  assert.strictEqual(normalizePlan('').plan, 'free');
+  assert.strictEqual(normalizePlan(undefined).plan, 'free');
+});
+test('normalizePlan: unknown plan defaults to free with warning', () => {
+  const r = normalizePlan('platinum');
+  assert.strictEqual(r.plan, 'free');
+  assert.ok(r.warning && /platinum/i.test(r.warning));
+});
+test('normalizePlan: known plans pass through (case-insensitive)', () => {
+  for (const p of ['free', 'paid', 'pro', 'team', 'enterprise']) {
+    assert.strictEqual(normalizePlan(p).plan, p);
+    assert.strictEqual(normalizePlan(p.toUpperCase()).plan, p);
+  }
+});
+test('PLAN_LIMITS: free is 3, all paid tiers are Infinity', () => {
+  assert.strictEqual(PLAN_LIMITS.free.max_naics_codes, 3);
+  assert.strictEqual(PLAN_LIMITS.free.is_paid, false);
+  for (const p of ['paid', 'pro', 'team', 'enterprise']) {
+    assert.strictEqual(PLAN_LIMITS[p].max_naics_codes, Infinity);
+    assert.strictEqual(PLAN_LIMITS[p].is_paid, true);
+  }
+});
+test('getSamSprintEntitlement accepts a profile and resolves plan', () => {
+  const ent = getSamSprintEntitlement({ subscription: { plan: 'pro' } });
+  assert.strictEqual(ent.plan, 'pro');
+  assert.strictEqual(ent.is_paid, true);
+});
+test('applyNaicsLimit: free plan caps to first 3 NAICS, lists blocked', () => {
+  const ent = getSamSprintEntitlement('free');
+  const out = applyNaicsLimit({ target_naics: ['1', '2', '3', '4', '5'] }, ent);
+  assert.deepStrictEqual(out.allowed_naics, ['1', '2', '3']);
+  assert.deepStrictEqual(out.blocked_naics, ['4', '5']);
+  assert.strictEqual(out.naics_limit_applied, true);
+});
+test('applyNaicsLimit: paid plan returns all NAICS, nothing blocked', () => {
+  const ent = getSamSprintEntitlement('paid');
+  const out = applyNaicsLimit({ target_naics: ['1', '2', '3', '4', '5'] }, ent);
+  assert.deepStrictEqual(out.allowed_naics, ['1', '2', '3', '4', '5']);
+  assert.strictEqual(out.blocked_naics.length, 0);
+  assert.strictEqual(out.naics_limit_applied, false);
+});
+test('describeNaicsLimit phrases honestly for free under-limit and over-limit', () => {
+  const free = getSamSprintEntitlement('free');
+  const under = describeNaicsLimit(free, 2, 2);
+  const over  = describeNaicsLimit(free, 7, 3);
+  assert.ok(/within limit/i.test(under), `expected within-limit phrasing, got: ${under}`);
+  assert.ok(/4 withheld/i.test(over) && /searching 3 of 7/i.test(over), `expected honest phrasing, got: ${over}`);
+});
+
+console.log('\n--- pursuit profile subscription normalization ---');
+test('missing subscription defaults to free / not paid', () => {
+  const { profile } = normalizePursuitProfile({});
+  assert.strictEqual(profile.subscription.plan, 'free');
+  assert.strictEqual(profile.subscription.is_paid, false);
+});
+test('unknown plan in profile defaults to free with warning', () => {
+  const { profile, issues } = normalizePursuitProfile({ subscription: { plan: 'platinum' } });
+  assert.strictEqual(profile.subscription.plan, 'free');
+  assert.ok(issues.some(i => i.field === 'subscription.plan' && /platinum/i.test(i.message)));
+});
+test('paid plan in profile yields is_paid=true', () => {
+  const { profile } = normalizePursuitProfile({ subscription: { plan: 'paid' } });
+  assert.strictEqual(profile.subscription.plan, 'paid');
+  assert.strictEqual(profile.subscription.is_paid, true);
+});
+
+console.log('\n--- buildQueryPlan respects entitlement ---');
+test('buildQueryPlan caps NAICS to 3 for free plan and records blocked codes', () => {
+  const { profile } = normalizePursuitProfile({
+    target_naics: ['238320', '561720', '561210', '561790', '541611', '541618', '541930'],
+    service_lanes: {}, // no lanes so lane-derived NAICS stay empty
+    subscription: { plan: 'free' },
+  });
+  const plan = buildQueryPlan(profile, NOW_MS);
+  assert.strictEqual(plan.naics.length, 3);
+  assert.deepStrictEqual(plan.naics, ['238320', '561720', '561210']);
+  assert.strictEqual(plan.entitlement.plan, 'free');
+  assert.strictEqual(plan.entitlement.naics_limit_applied, true);
+  assert.strictEqual(plan.entitlement.allowed_naics_count, 3);
+  assert.strictEqual(plan.entitlement.requested_naics_count, 7);
+  assert.deepStrictEqual(plan.entitlement.blocked_naics_codes, ['561790', '541611', '541618', '541930']);
+});
+test('buildQueryPlan keeps all NAICS for paid plan', () => {
+  const { profile } = normalizePursuitProfile({
+    target_naics: ['238320', '561720', '561210', '561790', '541611', '541618', '541930'],
+    service_lanes: {},
+    subscription: { plan: 'paid' },
+  });
+  const plan = buildQueryPlan(profile, NOW_MS);
+  assert.strictEqual(plan.naics.length, 7);
+  assert.strictEqual(plan.entitlement.is_paid, true);
+  assert.strictEqual(plan.entitlement.naics_limit_applied, false);
+  assert.deepStrictEqual(plan.entitlement.blocked_naics_codes, []);
+});
+test('free plan does not mutate the operator\'s saved target_naics on the profile', () => {
+  const { profile } = normalizePursuitProfile({
+    target_naics: ['238320', '561720', '561210', '561790', '541611', '541618', '541930'],
+    subscription: { plan: 'free' },
+  });
+  buildQueryPlan(profile, NOW_MS); // ignore return
+  // Saved list is preserved exactly.
+  assert.deepStrictEqual(profile.target_naics, ['238320', '561720', '561210', '561790', '541611', '541618', '541930']);
+});
+
+asyncTest('runSprint surfaces entitlement metadata on the result', async () => {
+  const fakeService = { search: async () => ({ ok: true, results: [], total: 0, returned: 0 }) };
+  const r = await runSprint({
+    profile: { target_naics: ['1','2','3','4','5'], subscription: { plan: 'free' } },
+    getApiKey: async () => 'fake',
+    samService: fakeService,
+    now: () => NOW_MS,
+  });
+  assert.strictEqual(r.entitlement.plan, 'free');
+  assert.strictEqual(r.entitlement.is_paid, false);
+  assert.strictEqual(r.entitlement.naics_limit_applied, true);
+  assert.strictEqual(r.entitlement.allowed_naics_count, 3);
+  assert.deepStrictEqual(r.entitlement.blocked_naics_codes, ['4', '5']);
+  assert.strictEqual(r.query_metadata.entitlement.plan, 'free');
+  assert.strictEqual(r.manual_review_required, true);
+});
+
+asyncTest('runSprint does NOT call SAM for blocked free-plan NAICS', async () => {
+  const calls = [];
+  const fakeService = {
+    search: async (params) => {
+      // Record what we were asked to search.
+      if (params && Array.isArray(params.naics)) calls.push(...params.naics);
+      return { ok: true, results: [], total: 0, returned: 0 };
+    },
+  };
+  await runSprint({
+    profile: { target_naics: ['111', '222', '333', '444', '555'], service_lanes: {}, subscription: { plan: 'free' } },
+    getApiKey: async () => 'fake',
+    samService: fakeService,
+    now: () => NOW_MS,
+  });
+  // Only the first 3 NAICS should have been queried; 444/555 must not appear.
+  const naicsCalledSet = new Set(calls);
+  assert.ok(naicsCalledSet.has('111') && naicsCalledSet.has('222') && naicsCalledSet.has('333'));
+  assert.strictEqual(naicsCalledSet.has('444'), false, 'blocked NAICS 444 was queried');
+  assert.strictEqual(naicsCalledSet.has('555'), false, 'blocked NAICS 555 was queried');
+});
+
+asyncTest('runSprint surfaces entitlement even on not_configured exit (no key)', async () => {
+  const r = await runSprint({
+    profile: { target_naics: ['1','2','3','4'], subscription: { plan: 'free' } },
+    getApiKey: async () => null,
+    now: () => NOW_MS,
+  });
+  assert.strictEqual(r.status, 'not_configured');
+  assert.ok(r.entitlement);
+  assert.strictEqual(r.entitlement.plan, 'free');
+  assert.strictEqual(r.entitlement.naics_limit_applied, true);
+  assert.strictEqual(r.entitlement.allowed_naics_count, 3);
+  assert.strictEqual(r.manual_review_required, true);
+});
+
+asyncTest('runSprint keeps manual_review_required=true under both plans', async () => {
+  const fakeService = { search: async () => ({ ok: true, results: [], total: 0, returned: 0 }) };
+  for (const plan of ['free', 'paid', 'pro', 'team', 'enterprise']) {
+    const r = await runSprint({
+      profile: { target_naics: ['1','2','3','4','5'], subscription: { plan } },
+      getApiKey: async () => 'fake',
+      samService: fakeService,
+      now: () => NOW_MS,
+    });
+    assert.strictEqual(r.manual_review_required, true, `plan ${plan} did not force manual_review_required`);
+    // Drafts (if any) must remain draft-only.
+    for (const d of (r.email_drafts || [])) {
+      assert.strictEqual(d.auto_send, false);
+      assert.strictEqual(d.manual_approval_required, true);
+    }
+  }
 });
 
 // ---- Finalize ----

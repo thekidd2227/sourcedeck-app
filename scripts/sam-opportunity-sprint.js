@@ -31,6 +31,12 @@ const path = require('path');
 
 const { runSprint } = require('../services/govcon/sam-opportunity-sprint');
 const { normalizePursuitProfile } = require('../services/govcon/govcon-pursuit-profile');
+const {
+  getSamSprintEntitlement,
+  applyNaicsLimit,
+  describeNaicsLimit,
+  normalizePlan,
+} = require('../services/govcon/sam-sprint-entitlements');
 
 const REPORTS_DIR = path.resolve(process.cwd(), 'reports');
 
@@ -100,6 +106,23 @@ function writeMd(file, result) {
   lines.push(`- Unique after dedupe: ${result.unique_count}`);
   lines.push(`- Errors: ${(result.errors || []).length}`);
   lines.push('');
+  const ent = result.entitlement || (result.query_metadata && result.query_metadata.entitlement);
+  if (ent) {
+    lines.push('## Profile Assumptions — Plan Entitlement');
+    lines.push('');
+    lines.push(`- Plan: **${ent.plan}** (paid: ${ent.is_paid})`);
+    lines.push(`- ${ent.message}`);
+    if (ent.naics_limit_applied) {
+      lines.push(`- NAICS searched: ${ent.allowed_naics_count} of ${ent.requested_naics_count} configured`);
+      if (Array.isArray(ent.blocked_naics_codes) && ent.blocked_naics_codes.length) {
+        lines.push(`- NAICS withheld by free-plan limit: ${ent.blocked_naics_codes.join(', ')}`);
+      }
+    } else {
+      lines.push(`- NAICS searched: all ${ent.allowed_naics_count} configured (no plan limit applied)`);
+    }
+    if (ent.plan_warning) lines.push(`- Plan warning: ${ent.plan_warning}`);
+    lines.push('');
+  }
   lines.push('## Profile Snapshot');
   lines.push('');
   lines.push('```json');
@@ -211,14 +234,39 @@ function writeEmailDrafts(file, drafts) {
 
 async function main() {
   const { source: profileSource, profile: rawProfile } = loadProfile();
+
+  // Allow `SAM_SPRINT_PLAN=free|paid|...` to override the profile's
+  // subscription.plan from the environment. Never accepts credentials,
+  // billing IDs, or tokens — just a plan name. Default is free.
+  const planEnv = process.env.SAM_SPRINT_PLAN;
+  if (planEnv) {
+    const { plan } = normalizePlan(planEnv);
+    rawProfile.subscription = Object.assign({}, rawProfile.subscription || {}, {
+      plan,
+      is_paid: plan !== 'free',
+      source: 'env_override',
+    });
+  }
+
   // Normalize early so we can echo a summary even on not_configured exit.
   const { profile, issues, isComplete } = normalizePursuitProfile(rawProfile);
+
+  // Compute the entitlement preview here so we can show plan/NAICS
+  // summary regardless of whether SAM_GOV_API_KEY is configured.
+  const entitlement = getSamSprintEntitlement(profile);
+  const naicsLimit = applyNaicsLimit(profile, entitlement);
+  const entitlementLine = describeNaicsLimit(entitlement, naicsLimit.requested_count, naicsLimit.allowed_count);
 
   const key = process.env.SAM_GOV_API_KEY;
   if (!key) {
     console.log('[sam-sprint] status: not_configured');
     console.log(`[sam-sprint] profile source: ${profileSource}`);
     console.log(`[sam-sprint] profile complete: ${isComplete ? 'yes' : 'no'}`);
+    console.log(`[sam-sprint] plan: ${entitlement.plan} (paid=${entitlement.is_paid})`);
+    console.log(`[sam-sprint] ${entitlementLine}`);
+    if (naicsLimit.blocked_count > 0) {
+      console.log(`[sam-sprint] withheld NAICS by free-plan limit: ${naicsLimit.blocked_count}`);
+    }
     console.log('');
     console.log('SAM_GOV_API_KEY is not present in the process environment.');
     console.log('To configure (do NOT paste the key into chat or commit it):');
@@ -235,6 +283,11 @@ async function main() {
   console.log('[sam-sprint] status: running');
   console.log(`[sam-sprint] profile source: ${profileSource}`);
   console.log(`[sam-sprint] profile complete: ${isComplete ? 'yes' : 'no'}`);
+  console.log(`[sam-sprint] plan: ${entitlement.plan} (paid=${entitlement.is_paid})`);
+  console.log(`[sam-sprint] ${entitlementLine}`);
+  if (naicsLimit.blocked_count > 0) {
+    console.log(`[sam-sprint] withheld NAICS by free-plan limit: ${naicsLimit.blocked_count}`);
+  }
   if (issues.length) {
     for (const i of issues) console.log(`[profile:${i.level}] ${i.field}: ${i.message}`);
   }
@@ -261,7 +314,11 @@ async function main() {
   // Summary only.
   const top = (result.scored_opportunities || []).slice(0, 10);
   const act = top.slice(0, 3);
+  const resultEnt = result.entitlement || (result.query_metadata && result.query_metadata.entitlement);
   console.log('');
+  if (resultEnt) {
+    console.log(`[sam-sprint] entitlement: ${resultEnt.message}`);
+  }
   console.log(`[sam-sprint] raw: ${result.raw_count}, unique: ${result.unique_count}, errors: ${(result.errors || []).length}`);
   console.log('[sam-sprint] top 10:');
   for (let i = 0; i < top.length; i++) {
