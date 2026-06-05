@@ -7839,14 +7839,10 @@ function clearChecks(){checkState={};renderDailyOps();toast('Checklist reset','o
 function renderFlow(){
   const steps=[
     {n:1,t:'Assessment Form',d:'New intake is received and queued for review.'},
-    {n:2,t:'Qualification',d:'Records are reviewed and qualified before any outreach.'},
-    {n:3,t:'CRM Sync',d:'Qualified records can sync to your connected workspace when configured.'},
-    {n:4,t:'Outreach Queue',d:'Approved prospects can be prepared for outreach review when configured.'},
-    {n:5,t:'Outreach Delivered',d:'Approved outreach is delivered on your configured schedule.'},
-    {n:6,t:'Reply Review',d:'Imported replies are classified and turned into draft-only next actions.'},
-    {n:7,t:'Booking Review',d:'Qualified booking signals can create follow-up tasks when configured.'},
-    {n:8,t:'Discovery Call',d:'A scheduled discovery call routes to a proposal or nurture path.'},
-    {n:9,t:'Close',d:'Won deals move to invoicing and onboarding.',done:true},
+    {n:2,t:'CRM Sync',d:'Qualified records can sync to your connected workspace when configured.'},
+    {n:3,t:'Outreach Queue',d:'Approved prospects can be prepared for outreach review when configured.'},
+    {n:4,t:'Reply Review',d:'Imported replies are classified and turned into draft-only next actions.'},
+    {n:5,t:'Booking Review',d:'Qualified booking signals can create follow-up tasks when configured.'},
   ];
   const el=document.getElementById('flow-steps');
   if(el)el.innerHTML=steps.map(s=>`

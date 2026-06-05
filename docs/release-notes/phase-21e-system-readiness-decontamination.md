@@ -1,51 +1,35 @@
-# Release Note — Phase 21E: System Readiness Decontamination
+# Phase 21E - System Readiness Decontamination
 
-**Type:** Bug fix (BLOCKER — buyer-demo recording)
-**Branch:** `fix/system-readiness-flow-contamination`
-**Date:** 2026-06-04
+## Summary
 
-## What was broken
+Phase 21E fixes the System Readiness flow-step contamination that caused the
+single failed Phase 21C real-navigation screen. The "9-Stage Revenue Pipeline"
+card no longer renders internal `PROD-02`, `PROD-03`, `PROD-04`, `PROD-05`, or
+`4595758` copy.
 
-After PR #55 restored the renderer, the **System Readiness** tab's "9-Stage
-Revenue Pipeline" card (`renderFlow()`) rendered internal operator labels —
-`PROD-02`, `PROD-03`, `PROD-04`, `PROD-05` and the real Instantly campaign ID
-`4595758` — visible to anyone navigating to the tab. This was the one screen
-that failed Phase 21C real-navigation QA. PR #56 renamed the tab but did not
-remove the contaminating data.
+## What changed
 
-## What was fixed
+- Replaced the System Readiness `flow-steps` data with safe readiness copy:
+  Assessment Form, CRM Sync, Outreach Queue, Reply Review, and Booking Review.
+- Added `test/system-readiness-flow-steps.test.js` coverage for the forbidden
+  internal labels, campaign IDs, webhook-token fragments, Gmail fake IDs,
+  Airtable fake IDs, and fake active-state copy in the flow-step source area.
+- Preserved the lower System Readiness empty states: No webhooks active, No
+  integrations configured, and No HTTP standards published.
 
-The flow-step labels/descriptions were rewritten with neutral, product-safe
-copy (CRM Sync, Outreach Queue, Reply Review, Booking Review, …) and all
-`PROD-02..05` / `4595758` references removed. Two adjacent user-facing leaks
-were also cleaned: the Booking panel sub-title (`POST → PROD-05 webhook`) and a
-Command Center work-item warning (`… awaiting PROD-03`), plus a non-rendered
-code comment. The three lower System Readiness empty-state cards (No webhooks
-active / No integrations configured / No HTTP standards published) are
-unchanged.
+## Safety
 
-## What was added
-
-`test/system-readiness-flow-steps.test.js` — regression coverage that fails if
-`PROD-02..05`, `4595758`, webhook tokens, or fake operator IDs reappear in the
-flow steps / System Readiness pane, while asserting the safe copy and the
-protected features (Response Desk import + no Send Email, SAM Free=1 NAICS,
-renderer boot, Phase 20G guard) remain. Wired into `npm test`.
-
-## No behavior change beyond display copy
-
-- No integration code, request, webhook, status filter, or credential path
-  changed.
-- **Response Desk** import workflow preserved — no Send Email, no auto-send.
-- **SAM Sprint** preserved — Free = 1 NAICS, no auto-send.
-- **Renderer boot** preserved — 0 boot SyntaxErrors; verified live via real nav.
-- **Phase 20G** `.btn-gold` and 900/899 guards preserved.
-- No `.env`, pricing/payment, watsonx, signing, provider, or Vercel changes.
-- No secrets exposed; no screenshots/videos committed.
+- No runtime integration behavior changed.
+- Renderer boot preserved.
+- Response Desk import preserved.
+- Response Desk no-send and human approval language preserved.
+- SAM Sprint preserved, including Free = 1 NAICS and no auto-send behavior.
+- Phase 20G `.btn-gold`, `900px`, and `899px` guards preserved.
+- No `.env` files touched.
+- No secrets exposed.
+- No screenshots or videos committed.
 
 ## Verification
 
-`npm test`, `release:evidence`, `troubleshooting:scan`, `govcon:smoke`,
-`phase13:rc-check`, `i18n:audit`, `release-check.js`, `renderer-boot`, and the
-new `system-readiness-flow-steps` test all green; live Electron real-navigation
-confirms the System Readiness tab is clean.
+Targeted tests, full gates, bounded safety scan, and live Electron
+real-navigation verification are captured in the Phase 21E PR report.

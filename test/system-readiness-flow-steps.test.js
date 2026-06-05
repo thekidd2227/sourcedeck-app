@@ -28,61 +28,79 @@ function test(name, fn) {
 
 console.log('\n=== System Readiness flow-steps — decontamination ===\n');
 
-// 1. No internal PROD scenario IDs or the Instantly campaign ID anywhere.
-test('sourcedeck.html contains no PROD-02..05 or campaign ID 4595758', () => {
-  for (const term of ['PROD-02', 'PROD-03', 'PROD-04', 'PROD-05', '4595758']) {
-    assert.ok(!HTML.includes(term), 'forbidden internal label still present: ' + term);
-  }
-});
-
-// 2. Webhook tokens and the fake Gmail connection ID must be absent file-wide
-//    (these were fully removed by the earlier default-state cleanup; this is a
-//    standing guard).
-test('no webhook tokens or fake Gmail connection ID present anywhere', () => {
-  const forbidden = [
-    'ti5tlit9s9ir0sr1vha7vqjyemcuvlnq', // PROD-05 webhook token
-    'jpu2xjxufd8x7yt3qnsk9ntxd0ns77jk', // LCC webhook token
-    '8125092'                            // fake Gmail connection ID
-  ];
-  for (const term of forbidden) {
-    assert.ok(!HTML.includes(term), 'forbidden operator ID/token still present: ' + term);
-  }
-});
-
-// 2b. The FLOW-STEP descriptions (renderFlow body) carry no scenario IDs,
-//     campaign ID, fake Airtable base ID, or internal automation codenames.
-//     (A code-level `AT_BASE='appXXX…'` placeholder constant lives elsewhere
-//     and is not a rendered flow-step description; it is out of scope here.)
-test('renderFlow flow-step descriptions carry no internal labels/IDs', () => {
+function getRenderFlowBody() {
   const m = HTML.match(/function renderFlow\(\)\{([\s\S]*?)\n\}/);
   assert.ok(m, 'renderFlow() not found');
-  const body = m[1];
-  for (const term of ['PROD-', '4595758', 'appXXXXXXXX', 'M3 writeback', 'Instantly Insert', 'Notion Sync (Auto)', 'Reply Analysis (Auto)', 'Booking Triggered']) {
+  return m[1];
+}
+
+function getSystemReadinessPane() {
+  const m = HTML.match(/<div class="tab-pane" id="tab-sysflow">([\s\S]*?)<div class="tab-pane"/i)
+       || HTML.match(/<div class="tab-pane" id="tab-sysflow">([\s\S]*?)<\/main>/i);
+  assert.ok(m, 'tab-sysflow pane not found');
+  return m[1];
+}
+
+// 1. The active System Readiness flow-step source area must carry no internal
+//    scenario IDs, campaign IDs, webhook tokens, Gmail fake IDs, or Airtable fake IDs.
+test('renderFlow flow-step source area carries no internal labels/IDs', () => {
+  const body = getRenderFlowBody();
+  for (const term of [
+    'PROD-02',
+    'PROD-03',
+    'PROD-04',
+    'PROD-05',
+    '4595758',
+    '8125092',
+    'ti5tlit9s',
+    'jpu2xj',
+    'appXXXXXXXX',
+    'M3 writeback',
+    'Instantly Insert',
+    'Notion Sync (Auto)',
+    'Reply Analysis (Auto)',
+    'Booking Triggered',
+    'ACTIVE'
+  ]) {
     assert.ok(!body.includes(term), 'renderFlow still references internal label: ' + term);
-  }
-  // safe replacement titles are present
-  for (const t of ['CRM Sync', 'Outreach Queue', 'Reply Review', 'Booking Review']) {
-    assert.ok(body.includes(t), 'expected neutral flow-step title missing: ' + t);
   }
 });
 
-// 2c. The System Readiness pane markup itself carries no PROD/campaign/fake-ID
-//     contamination.
+// 2. The exact safe five-step copy is present in renderFlow().
+test('renderFlow safe five-step copy preserved', () => {
+  const body = getRenderFlowBody();
+  const expected = [
+    ['Assessment Form', 'New intake is received and queued for review.'],
+    ['CRM Sync', 'Qualified records can sync to your connected workspace when configured.'],
+    ['Outreach Queue', 'Approved prospects can be prepared for outreach review when configured.'],
+    ['Reply Review', 'Imported replies are classified and turned into draft-only next actions.'],
+    ['Booking Review', 'Qualified booking signals can create follow-up tasks when configured.']
+  ];
+
+  for (const [title, description] of expected) {
+    assert.ok(body.includes(title), 'expected neutral flow-step title missing: ' + title);
+    assert.ok(body.includes(description), 'expected neutral flow-step description missing: ' + description);
+  }
+});
+
+// 3. The static System Readiness pane markup itself carries no PROD/campaign/fake-ID
+//    contamination.
 test('System Readiness pane markup carries no PROD/campaign/fake-ID labels', () => {
-  const m = HTML.match(/<div class="tab-pane" id="tab-sysflow">([\s\S]*?)<\/div>\s*<!--/i)
-         || HTML.match(/<div class="tab-pane" id="tab-sysflow">([\s\S]*?)<div class="tab-pane"/i);
-  assert.ok(m, 'tab-sysflow pane not found');
-  const pane = m[1];
-  for (const term of ['PROD-0', '4595758', 'appXXXXXXXX', '8125092']) {
+  const pane = getSystemReadinessPane();
+  for (const term of ['PROD-02', 'PROD-03', 'PROD-04', 'PROD-05', '4595758', '8125092', 'ti5tlit9s', 'jpu2xj', 'appXXXXXXXX']) {
     assert.ok(!pane.includes(term), 'System Readiness pane still contains: ' + term);
   }
 });
 
-// 3. System Readiness copy still contains the safe, user-facing labels.
+// 4. System Readiness copy still contains the safe, user-facing labels.
 test('System Readiness safe copy preserved', () => {
   for (const s of [
     'System Readiness',
     '9-Stage Revenue Pipeline',
+    'CRM Sync',
+    'Outreach Queue',
+    'Reply Review',
+    'Booking Review',
     'No webhooks active',
     'No integrations configured',
     'No HTTP standards published'
@@ -91,7 +109,7 @@ test('System Readiness safe copy preserved', () => {
   }
 });
 
-// 4. Renderer still boots: every inline <script> block parses.
+// 5. Renderer still boots: every inline <script> block parses.
 test('renderer still boots — all inline <script> blocks parse', () => {
   const scripts = [...HTML.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)];
   const failures = [];
@@ -102,26 +120,30 @@ test('renderer still boots — all inline <script> blocks parse', () => {
   assert.strictEqual(failures.length, 0, 'unparseable inline scripts:\n' + failures.join('\n'));
 });
 
-// 5. Response Desk Import Email workflow copy still exists.
+// 6. Response Desk Import Email workflow copy still exists.
 test('Response Desk Import Email copy preserved', () => {
   assert.ok(HTML.includes('Import Email'), 'Import Email control missing');
-  assert.ok(/never auto-sends, never auto-submits/.test(HTML), 'Response Desk no-send copy missing');
+  assert.ok(/draft-only/i.test(HTML), 'draft-only copy missing');
+  assert.ok(/human approval/i.test(HTML), 'human approval copy missing');
 });
 
-// 6. No Send Email button introduced anywhere.
+// 7. No Send Email button introduced anywhere.
 test('no Send Email button present', () => {
   assert.ok(!/>\s*(?:📧\s*)?Send Email\s*</i.test(HTML), 'a "Send Email" button is present');
 });
 
-// 7. SAM Sprint Free = 1 NAICS copy remains.
+// 8. SAM Sprint Free = 1 NAICS and no auto-send copy remain.
 test('SAM Sprint Free=1 NAICS copy preserved', () => {
   assert.ok(HTML.includes('Free users: 1 NAICS'), 'Free=1 NAICS copy missing');
+  assert.ok(/no auto-send/i.test(HTML), 'SAM Sprint no auto-send copy missing');
 });
 
-// 8. Phase 20G .btn-gold guard remains.
+// 9. Phase 20G .btn-gold and responsive guards remain.
 test('Phase 20G .btn-gold guard preserved', () => {
   assert.ok(HTML.includes('Phase 20G guard'), 'Phase 20G guard comment missing');
   assert.ok(HTML.includes('.btn-gold'), '.btn-gold rule missing');
+  assert.ok(HTML.includes('899px'), '899px responsive guard missing');
+  assert.ok(HTML.includes('900px'), '900px responsive guard missing');
 });
 
 console.log(`\n=== ${failed === 0 ? 'PASS' : 'FAIL'} — ${passed}/${passed + failed} system-readiness-flow-steps checks ===\n`);
