@@ -13236,6 +13236,12 @@ document.addEventListener('DOMContentLoaded',()=>{
   var PPF_KEY       = 'sd.govcon.primePartners.v1';
   var CS_KEY        = 'sd.govcon.capabilityStatement.v1';
   var SUB_KEY       = 'sd.govcon.submissionReadiness.v1';
+  // Phase 23H — also seed the Phase 22D Pricing Worksheet store so the
+  // Phase 23D vendor-pricing Last Updated chip stamps on Load Sample. The
+  // sample numbers stay clearly labeled SAMPLE / Demo only via the
+  // assumptions block; raw integer fields render with no surrounding
+  // narrative so the operator can swap them out wholesale.
+  var PR_KEY        = 'sd.govcon.pricingWorksheet.v1';
   function load(key){ try { var v = localStorage.getItem(key); return v ? JSON.parse(v) : null; } catch (e) { return null; } }
   function save(key, val){ try { localStorage.setItem(key, JSON.stringify(val)); } catch (e) {} }
   function isDemoActive(){ var f = load(FLAG_KEY); return !!(f && f.active); }
@@ -13386,10 +13392,34 @@ document.addEventListener('DOMContentLoaded',()=>{
       }
     };
   }
+  // Phase 23H — Sample Pricing Worksheet. Numbers are illustrative only
+  // (round, recognizable values) and the assumptions block visibly carries
+  // "SAMPLE / Demo only — Replace before proposal use." so the operator
+  // can never mistake them for a real pricing model. No margin/profit
+  // claim is made; the Phase 22D worksheet computes its own advisory
+  // estimate from these inputs.
+  function buildSamplePricingWorksheet(){
+    return {
+      labor:       10000,
+      materials:    2500,
+      vendor:       1500,
+      travel:        500,
+      equipment:     500,
+      overheadPct:    15,
+      profitPct:      10,
+      contingencyPct:  5,
+      assumptions:
+        'SAMPLE / Demo only — Replace before proposal use. ' +
+        'Numbers above are illustrative and do not reflect any real bid, ' +
+        'quote, or government response. SourceDeck does not submit, ' +
+        'upload, email, or transmit pricing.'
+    };
+  }
   window.gcDemoLoadSample = function(){
     save(CAPTURE_KEY, buildSampleCaptureBoard());
     save(SOL_KEY,     buildSampleSolWorkspace());
     save(VQR_KEY,     buildSampleVendorQuotes());
+    save(PR_KEY,      buildSamplePricingWorksheet()); // Phase 23H — Defect B
     save(PP_KEY,      buildSamplePastPerformance());
     save(PPF_KEY,     buildSamplePrimePartners());
     save(CS_KEY,      buildSampleCapabilityStatement());
@@ -13406,7 +13436,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   };
   window.gcDemoClearSample = function(){
     // Remove the phase-22 workflow store keys + the demo flag.
-    [CAPTURE_KEY, SOL_KEY, VQR_KEY, PP_KEY, PPF_KEY, CS_KEY, SUB_KEY, FLAG_KEY].forEach(function(k){
+    // Phase 23H — also clear PR_KEY so the Pricing Worksheet resets cleanly.
+    [CAPTURE_KEY, SOL_KEY, VQR_KEY, PR_KEY, PP_KEY, PPF_KEY, CS_KEY, SUB_KEY, FLAG_KEY].forEach(function(k){
       try { localStorage.removeItem(k); } catch (e) {}
     });
     setBanner(false);
@@ -13485,15 +13516,22 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){
   'use strict';
 
+  // Phase 23H — align Phase 23D watcher keys with the ACTUAL Phase 22/23A
+  // storage keys. Prior to Phase 23H the watcher used short aliases that did
+  // not match what Phase 22D / Phase 22E / Phase 22F / Phase 23A actually
+  // persist to, which left three of the five chips at "Not yet" after a
+  // demo-mode Load Sample and prevented the Markdown export's SAMPLE DEMO
+  // DATA banner from ever firing. Defects A + B + C in
+  // docs/demo/phase-23g-local-demo-recording-review.md.
   var SECTION_DEFS = [
     { id: 'capture-cc',     label: 'GovCon Capture Command Center', keys: ['sd.govcon.captureBoard.v1'] },
     { id: 'sol-workspace',  label: 'Solicitation Workspace',        keys: ['sd.govcon.solWorkspace.v1'] },
-    { id: 'vendor-pricing', label: 'Vendor Quote Room + Pricing Worksheet', keys: ['sd.govcon.vqr.v1','sd.govcon.pricing.v1'] },
-    { id: 'past-perf',      label: 'Past Performance + Capability + Prime Partner', keys: ['sd.govcon.pp.v1','sd.govcon.cs.v1','sd.govcon.ppf.v1'] },
-    { id: 'sub-gate',       label: 'Submission Readiness Gate',     keys: ['sd.govcon.subGate.v1','sd.govcon.subGatePkg.v1'] }
+    { id: 'vendor-pricing', label: 'Vendor Quote Room + Pricing Worksheet', keys: ['sd.govcon.vendorQuotes.v1','sd.govcon.pricingWorksheet.v1'] },
+    { id: 'past-perf',      label: 'Past Performance + Capability + Prime Partner', keys: ['sd.govcon.pastPerformance.v1','sd.govcon.capabilityStatement.v1','sd.govcon.primePartners.v1'] },
+    { id: 'sub-gate',       label: 'Submission Readiness Gate',     keys: ['sd.govcon.submissionReadiness.v1'] }
   ];
   var LU_KEY = 'sd.govcon.demoDelivery.lastUpdated.v1';
-  var DEMO_MODE_KEY = 'sd.govcon.demoMode.active.v1';
+  var DEMO_MODE_KEY = 'sd.govcon.demoMode.v1';
 
   function safeGet(k){
     try { return (window.localStorage && window.localStorage.getItem(k)) || ''; }
@@ -13591,15 +13629,33 @@ document.addEventListener('DOMContentLoaded',()=>{
     return !!(el && el.checked);
   }
   function isDemoModeActive(){
-    var raw = safeGet(DEMO_MODE_KEY);
-    if (raw === 'true' || raw === '1') return true;
-    var ind = document.getElementById('gc-demo-mode-indicator');
-    if (ind && /active|on/i.test(ind.textContent || '')) return true;
-    // Heuristic: sample data in capture board with the Phase 23A demo tag.
+    // Phase 23H — read the Phase 23A FLAG_KEY (sd.govcon.demoMode.v1) as JSON
+    // (the actual on-disk format is {active: true, loadedAt: 'local-only'}),
+    // and fall back to a row-content heuristic so the SAMPLE DEMO DATA banner
+    // still fires if a sample-loaded session is exported after the flag is
+    // dropped or rewritten externally. Defect C from
+    // docs/demo/phase-23g-local-demo-recording-review.md.
+    try {
+      var raw = safeGet(DEMO_MODE_KEY);
+      if (raw) {
+        if (raw === 'true' || raw === '1') return true; // Phase 23H — back-compat string form
+        var parsed = JSON.parse(raw);
+        if (parsed && parsed.active === true) return true;
+      }
+    } catch (e) {}
+    // Heuristic 1: legacy capture-row tags.
     var arr = readArr('sd.govcon.captureBoard.v1');
     for (var i = 0; i < arr.length; i++) {
       var row = arr[i];
-      if (row && (row.demo === true || row.source === 'phase-23a-demo' || /demo|sample/i.test(row.tag || ''))) return true;
+      if (!row) continue;
+      if (row.demo === true || row.source === 'phase-23a-demo' || /demo|sample/i.test(row.tag || '')) return true;
+      // Heuristic 2 (Phase 23H): the Phase 23A buildSampleCaptureBoard() rows
+      // do not carry .demo/.source/.tag — but every sample field is visibly
+      // labeled SAMPLE / Demo only. Detect that label set explicitly.
+      if (row.id === 'op_sample_demo_001') return true;
+      if (typeof row.title === 'string' && /\bSAMPLE\b/.test(row.title)) return true;
+      if (typeof row.solicitationNumber === 'string' && /SAMPLE-SOL-DEMO/.test(row.solicitationNumber)) return true;
+      if (typeof row.notes === 'string' && /SAMPLE\s*\/\s*DEMO ONLY/.test(row.notes)) return true;
     }
     return false;
   }
@@ -13667,25 +13723,31 @@ document.addEventListener('DOMContentLoaded',()=>{
       md.push('- Compliance matrix (Phase 22C): ' + m + ' rows');
     }
     if (inc.pricing) {
-      var p = readObj('sd.govcon.pricing.v1') || {};
+      // Phase 23H — use the actual Phase 22D storage key (PR_KEY) instead of
+      // the wrong alias sd.govcon.pricing.v1.
+      var p = readObj('sd.govcon.pricingWorksheet.v1') || {};
       var any = false;
       for (var k in p) { if (k !== 'assumptions' && Number(p[k]) > 0) { any = true; break; } }
       md.push('- Pricing worksheet (Phase 22D): ' + (any ? 'fields present (local only)' : 'no cost inputs entered'));
     }
     if (inc.vendor) {
-      var vqr = readArr('sd.govcon.vqr.v1');
+      // Phase 23H — use the actual Phase 22D storage key (VQR_KEY).
+      var vqr = readArr('sd.govcon.vendorQuotes.v1');
       md.push('- Vendor quote table (Phase 22D): ' + vqr.length + ' rows');
     }
     if (inc.pp) {
-      var pp = readArr('sd.govcon.pp.v1');
+      // Phase 23H — use the actual Phase 22E storage key (PP_KEY).
+      var pp = readArr('sd.govcon.pastPerformance.v1');
       md.push('- Past performance records (Phase 22E): ' + pp.length + ' records');
     }
     if (inc.cs) {
-      var cs = readObj('sd.govcon.cs.v1');
+      // Phase 23H — use the actual Phase 22E storage key (CS_KEY).
+      var cs = readObj('sd.govcon.capabilityStatement.v1');
       md.push('- Capability statement outline (Phase 22E): ' + (cs ? 'draft saved (advisory)' : 'no draft saved'));
     }
     if (inc.ppf) {
-      var ppf = readArr('sd.govcon.ppf.v1');
+      // Phase 23H — use the actual Phase 22E storage key (PPF_KEY).
+      var ppf = readArr('sd.govcon.primePartners.v1');
       md.push('- Prime partner notes (Phase 22E): ' + ppf.length + ' rows');
     }
     if (inc.risk) {
@@ -13694,8 +13756,9 @@ document.addEventListener('DOMContentLoaded',()=>{
       md.push('- Risk log (Phase 22C): ' + risks + ' lines');
     }
     if (inc.checklist) {
-      // Read the same submission-gate checklist that Build Package Preview uses.
-      var st = readObj('sd.govcon.subGate.v1') || {};
+      // Phase 23H — use the actual Phase 22F storage key (SUB_KEY) instead of
+      // the wrong alias sd.govcon.subGate.v1.
+      var st = readObj('sd.govcon.submissionReadiness.v1') || {};
       var checklist = st.checklist || {};
       var reviewed = 0, total = 0;
       for (var c in checklist) { total++; if (checklist[c] === 'Reviewed') reviewed++; }
