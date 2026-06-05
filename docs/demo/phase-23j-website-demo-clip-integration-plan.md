@@ -123,6 +123,31 @@ These four lines must appear, legibly, near any GovCon clip block:
 - "All exports are for internal review unless separately submitted by the user."
 - "Local development builds may show unsigned-artifact warnings unless release evidence verifies signing/notarization."
 
+The first three lines may also appear as a single combined disclaimer string,
+verbatim:
+
+> Demo uses sample data. SourceDeck does not submit bids, quotes, emails, or portal uploads. Exports are for internal review unless separately submitted by the user.
+
+### Forbidden website copy (verbatim — never allow)
+
+None of the following may appear in any clip caption, surrounding copy, alt
+text, transcript, or CTA (unless independently verified by release evidence,
+which currently it is not):
+
+- "Free demo"
+- "Download now"
+- "Try now"
+- "Submit bids automatically"
+- "Send emails automatically"
+- "SourceDeck files into SAM.gov"
+- "SourceDeck submits proposals"
+- "Guaranteed award"
+- "FedRAMP certified"
+- "SOC 2 certified"
+- "CMMC certified"
+- "Signed and notarized"
+- "Apple notarized"
+
 ---
 
 ## 6. Required unsigned-build caveat (until Phase 23E verifies the build)
