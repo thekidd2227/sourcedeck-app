@@ -55,6 +55,27 @@ sourcedeck-govcon-<NN>-<slug>-<variant>.<ext>
 
 Example: `sourcedeck-govcon-13-internal-review-markdown-export-web.mp4` (+ `.webm`, + `-poster.jpg`).
 
+### Canonical website clip set (8 consolidated cuts)
+
+For the public website, the 17 source shots are consolidated into **8 canonical
+website clips** with fixed, predictable filenames (each ships with a `.webm`
+sibling and a `-poster.jpg`):
+
+| File | Consolidates source shots | Screen shown |
+|---|---|---|
+| `sourcedeck-govcon-00-cold-open.mp4` | 00, 01 | GovCon Capture OS cold open + sidebar/Mode indicator |
+| `sourcedeck-govcon-01-load-sample-data.mp4` | 02 | Load Sample GovCon Demo Data (demo-tagged) |
+| `sourcedeck-govcon-02-capture-command-center.mp4` | 03 | Capture Command Center |
+| `sourcedeck-govcon-03-solicitation-workspace.mp4` | 04, 05 | Solicitation Workspace + Compliance Matrix |
+| `sourcedeck-govcon-04-compliance-matrix.mp4` | 05 | Compliance Matrix detail (sales-leaning) |
+| `sourcedeck-govcon-05-vendor-pricing.mp4` | 06, 07 | Vendor Quote Room + Pricing Worksheet |
+| `sourcedeck-govcon-06-submission-readiness.mp4` | 11, 12, 14 | Submission Readiness Gate + Last Updated chips + no-submit language |
+| `sourcedeck-govcon-07-internal-review-export.mp4` | 13 | Internal Review Markdown export (SAMPLE DEMO DATA + INTERNAL REVIEW DRAFT — NOT SUBMITTED) |
+
+These 8 names are the canonical website-asset filenames. The longer
+`<NN>-<slug>-<variant>` form above remains the naming for the raw per-shot
+working cuts.
+
 Source/working files stay in `.qa/phase-23j-…/` or `/tmp/` only — never committed to this repo.
 
 ---
@@ -92,6 +113,15 @@ A persistent disclaimer must appear adjacent to any GovCon clip block:
 > **SourceDeck prepares internal review materials only.** It does not submit, upload, email, or transmit bids, quotes, or government responses. No portal upload. No SAM / PIEE / eBuy / GSA interaction. No email transmission. Final submission requires human review and action outside SourceDeck.
 
 This mirrors the in-app Markdown export boundary and must not be omitted, collapsed-by-default behind interaction, or visually de-emphasized below legibility.
+
+### Required website copy near every clip (verbatim)
+
+These four lines must appear, legibly, near any GovCon clip block:
+
+- "Demo uses sample data."
+- "SourceDeck does not submit bids, quotes, emails, or portal uploads."
+- "All exports are for internal review unless separately submitted by the user."
+- "Local development builds may show unsigned-artifact warnings unless release evidence verifies signing/notarization."
 
 ---
 
