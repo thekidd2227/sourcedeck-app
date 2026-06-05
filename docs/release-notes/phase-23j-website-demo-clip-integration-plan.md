@@ -5,6 +5,20 @@
 **Branch:** `docs/phase-23j-website-demo-clip-integration-plan`
 **Builds on:** PR #76 — *clean GovCon demo recording review* (`fd8146a` on `main`).
 
+> **Revision (2026-06-04):** added the canonical 8-clip website naming set
+> (`sourcedeck-govcon-00-cold-open.mp4` … `-07-internal-review-export.mp4`) and
+> the four verbatim required-copy lines that must appear near every clip ("Demo
+> uses sample data."; "SourceDeck does not submit bids, quotes, emails, or
+> portal uploads."; "All exports are for internal review unless separately
+> submitted by the user."; "Local development builds may show unsigned-artifact
+> warnings unless release evidence verifies signing/notarization."). Also adds
+> the single combined disclaimer string and an explicit verbatim
+> forbidden-website-copy list (Free demo / Download now / Try now / Submit bids
+> automatically / Send emails automatically / SourceDeck files into SAM.gov /
+> SourceDeck submits proposals / Guaranteed award / FedRAMP certified / SOC 2
+> certified / CMMC certified / Signed and notarized / Apple notarized). Still
+> docs-only; no media, no website/runtime change.
+
 ## What this phase adds
 
 A **plan-only** document defining how the approved GovCon Capture OS demo clips
