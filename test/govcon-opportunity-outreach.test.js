@@ -30,7 +30,15 @@ function test(name, fn) {
   );
 }
 
-const NOW = Date.parse('2026-06-01T00:00:00.000Z');
+// Phase 24A — bumped from '2026-06-01T00:00:00Z' so the test's injected
+// clock stays comfortably ahead of the real system clock for years to come.
+// `services/govcon/email-compliance.js#activeSolicitation()` uses
+// `Date.now()` (system clock) to check whether a solicitation's response
+// window is still open; when NOW slipped behind the wall clock, MOCK-A's
+// `NOW + 5 days` deadline became "in the past" and the active-solicitation
+// gate stopped firing in tests (the gate still works in production where
+// real deadlines are anchored to real now). No product code is modified.
+const NOW = Date.parse('2099-01-01T00:00:00.000Z');
 const nowFn = () => NOW;
 function freshStore() { const d = {}; return { get: (k) => d[k], set: (k, v) => { d[k] = v; }, _d: d }; }
 
