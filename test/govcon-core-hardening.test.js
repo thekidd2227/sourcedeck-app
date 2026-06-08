@@ -199,6 +199,48 @@ test('Operating Rhythm parent + four prior panels remain intact', () => {
   assert.ok(/id="gc-agency-targeting"/.test(HTML),       'agency-targeting panel missing');
 });
 
+// 6b. Phase 24C — GovCon NAICS filter dropdown is profile-driven.
+test('GovCon NAICS filter dropdown is profile-driven (no hardcoded NAICS options)', () => {
+  // Locate the <select id="gc-naics-filter"> open tag and the closing </select>.
+  const openIdx = HTML.indexOf('id="gc-naics-filter"');
+  assert.ok(openIdx > 0, 'gc-naics-filter <select> missing');
+  // Walk back to the opening "<select" so we can capture the entire element.
+  const selOpen = HTML.lastIndexOf('<select', openIdx);
+  const selClose = HTML.indexOf('</select>', openIdx);
+  assert.ok(selOpen > 0 && selClose > openIdx, 'malformed gc-naics-filter <select>');
+  const block = HTML.slice(selOpen, selClose);
+  // Only the "All NAICS" sentinel option ships in HTML; everything else is
+  // populated by gcRenderNaicsFilter() at runtime.
+  assert.ok(/<option value="">All NAICS<\/option>/.test(block),
+    '"All NAICS" entry missing in gc-naics-filter');
+  // No operator-specific NAICS literals as static <option> entries.
+  for (const code of ['541611','541614','541512','541519','561210','561720','238320','561110','541612','541613','541990','518210']) {
+    assert.ok(!new RegExp('<option>\\s*' + code + '\\s*<').test(block),
+      'hardcoded NAICS <option>' + code + '</option> still in gc-naics-filter');
+  }
+});
+
+test('gcRenderNaicsFilter() reads from window.APPROVED_NAICS and surfaces configure prompt when empty', () => {
+  const m = HTML.match(/function\s+gcRenderNaicsFilter\s*\(\s*\)\s*\{[\s\S]*?\n\}/);
+  assert.ok(m, 'gcRenderNaicsFilter function not found');
+  const fn = m[0];
+  assert.ok(/getElementById\(['"]gc-naics-filter['"]\)/.test(fn),
+    'gcRenderNaicsFilter must target #gc-naics-filter');
+  assert.ok(/window\.APPROVED_NAICS/.test(fn),
+    'gcRenderNaicsFilter must read from the profile-driven APPROVED_NAICS cache');
+  assert.ok(/Configure NAICS in Settings/i.test(fn),
+    'gcRenderNaicsFilter must surface a "Configure NAICS in Settings" prompt when the profile is empty');
+  assert.ok(/window\.gcRenderNaicsFilter\s*=\s*gcRenderNaicsFilter/.test(HTML),
+    'gcRenderNaicsFilter must be exposed on window');
+});
+
+test('DOMContentLoaded chains gcRenderNaicsFilter after gcLoadTargetingNaics', () => {
+  // We need the loader to finish populating window.APPROVED_NAICS before
+  // the dropdown render fires.
+  assert.ok(/gcLoadTargetingNaics\(\)\.then\(\s*function\s*\(\s*\)\s*\{\s*gcRenderNaicsFilter\(\);/.test(HTML),
+    'DOMContentLoaded must chain gcRenderNaicsFilter() after gcLoadTargetingNaics()');
+});
+
 // 7. Renderer-boot guard: every inline <script> still parses.
 test('every inline <script> block still parses (renderer-boot guard)', () => {
   const scripts = [...HTML.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)];
