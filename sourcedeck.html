@@ -1667,6 +1667,11 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                   <label class="label">Airtable PAT</label>
                   <input class="input" id="s-atpat" type="password" value="" placeholder="pati54Z...">
                 </div>
+                <div class="form-group">
+                  <label class="label">SAM.gov API Key</label>
+                  <input class="input" id="s-samkey" type="password" value="" placeholder="SAM.gov API key (stored securely; never leaves your device)" autocomplete="off">
+                  <div style="font-size:9px;color:var(--muted);margin-top:4px">Used by the SAM.gov Opportunity Outreach scan and SAM Sprint. Phase 24I: setup is consolidated here — the SAM scan screen no longer prompts for a key.</div>
+                </div>
               </div>
             </div>
             <div class="card">
@@ -1963,11 +1968,12 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <span style="background:rgba(201,148,26,.12);border:1px solid rgba(201,148,26,.4);padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700">Human approval required</span>
             <span style="background:rgba(31,166,201,.12);border:1px solid rgba(31,166,201,.4);padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700">SAM.gov API</span>
           </div>
-          <!-- SAM key -->
-          <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
-            <input class="input" id="out-samkey" type="password" placeholder="SAM.gov API key (stored securely; never leaves your device)" style="flex:1;min-width:240px">
-            <button class="btn btn-ghost" onclick="saveSamKey()">Save Key</button>
+          <!-- SAM.gov API key — Phase 24I: setup is Settings-only.
+               This surface only DISPLAYS the credential presence status;
+               the operator paste/save flow lives in Settings → API Keys. -->
+          <div id="out-samkey-pointer" style="display:flex;gap:9px;flex-wrap:wrap;align-items:center;margin-bottom:12px;padding:9px 12px;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);font-size:12px;color:var(--muted)">
             <span id="out-samkey-status" style="font-size:12px;color:var(--muted)">SAM.gov key: checking…</span>
+            <button type="button" class="btn btn-ghost" onclick="openTab('settings')" style="font-size:11.5px;padding:6px 11px">⚙ Configure SAM.gov API key in Settings</button>
           </div>
           <!-- Scan config -->
           <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end">
@@ -4314,6 +4320,7 @@ async function saveSettings(){
     APOLLO_KEY: document.getElementById('s-apollo')?.value?.trim()||'',
     AT_PAT_OVERRIDE: document.getElementById('s-atpat')?.value?.trim()||'',
     BOOK_WH_OVERRIDE: document.getElementById('s-bookwh')?.value?.trim()||'',
+    SAM_API_KEY: document.getElementById('s-samkey')?.value?.trim()||'',
   };
   // Airtable PAT migrates to the safe credential adapter
   // (window.sd.credentials). It NEVER lands in localStorage.
@@ -4356,6 +4363,17 @@ async function saveSettings(){
       if (r && r.ok) {
         CLAUDE_KEY = '<anthropic_credential_present>';
         const el = document.getElementById('s-claude'); if (el) el.value = '';
+      }
+    } catch (_) {}
+  }
+  // SAM.gov API key migrates to safeStorage (same pattern as Airtable / Apollo /
+  // OpenAI / Claude). Phase 24I: setup is consolidated here — the SAM scan
+  // screen no longer prompts for a key. Renderer never holds the raw key.
+  if (keys.SAM_API_KEY && window.sd && window.sd.credentials) {
+    try {
+      const r = await window.sd.credentials.set('sam-gov', keys.SAM_API_KEY);
+      if (r && r.ok) {
+        const el = document.getElementById('s-samkey'); if (el) el.value = '';
       }
     } catch (_) {}
   }
@@ -11994,18 +12012,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     } catch(e){ el.textContent = 'SAM.gov key: status unavailable'; }
   }
 
-  window.saveSamKey = async function(){
-    var inp = $('out-samkey'); if (!inp) return;
-    var v = (inp.value||'').trim();
-    if (!v) { return; }
-    try {
-      if (window.sd && window.sd.credentials) {
-        var r = await window.sd.credentials.set('sam-gov', v);
-        if (r && r.ok) inp.value = '';
-      }
-    } catch(e){}
-    updateKeyStatus();
-  };
+  // Phase 24I — saveSamKey removed; SAM.gov API key setup is Settings-only.
+  // The SAM Outreach screen now displays presence status and a button that
+  // opens the Settings tab where the operator enters/updates the key.
 
   function readConfig(){
     var naics = ((($('out-naics')||{}).value)||'').split(/[ ,]+/).filter(Boolean);
@@ -12195,18 +12204,29 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
 
   // ── Load user NAICS into the selector ────────────────────────────────
+  // Phase 24I — no one-operator hardcoded NAICS fallback. When the
+  // targeting profile is empty, surface a "Configure NAICS in Settings"
+  // disabled option (same pattern as Phase 24C's GovCon NAICS filter
+  // dropdown).
   async function loadUserNaics() {
     var sel = document.getElementById('ppf-naics');
     if (!sel) return;
     try {
       if (window.sd && window.sd.govcon && window.sd.govcon.getTargeting) {
         var profile = await window.sd.govcon.getTargeting();
-        var codes = Array.isArray(profile && profile.naics) ? profile.naics : [];
-        // Rebuild options
+        var codes = Array.isArray(profile && profile.naics) ? profile.naics.filter(Boolean) : [];
         sel.innerHTML = '<option value="">All NAICS</option>';
-        (codes.length ? codes : ['541512','541611','541330','561210']).forEach(function(n) {
+        if (!codes.length) {
+          var empty = document.createElement('option');
+          empty.value = '';
+          empty.textContent = 'Configure NAICS in Settings → GovCon Targeting';
+          empty.disabled = true;
+          sel.appendChild(empty);
+          return;
+        }
+        codes.forEach(function(n) {
           var o = document.createElement('option');
-          o.value = n; o.textContent = n;
+          o.value = String(n); o.textContent = String(n);
           sel.appendChild(o);
         });
         // Select all user codes by default
@@ -12655,6 +12675,26 @@ document.addEventListener('DOMContentLoaded',()=>{
     var opps = loadOpps();
     var opp = null;
     for (var i = 0; i < opps.length; i++) { if (opps[i].id === id) { opp = opps[i]; break; } }
+    // Phase 24I — Capture Command Center opp-selection hook for the
+    // Phase 24E Stakeholder Graph. When the operator picks an opportunity
+    // here, refresh the stakeholder graph with that opp's context. The
+    // graph helper is a no-op when the bridge is unavailable, so this is
+    // safe in every renderer state.
+    if (opp && typeof window.gcLoadStakeholderGraph === 'function') {
+      try {
+        window.gcLoadStakeholderGraph({
+          opp: {
+            noticeId:           opp.id || null,
+            solicitationNumber: opp.solicitationNumber || null,
+            noticeType:         opp.noticeType || 'Solicitation',
+            responseDeadline:   opp.dueDate || null,
+            agency:             opp.agency || null,
+            subAgency:          opp.subAgency || null,
+            contractingOffice:  opp.contractingOffice || null
+          }
+        });
+      } catch (_e) { /* no-op — sample fallback remains */ }
+    }
     if (!opp) {
       out.innerHTML = '<div class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">Opportunity not found.</div>';
       return;
