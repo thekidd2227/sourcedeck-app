@@ -5,6 +5,30 @@
 
 ---
 
+## RESOLUTION (Phase 22A-P, 2026-06)
+
+**The pricing disagreement flagged below has been resolved.** See `docs/product/pricing-source-of-truth.md` (the new authoritative pricing reference) and `docs/release-notes/phase-22a-pricing-source-of-truth.md`.
+
+**Decision:** V3 posture adopted as the source of truth:
+
+| Tier | Price | Type |
+|---|---|---|
+| Solo Capture | $149 / month | Recurring (the product) |
+| GovCon Operator | $499 / month (or $4,990 / year) | Recurring (the product) |
+| Operator Plus | $997 / month (or $9,970 / year) | Recurring (the product) |
+| Enterprise | Custom | Recurring (the product) |
+| Self-Install Implementation | $1,497 one-time | Service |
+| Guided Implementation | $3,497 one-time | Service |
+| DFY Implementation | $5,997 one-time | Service |
+
+**Deprecated:** Public-site V2 amounts ($79 / $349 / $999 monthly subscription; $997 / $2,497 / $4,997 one-time implementation) are stale for buyer-facing use going forward, except where retained as archived historical context. V1 legacy Price IDs ($49 / $149 / mo) remain grandfathered server-side and are not re-exposed in UI.
+
+**Website alignment** to V3 (updates to `sourcedeck-site` `/pricing/`, `assets/sd-config.js`, Stripe Price IDs) is a separate phase run in the website repo, not in this app repo. Until that phase runs, the public site continues to display V2 amounts; existing checkouts continue to bill V2 prices. The transitional state is openly documented in `pricing-source-of-truth.md` §3.
+
+The rest of this document is the **original Phase 22A critique** that motivated the resolution. It is retained as the audit-record context.
+
+---
+
 ## 0. Bottom line
 
 SourceDeck's current pricing posture has **three independent failures** that compound:
