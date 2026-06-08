@@ -2403,6 +2403,21 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               <div class="gc-or-foot" style="font-size:10px;color:var(--muted);line-height:1.55">Sample agencies for demo only. Replace with your own targeting list before proposal use. No outreach is sent from this panel; every action is human-approved.</div>
             </div>
 
+            <!-- Panel E — Audit Log (trust feature) -->
+            <div id="gc-audit-log" class="gc-or-panel" data-section="govcon-audit-log" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;flex-wrap:wrap">
+                <div>
+                  <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Audit Log</div>
+                  <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">AI · Storage · Context · Config · Sensitive actions · Local-only</div>
+                </div>
+                <button type="button" class="btn btn-ghost" id="gc-audit-refresh-btn" onclick="gcAuditRefresh()" style="font-size:10.5px;padding:5px 10px">↻ Refresh</button>
+              </div>
+              <div id="gc-audit-list" class="gc-or-list" style="display:flex;flex-direction:column;gap:6px;max-height:320px;overflow:auto">
+                <div class="gc-or-row" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:10.5px;color:var(--muted)">Audit log not loaded. Click ↻ Refresh to fetch the most recent local-only events.</div>
+              </div>
+              <div class="gc-or-foot" style="font-size:10px;color:var(--muted);line-height:1.55">Events are persisted locally only and never include API keys, raw prompts, document contents, or secret values. No event is uploaded to any portal or transmitted by SourceDeck.</div>
+            </div>
+
           </div>
         </section>
         <!-- ═══════════════════════════════════════════════════════════════
@@ -4367,7 +4382,13 @@ function isApprovedNaicsMatch(org){
   const keywords = (org.keywords || []).join(' ').toLowerCase();
   const industry = (org.industry || '').toLowerCase();
   const name = (org.name || '').toLowerCase();
-  const approved = ['531311','531312','561210','561720','238220','238210','561320','561311','541611','541614'];
+  // Resolve the approved NAICS list from the user-editable targeting profile
+  // (window.APPROVED_NAICS is populated by gcLoadTargetingNaics() reading
+  // services/govcon/targeting-profile.js via IPC). When the profile is
+  // empty we fall through to the keyword-signal heuristic below — this
+  // file no longer hardcodes one operator's NAICS list.
+  const approved = (typeof window !== 'undefined' && Array.isArray(window.APPROVED_NAICS))
+    ? window.APPROVED_NAICS : [];
   for(const n of naics){ for(const a of approved){ if(n.startsWith(a.slice(0,4))||a.startsWith(n)) return true; } }
   const SIGNALS = ['property management','building management','apartment management','residential management',
     'facilities management','janitorial','cleaning service','hvac','plumbing','electrical contractor',
@@ -9128,12 +9149,91 @@ async function openGovconProposal(recId){
   showGovconResult('Proposal Workspace',result);
 }
 
-// ── APPROVED NAICS SET — single source of truth for GovCon search targeting ──
-const APPROVED_NAICS = [
-  '531311','531312','561210','561720','238220',
-  '238210','561320','561311','541611','541614'
-];
+// ── Targeting-profile-driven NAICS list ──
+// Source of truth: services/govcon/targeting-profile.js via
+// window.sd.govcon.getTargeting(). The renderer holds an in-memory
+// cache only; the profile lives in the main process (electron-store).
+// Default is EMPTY by design — see services/govcon/targeting-profile.js
+// docstring. No single operator's NAICS list is baked into the product;
+// operators populate their own profile via Settings → GovCon Targeting.
+let APPROVED_NAICS = [];
 window.APPROVED_NAICS = APPROVED_NAICS;
+
+// gcLoadTargetingNaics — refresh the renderer cache from the targeting
+// profile. Returns the array (also stored on window.APPROVED_NAICS).
+// Pure read; never writes credentials, never builds Bearer headers.
+async function gcLoadTargetingNaics() {
+  try {
+    if (!(window.sd && window.sd.govcon && typeof window.sd.govcon.getTargeting === 'function')) return [];
+    const profile = await window.sd.govcon.getTargeting();
+    const codes = Array.isArray(profile && profile.naics) ? profile.naics.filter(Boolean) : [];
+    APPROVED_NAICS = codes.slice();
+    window.APPROVED_NAICS = APPROVED_NAICS;
+    return APPROVED_NAICS;
+  } catch (_e) {
+    return APPROVED_NAICS;
+  }
+}
+window.gcLoadTargetingNaics = gcLoadTargetingNaics;
+if (typeof document !== 'undefined' && document.addEventListener) {
+  document.addEventListener('DOMContentLoaded', function () { gcLoadTargetingNaics(); });
+}
+
+// gcAuditRefresh — populate the in-app Audit Log panel.
+// Calls main-process audit:list IPC; renderer never touches the raw
+// persisted event store. The audit-log service already redacts secrets,
+// raw prompts, document content, and Authorization material before any
+// event is persisted, so it is safe to display the returned shape here.
+async function gcAuditRefresh() {
+  const host = document.getElementById('gc-audit-list');
+  if (!host) return;
+  if (!(window.sd && typeof window.sd.auditList === 'function')) {
+    host.innerHTML = '<div class="gc-or-row" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:10.5px;color:var(--muted)">Audit bridge unavailable in this build.</div>';
+    return;
+  }
+  host.innerHTML = '<div class="gc-or-row" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:10.5px;color:var(--muted)">Loading…</div>';
+  try {
+    const res = await window.sd.auditList({ limit: 25 });
+    const events = (res && Array.isArray(res.events)) ? res.events
+                 : Array.isArray(res) ? res : [];
+    if (!events.length) {
+      host.innerHTML = '<div class="gc-or-row" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:10.5px;color:var(--muted)">No audit events yet. Events appear here once AI, storage, context, or sensitive actions run.</div>';
+      return;
+    }
+    const esc = function (s) {
+      return String(s == null ? '' : s)
+        .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    };
+    const fmtTs = function (ts) {
+      try { return new Date(ts).toISOString().replace('T', ' ').slice(0, 19) + 'Z'; }
+      catch (_e) { return String(ts || ''); }
+    };
+    const statusColor = function (s) {
+      if (s === 'ok' || s === 'completed' || s === 'success') return 'var(--green,#30d158)';
+      if (s === 'failed' || s === 'error' || s === 'denied')  return 'var(--red,#ff453a)';
+      return 'var(--gold,#d4a843)';
+    };
+    const html = events.map(function (e) {
+      const meta = e && e.metadata ? JSON.stringify(e.metadata) : '';
+      return ''
+        + '<div class="gc-or-row" data-audit-row="1" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">'
+        +   '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">'
+        +     '<div style="font-size:11.5px;color:var(--text);font-weight:600">' + esc(e && e.eventType) + '</div>'
+        +     '<span style="font-family:\'IBM Plex Mono\',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:' + statusColor(e && e.status) + ';background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-weight:700">' + esc(e && e.status) + '</span>'
+        +   '</div>'
+        +   '<div style="font-size:9.5px;color:var(--muted);margin-top:3px;font-family:\'IBM Plex Mono\',monospace">' + esc(fmtTs(e && e.timestamp)) + '</div>'
+        + (meta && meta !== '{}'
+            ? '<div style="font-size:10px;color:var(--sub);margin-top:4px;line-height:1.55;word-break:break-word">' + esc(meta.slice(0, 400)) + '</div>'
+            : '')
+        + '</div>';
+    }).join('');
+    host.innerHTML = html;
+  } catch (_e) {
+    host.innerHTML = '<div class="gc-or-row" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:10.5px;color:var(--muted)">Could not load audit events.</div>';
+  }
+}
+window.gcAuditRefresh = gcAuditRefresh;
 
 // Build a SAM.gov search URL with keyword tags for one or more NAICS codes.
 // keywordRadio = 'ANY' when multiple codes → matches opportunities containing any of them.
@@ -9155,8 +9255,16 @@ function _buildSamUrl(codes, wide){
 
 // DEFAULT — DUAL-MODE: browser-tab now, in-app data when SAM API key arrives.
 function runGovconSync() {
-  const _browserFallback = function() {
-    const url = _buildSamUrl(window.APPROVED_NAICS || [], false);
+  const _browserFallback = async function() {
+    // Refresh from the targeting profile so we never use a stale renderer cache.
+    await gcLoadTargetingNaics();
+    const codes = window.APPROVED_NAICS || [];
+    if (!codes.length) {
+      toast('Configure your NAICS in Settings → GovCon Targeting before running SAM.gov search.','warn');
+      logActivity('⚠️','var(--gold,#d4a843)','GovCon SAM.gov search skipped — no NAICS configured in targeting profile');
+      return;
+    }
+    const url = _buildSamUrl(codes, false);
     // Anchor-click method — works in file://, localhost, Electron, desktop app contexts
     const a = document.createElement('a');
     a.href = url; a.target = '_blank'; a.rel = 'noopener noreferrer';
@@ -9166,8 +9274,8 @@ function runGovconSync() {
     document.body.removeChild(a);
     // Belt-and-suspenders
     try { window.open(url, '_blank', 'noopener,noreferrer'); } catch(e){}
-    toast('SAM.gov opened in browser · '+(window.APPROVED_NAICS||[]).length+' NAICS codes · Solicitation + Combined Synopsis only','info');
-    logActivity('🔎','var(--blue2)','GovCon SAM.gov search (ALL '+(window.APPROVED_NAICS||[]).length+' NAICS, strict)');
+    toast('SAM.gov opened in browser · '+codes.length+' NAICS codes from your targeting profile · Solicitation + Combined Synopsis only','info');
+    logActivity('🔎','var(--blue2)','GovCon SAM.gov search ('+codes.length+' NAICS from profile, strict)');
   };
   // Check proxy (100ms timeout — never slows browser-open path)
   try {
@@ -9261,9 +9369,17 @@ function _pushOppToAirtable(opp){
 
 // SINGLE-NAICS OVERRIDE — for when the operator explicitly wants to search just one code.
 function runGovconSyncSingle(){
-  const naics = prompt('Enter a single NAICS code to search:','541611');
+  const naics = prompt('Enter a single NAICS code to search:','');
   if(naics === null) return;
-  const code = naics.trim() || '541611';
+  const code = (naics || '').trim();
+  if (!code) {
+    toast('Enter a NAICS code, or open SAM.gov directly to browse.','warn');
+    return;
+  }
+  if (!/^\d{4,6}$/.test(code)) {
+    toast('NAICS code should be 4–6 digits.','warn');
+    return;
+  }
   const url = _buildSamUrl([code], false);
   window.open(url, '_blank');
   toast('SAM.gov search opened for single NAICS '+code+' (Solicitation + Combined Synopsis ONLY)','info');
@@ -9271,13 +9387,20 @@ function runGovconSyncSingle(){
 }
 window.runGovconSyncSingle = runGovconSyncSingle;
 
-// WIDE MODE — all approved NAICS but also includes Sources Sought + Pre-Solicitation.
+// WIDE MODE — all profile-configured NAICS but also includes Sources Sought + Pre-Solicitation.
 // Still excludes awards. Use when operator explicitly wants the broader view.
-function runGovconSyncWide(){
-  const url = _buildSamUrl(APPROVED_NAICS, true);
+async function runGovconSyncWide(){
+  await gcLoadTargetingNaics();
+  const codes = window.APPROVED_NAICS || [];
+  if (!codes.length) {
+    toast('Configure your NAICS in Settings → GovCon Targeting before running the wide SAM.gov search.','warn');
+    logActivity('⚠️','var(--gold,#d4a843)','GovCon SAM.gov WIDE search skipped — no NAICS configured in targeting profile');
+    return;
+  }
+  const url = _buildSamUrl(codes, true);
   window.open(url, '_blank');
-  toast('SAM.gov WIDE search for ALL '+APPROVED_NAICS.length+' NAICS (Solicitation + Combined Synopsis + Sources Sought + Pre-Solicitation; still excludes awards)','info');
-  logActivity('🔄','var(--blue2)','GovCon SAM.gov WIDE search (ALL '+APPROVED_NAICS.length+' NAICS)');
+  toast('SAM.gov WIDE search for '+codes.length+' NAICS from your targeting profile (Solicitation + Combined Synopsis + Sources Sought + Pre-Solicitation; still excludes awards)','info');
+  logActivity('🔄','var(--blue2)','GovCon SAM.gov WIDE search ('+codes.length+' NAICS from profile)');
 }
 window.runGovconSyncWide = runGovconSyncWide;
 
