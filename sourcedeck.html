@@ -2030,12 +2030,16 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <option value="Analyzed">Analyzed</option>
             <option value="Proposal Ready">Proposal Ready</option>
           </select>
+          <!-- Phase 24C — NAICS filter is profile-driven via
+               gcRenderNaicsFilter(); the dropdown ships with only the
+               "All NAICS" entry and is populated on DOMContentLoaded
+               from window.sd.govcon.getTargeting() (services/govcon/
+               targeting-profile.js). Empty profile surfaces a
+               "Configure NAICS in Settings → GovCon Targeting" prompt.
+               No operator-specific NAICS list is baked into the
+               renderer. -->
           <select class="select" id="gc-naics-filter" onchange="renderGovcon()">
             <option value="">All NAICS</option>
-            <option>541611</option><option>541614</option><option>541512</option><option>541519</option>
-            <option>561210</option><option>561720</option><option>238320</option><option>561110</option>
-            <option>541612</option><option>561311</option><option>561320</option><option>541613</option>
-            <option>541990</option><option>518210</option>
           </select>
           <select class="select" id="gc-sort" onchange="renderGovcon()">
             <option value="score">By Score</option>
@@ -9175,8 +9179,48 @@ async function gcLoadTargetingNaics() {
   }
 }
 window.gcLoadTargetingNaics = gcLoadTargetingNaics;
+
+// gcRenderNaicsFilter — populate the GovCon NAICS filter dropdown
+// (#gc-naics-filter) from the targeting profile's `naics` array.
+// Empty-profile state surfaces an explicit "Configure NAICS in
+// Settings → GovCon Targeting" prompt as a disabled option, so the
+// renderer never silently defaults to a baked-in operator list.
+// Re-uses the already-cached profile from gcLoadTargetingNaics().
+function gcRenderNaicsFilter() {
+  const sel = document.getElementById('gc-naics-filter');
+  if (!sel) return;
+  // Wipe everything except the "All NAICS" entry (idempotent: safe to
+  // re-run when the profile is updated in Settings).
+  const all = sel.querySelector('option[value=""]');
+  sel.innerHTML = '';
+  if (all) {
+    sel.appendChild(all);
+  } else {
+    const o = document.createElement('option');
+    o.value = ''; o.textContent = 'All NAICS';
+    sel.appendChild(o);
+  }
+  const codes = Array.isArray(window.APPROVED_NAICS) ? window.APPROVED_NAICS.filter(Boolean) : [];
+  if (!codes.length) {
+    const empty = document.createElement('option');
+    empty.value = '';
+    empty.textContent = 'Configure NAICS in Settings → GovCon Targeting';
+    empty.disabled = true;
+    sel.appendChild(empty);
+    return;
+  }
+  for (const code of codes) {
+    const o = document.createElement('option');
+    o.value = String(code); o.textContent = String(code);
+    sel.appendChild(o);
+  }
+}
+window.gcRenderNaicsFilter = gcRenderNaicsFilter;
+
 if (typeof document !== 'undefined' && document.addEventListener) {
-  document.addEventListener('DOMContentLoaded', function () { gcLoadTargetingNaics(); });
+  document.addEventListener('DOMContentLoaded', function () {
+    gcLoadTargetingNaics().then(function () { gcRenderNaicsFilter(); });
+  });
 }
 
 // gcAuditRefresh — populate the in-app Audit Log panel.

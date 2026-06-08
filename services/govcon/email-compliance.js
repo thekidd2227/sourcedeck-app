@@ -9,8 +9,9 @@ function draftOfficialEmail(input) {
   const opportunity = input.opportunity || {};
   const contact = input.contact || {};
   const purpose = String(input.purpose || 'clarification').slice(0, 80);
+  const nowMs = (typeof input.nowMs === 'number' && isFinite(input.nowMs)) ? input.nowMs : Date.now();
   const gate = guardDraft(opportunity, purpose);
-  if ((!gate.allowed && gate.window === 'RED_RESTRICTED') || activeSolicitation(opportunity)) {
+  if ((!gate.allowed && gate.window === 'RED_RESTRICTED') || activeSolicitation(opportunity, nowMs)) {
     return {
       ok: false,
       blocked: true,
@@ -44,10 +45,16 @@ function draftOfficialEmail(input) {
   };
 }
 
-function activeSolicitation(opportunity) {
+// `nowMs` is the injectable comparison clock — callers running with a
+// frozen test now (or against historical fixtures) must pass it so a
+// deadline placed N days "in the future" relative to the agent's now
+// isn't mis-classified as past when wall-clock has drifted. Defaults to
+// the real Date.now() when omitted.
+function activeSolicitation(opportunity, nowMs) {
   const kind = String(opportunity.noticeGroup || opportunity.noticeType || '').toLowerCase();
   const due = Date.parse(opportunity.responseDeadline || opportunity.responseDeadLine || '');
-  return /solicitation|rfp|rfq|combined/.test(kind) && (!Number.isFinite(due) || due > Date.now());
+  const cmp = (typeof nowMs === 'number' && isFinite(nowMs)) ? nowMs : Date.now();
+  return /solicitation|rfp|rfq|combined/.test(kind) && (!Number.isFinite(due) || due > cmp);
 }
 
 function officialQaDraft(opportunity, purpose) {

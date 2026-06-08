@@ -315,7 +315,10 @@ function createOpportunityOutreachService(deps) {
       contact: poc || {},
       purpose,
       companyName: profile.name || profile.companyName || 'SourceDeck user',
-      companyProfile: profile
+      companyProfile: profile,
+      // Pass the injectable clock so deadline-based "active solicitation"
+      // detection matches the agent's frame, not the wall clock.
+      nowMs: now()
     });
 
     // Apply the overclaim + cert guard to whatever draft text came back.
