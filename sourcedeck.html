@@ -2940,6 +2940,201 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           </div>
         </section>
         <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 24E — Stakeholder Graph UI
+             Buyer-visible FAR-aware capture-planning surface. Reference
+             intelligence only. SourceDeck does not contact government
+             officials, submit materials, upload to portals, or guarantee
+             procurement outcomes. Five backend categories
+             (contracting_office, program_office, incumbent,
+             partner_prime_or_sub, industry_day) + one synthetic UI-only
+             category (internal_owner with synthetic: true marker). Reads
+             window.sd.govcon.stakeholders({ opp, extras }) IPC for live
+             data; ships labeled SAMPLE rows in the default state.
+             Implementation contract: docs/product/phase-24e-stakeholder-
+             graph-implementation-contract.md.
+             ═══════════════════════════════════════════════════════════════ -->
+        <section id="gc-stakeholder-graph" class="gc-stakeholder-graph" data-section="govcon-stakeholder-graph" style="margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+          <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Stakeholder Graph</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">FAR-aware capture planning · Reference intelligence only · Human approval required</div>
+            <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">Internal capture planning only. SourceDeck does not contact government officials, submit materials, upload to portals, or guarantee procurement outcomes.</div>
+          </div>
+
+          <!-- Risk / ethics warning rail — shows when graph.inRestrictedWindow === true -->
+          <div id="gc-sg-risk-rail" class="gc-sg-risk-rail" style="margin-bottom:12px;background:rgba(139,26,46,0.10);border:1px solid rgba(139,26,46,0.30);border-radius:var(--r2);padding:9px 12px">
+            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--red,#ff453a);background:rgba(139,26,46,0.18);border:1px solid rgba(139,26,46,0.45);border-radius:4px;padding:2px 6px;font-weight:700">RESTRICTED WINDOW</span>
+              <span style="font-size:10.5px;color:var(--sub);line-height:1.55">Sample state: contracting officer is in a restricted communication window — use the agency's official Q&amp;A mechanism only. No direct outreach.</span>
+            </div>
+          </div>
+
+          <!-- Empty state placeholder (revealed when no opp is selected and no sample loaded) -->
+          <div id="gc-sg-empty" class="gc-sg-empty" hidden style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;font-size:11px;color:var(--muted);line-height:1.55">Map agency, prime, vendor, and internal stakeholders to plan compliant capture actions. SourceDeck does not contact or submit to stakeholders.</div>
+
+          <div class="gc-sg-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px">
+
+            <!-- View 1 — Opportunity stakeholder map -->
+            <div id="gc-stakeholder-by-opportunity" class="gc-sg-panel" data-sg-view="opportunity" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+              <div>
+                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Opportunity stakeholder map</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Per-opportunity roles · FAR-aware posture · Human approval required</div>
+              </div>
+              <div id="gc-sg-by-opp-list" class="gc-sg-list" style="display:flex;flex-direction:column;gap:6px">
+                <!-- Sample 1: Contracting officer (CO) — contracting_office / restricted -->
+                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="contracting_office" data-posture="restricted" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
+                    <div>
+                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Contracting officer (CO)</div>
+                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Sample Agency · Contracting Office</div>
+                    </div>
+                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
+                  </div>
+                  <div class="gc-sg-posture" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--red,#ff453a);background:rgba(139,26,46,0.10);border:1px solid rgba(139,26,46,0.30);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">Restricted</div>
+                  <div data-stakeholder-warning="restricted" style="font-size:10px;color:var(--red,#ff453a);line-height:1.55;margin-top:4px;font-weight:600">Restricted communication window — official Q&amp;A only. No direct outreach.</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.55">Posture: Restricted. Communications are limited to the official mechanism named in the solicitation.</div>
+                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">Linked to Sample RFP A · SAMPLE — operator must verify against the live SAM.gov posting.</div>
+                </div>
+
+                <!-- Sample 2: Program / mission office — program_office / research_target -->
+                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="program_office" data-posture="research_target" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
+                    <div>
+                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Program / mission office</div>
+                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Sample Agency · Program Office</div>
+                    </div>
+                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
+                  </div>
+                  <div class="gc-sg-posture" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--signal2,#2260A0);background:rgba(27,77,110,0.10);border:1px solid rgba(27,77,110,0.30);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">Research target</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">Posture: Research target. Approachable through public-record channels and industry days only.</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.55">Do not pitch during the restricted communication window. Engagement only via published forums.</div>
+                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">SAMPLE — operator must verify the agency's published forum guidance.</div>
+                </div>
+
+                <!-- Sample 3: Small Business Specialist (SBS) — program_office / outreach_candidate -->
+                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="program_office" data-posture="outreach_candidate" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
+                    <div>
+                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Small Business Specialist (SBS)</div>
+                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Sample Agency · SBS Office</div>
+                    </div>
+                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
+                  </div>
+                  <div class="gc-sg-posture" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold,#C9941A);background:rgba(201,148,26,0.10);border:1px solid rgba(201,148,26,0.30);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">Outreach candidate</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">Posture: Outreach candidate. Standard pre-RFP teaming/capability outreach.</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.55">Confirm any agency-specific guidance before reaching out. Never solicit non-public source-selection information.</div>
+                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">SAMPLE — operator must verify the agency's SBS office contact via the agency's small-business page.</div>
+                </div>
+
+                <!-- Sample 4: Likely incumbent — incumbent / research_target -->
+                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="incumbent" data-posture="research_target" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
+                    <div>
+                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Likely incumbent</div>
+                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Public-record FPDS award (if any)</div>
+                    </div>
+                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
+                  </div>
+                  <div class="gc-sg-posture" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--signal2,#2260A0);background:rgba(27,77,110,0.10);border:1px solid rgba(27,77,110,0.30);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">Research target</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">Win/loss analysis only. Use FPDS-NG award history to identify the current performer and incumbent contract value.</div>
+                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">SAMPLE — replace with verified FPDS-NG lookup.</div>
+                </div>
+              </div>
+              <div class="gc-sg-foot" style="font-size:10px;color:var(--muted);line-height:1.55">Sample rows for buyer demo. Replace with operator-verified stakeholders before proposal use. No outreach is drafted, sent, or queued from this panel.</div>
+            </div>
+
+            <!-- View 2 — Account / agency stakeholder map -->
+            <div id="gc-stakeholder-by-agency" class="gc-sg-panel" data-sg-view="agency" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+              <div>
+                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Account / agency stakeholder map</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Multi-opportunity rollup · Renderer-side aggregation</div>
+              </div>
+              <div id="gc-sg-by-agency-list" class="gc-sg-list" style="display:flex;flex-direction:column;gap:6px">
+                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="program_office" data-posture="research_target" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
+                    <div>
+                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Sample Agency — 3 opportunities tracked</div>
+                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Rolled up across Sample RFP A, Sample RFP B, Sample Sources Sought C</div>
+                    </div>
+                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
+                  </div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">3 program-office stakeholders · 1 contracting office (restricted on RFP A) · 1 SBS · public-record incumbent search recommended on each.</div>
+                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">SAMPLE — rollup recomputed when operator opens an opportunity from Capture Command Center.</div>
+                </div>
+              </div>
+              <div class="gc-sg-foot" style="font-size:10px;color:var(--muted);line-height:1.55">Account rollup is renderer-side aggregation from the per-opportunity graph. No backend rewrite.</div>
+            </div>
+
+            <!-- View 3 — Teaming / prime relationship map -->
+            <div id="gc-stakeholder-teaming" class="gc-sg-panel" data-sg-view="teaming" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+              <div>
+                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Teaming / prime relationship map</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Prime + sub + middleman-fit candidates · Mutual NDA standard</div>
+              </div>
+              <div id="gc-sg-teaming-list" class="gc-sg-list" style="display:flex;flex-direction:column;gap:6px">
+                <!-- Sample 5: Potential teaming partner (prime) — partner_prime_or_sub / outreach_candidate -->
+                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="partner_prime_or_sub" data-posture="outreach_candidate" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
+                    <div>
+                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Potential teaming partner (prime)</div>
+                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Sample Prime Co. (sample only)</div>
+                    </div>
+                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
+                  </div>
+                  <div class="gc-sg-posture" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold,#C9941A);background:rgba(201,148,26,0.10);border:1px solid rgba(201,148,26,0.30);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">Outreach candidate</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">Candidate prime partner for SDVOSB or 8(a) team-up on Sample RFP A.</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.55">Mutual NDA standard before sharing capability details. No source-selection or pricing information exchanged.</div>
+                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">SAMPLE — replace with a vetted candidate from your past-performance library or subcontractor bench.</div>
+                </div>
+
+                <!-- Sample 6: Potential subcontractor / vendor — partner_prime_or_sub / outreach_candidate -->
+                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="partner_prime_or_sub" data-posture="outreach_candidate" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
+                    <div>
+                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Potential subcontractor / vendor</div>
+                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Sample Vendor Co. (sample only)</div>
+                    </div>
+                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
+                  </div>
+                  <div class="gc-sg-posture" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold,#C9941A);background:rgba(201,148,26,0.10);border:1px solid rgba(201,148,26,0.30);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">Outreach candidate</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">Candidate vendor for cabling / IT installation scope on Sample RFP A.</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.55">Mutual NDA standard before sharing capability details. Verify FAR 52.219-14 limitation-of-subcontracting compliance before signing.</div>
+                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">SAMPLE — replace with a vendor from your subcontractor bench.</div>
+                </div>
+              </div>
+              <div class="gc-sg-foot" style="font-size:10px;color:var(--muted);line-height:1.55">Subset filtered from the opportunity graph where category = partner_prime_or_sub. No source-selection or pricing information is exchanged on this surface.</div>
+            </div>
+
+            <!-- View 4 — Internal owner map -->
+            <div id="gc-stakeholder-internal-owner" class="gc-sg-panel" data-sg-view="internal-owner" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+              <div>
+                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Internal owner map</div>
+                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Synthetic UI category · Local capture-team note · Never transmitted</div>
+              </div>
+              <div id="gc-sg-internal-owner-list" class="gc-sg-list" style="display:flex;flex-direction:column;gap:6px">
+                <!-- Synthetic internal_owner node — Phase 24E-PREP §B.2; carries synthetic: true marker via data-synthetic="true" -->
+                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="internal_owner" data-posture="internal" data-synthetic="true" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
+                    <div>
+                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Internal capture owner</div>
+                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Your team (you)</div>
+                    </div>
+                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
+                  </div>
+                  <div class="gc-sg-posture" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">Internal — synthetic</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">Posture: Internal capture planning only.</div>
+                  <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.55">Local capture-team owner for this pursuit. Local note only; never transmitted by SourceDeck.</div>
+                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">SAMPLE — replace with the operator-team owner from your pursuit profile.</div>
+                </div>
+              </div>
+              <div class="gc-sg-foot" style="font-size:10px;color:var(--muted);line-height:1.55">Synthetic UI-only category. Carries the data-synthetic="true" marker so it can never be sent back through a backend-expecting code path.</div>
+            </div>
+
+          </div>
+
+          <!-- Verbatim backend safety note (FAR 3.104 + Section L) -->
+          <div class="gc-sg-safety-note" style="margin-top:12px;font-size:10px;color:var(--muted);line-height:1.6;padding:8px 11px;border:1px solid var(--border);border-radius:var(--r2);background:var(--panel3,#0E2040)">SourceDeck does not draft or send outreach to contracting officers, contracting specialists, or CORs. Communications during a restricted communication window must be routed through the official mechanism named in the solicitation. Pre-RFP capability conversations with Small Business Specialists or program offices are appropriate when the agency permits them; respect industry-day formats and source-sought response windows. See FAR 3.104 (procurement integrity) and the solicitation's Section L communication instructions before initiating any contact.</div>
+        </section>
+        <!-- ═══════════════════════════════════════════════════════════════
              PHASE 22F — Submission Readiness Gate + Human-Approved
              Package Export. Closes the GovCon capture workflow with a
              pre-submission readiness control surface and an internal-
@@ -9231,6 +9426,102 @@ function gcRenderNaicsFilter() {
   }
 }
 window.gcRenderNaicsFilter = gcRenderNaicsFilter;
+
+// ── Phase 24E — Stakeholder Graph UI handlers ──
+// Reference-intelligence renderer. Reads the existing
+// window.sd.govcon.stakeholders({ opp, extras }) IPC (Phase 24E-PREP
+// audit verified READY). No backend rewrite; no send/submit/upload.
+// Default state renders the SAMPLE rows already in the HTML; the
+// live path is invoked when an operator-selected opportunity becomes
+// available (gcOpps / Capture Command Center linkage). Synthetic
+// internal_owner nodes carry data-synthetic="true" so they can never
+// be sent back through a backend-expecting code path.
+async function gcLoadStakeholderGraph(input) {
+  try {
+    if (!(window.sd && window.sd.govcon && typeof window.sd.govcon.stakeholders === 'function')) return null;
+    const payload = (input && typeof input === 'object') ? input : {};
+    const graph = await window.sd.govcon.stakeholders(payload);
+    if (graph && Array.isArray(graph.nodes)) gcRenderStakeholderGraph(graph);
+    return graph;
+  } catch (_e) { return null; }
+}
+function gcSyntheticInternalOwner(profile) {
+  const owner = (profile && (profile.assignedOwner || profile.captureOwner || profile.bdOwner)) || 'Operator (you)';
+  return Object.freeze({
+    role: 'Internal capture owner',
+    category: 'internal_owner',
+    label: String(owner),
+    posture: 'internal',
+    postureLabel: 'Internal capture planning only.',
+    instructions: 'Local capture-team note; never transmitted.',
+    synthetic: true
+  });
+}
+function gcRenderStakeholderEmptyState() {
+  const empty = document.getElementById('gc-sg-empty');
+  if (empty) empty.hidden = false;
+  for (const id of ['gc-sg-by-opp-list', 'gc-sg-by-agency-list', 'gc-sg-teaming-list', 'gc-sg-internal-owner-list']) {
+    const host = document.getElementById(id);
+    if (host) host.innerHTML = '';
+  }
+}
+function gcRenderStakeholderGraph(graph) {
+  if (!graph || !Array.isArray(graph.nodes)) return;
+  const oppHost     = document.getElementById('gc-sg-by-opp-list');
+  const teamingHost = document.getElementById('gc-sg-teaming-list');
+  const rail        = document.getElementById('gc-sg-risk-rail');
+  const empty       = document.getElementById('gc-sg-empty');
+  if (empty) empty.hidden = true;
+  const esc = function (s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  };
+  // Backend-supplied posture labels are the authoritative copy; UI
+  // never invents postures or rewrites posture wording.
+  const labels = graph.postureLabels || {};
+  const rowHtml = function (node) {
+    if (!node) return '';
+    const cat = String(node.category || '').replace(/[^a-z0-9_]/gi, '');
+    const post = String(node.posture || '').replace(/[^a-z0-9_]/gi, '');
+    const postureLabel = node.postureLabel || labels[node.posture] || '';
+    const isRestricted = post === 'restricted';
+    const warning = isRestricted
+      ? '<div data-stakeholder-warning="restricted" style="font-size:10px;color:var(--red,#ff453a);line-height:1.55;margin-top:4px;font-weight:600">Restricted communication window — official Q&amp;A only. No direct outreach.</div>'
+      : '';
+    return ''
+      + '<div class="gc-sg-row" data-stakeholder-category="' + esc(cat) + '" data-posture="' + esc(post) + '"'
+      + (node.synthetic ? ' data-synthetic="true"' : '')
+      + ' style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">'
+      +   '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">'
+      +     '<div>'
+      +       '<div style="font-size:11.5px;color:var(--text);font-weight:600">' + esc(node.role) + '</div>'
+      +       '<div style="font-size:10px;color:var(--muted);margin-top:1px">' + esc(node.label) + '</div>'
+      +     '</div>'
+      +   '</div>'
+      +   '<div class="gc-sg-posture" style="font-family:\'IBM Plex Mono\',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">' + esc(post.replace(/_/g, ' ')) + '</div>'
+      +   warning
+      +   '<div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">' + esc(postureLabel) + '</div>'
+      +   '<div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.55">' + esc(node.instructions) + '</div>'
+      + '</div>';
+  };
+  if (oppHost) {
+    oppHost.innerHTML = graph.nodes.map(rowHtml).join('');
+  }
+  if (teamingHost) {
+    const teamingNodes = graph.nodes.filter(function (n) { return n && n.category === 'partner_prime_or_sub'; });
+    teamingHost.innerHTML = teamingNodes.length
+      ? teamingNodes.map(rowHtml).join('')
+      : '<div class="gc-sg-row" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:10.5px;color:var(--muted)">No teaming candidates in the current opportunity graph.</div>';
+  }
+  if (rail) {
+    rail.style.display = graph.inRestrictedWindow ? '' : 'none';
+  }
+}
+window.gcLoadStakeholderGraph     = gcLoadStakeholderGraph;
+window.gcSyntheticInternalOwner   = gcSyntheticInternalOwner;
+window.gcRenderStakeholderGraph   = gcRenderStakeholderGraph;
+window.gcRenderStakeholderEmptyState = gcRenderStakeholderEmptyState;
 
 if (typeof document !== 'undefined' && document.addEventListener) {
   document.addEventListener('DOMContentLoaded', function () {
