@@ -4837,44 +4837,36 @@ This is the ONLY approved target set for the Generate Leads flow. A business
 that does not map to one of these clusters is out-of-scope and MUST be excluded
 from the output — do not return it even if it looks interesting.
 
-- 531311 — Residential Property Managers
-- 531312 — Nonresidential Property Managers
-- 561210 — Facilities Support Services
-- 561720 — Janitorial Services
-- 238220 — Plumbing, Heating, and Air-Conditioning Contractors
-- 238210 — Electrical Contractors and Other Wiring Installation Contractors
-- 561320 — Temporary Help Services
-- 561311 — Employment Placement Agencies
-- 541611 — Administrative Management and General Management Consulting Services
-- 541614 — Process, Physical Distribution, and Logistics Consulting Services
+${gcPromptNaicsContext()}
 
 NAICS TARGETING RULES (BINDING):
-1. PREFER — a candidate business MUST clearly map to one of the approved NAICS /
-   service clusters above, OR to a very close operational equivalent
-   (e.g. "property management company managing 50+ units" → 531311/531312,
-   "commercial janitorial service" → 561720, "temp staffing agency" → 561320).
-2. EXCLUDE — if a business does not plausibly fit one of the approved clusters,
+1. PREFER — a candidate business MUST clearly map to one of the configured NAICS /
+   service clusters above, OR to a very close operational equivalent (use the
+   description of each configured NAICS as your mapping guide).
+2. EXCLUDE — if a business does not plausibly fit one of the configured clusters,
    exclude it entirely. Do not return law firms, marketing agencies, SaaS
-   companies, retail brands, restaurants, real-estate brokerages (listing/sales
-   only), investment firms, or any other business type that is outside the
-   approved clusters — no matter how interesting or well-known they are.
-3. REAL-ESTATE BROKERAGES vs PROPERTY MANAGEMENT — these are different NAICS.
-   Only property management operations (531311 / 531312) are in scope. A pure
-   listing/sales brokerage (NAICS 531210) is out of scope even if it shares a
-   parent brand with a PM arm; in that case target the PM arm specifically.
-4. DO NOT FABRICATE NAICS — you may use NAICS codes as internal targeting
-   guidance, but you MUST NOT claim a NAICS code as a public fact about a
-   specific business in the output fields unless that code is publicly
+   companies, retail brands, restaurants, listing/sales-only real-estate
+   brokerages, investment firms, or any other business type that is outside the
+   configured clusters — no matter how interesting or well-known they are.
+3. NEAR-MATCH vs OUT-OF-SCOPE — when a business shares a parent brand with an
+   in-scope NAICS-aligned arm and an out-of-scope arm (for example, a parent
+   brand with one in-scope subsidiary and one out-of-scope subsidiary), target
+   only the in-scope arm whose direct operation matches the configured NAICS.
+   A pure out-of-scope brokerage, listing/sales firm, or other line of business
+   outside the configured NAICS is out of scope even if it shares a brand.
+4. DO NOT FABRICATE NAICS — you may use the configured NAICS codes as internal
+   targeting guidance, but you MUST NOT claim a NAICS code as a public fact
+   about a specific business in the output fields unless that code is publicly
    documented for that business (e.g. on SAM.gov, state licensing records,
    or a public contract). NAICS is targeting discipline, not emitted metadata.
 5. GOVCON SCOPE — for any govcon-adjacent generation, "small government
-   contractor" means a business whose primary NAICS is one of the approved
+   contractor" means a business whose primary NAICS is one of the configured
    clusters above AND that holds a SAM.gov registration. Do not target pure
    federal prime contractors, aerospace/defense primes, IT-staffing body shops,
-   or any business outside the approved clusters.
+   or any business outside the configured clusters.
 6. BRIEFLY LABEL each returned lead's fit in verification_notes or
    contact_quality_reason with the matched NAICS / service cluster (e.g.
-   "matches 531311 — residential property manager, 3000+ units NYC portfolio").
+   "matches <configured NAICS code> — <one-line operator-targeting fit>").
    A lead without a plausible NAICS match is invalid and must be dropped.
 
 VERIFICATION STANDARD — EVERY LEAD MUST PASS:
@@ -7066,44 +7058,36 @@ This is the ONLY approved target set for the Generate Leads flow. A business
 that does not map to one of these clusters is out-of-scope and MUST be excluded
 from the output — do not return it even if it looks interesting.
 
-- 531311 — Residential Property Managers
-- 531312 — Nonresidential Property Managers
-- 561210 — Facilities Support Services
-- 561720 — Janitorial Services
-- 238220 — Plumbing, Heating, and Air-Conditioning Contractors
-- 238210 — Electrical Contractors and Other Wiring Installation Contractors
-- 561320 — Temporary Help Services
-- 561311 — Employment Placement Agencies
-- 541611 — Administrative Management and General Management Consulting Services
-- 541614 — Process, Physical Distribution, and Logistics Consulting Services
+${gcPromptNaicsContext()}
 
 NAICS TARGETING RULES (BINDING):
-1. PREFER — a candidate business MUST clearly map to one of the approved NAICS /
-   service clusters above, OR to a very close operational equivalent
-   (e.g. "property management company managing 50+ units" → 531311/531312,
-   "commercial janitorial service" → 561720, "temp staffing agency" → 561320).
-2. EXCLUDE — if a business does not plausibly fit one of the approved clusters,
+1. PREFER — a candidate business MUST clearly map to one of the configured NAICS /
+   service clusters above, OR to a very close operational equivalent (use the
+   description of each configured NAICS as your mapping guide).
+2. EXCLUDE — if a business does not plausibly fit one of the configured clusters,
    exclude it entirely. Do not return law firms, marketing agencies, SaaS
-   companies, retail brands, restaurants, real-estate brokerages (listing/sales
-   only), investment firms, or any other business type that is outside the
-   approved clusters — no matter how interesting or well-known they are.
-3. REAL-ESTATE BROKERAGES vs PROPERTY MANAGEMENT — these are different NAICS.
-   Only property management operations (531311 / 531312) are in scope. A pure
-   listing/sales brokerage (NAICS 531210) is out of scope even if it shares a
-   parent brand with a PM arm; in that case target the PM arm specifically.
-4. DO NOT FABRICATE NAICS — you may use NAICS codes as internal targeting
-   guidance, but you MUST NOT claim a NAICS code as a public fact about a
-   specific business in the output fields unless that code is publicly
+   companies, retail brands, restaurants, listing/sales-only real-estate
+   brokerages, investment firms, or any other business type that is outside the
+   configured clusters — no matter how interesting or well-known they are.
+3. NEAR-MATCH vs OUT-OF-SCOPE — when a business shares a parent brand with an
+   in-scope NAICS-aligned arm and an out-of-scope arm (for example, a parent
+   brand with one in-scope subsidiary and one out-of-scope subsidiary), target
+   only the in-scope arm whose direct operation matches the configured NAICS.
+   A pure out-of-scope brokerage, listing/sales firm, or other line of business
+   outside the configured NAICS is out of scope even if it shares a brand.
+4. DO NOT FABRICATE NAICS — you may use the configured NAICS codes as internal
+   targeting guidance, but you MUST NOT claim a NAICS code as a public fact
+   about a specific business in the output fields unless that code is publicly
    documented for that business (e.g. on SAM.gov, state licensing records,
    or a public contract). NAICS is targeting discipline, not emitted metadata.
 5. GOVCON SCOPE — for any govcon-adjacent generation, "small government
-   contractor" means a business whose primary NAICS is one of the approved
+   contractor" means a business whose primary NAICS is one of the configured
    clusters above AND that holds a SAM.gov registration. Do not target pure
    federal prime contractors, aerospace/defense primes, IT-staffing body shops,
-   or any business outside the approved clusters.
+   or any business outside the configured clusters.
 6. BRIEFLY LABEL each returned lead's fit in verification_notes or
    contact_quality_reason with the matched NAICS / service cluster (e.g.
-   "matches 531311 — residential property manager, 3000+ units NYC portfolio").
+   "matches <configured NAICS code> — <one-line operator-targeting fit>").
    A lead without a plausible NAICS match is invalid and must be dropped.
 
 VERIFICATION STANDARD — EVERY LEAD MUST PASS:
@@ -9389,6 +9373,24 @@ async function gcLoadTargetingNaics() {
   }
 }
 window.gcLoadTargetingNaics = gcLoadTargetingNaics;
+
+// gcPromptNaicsContext — render the NAICS context string injected into
+// AI prompt-builder template literals. Reads window.APPROVED_NAICS
+// (the profile-driven cache populated by gcLoadTargetingNaics()).
+// When the profile is populated, emits a deduplicated bulleted list of
+// the operator's configured NAICS codes. When the profile is empty,
+// returns the neutral phrase "the configured target NAICS categories"
+// so the prompt never falls back to a single operator's NAICS list.
+// Pure helper — no network call, no AI provider call, no send/submit
+// behavior. Safe to call from any prompt-builder template literal.
+function gcPromptNaicsContext() {
+  const raw = (typeof window !== 'undefined' && Array.isArray(window.APPROVED_NAICS))
+    ? window.APPROVED_NAICS : [];
+  const uniq = Array.from(new Set(raw.map(String).map(function (s) { return s.trim(); }).filter(Boolean)));
+  if (!uniq.length) return 'the configured target NAICS categories';
+  return uniq.map(function (c) { return '- ' + c; }).join('\n');
+}
+window.gcPromptNaicsContext = gcPromptNaicsContext;
 
 // gcRenderNaicsFilter — populate the GovCon NAICS filter dropdown
 // (#gc-naics-filter) from the targeting profile's `naics` array.
