@@ -1670,7 +1670,14 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 <div class="form-group">
                   <label class="label">SAM.gov API Key</label>
                   <input class="input" id="s-samkey" type="password" value="" placeholder="SAM.gov API key (stored securely; never leaves your device)" autocomplete="off">
-                  <div style="font-size:9px;color:var(--muted);margin-top:4px">Used by the SAM.gov Opportunity Outreach scan and SAM Sprint. Phase 24I: setup is consolidated here — the SAM scan screen no longer prompts for a key.</div>
+                  <div style="font-size:9px;color:var(--muted);margin-top:4px">Used by the SAM.gov Opportunity Outreach scan and SAM Sprint. Phase 24K: also available in the Setup Wizard during onboarding. The SAM search screen does not prompt for credentials.</div>
+                </div>
+                <div class="form-group">
+                  <label class="label">Setup Wizard</label>
+                  <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+                    <button type="button" class="btn btn-ghost" id="s-run-setup-wizard" onclick="openGovconSetupWizard()" style="font-size:11.5px">⚙ Run Setup Wizard</button>
+                    <span style="font-size:10px;color:var(--muted)">Re-walk the onboarding flow (Welcome → Business → Targeting → API Keys → Quick Tour → Confirmation). Does not erase saved credentials.</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -4045,14 +4052,22 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
     <div class="gcwiz-hdr">
       <div class="gcwiz-title">GovCon Setup</div>
       <div style="display:flex;align-items:center;gap:10px">
-        <span class="gcwiz-progress" id="gcwiz-progress">Step 1 of 9</span>
+        <span class="gcwiz-progress" id="gcwiz-progress">Step 1 of 11</span>
         <button class="x-btn" onclick="closeGovconSetupWizard()">✕</button>
       </div>
     </div>
     <div class="gcwiz-body">
-      <!-- Step 1 — Business Profile -->
+      <!-- Step 1 — Welcome (Phase 24K) -->
       <div class="gcwiz-step active" data-step="1">
-        <h4>1. Business profile</h4>
+        <h4>1. Welcome to SourceDeck</h4>
+        <div class="gcwiz-help">SourceDeck helps you organize GovCon pursuits from opportunity discovery to internal-review package. You stay in control of every send, upload, submission, and decision.</div>
+        <div class="gcwiz-note"><strong>What this wizard sets up:</strong> your business profile, GovCon targeting filters, API keys (including SAM.gov), and approval rules. You can skip optional steps and return later from Settings → Run Setup Wizard.</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:10px">SourceDeck prepares internal review materials. It never sends outreach, submits bids/quotes/proposals, or uploads to SAM.gov / PIEE / eBuy / GSA on your behalf. Every action requires your explicit human approval.</div>
+        <div class="gcwiz-help" style="margin-top:10px">After completing this wizard, the GovCon Capture OS becomes your default workspace.</div>
+      </div>
+      <!-- Step 2 — Business Profile (was Step 1) -->
+      <div class="gcwiz-step" data-step="2">
+        <h4>2. Business profile</h4>
         <div class="gcwiz-help">Tell SourceDeck who you are so capture and content outputs use your real context. Stored locally as profile context — never as a credential.</div>
         <div class="gcwiz-field"><label>Legal business name</label><input class="input" id="gcwiz-company" type="text" placeholder="Your company legal name" style="width:100%"></div>
         <div class="gcwiz-field"><label>DBA / brand name</label><input class="input" id="gcwiz-dba" type="text" placeholder="Brand / trade name" style="width:100%"></div>
@@ -4066,9 +4081,9 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
         <div class="gcwiz-field"><label>Core services (comma separated)</label><input class="input" id="gcwiz-coreservices" type="text" placeholder="Help desk, Cloud migration, Staffing" style="width:100%"></div>
         <div class="gcwiz-field"><label>Differentiators (comma separated)</label><input class="input" id="gcwiz-differentiators" type="text" placeholder="24/7 coverage, CMMC-aware processes" style="width:100%"></div>
       </div>
-      <!-- Step 2 — Capability Statement -->
-      <div class="gcwiz-step" data-step="2">
-        <h4>2. Capability statement</h4>
+      <!-- Step 3 — Capability Statement (was Step 2) -->
+      <div class="gcwiz-step" data-step="3">
+        <h4>3. Capability statement</h4>
         <div class="gcwiz-help">Paste your capability statement text to extract candidate fields. Nothing is sent to any external provider — extraction runs locally. You approve each field before it is saved.</div>
         <div class="gcwiz-field"><label>Paste capability statement text (or skip)</label><textarea class="textarea" id="gcwiz-capstmt" placeholder="Paste capability statement text here…" style="width:100%;min-height:90px"></textarea></div>
         <div style="display:flex;gap:8px;align-items:center">
@@ -4079,9 +4094,9 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
         <div id="gcwiz-cap-candidates" style="margin-top:10px"></div>
         <div class="gcwiz-help">File upload &amp; PDF extraction: planned (TODO) — paste text or enter fields manually for now.</div>
       </div>
-      <!-- Step 3 — GovCon Targeting -->
-      <div class="gcwiz-step" data-step="3">
-        <h4>3. GovCon targeting</h4>
+      <!-- Step 4 — GovCon Targeting (was Step 3) -->
+      <div class="gcwiz-step" data-step="4">
+        <h4>4. GovCon targeting</h4>
         <div class="gcwiz-help">Used as default context for SAM search, outreach, and prime-partner matching.</div>
         <div class="gcwiz-field"><label>Socioeconomic certifications</label>
           <div class="gcwiz-certs" id="gcwiz-certs">
@@ -4108,11 +4123,11 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
         <div class="gcwiz-field"><label>Prime / subcontractor preference</label><input class="input" id="gcwiz-subpref" type="text" placeholder="prime / sub / either" style="width:100%"></div>
         <div class="gcwiz-field"><label>Remote / on-site preference</label><input class="input" id="gcwiz-remotepref" type="text" placeholder="remote / on-site / hybrid" style="width:100%"></div>
       </div>
-      <!-- Step 4 — SAM.gov API key -->
-      <div class="gcwiz-step" data-step="4">
-        <h4>4. SAM.gov API key</h4>
-        <div class="gcwiz-help">A SAM.gov API key lets SourceDeck search opportunities directly. Without a key, you can still use a manual/fallback sam.gov search route.</div>
-        <div class="gcwiz-note">Saved through the secure main-process credential boundary. Status is presence-only — the raw key is never displayed after save and never reaches the page or logs.</div>
+      <!-- Step 5 — SAM.gov API key (was Step 4) — Phase 24K: this step also remains available in Settings → API Keys -->
+      <div class="gcwiz-step" data-step="5">
+        <h4>5. SAM.gov API key</h4>
+        <div class="gcwiz-help">Add your SAM.gov API key here during setup, or manage it later in Settings. SourceDeck uses this key only for authorized SAM.gov opportunity lookup. The SAM search screen does not ask you to paste credentials.</div>
+        <div class="gcwiz-note">Saved through the secure main-process credential boundary. Status is presence-only — the raw key is never displayed after save and never reaches the page or logs. SourceDeck never displays saved API key values in search screens, proposal screens, exports, demos, or logs.</div>
         <div class="gcwiz-field"><label>SAM.gov API key</label><input class="input" id="gcwiz-sam" type="password" placeholder="Paste SAM.gov API key" autocomplete="off" style="width:100%"></div>
         <div style="display:flex;gap:8px;align-items:center">
           <button class="btn btn-blue" onclick="gcWizSaveSam()">Save SAM.gov key</button>
@@ -4120,10 +4135,10 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
         </div>
         <div class="gcwiz-status missing" id="gcwiz-sam-status">SAM.gov key missing</div>
       </div>
-      <!-- Step 5 — AI Agent API key -->
-      <div class="gcwiz-step" data-step="5">
-        <h4>5. AI agent API key</h4>
-        <div class="gcwiz-help">Powers AI drafting and reasoning. Saved presence-only through the credential boundary; the raw key never returns to the page.</div>
+      <!-- Step 6 — AI Agent API key (was Step 5) — Phase 24K: also manage later in Settings → API Keys -->
+      <div class="gcwiz-step" data-step="6">
+        <h4>6. AI agent API key</h4>
+        <div class="gcwiz-help">Powers AI drafting and reasoning. Only add keys for services you plan to use. You can skip keys now and add them later in Settings. Saved presence-only through the credential boundary; the raw key never returns to the page.</div>
         <div class="gcwiz-field"><label>Provider</label>
           <select class="select" id="gcwiz-ai-provider" style="width:100%">
             <option value="openai">OpenAI</option>
@@ -4138,9 +4153,9 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
         </div>
         <div class="gcwiz-status missing" id="gcwiz-ai-status">No AI key saved</div>
       </div>
-      <!-- Step 6 — Creative / Imaging API key -->
-      <div class="gcwiz-step" data-step="6">
-        <h4>6. Creative / imaging API key</h4>
+      <!-- Step 7 — Creative / Imaging API key (was Step 6) -->
+      <div class="gcwiz-step" data-step="7">
+        <h4>7. Creative / imaging API key</h4>
         <div class="gcwiz-help">Optional. Credential saved for future creative-provider workflows. Manual image prompt workflow is available now; SourceDeck does not generate or publish images on your behalf yet.</div>
         <div class="gcwiz-field"><label>Provider</label>
           <select class="select" id="gcwiz-creative-provider" style="width:100%">
@@ -4155,9 +4170,9 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
         </div>
         <div class="gcwiz-status missing" id="gcwiz-creative-status">No creative key saved</div>
       </div>
-      <!-- Step 7 — Social handles / platforms -->
-      <div class="gcwiz-step" data-step="7">
-        <h4>7. Social handles &amp; platforms</h4>
+      <!-- Step 8 — Social handles / platforms (was Step 7) -->
+      <div class="gcwiz-step" data-step="8">
+        <h4>8. Social handles &amp; platforms</h4>
         <div class="gcwiz-help">Profile context only. SourceDeck prepares draft content — it does not post to or publish on any platform.</div>
         <div class="gcwiz-field"><label>LinkedIn URL</label><input class="input" id="gcwiz-soc-linkedin" type="text" placeholder="https://linkedin.com/company/…" style="width:100%"></div>
         <div class="gcwiz-field"><label>Facebook page URL</label><input class="input" id="gcwiz-soc-facebook" type="text" placeholder="https://facebook.com/…" style="width:100%"></div>
@@ -4176,9 +4191,9 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
         </div>
         <div class="gcwiz-note">No platform posting. Handles and platform choices are profile context for draft preparation only.</div>
       </div>
-      <!-- Step 8 — Safety & approval rules -->
-      <div class="gcwiz-step" data-step="8">
-        <h4>8. Safety &amp; approval rules</h4>
+      <!-- Step 9 — Safety & approval rules (was Step 8) -->
+      <div class="gcwiz-step" data-step="9">
+        <h4>9. Safety &amp; approval rules</h4>
         <div class="gcwiz-note">SourceDeck prepares drafts and decision support. You approve before outreach, proposal submission, publishing, or posting. AI outputs require human review. SourceDeck does not approve outreach, certify compliance, or make final bid decisions.</div>
         <div class="gcwiz-certs" style="flex-direction:column;align-items:flex-start">
           <label><input type="checkbox" id="gcwiz-saf-outreach" checked> Require human approval before outreach</label>
@@ -4191,12 +4206,44 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
         <div class="gcwiz-field"><label>Approved claims (comma separated)</label><input class="input" id="gcwiz-approvedclaims" type="text" placeholder="claims you have verified you can make" style="width:100%"></div>
         <div class="gcwiz-help">RED_RESTRICTED blocks informal outreach during restricted windows; a KILL decision is irreversible. These guardrails protect procurement integrity. Nothing here is legal, contracting, or compliance advice.</div>
       </div>
-      <!-- Step 9 — Finish -->
-      <div class="gcwiz-step" data-step="9">
-        <h4>9. You're set up</h4>
+      <!-- Step 10 — Quick Setup Tour (Phase 24K) -->
+      <div class="gcwiz-step" data-step="10">
+        <h4>10. Quick Setup Tour</h4>
+        <div class="gcwiz-help">A one-screen tour of the GovCon Capture OS surfaces you'll use most. Each feature is local-only, advisory, and requires human approval — SourceDeck never sends, submits, or uploads on your behalf.</div>
+        <div class="gcwiz-note" id="gcwiz-tour-video"><strong>Quick Setup Video:</strong> Video walkthrough pending. Use the quick text tour below.</div>
+        <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;font-size:11px;line-height:1.55">
+          <div data-tour-feature="capture-command-center"><strong>Capture Command Center</strong> — Central pursuit board showing active pursuits, deadlines, Q&amp;A windows, bid/no-bid review counts. Add opportunities as you intake them; advisory recommendations only.</div>
+          <div data-tour-feature="operating-rhythm"><strong>Operating Rhythm</strong> — Daily capture rhythm with Daily Rhythm, Deadline &amp; Q&amp;A Calendar, Pre-RFP Intelligence, and Agency Targeting Insights panels. Local-only operating view.</div>
+          <div data-tour-feature="solicitation-workspace"><strong>Solicitation Workspace</strong> — Paste solicitation text to get a Section L / M / B / C / H / K shred and a starter compliance matrix. Human review required before proposal use.</div>
+          <div data-tour-feature="compliance-matrix"><strong>Compliance Matrix</strong> — Per-requirement matrix bound to the solicitation. Mark each requirement Draft → Addressed → Reviewed → Approved as your team works it.</div>
+          <div data-tour-feature="vendor-quote-room"><strong>Vendor Quote Room</strong> — Vendor candidates with manual quote-status tracking. SourceDeck does not email vendors or submit quote requests on your behalf.</div>
+          <div data-tour-feature="pricing-worksheet"><strong>Pricing Worksheet</strong> — Advisory price/margin worksheet. Operator sets the bid price; SourceDeck does not auto-quote and does not submit pricing.</div>
+          <div data-tour-feature="past-performance-library"><strong>Past Performance Library</strong> — Reusable past-performance citations. Local storage; SourceDeck does not transmit your PP library.</div>
+          <div data-tour-feature="capability-statement-studio"><strong>Capability Statement Studio</strong> — Per-opportunity capability statement tailoring. Internal review draft only; SourceDeck does not send or attest.</div>
+          <div data-tour-feature="prime-partner-finder"><strong>Prime Partner Finder</strong> — Prime/sub team-up candidate finder driven by your configured NAICS. Mutual NDA standard before sharing capability details.</div>
+          <div data-tour-feature="stakeholder-graph"><strong>Stakeholder Graph</strong> — FAR-aware posture labels for CO, program office, incumbent, prime/sub partners, industry-day respondents, and internal owner. Reference intelligence only.</div>
+          <div data-tour-feature="submission-readiness-gate"><strong>Submission Readiness Gate</strong> — Red / yellow / green readiness advisory: "are we responsive yet?" SourceDeck never auto-submits.</div>
+          <div data-tour-feature="internal-review-markdown-export"><strong>Internal Review Markdown Export</strong> — Local Markdown export of the internal-review package. Operator delivers via their own channel; no portal upload.</div>
+          <div data-tour-feature="audit-log"><strong>Audit Log</strong> — Local-only evidence trail of AI, storage, context, and sensitive-action events. Never includes API keys, raw prompts, or document contents.</div>
+          <div data-tour-feature="response-desk"><strong>Response Desk</strong> — Import-first reply analysis (paste or manual import). No Send Email surface; draft-only with human approval required.</div>
+          <div data-tour-feature="sam-sprint"><strong>SAM Sprint</strong> — Plan-tier SAM.gov opportunity sprint (Free = 1 NAICS, paid = multi-NAICS). Manual-review required; no autonomous submission.</div>
+        </div>
+        <div class="gcwiz-help" style="margin-top:10px">Tip: most surfaces ship with SAMPLE/DEMO rows so you can explore safely. Replace sample content with real operator data before proposal use.</div>
+      </div>
+      <!-- Step 11 — Finish (was Step 9) + Final Confirmation Checklist (Phase 24K) -->
+      <div class="gcwiz-step" data-step="11">
+        <h4>11. You're set up</h4>
         <div class="gcwiz-help" id="gcwiz-finish-summary">Setup saved. Review the summary below.</div>
         <div id="gcwiz-summary" style="font-size:11px;color:var(--sub);line-height:1.7;margin-bottom:10px"></div>
         <div class="gcwiz-note">No raw secrets are displayed anywhere in the UI. SourceDeck prepares drafts and decision support — you approve before outreach, proposal submission, publishing, or posting.</div>
+        <div class="gcwiz-help" style="margin-top:10px"><strong>Final confirmation.</strong> Review and check each item before completing setup:</div>
+        <div class="gcwiz-certs" id="gcwiz-final-confirm" style="flex-direction:column;align-items:flex-start;margin-top:6px">
+          <label><input type="checkbox" id="gcwiz-confirm-internal-review"> I understand SourceDeck prepares internal review materials.</label>
+          <label><input type="checkbox" id="gcwiz-confirm-approve-externally"> I understand I approve and send/upload/submit externally.</label>
+          <label><input type="checkbox" id="gcwiz-confirm-sam-key-locations"> I understand SAM.gov API key setup is available in Setup Wizard and Settings.</label>
+          <label><input type="checkbox" id="gcwiz-confirm-sam-search-no-paste"> I understand the SAM search screen does not ask me to paste credentials.</label>
+          <label><input type="checkbox" id="gcwiz-confirm-replace-sample"> I understand demo/sample data must be replaced before real use.</label>
+        </div>
         <div style="display:flex;gap:7px;flex-wrap:wrap;margin-top:10px">
           <button class="btn btn-gold" onclick="closeGovconSetupWizard();openTab('govcon')">Go to GovCon</button>
           <button class="btn btn-ghost" onclick="closeGovconSetupWizard();openTab('outreach')">Outreach</button>
@@ -10323,7 +10370,7 @@ window.refreshGovconSetup = refreshGovconSetup;
 
 // ── Wizard control ──
 let _gcWizStep = 1;
-const _GC_WIZ_MAX = 9;
+const _GC_WIZ_MAX = 11;
 let _gcWizCapCandidates = null;
 
 function _gcv(id){ const el = document.getElementById(id); return el ? el.value : ''; }
@@ -10629,6 +10676,11 @@ async function _gcWizRenderSummary(){
 
 async function gcWizFinish(){
   await gcWizSaveProfile();
+  // Phase 24K — persistent setup-complete flag (localStorage). Auto-open
+  // logic checks this before sessionStorage so the wizard doesn't
+  // reappear after the user has explicitly completed setup. Reopening
+  // the wizard manually from Settings or the GovCon tab is unaffected.
+  try { localStorage.setItem('sd.govcon.setupComplete', '1'); } catch (_) {}
   closeGovconSetupWizard();
   await refreshGovconSetup();
   if (typeof refreshWorkspaceCredentialStatus === 'function') { try { await refreshWorkspaceCredentialStatus(); } catch(_) {} }
@@ -10636,6 +10688,52 @@ async function gcWizFinish(){
   toast('GovCon operating profile saved','ok');
 }
 window.gcWizFinish = gcWizFinish;
+
+// Phase 24K — gcIsSetupComplete: localStorage-backed authoritative
+// setup-complete check. Returns true if the user has explicitly
+// completed the wizard at least once. Used by the first-run auto-open
+// gate so the wizard does not repeatedly open on every app launch.
+function gcIsSetupComplete() {
+  try { return localStorage.getItem('sd.govcon.setupComplete') === '1'; }
+  catch (_) { return false; }
+}
+window.gcIsSetupComplete = gcIsSetupComplete;
+
+// Phase 24K — gcMaybeAutoOpenWizard: first-run / new-profile auto-open.
+// Called on DOMContentLoaded (cold launch) since tab-govcon is the
+// default-active tab and the explicit openTab('govcon') click path may
+// not fire on cold open. Conditions:
+//   1. Persistent setup-complete flag is NOT set (localStorage).
+//   2. Profile-derived setup is NOT complete (govconSetupComplete()
+//      check via refreshGovconSetupState).
+//   3. We have not auto-opened in THIS session (sessionStorage).
+// On fail-open / corrupt state, the wizard shows — the operator can
+// always close it. Reopening from Settings or Help / Setup is a
+// separate user-initiated path that bypasses these gates.
+async function gcMaybeAutoOpenWizard() {
+  try {
+    if (gcIsSetupComplete()) return;
+    if (sessionStorage.getItem('lcc_govcon_wizard_seen') === '1') return;
+    if (typeof refreshGovconSetupState === 'function') {
+      try { await refreshGovconSetupState(); } catch (_) {}
+    }
+    if (typeof govconSetupComplete === 'function' && govconSetupComplete()) return;
+    sessionStorage.setItem('lcc_govcon_wizard_seen', '1');
+    if (typeof openGovconSetupWizard === 'function') openGovconSetupWizard();
+  } catch (_) {
+    // Corrupt state fails open — show the wizard so the operator can configure.
+    try { if (typeof openGovconSetupWizard === 'function') openGovconSetupWizard(); } catch (__) {}
+  }
+}
+window.gcMaybeAutoOpenWizard = gcMaybeAutoOpenWizard;
+if (typeof document !== 'undefined' && document.addEventListener) {
+  // Defer ~600ms after DOMContentLoaded so renderer + IPC bridges have
+  // initialized; bring the wizard up after the GovCon tab is already
+  // visible (it is the Phase 23C default-active tab).
+  document.addEventListener('DOMContentLoaded', function () {
+    setTimeout(function () { gcMaybeAutoOpenWizard(); }, 600);
+  });
+}
 
 // ── DEAL MODEL ──
 function createDeal(lead){
