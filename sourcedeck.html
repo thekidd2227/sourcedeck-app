@@ -789,6 +789,13 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <button class="nav-btn" data-tab="outreach"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span>Outreach</button>
       <button class="nav-btn" data-tab="primes"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 17l5-5-5-5"/><path d="M8 7l-5 5 5 5"/><path d="M14 4l-4 16"/></svg></span>Prime Partners</button>
     </div>
+    <!-- Phase 25E.4: Help / FAQ — always visible, regardless of the
+         Phase 25E.1 "Other business tools" toggle state. Buyers need
+         help one click away on cold open. -->
+    <div class="nav-section" id="nav-section-help" data-section="help-nav">
+      <div class="nav-label">Help</div>
+      <button class="nav-btn" data-tab="help"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>Help / FAQ</button>
+    </div>
     <!-- Phase 23C: Show All Tools toggle — defaults to expanded so
          every commercial tab remains visible by default; an operator
          can collapse non-GovCon sections for a buyer demo. The toggle
@@ -3845,6 +3852,36 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
           </div>
         </div>
         <div class="card" style="margin-top:16px"><div class="sl">Generated Report</div><div id="proof-output" style="min-height:200px;color:var(--muted);padding:20px;text-align:center">Select a report type above to generate</div></div>
+      </div>
+    </div>
+
+    <!-- ═══════ HELP / FAQ (Phase 25E.4) ═══════
+         Buyer-facing help with 9 sections × 20 FAQ items each.
+         Written at ~4th-grade reading level. The full manual
+         lives at docs/manuals/sourcedeck-user-manual-4th-grade.md.
+         The pane is search-filterable, accordion-style, and
+         always visible (sits in the always-on Help nav section).
+    -->
+    <div class="tab-pane" id="tab-help">
+      <div class="pane-hdr">
+        <div>
+          <div class="pane-title"><span class="brief-head">Help / FAQ</span></div>
+          <div class="pane-sub">Plain English answers · 9 sections · 20 questions each</div>
+        </div>
+      </div>
+      <div class="pane-body">
+        <div style="background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--text);line-height:1.55">
+          <strong style="color:var(--gold2)">Phase 25E.4:</strong> Plain-English help written at a fourth-grade reading level. Read the full manual at <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">docs/manuals/sourcedeck-user-manual-4th-grade.md</code>. If a word still feels hard, tell your operator.
+        </div>
+        <div class="form-group" style="margin-bottom:12px">
+          <label class="label">Search</label>
+          <input class="input" id="help-search" type="text" placeholder="Type a word or phrase — e.g. SAM key, lead, proposal" oninput="hpFilterFaq()" autocomplete="off">
+        </div>
+        <div id="help-faq-list" data-help-faq="true" style="display:flex;flex-direction:column;gap:10px"></div>
+        <div id="help-faq-empty" style="display:none;padding:32px 16px;text-align:center;color:var(--muted);font-size:12px">No FAQ items match your search. Try a shorter word or check the user manual.</div>
+        <div style="margin-top:14px;font-size:10.5px;color:var(--muted);line-height:1.55">
+          Need more help? Ask your pilot operator first (Tier 1, business-day response). For product defects or credential-boundary questions, your operator can escalate to Tier 2 engineering on your behalf (48-hour response).
+        </div>
       </div>
     </div>
 
@@ -15141,6 +15178,290 @@ document.addEventListener('DOMContentLoaded',()=>{
       wireAutosave();
     });
   }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 0);
+  }
+})();
+</script>
+
+<script>
+/* Phase 25E.4 — Help / FAQ
+   9 sections × 20 FAQ items (180 total) written at ~4th-grade
+   reading level. The full long-form manual lives at
+   docs/manuals/sourcedeck-user-manual-4th-grade.md.
+
+   Rendering: simple <details> accordion per section, with a
+   client-side search input that filters items by question or
+   answer substring (case-insensitive). No fetch, no network call,
+   no persistence — the data is in-source so the renderer is
+   self-contained and the i18n audit can scan it like any other
+   string. */
+(function(){
+  'use strict';
+  var FAQ = [
+    ['Command Center', [
+      ['What is the Command Center?',                 'The Command Center is your daily home base in SourceDeck.'],
+      ['What do I see on the Command Center?',         'You see leads, tasks, and alerts.'],
+      ['What is a lead?',                              'A lead is someone who might buy from you.'],
+      ['What is a task?',                              'A task is one job you need to do.'],
+      ['What is an alert?',                            'An alert is a note that something needs you now.'],
+      ['Why is the Command Center empty?',             'It is empty because you have not added any leads or tasks yet. Add some and it will fill up.'],
+      ['Do I need to set up anything first?',          'Yes. Go to Settings and add your SAM.gov key first.'],
+      ['Can I add a task here?',                       'You add tasks in Leads or in Pipeline. The Command Center shows them.'],
+      ['Can I delete a task here?',                    'You delete tasks where you made them.'],
+      ['What does the badge by the tab mean?',         'The badge is a small number. It tells you how many new alerts you have.'],
+      ['Can SourceDeck send a reminder email?',        'No. SourceDeck does not send emails. It just shows you the alert.'],
+      ['What is the Operating Rhythm?',                'The Operating Rhythm is a small list of jobs to do each day.'],
+      ['Where do my tasks come from?',                 'Your tasks come from your leads, your deals, and what you type in.'],
+      ['Can I have more than one user?',               'SourceDeck is one user per app right now.'],
+      ['Can I see last week’s tasks?',            'The Command Center shows today’s work. Go to Reports for older work.'],
+      ['Why did my work disappear?',                   'Make sure you saved before you closed. SourceDeck saves on your Mac.'],
+      ['Can I share my screen with my team?',          'Yes, you can share your screen. Do not share your API keys.'],
+      ['Is the Command Center the same on every Mac?', 'The look is the same. The data is yours, on your Mac.'],
+      ['Does SourceDeck send my data to the cloud?',   'SourceDeck keeps your data on your Mac. It does not send it out.'],
+      ['Who do I ask if I am stuck?',                  'Ask your pilot operator first. They are your Tier 1 help.']
+    ]],
+    ['Leads', [
+      ['What is the Leads tab?',                       'The Leads tab is where you keep your list of people who might buy from you.'],
+      ['How do I add a lead by hand?',                 'Open Leads. Type the name, the email, and what they do. Save it.'],
+      ['Can the AI find leads for me?',                'Yes, if you set up an AI key in Settings.'],
+      ['How does the AI find leads?',                  'It searches for people who match your target.'],
+      ['What is a target?',                            'A target is what kind of customer you want.'],
+      ['Where do I set my target?',                    'In the Setup Wizard or in your GovCon targeting profile.'],
+      ['What if I do not have an AI key?',             'You can add leads by hand. No AI key is needed for that.'],
+      ['How do I rate a lead?',                        'Click the lead and set the Priority. High, Medium, or Low.'],
+      ['What does Qualified mean?',                    'Qualified means the lead looks like a good fit for you.'],
+      ['What does the Status field do?',               'The Status tells you where the lead is in your steps. New, Contacted, Qualified.'],
+      ['Can I send an email to a lead from SourceDeck?','No. SourceDeck does not send emails. You email leads from your own email tool.'],
+      ['Does Leads save to Airtable?',                 'Airtable is an old extra option. SourceDeck saves leads on your Mac.'],
+      ['Do I need an Airtable key?',                   'No. Airtable is optional.'],
+      ['What if I delete a lead by mistake?',          'If you have not closed the app, you can press undo. Check often.'],
+      ['Can I add the same lead twice?',               'You can, but it is better not to. Use one record per person.'],
+      ['How do I know if a lead is hot?',              'Set the lead to High Priority. The list will show it first.'],
+      ['Can I add notes to a lead?',                   'Yes. There is a Notes box on each lead.'],
+      ['Do leads link to pursuits in GovCon?',         'Yes, you can link a lead to a pursuit.'],
+      ['Can I export my leads?',                       'Yes. Use the export button to save a local file.'],
+      ['Where do I learn more about Leads?',           'Read the user manual or ask your operator.']
+    ]],
+    ['GovCon', [
+      ['What is the GovCon tab?',                      'GovCon is where you find and track United States government contracts.'],
+      ['Why is the SAM.gov key needed?',               'The SAM.gov key lets SourceDeck search the SAM.gov site for contracts.'],
+      ['Where do I put the SAM.gov key?',              'Put the key in the Setup Wizard, or in Settings, in the API Keys area.'],
+      ['Can I paste my SAM.gov key on the SAM search page?','No. The SAM search page does not ask for a key. If you see a key box there, stop and tell your operator.'],
+      ['What is a pursuit?',                           'A pursuit is a contract you want to bid on.'],
+      ['How do I start a pursuit?',                    'Find a contract in SAM, click Save, and add it to GovCon as a pursuit.'],
+      ['What is a solicitation?',                      'A solicitation is the official paper the government sends out asking for bids.'],
+      ['What is FAR?',                                 'FAR stands for Federal Acquisition Regulation. It is the big rule book.'],
+      ['What is a clause?',                            'A clause is one rule inside the FAR.'],
+      ['What is a Compliance Matrix?',                 'The Compliance Matrix is a chart that shows you matched each rule with a part of your proposal.'],
+      ['What does Section L mean?',                    'Section L is the part of the solicitation that says how to write your proposal.'],
+      ['What does Section M mean?',                    'Section M is the part that says how your proposal will be graded.'],
+      ['What is a set-aside?',                         'A set-aside is when the government saves a contract for one type of small business.'],
+      ['What is SDVOSB?',                              'SDVOSB means Service-Disabled Veteran-Owned Small Business.'],
+      ['What is HUBZone?',                             'HUBZone is a kind of small business in a place with low income.'],
+      ['What is 8(a)?',                                '8(a) is a special program for small businesses.'],
+      ['What is WOSB?',                                'WOSB means Woman-Owned Small Business.'],
+      ['Can SourceDeck submit a bid for me?',          'No. You always submit the bid yourself, outside SourceDeck.'],
+      ['Can SourceDeck make me win?',                  'No. SourceDeck helps you get ready. It does not promise wins.'],
+      ['Where do I go after I find a pursuit?',        'Move to Proposal Workspace to start drafting your sections.']
+    ]],
+    ['Proposal Workspace', [
+      ['What is the Proposal Workspace?',              'The Proposal Workspace helps you write a proposal one part at a time.'],
+      ['Can I write the whole proposal in one click?', 'No. That is on purpose. You write each section one by one.'],
+      ['Why not all at once?',                         'A proposal you do not read is a proposal you will not win. We slow you down so you can think.'],
+      ['How many sections are there?',                 'There are 13 sections.'],
+      ['What are the 13 sections?',                    'Table of Contents, Solicitation Summary, Compliance Matrix, Technical Approach, Management Approach, Staffing, Past Performance, Quality Control, Risk Management, Transition, Cost/Price, Attachments, and Final Review.'],
+      ['What is the status of a section?',             'The status tells you where the section is. Not Started, Drafted, Approved, Needs Revision, or User Finalized.'],
+      ['What does Drafted mean?',                      'Drafted means you have something written but you have not said it is good yet.'],
+      ['What does Approved mean?',                     'Approved means you read it and you like it.'],
+      ['What does Needs Revision mean?',               'Needs Revision means it needs work. The AI can try again.'],
+      ['What does User Finalized mean?',               'User Finalized means you are done with this section. It is locked.'],
+      ['Can I unlock a section?',                      'Yes. Click Reset Section to open it again.'],
+      ['What is the Notes box for?',                   'The Notes box is for your own thoughts on the section. It also helps the AI write better.'],
+      ['Can the AI help me write?',                    'Yes, if you add an AI key in Settings. The AI helps with one section at a time.'],
+      ['Can the AI write the whole proposal?',         'No. The AI only writes one section per click.'],
+      ['Do I have to use the AI?',                     'No. You can type your own draft.'],
+      ['How do I export my proposal?',                 'Click Export Internal Review. It saves a local file on your Mac.'],
+      ['Is the export an official proposal?',          'No. It is an internal review draft. You take it to your team.'],
+      ['Does SourceDeck send the export anywhere?',    'No. It saves to your Mac only.'],
+      ['Can SourceDeck submit my proposal?',           'No. You submit outside SourceDeck.'],
+      ['What is the Final Internal Review section for?','It is your last check before you take the package out of SourceDeck.']
+    ]],
+    ['Pipeline', [
+      ['What is the Pipeline?',                        'The Pipeline shows all your deals from start to end.'],
+      ['What is a deal?',                              'A deal is a chance to win a contract.'],
+      ['What is a stage?',                             'A stage is one step in the deal. Like New, Working, Submitted, or Won.'],
+      ['How do I move a deal forward?',                'Click the deal and change the stage.'],
+      ['Can SourceDeck submit a deal for me?',         'No. You mark Submitted outside SourceDeck when you have submitted on your own.'],
+      ['What does Expected Value mean?',               'Expected Value is the dollar amount you think the deal is worth.'],
+      ['How is the forecast made?',                    'The forecast adds up the values of deals by stage.'],
+      ['Is the forecast a promise?',                   'No. It is just an estimate. Real wins are not promised.'],
+      ['What is the Won stage?',                       'Won means you won the contract.'],
+      ['What is the Lost stage?',                      'Lost means you did not win.'],
+      ['Can a deal be both won and lost?',             'No. A deal is one or the other.'],
+      ['Can I see my Pipeline in a chart?',            'Yes. Open Reports to see it as a chart.'],
+      ['Can I delete a deal?',                         'Yes. Click the deal and pick Delete.'],
+      ['Can I add a deal by hand?',                    'Yes. Use the Add Deal button.'],
+      ['Does my Pipeline share with my team?',         'No. The data lives on your Mac.'],
+      ['Where do leads turn into deals?',              'When you mark a lead Qualified, you can move it to Pipeline as a deal.'],
+      ['Does Pipeline talk to GovCon?',                'Yes. A pursuit in GovCon can become a deal in Pipeline.'],
+      ['Can I track my follow-up date?',               'Yes. Each deal has a Next Follow-Up date.'],
+      ['Does SourceDeck remind me?',                   'SourceDeck shows the date. Your own calendar or alarm reminds you.'],
+      ['Can I add notes to a deal?',                   'Yes. Each deal has a Notes box.']
+    ]],
+    ['Pilot Tracker', [
+      ['What is the Pilot Tracker?',                   'The Pilot Tracker helps you run a 7-day test of SourceDeck.'],
+      ['Why a 7-day test?',                            'So you can try SourceDeck before you use it for real work.'],
+      ['What is Day 0?',                               'Day 0 is the day you set up SourceDeck and check that it works.'],
+      ['What do I do on Day 1?',                       'On Day 1 you finish the Setup Wizard and try the first workflow.'],
+      ['What do I do on Day 7?',                       'On Day 7 you check all the steps and decide if you are ready to keep using it.'],
+      ['Where do I write down problems?',              'There is a Troubleshooting Log in the trial package on your Desktop.'],
+      ['Do I have to share my problems with anyone?',  'You can share with your operator. You do not have to share with anyone else.'],
+      ['What if I cannot finish the 7 days?',          'Tell your operator. You can pause or restart.'],
+      ['What is a critical problem?',                  'A critical problem stops you from working. Like the app will not open.'],
+      ['What is a high problem?',                      'A high problem blocks one step but you can still do other things.'],
+      ['What is a medium problem?',                    'A medium problem is confusing or annoying but you can still finish.'],
+      ['What is a low problem?',                       'A low problem is a small thing like a typo.'],
+      ['Should I keep going if I see a critical problem?','No. Stop and tell your operator.'],
+      ['What is the Go/No-Go Score?',                  'It is a list of yes/no checks. It tells you if you are ready to move on.'],
+      ['What does READY mean?',                        'READY means you can keep using SourceDeck for real work.'],
+      ['What does NEEDS FIXES mean?',                  'NEEDS FIXES means there are still problems to fix first.'],
+      ['What does STOP PILOT mean?',                   'STOP PILOT means do not show SourceDeck to a real buyer yet.'],
+      ['Will the test send my data anywhere?',         'No. Your test data stays on your Mac.'],
+      ['Can I do the test again later?',               'Yes. You can run a new test any time.'],
+      ['Where is the trial package on my Mac?',        'It is on your Desktop, in a folder called SourceDeck Buyer Trial Package.']
+    ]],
+    ['Reports / Audit Log', [
+      ['What is the Reports tab?',                     'Reports makes a one-page summary of your work.'],
+      ['What kinds of reports are there?',             'There are pipeline summaries, qualification reports, and monthly snapshots.'],
+      ['What is the Audit Log?',                       'The Audit Log is a list of important things that happened in the app.'],
+      ['What does the Audit Log show?',                'It shows when you saved a key, when you exported a file, and when you finished a workflow.'],
+      ['Does the Audit Log show my passwords?',        'No. It does not store the value of any key.'],
+      ['Can I delete the Audit Log?',                  'The Audit Log stays so you have a record. Ask your operator if you have to clear it.'],
+      ['Can I share a report with my team?',           'Yes. Save it to a file and share the file.'],
+      ['Does SourceDeck send my report?',              'No. You send your own report.'],
+      ['Can I print a report?',                        'Yes. Save it and then print.'],
+      ['What is in a Pipeline Summary?',               'It shows your deals by stage and the total value.'],
+      ['What is in a Qualification Report?',           'It shows how many leads you Pursue, Conditional, or Kill.'],
+      ['What is a Monthly Snapshot?',                  'It shows your leads, deals, and trends for the month.'],
+      ['Can I make my own report?',                    'Right now you pick from the ones in the app.'],
+      ['Where are my reports saved?',                  'They save on your Mac unless you export them.'],
+      ['Is a report a legal document?',                'No. A report is a working note.'],
+      ['Can a report help me file taxes?',             'Ask your tax helper. The report is a starting point.'],
+      ['Does the report send to my email?',            'No. SourceDeck does not send emails.'],
+      ['How often should I make a report?',            'Once a week is a good habit.'],
+      ['Can I see a chart in a report?',               'Yes. Some reports show a chart.'],
+      ['What if I need a report SourceDeck does not have?','Tell your operator. They can pass the idea on.']
+    ]],
+    ['Settings', [
+      ['What is Settings?',                            'Settings is where you set up SourceDeck the way you want.'],
+      ['Where do I add my SAM.gov key?',               'In the API Keys area in Settings, or in the Setup Wizard.'],
+      ['Where do I add my AI key?',                    'In the API Keys area in Settings.'],
+      ['What is an AI key?',                           'An AI key lets SourceDeck talk to an AI helper, like OpenAI or Anthropic.'],
+      ['Do I need an AI key?',                         'No. You can use SourceDeck without one.'],
+      ['What is the Airtable PAT?',                    'The Airtable PAT is an optional key for an old CRM tool. You do not need it.'],
+      ['Can I change my company name later?',          'Yes. Update it in Settings.'],
+      ['Can I change my NAICS codes?',                 'Yes. Update them in your GovCon targeting profile.'],
+      ['Will my keys leave my Mac?',                   'No. Your keys stay on your Mac.'],
+      ['Can someone else see my keys?',                'Only if they sit at your Mac. Your operator never sees the value of your key.'],
+      ['How do I delete a key?',                       'Open the key box, clear the text, and save.'],
+      ['Can I add more than one AI key?',              'SourceDeck uses one AI key at a time.'],
+      ['What is the Run Setup Wizard button?',         'It lets you walk through the setup again.'],
+      ['Does the Setup Wizard erase my keys?',         'No. It only walks you through the steps again.'],
+      ['What is Demo Mode?',                           'Demo Mode loads pretend data so you can practice.'],
+      ['Do I have to clear Demo Mode before real work?','Yes. Always clear Demo Mode before real work.'],
+      ['Where do I clear Demo Mode?',                  'In Settings, in the Demo Mode area.'],
+      ['Can I change the look of the app?',            'Some themes will come in the future. For now SourceDeck has one look.'],
+      ['Does SourceDeck update on its own?',           'New versions come from your operator. Ask your operator about updates.'],
+      ['Who do I ask if Settings does not save?',      'Tell your operator. They can help.']
+    ]],
+    ['Help / FAQ', [
+      ['What is the Help / FAQ tab?',                  'The Help / FAQ tab is a list of answers to common questions.'],
+      ['How do I search the FAQ?',                     'Type a word in the search box. The list filters as you type.'],
+      ['Are the answers from real people?',            'Yes. The answers come from the SourceDeck team.'],
+      ['What if my question is not here?',             'Ask your operator. They can answer it.'],
+      ['Will the FAQ change?',                         'Yes. We update it as the app grows.'],
+      ['Can I print the FAQ?',                         'Yes. You can also read the user manual.'],
+      ['Where is the user manual?',                    'It is in your trial package. You can also find it in the app docs.'],
+      ['What reading level is the FAQ?',               'It is plain English. Short words and short sentences.'],
+      ['Why is the FAQ so simple?',                    'Because we want it to be easy. You should not need a dictionary.'],
+      ['Do you have a video?',                         'We may add videos later.'],
+      ['Can I ask a new question?',                    'Yes. Tell your operator and they can pass it on.'],
+      ['What is Tier 1 support?',                      'Tier 1 is your pilot operator. Ask them first.'],
+      ['What is Tier 2 support?',                      'Tier 2 is the SourceDeck team for hard problems.'],
+      ['How fast will I hear back?',                   'Tier 1 in one business day. Tier 2 in two business days.'],
+      ['Is there a phone number?',                     'Right now support is by email and chat with your operator.'],
+      ['Can I open a GitHub issue?',                   'Buyers do not open GitHub issues. Talk to your operator.'],
+      ['What if the app crashes?',                     'Tell your operator. Note what you were doing when it crashed.'],
+      ['What if I find a bug?',                        'Tell your operator. Use the troubleshooting log in your trial package.'],
+      ['Do you keep my chats?',                        'Your operator keeps notes. The chat tool is between you and your operator.'],
+      ['Will the help screen always be here?',         'Yes. The Help / FAQ tab is part of SourceDeck.']
+    ]]
+  ];
+
+  function escapeHtml(s){
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function renderFaq(filter){
+    var listEl = document.getElementById('help-faq-list');
+    var emptyEl = document.getElementById('help-faq-empty');
+    if (!listEl) return;
+    var q = (filter || '').trim().toLowerCase();
+    var html = '';
+    var visibleCount = 0;
+    for (var i = 0; i < FAQ.length; i++){
+      var sectionTitle = FAQ[i][0];
+      var items = FAQ[i][1];
+      var sectionHtml = '';
+      var sectionVisible = 0;
+      for (var j = 0; j < items.length; j++){
+        var qStr = items[j][0];
+        var aStr = items[j][1];
+        var hay = (qStr + ' ' + aStr).toLowerCase();
+        if (q && hay.indexOf(q) === -1) continue;
+        sectionHtml +=
+          '<details data-help-q="' + escapeHtml(qStr) + '" style="border-bottom:1px solid var(--border);padding:6px 0">' +
+            '<summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--text);padding:4px 0;list-style:none">' +
+              escapeHtml('Q' + (j + 1) + '. ' + qStr) +
+            '</summary>' +
+            '<div style="font-size:11.5px;color:var(--sub);padding:6px 0 6px 16px;line-height:1.6">A. ' + escapeHtml(aStr) + '</div>' +
+          '</details>';
+        sectionVisible++;
+      }
+      if (sectionVisible === 0) continue;
+      visibleCount += sectionVisible;
+      html +=
+        '<div class="card" data-help-section="' + escapeHtml(sectionTitle) + '" style="padding:10px 14px">' +
+          '<div class="sl" style="margin-bottom:6px">' + escapeHtml(sectionTitle) + ' <span style="font-size:9px;color:var(--muted);text-transform:none;letter-spacing:0">(' + sectionVisible + ' of ' + items.length + ' shown)</span></div>' +
+          sectionHtml +
+        '</div>';
+    }
+    if (visibleCount === 0){
+      listEl.innerHTML = '';
+      if (emptyEl) emptyEl.style.display = '';
+    } else {
+      listEl.innerHTML = html;
+      if (emptyEl) emptyEl.style.display = 'none';
+    }
+  }
+
+  window.hpFilterFaq = function(){
+    var input = document.getElementById('help-search');
+    renderFaq(input ? input.value : '');
+  };
+
+  // Expose the data shape for the Phase 25E.4 sentinel test to count.
+  window.__sdHelpFaqData = FAQ;
+
+  function boot(){ renderFaq(''); }
   if (document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', boot);
   } else {
