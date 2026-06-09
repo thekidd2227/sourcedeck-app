@@ -69,7 +69,13 @@ assert(!visiblePhaseRe.test(html),
 const stripped = html
   .replace(/<!--[\s\S]*?-->/g, '')
   .replace(/\/\*[\s\S]*?\*\//g, '')
-  .replace(/(^|\n)\s*\/\/[^\n]*/g, '$1');
+  .replace(/(^|\n)\s*\/\/[^\n]*/g, '$1')
+  // The Phase 25I farBuildReviewPrompt builder is a model instruction
+  // (not user-facing UI copy) that deliberately enumerates the banned
+  // claims so the AI is told NOT to use them. It is asserted verbatim
+  // by test/phase-25i-far-upload-review.test.js, so exclude it here to
+  // avoid a false "affirmative claim" positive.
+  .replace(/window\.farBuildReviewPrompt\s*=\s*function[\s\S]*?\n\s*\};/, '');
 const forbidden = [
   { re: />\s*Submit Bid\s*</, label: 'Submit Bid button' },
   { re: />\s*Submit Quote\s*</, label: 'Submit Quote button' },

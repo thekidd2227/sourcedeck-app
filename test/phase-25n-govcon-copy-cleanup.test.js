@@ -57,9 +57,16 @@ assert(!/2026-06-04/.test(find),
 
 // ── No affirmative submission / upload claims globally ──────────────
 // (Negation phrases inside comments / docs are stripped before scan.)
+// The Phase 25I farBuildReviewPrompt builder is a model instruction —
+// not user-facing UI copy — and deliberately enumerates the banned
+// claims ("certified compliant" / "legally sufficient" / "FAR
+// certified") so the AI is told NOT to use them. That negative guard
+// is asserted verbatim by test/phase-25i-far-upload-review.test.js, so
+// it is excluded here to avoid a false "affirmative claim" positive.
 const stripped = html
   .replace(/<!--[\s\S]*?-->/g, '')
-  .replace(/\/\*[\s\S]*?\*\//g, '');
+  .replace(/\/\*[\s\S]*?\*\//g, '')
+  .replace(/window\.farBuildReviewPrompt\s*=\s*function[\s\S]*?\n\s*\};/, '');
 const forbidden = [
   { re: />\s*Submit Bid\s*</, label: 'Submit Bid button' },
   { re: />\s*Submit Quote\s*</, label: 'Submit Quote button' },
