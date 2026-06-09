@@ -2020,11 +2020,11 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               <select class="select" id="out-window"><option value="30">Next 30 days</option><option value="7">Next 7 days</option></select>
             </label>
             <label style="font-size:11px;color:var(--muted)">NAICS (space/comma)<br>
-              <input class="input" id="out-naics" placeholder="561710 561720" style="width:160px"></label>
+              <input class="input" id="out-naics" placeholder="NAICS codes (e.g. 541330)" style="width:160px"></label>
             <label style="font-size:11px;color:var(--muted)">Keywords (comma)<br>
-              <input class="input" id="out-keywords" placeholder="janitorial, pest" style="width:170px"></label>
+              <input class="input" id="out-keywords" placeholder="keywords (e.g. facility services)" style="width:170px"></label>
             <label style="font-size:11px;color:var(--muted)">Place of performance<br>
-              <input class="input" id="out-place" placeholder="MD or 20782" style="width:120px"></label>
+              <input class="input" id="out-place" placeholder="state or ZIP" style="width:120px"></label>
             <label style="font-size:11px;color:var(--muted)">Set-aside<br>
               <select class="select" id="out-setaside"><option value="">Any</option><option value="SDVOSB">SDVOSB</option><option value="VOSB">VOSB</option><option value="8A">8(a)</option><option value="WOSB">WOSB</option><option value="EDWOSB">EDWOSB</option><option value="HUBZONE">HUBZone</option><option value="SBA">Total Small Business</option></select>
             </label>
@@ -2101,6 +2101,27 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div class="pane-body">
         <!-- First-time GovCon setup banner (state-only; no certification claims) -->
         <div id="govcon-setup-banner" hidden></div>
+        <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 25F — GovCon Section Navigation
+             A sticky pill-bar that lets the buyer jump to internal
+             sections of the GovCon pane without scrolling through the
+             entire workspace. Each pill anchors via id-scroll to the
+             corresponding <section> below. The pane stays a single
+             scroll surface (Phase 24 invariants preserved); the pills
+             are an information-architecture aid, not a tab swap.
+             ═══════════════════════════════════════════════════════════════ -->
+        <nav id="gc-section-nav" data-phase-25f="govcon-section-nav" aria-label="GovCon section navigation" style="position:sticky;top:0;z-index:5;background:linear-gradient(180deg,var(--panel,#0a0d14) 0%,var(--panel,#0a0d14) 80%,rgba(10,13,20,0));padding:8px 0 12px;margin-bottom:8px">
+          <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:10px;letter-spacing:0.06em;text-transform:uppercase">
+            <span style="color:var(--muted);margin-right:4px">Jump to:</span>
+            <a href="#gc-capture-cc"     class="gc-section-pill" onclick="gcScrollTo(event,'gc-capture-cc')"     style="padding:4px 9px;border-radius:980px;background:rgba(176,138,60,0.10);border:1px solid rgba(176,138,60,0.32);color:var(--text);text-decoration:none">Overview</a>
+            <a href="#gc-operating-rhythm" class="gc-section-pill" onclick="gcScrollTo(event,'gc-operating-rhythm')" style="padding:4px 9px;border-radius:980px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--sub);text-decoration:none">Operating Rhythm</a>
+            <a href="#gc-sol-workspace"  class="gc-section-pill" onclick="gcScrollTo(event,'gc-sol-workspace')"  style="padding:4px 9px;border-radius:980px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--sub);text-decoration:none">Solicitation</a>
+            <a href="#gc-vqr-pricing"    class="gc-section-pill" onclick="gcScrollTo(event,'gc-vqr-pricing')"    style="padding:4px 9px;border-radius:980px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--sub);text-decoration:none">Vendor &amp; Pricing</a>
+            <a href="#gc-pp-cs-pp"       class="gc-section-pill" onclick="gcScrollTo(event,'gc-pp-cs-pp')"       style="padding:4px 9px;border-radius:980px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--sub);text-decoration:none">Past Performance · Capability · Prime</a>
+            <a href="#gc-sub-gate"       class="gc-section-pill" onclick="gcScrollTo(event,'gc-sub-gate')"       style="padding:4px 9px;border-radius:980px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--sub);text-decoration:none">Submission Readiness</a>
+            <a href="#gc-audit-log"      class="gc-section-pill" onclick="gcScrollTo(event,'gc-audit-log')"      style="padding:4px 9px;border-radius:980px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--sub);text-decoration:none">Audit Log</a>
+          </div>
+        </nav>
         <!-- ═══════════════════════════════════════════════════════════════
              PHASE 23B — GovCon Mode Indicator
              A visible indicator that this is the GovCon capture workflow.
@@ -2289,35 +2310,35 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Today's capture priorities · Human-approved actions only</div>
               </div>
               <div id="gc-daily-rhythm-list" class="gc-or-list" style="display:flex;flex-direction:column;gap:6px">
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Qualify 3 pursuits open ≥48h</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
                   </div>
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Bid/No-Bid review · Operator marks each one Bid Target or Pass. Advisory only.</div>
                 </div>
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Review 1 solicitation extraction</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
                   </div>
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Verify Section L / M extraction against the source document. Compliance matrix is a draft until human-approved.</div>
                 </div>
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Vendor quote follow-ups (2)</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
                   </div>
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Outreach is drafted only and requires human approval. SourceDeck does not auto-send.</div>
                 </div>
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Submission readiness risk on 1 pursuit</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
                   </div>
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Section K reps not yet signed. Readiness score is advisory only — SourceDeck does not submit and does not upload.</div>
                 </div>
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Internal review package waiting (1)</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
@@ -2335,35 +2356,35 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Proposal due · Q&amp;A · Site visit · Amendment watch</div>
               </div>
               <div id="gc-deadline-calendar-list" class="gc-or-list" style="display:flex;flex-direction:column;gap:6px">
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Q&amp;A submission deadline — Sample RFP A</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE · 2 days</span>
                   </div>
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Draft Q&amp;A package locally. Operator submits in the agency portal. SourceDeck does not submit. No portal upload.</div>
                 </div>
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Amendment watch — Sample RFP B</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE · 5 days</span>
                   </div>
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Re-shred compliance matrix if amendment posts. No live SAM call from this panel; operator verifies on SAM.gov directly.</div>
                 </div>
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Site visit — Sample RFP C</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE · 7 days</span>
                   </div>
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Operator coordinates attendance via the agency's published contact. SourceDeck does not send attendance email.</div>
                 </div>
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Proposal due — Sample RFP A</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE · 14 days</span>
                   </div>
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Operator submits via the solicitation's stated channel. SourceDeck does not submit. No portal upload. No SAM.gov / PIEE / eBuy / GSA interaction.</div>
                 </div>
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Clarification window closes — Sample RFI D</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE · 21 days</span>
@@ -2381,28 +2402,28 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Sources Sought · Forecast · Recompete watchlist · Industry day</div>
               </div>
               <div id="gc-prerfp-intel-list" class="gc-or-list" style="display:flex;flex-direction:column;gap:6px">
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Sources Sought — Sample Agency · IT services</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
                   </div>
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Prepare capability statement variant for this NAICS / agency pair before the RFP drops. Draft only; human approval required.</div>
                 </div>
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Forecast / acquisition plan signal — Sample Agency</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
                   </div>
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Public acquisition forecast indicates likely solicitation Q3. Operator confirms by checking the agency's published forecast.</div>
                 </div>
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Recompete watch — Sample contract ending in 9 months</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
                   </div>
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Past-pattern note: similar recompete had a 30-day Q&amp;A window last cycle. Use to plan capture timeline. Advisory only.</div>
                 </div>
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Industry Day — Sample Agency · attend or skip?</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
@@ -2420,28 +2441,28 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Target agencies · NAICS / PSC fit · Buying office notes · Next action</div>
               </div>
               <div id="gc-agency-targeting-list" class="gc-or-list" style="display:flex;flex-direction:column;gap:6px">
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Sample Agency — fit: NAICS 541512 / 541611</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
                   </div>
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Buying office: Sample Contracting Office. Past pattern: 8(a) and SDVOSB set-asides. Next action: prepare tailored capability statement variant.</div>
                 </div>
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Sample Agency — fit: NAICS 541330</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
                   </div>
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Buying office: Sample Engineering Office. Past pattern: small-business prime with engineering sub. Next action: identify candidate prime partners.</div>
                 </div>
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Sample Agency — fit: NAICS 561210</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
                   </div>
                   <div style="font-size:10px;color:var(--muted);margin-top:3px">Buying office: Sample Facilities Office. Past pattern: IDIQ task orders. Next action: monitor for IDIQ holders' team-up windows.</div>
                 </div>
-                <div class="gc-or-row" data-or-source="sample" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
+                <div class="gc-or-row" data-or-source="sample" data-phase-25f="sample-hidden-by-default" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
                   <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">
                     <div style="font-size:11.5px;color:var(--text);font-weight:600">Sample Agency — fit: PSC R408 / R499</div>
                     <span class="gc-or-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
@@ -3505,7 +3526,7 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
               <th>Title</th><th>Agency</th><th>NAICS</th><th>Set-Aside</th><th>Due</th><th>Days</th><th>Score</th><th>Category</th><th style="width:140px">Actions</th>
             </tr></thead>
             <tbody id="gc-tbody">
-              <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:40px">Loading GovCon opportunities from Airtable...</td></tr>
+              <tr><td colspan="9" style="text-align:center;color:var(--muted);padding:40px">No GovCon opportunities loaded yet. Configure your profile or run an approved opportunity search.</td></tr>
             </tbody>
           </table>
         </div>
@@ -14412,6 +14433,16 @@ document.addEventListener('DOMContentLoaded',()=>{
         'upload, email, or transmit pricing.'
     };
   }
+  // Phase 25F — toggle the hardcoded Outreach sample rows in unison
+  // with the demo-mode banner. Rows ship with inline display:none so
+  // a clean buyer cold-open never surfaces them; loading demo data
+  // reveals them, clearing demo data hides them again.
+  function gcSetSampleRowVisibility(visible){
+    var rows = document.querySelectorAll('[data-phase-25f="sample-hidden-by-default"]');
+    for (var i = 0; i < rows.length; i++){
+      rows[i].style.display = visible ? '' : 'none';
+    }
+  }
   window.gcDemoLoadSample = function(){
     save(CAPTURE_KEY, buildSampleCaptureBoard());
     save(SOL_KEY,     buildSampleSolWorkspace());
@@ -14423,6 +14454,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     save(SUB_KEY,     buildSampleSubmissionState());
     save(FLAG_KEY,    { active: true, loadedAt: 'local-only' });
     setBanner(true);
+    gcSetSampleRowVisibility(true);
     // Re-render every phase surface.
     if (typeof window.gcCaptureRender    === 'function') try { window.gcCaptureRender();    } catch (e) {}
     if (typeof window.gcSolRender        === 'function') try { window.gcSolRender();        } catch (e) {}
@@ -14438,6 +14470,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       try { localStorage.removeItem(k); } catch (e) {}
     });
     setBanner(false);
+    gcSetSampleRowVisibility(false);
     if (typeof window.gcCaptureRender    === 'function') try { window.gcCaptureRender();    } catch (e) {}
     if (typeof window.gcSolRender        === 'function') try { window.gcSolRender();        } catch (e) {}
     if (typeof window.gcVendorPricingRender === 'function') try { window.gcVendorPricingRender(); } catch (e) {}
@@ -14446,7 +14479,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (window.toast) try { window.toast('Sample demo data cleared. Working with operator-entered data only.', 'ok'); } catch (e) {}
   };
   function init(){
-    setBanner(isDemoActive());
+    var active = isDemoActive();
+    setBanner(active);
+    // Phase 25F — sync sample row visibility with the persisted demo
+    // flag on cold open. Clean buyer launch hides the rows.
+    gcSetSampleRowVisibility(active);
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
@@ -15664,6 +15701,45 @@ document.addEventListener('DOMContentLoaded',()=>{
   } else {
     setTimeout(boot, 0);
   }
+})();
+</script>
+
+<script>
+/* Phase 25F — GovCon section navigation
+   Smooth-scroll the GovCon pane to a target <section> when a section
+   pill is clicked. Updates the active-pill style so the buyer can
+   see which section they are on. Pure browser code; no network. */
+(function(){
+  'use strict';
+  var ACTIVE_BG    = 'rgba(176,138,60,0.10)';
+  var ACTIVE_BORDER= 'rgba(176,138,60,0.32)';
+  var ACTIVE_COLOR = 'var(--text)';
+  var INACTIVE_BG  = 'rgba(255,255,255,0.04)';
+  var INACTIVE_BORDER = 'var(--border)';
+  var INACTIVE_COLOR  = 'var(--sub)';
+  function pills(){
+    return Array.from(document.querySelectorAll('.gc-section-pill'));
+  }
+  function setActive(targetId){
+    pills().forEach(function(p){
+      var href = (p.getAttribute('href') || '').replace(/^#/, '');
+      var isActive = (href === targetId);
+      p.style.background  = isActive ? ACTIVE_BG     : INACTIVE_BG;
+      p.style.borderColor = isActive ? ACTIVE_BORDER : INACTIVE_BORDER;
+      p.style.color       = isActive ? ACTIVE_COLOR  : INACTIVE_COLOR;
+    });
+  }
+  window.gcScrollTo = function(ev, targetId){
+    if (ev && ev.preventDefault) ev.preventDefault();
+    var target = document.getElementById(targetId);
+    if (!target) return;
+    try {
+      target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    } catch (e) {
+      target.scrollIntoView();
+    }
+    setActive(targetId);
+  };
 })();
 </script>
 </body>
