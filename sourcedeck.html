@@ -833,7 +833,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <button class="nav-btn" data-tab="opportunities"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>Opportunities</button>
       <button class="nav-btn" data-tab="dealwork"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>Deal Workspace</button>
       <button class="nav-btn" data-tab="pipeline"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Pipeline</button>
-      <button class="nav-btn" data-tab="execution"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Execution</button>
+      <button class="nav-btn" data-tab="execution"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Proposal Workspace</button>
       <button class="nav-btn" data-tab="proof"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Reports</button>
     </div>
     <!-- ── CAPABILITIES — Optional product modes. Hidden by default;
@@ -3724,21 +3724,100 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
     </div>
 
     <!-- ═══════ EXECUTION ═══════ -->
+    <!-- ═══════ PROPOSAL WORKSPACE (Phase 25E.2)
+         Section-by-section proposal drafting surface. Replaces the
+         pre-Phase-25E "Execution" locked teaser.
+
+         Rules (Phase 25A + Phase 25E.2):
+         - SourceDeck does NOT generate a full proposal in one click.
+         - User completes the proposal one section at a time.
+         - AI may draft a section only after the user opens that section
+           and explicitly requests a draft.
+         - Each section carries a status state machine:
+           Not Started → Drafted → (Approved | Needs Revision)
+                                  → Approved → User Finalized
+           Needs Revision → Drafted (retry)
+         - Each section carries a notes / special instructions textarea.
+         - Each section carries an "Internal review only" disclaimer.
+         - No Send Email / Submit Bid / Submit Quote / portal-upload
+           control appears on this pane. SourceDeck never submits.
+
+         Persistence: window.sd.storeGet/storeSet ('proposalWorkspace')
+         under the electron-store keyspace, mirroring the Phase 23A
+         clinical pattern. Falls back to localStorage when the preload
+         bridge is unavailable.
+    -->
     <div class="tab-pane" id="tab-execution">
-      <div class="pane-hdr"><div><div class="pane-title"><span class="brief-head">Execution</span></div><div class="pane-sub">Timeline · Subcontractors · Readiness</div></div></div>
-      <div class="pane-body">
-        <div id="exec-locked" style="text-align:center;padding:48px">
-          <div style="font-size:28px;margin-bottom:10px">🔒</div>
-          <div style="color:var(--gold2);font-weight:600;margin-bottom:6px">Operator / Federal Tier</div>
-          <div style="color:var(--muted);font-size:12px;max-width:400px;margin:0 auto">Subcontractor matching, execution timelines, and readiness assessment. Includes cost estimation, margin impact analysis, and milestone tracking.</div>
-          <button class="btn btn-gold" style="margin-top:16px" onclick="toast('Upgrade to Operator tier in Settings → Subscription','info')">Unlock Execution Suite →</button>
+      <div class="pane-hdr">
+        <div>
+          <div class="pane-title"><span class="brief-head">Proposal Workspace</span></div>
+          <div class="pane-sub">Section-by-section internal review drafting · Human approval gate on every section</div>
         </div>
-        <div id="exec-content" style="display:none">
-          <div class="grid-2">
-            <div class="card"><div class="sl">Execution Timeline</div><div id="exec-timeline"></div></div>
-            <div class="card"><div class="sl">Subcontractor Match</div><div id="exec-subs"></div></div>
+        <div class="pane-actions">
+          <button class="btn btn-ghost" onclick="pwExportInternalReview()" title="Export internal review markdown of all approved/finalized sections (local file only)">↗ Export Internal Review</button>
+        </div>
+      </div>
+      <div class="pane-body">
+        <div id="pw-disclaimer" style="background:rgba(176,138,60,0.08);border:1px solid rgba(176,138,60,0.30);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--text);line-height:1.55">
+          <strong style="color:var(--gold2)">Internal review only.</strong>
+          Drafts produced here are not legal review, not compliance certification, and not final proposals. SourceDeck does not send, submit, or upload anything to SAM.gov, PIEE, eBuy, GSA, or any agency portal. The user is responsible for every external action.
+        </div>
+
+        <div class="grid-2" style="grid-template-columns:240px 1fr;gap:14px;align-items:start">
+
+          <!-- Section navigation rail -->
+          <div class="card" style="padding:8px 4px">
+            <div class="sl" style="padding:6px 10px 8px;border-bottom:1px solid var(--border);margin-bottom:6px">Sections</div>
+            <div id="pw-section-list" data-pw-section-list="true" style="display:flex;flex-direction:column;gap:2px"></div>
           </div>
-          <div class="card" style="margin-top:12px"><div class="sl">Readiness Summary</div><div id="exec-readiness"></div></div>
+
+          <!-- Active section editor -->
+          <div>
+            <div class="card" id="pw-section-editor">
+              <div id="pw-empty-state" style="text-align:center;padding:32px 16px;color:var(--muted);font-size:12px;line-height:1.55">
+                Select a section to begin. Each section is drafted, reviewed, and finalized one at a time. SourceDeck does not generate a full proposal in one click.
+              </div>
+              <div id="pw-section-detail" style="display:none">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px">
+                  <div style="flex:1">
+                    <div class="card-title" id="pw-section-title" style="color:var(--gold2)">—</div>
+                    <div id="pw-section-help" style="font-size:11px;color:var(--muted);line-height:1.5;margin-top:2px"></div>
+                  </div>
+                  <span class="sd-pill" id="pw-section-status-pill" data-status="not-started" style="white-space:nowrap;font-size:10px;padding:4px 10px;border-radius:980px;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--sub);text-transform:uppercase;letter-spacing:0.06em">Not Started</span>
+                </div>
+
+                <div class="form-group" style="margin-bottom:10px">
+                  <label class="label" style="display:flex;justify-content:space-between;align-items:center">
+                    <span>Notes / special instructions</span>
+                    <span style="font-size:9px;color:var(--muted);text-transform:none;letter-spacing:0">Stays on this section. Used as AI draft context.</span>
+                  </label>
+                  <textarea class="textarea" id="pw-section-notes" placeholder="Section-specific guidance for yourself or an AI draft — e.g., specific past-performance contracts to reference, compliance citations to anchor against, evaluation criteria to address." style="min-height:80px"></textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom:10px">
+                  <label class="label" style="display:flex;justify-content:space-between;align-items:center">
+                    <span>Draft</span>
+                    <span style="font-size:9px;color:var(--muted);text-transform:none;letter-spacing:0">Internal review draft only — not for external submission.</span>
+                  </label>
+                  <textarea class="textarea" id="pw-section-draft" placeholder="Type or paste your section draft here. Request an AI draft (below) if an AI provider key is configured in Settings." style="min-height:180px"></textarea>
+                </div>
+
+                <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">
+                  <button class="btn btn-blue" onclick="pwRequestAiDraft()" id="pw-ai-draft-btn" title="Generate an AI draft for this section using your configured AI provider key.">🪄 Request AI Draft (this section)</button>
+                  <button class="btn btn-ghost" onclick="pwSetStatus('drafted')" id="pw-mark-drafted">Mark as Drafted</button>
+                  <button class="btn btn-ghost" onclick="pwSetStatus('approved')" id="pw-approve" style="color:var(--green)">✓ Approve</button>
+                  <button class="btn btn-ghost" onclick="pwSetStatus('needs-revision')" id="pw-needs-revision" style="color:var(--gold2)">↻ Needs Revision</button>
+                  <button class="btn btn-ghost" onclick="pwSetStatus('finalized')" id="pw-finalize" style="color:var(--blue)">🔒 User Finalize</button>
+                  <button class="btn btn-ghost" onclick="pwSetStatus('not-started')" id="pw-reset" style="color:var(--muted);margin-left:auto">⊘ Reset Section</button>
+                </div>
+
+                <div id="pw-finalized-banner" style="display:none;margin-top:10px;padding:8px 12px;background:rgba(27,77,110,0.10);border:1px solid rgba(27,77,110,0.30);border-radius:6px;font-size:11px;color:var(--text);line-height:1.5">
+                  <strong style="color:var(--blue)">User Finalized.</strong> This section is locked. Use Reset Section to edit again. SourceDeck still does not submit, send, or upload — the user is responsible for taking the finalized draft outside SourceDeck.
+                </div>
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
@@ -14675,6 +14754,397 @@ document.addEventListener('DOMContentLoaded',()=>{
       if (window.toast) try { window.toast('Markdown export failed locally (no network call attempted).', 'err'); } catch (e2) {}
     }
   };
+})();
+</script>
+
+<script>
+/* Phase 25E.2 — Proposal Workspace
+   Section-by-section internal review drafting surface.
+
+   Boundary contract (Phase 25A + Phase 25E.2):
+   - SourceDeck does NOT generate a full proposal in one click.
+   - Each section is drafted individually after the user selects it.
+   - AI drafting is single-section only, and only enabled when an AI
+     provider key is configured in Settings.
+   - Each section carries a five-state status machine:
+       not-started -> drafted -> approved -> finalized
+                              -> needs-revision -> drafted (retry)
+   - Each section carries a notes / special instructions textarea
+     that is used as additional context for any AI draft request.
+   - Each section displays an "Internal review only" disclaimer.
+   - No Send Email / Submit Bid / Submit Quote / portal-upload
+     control appears on this pane. SourceDeck does not submit.
+
+   Persistence:
+   - Primary: window.sd.storeGet/storeSet('proposalWorkspace') via
+     the electron-store preload bridge.
+   - Fallback: localStorage key 'sd.proposalWorkspace.v1' when the
+     bridge is unavailable (renderer-only test contexts, etc.).
+
+   Storage shape:
+   {
+     activeSection: 'solicitation-summary' | null,
+     sections: {
+       'table-of-contents': { status, notes, draft, updatedAt },
+       'solicitation-summary': { ... },
+       ...
+     }
+   }
+*/
+(function(){
+  'use strict';
+
+  // ── Section definitions (13 sections, ordered as Phase 25E.2 §11) ──
+  var SECTIONS = [
+    { id: 'table-of-contents',     title: 'Table of Contents',         help: 'Outline the proposal structure. Lists the sections required by the solicitation and your numbering scheme.' },
+    { id: 'solicitation-summary',  title: 'Solicitation Summary',      help: 'Plain-English summary of the solicitation: agency, requirement, period of performance, submission window. Internal reference only.' },
+    { id: 'compliance-matrix',     title: 'Compliance Matrix',         help: 'Section L / M cross-reference. Maps each requirement to where it is addressed in the proposal. Internal review only.' },
+    { id: 'technical-approach',    title: 'Technical Approach',        help: 'How the work will be performed. Solution architecture, methodology, deliverables.' },
+    { id: 'management-approach',   title: 'Management Approach',       help: 'Program management plan. Communication, reporting, escalation, change control.' },
+    { id: 'staffing-key-personnel',title: 'Staffing / Key Personnel',  help: 'Org chart, named key personnel, resumes, labor-category mapping.' },
+    { id: 'past-performance',      title: 'Past Performance',          help: 'Relevant past contracts. CPARS references. Customer references with verified contact info.' },
+    { id: 'quality-control',       title: 'Quality Control',           help: 'QC plan. Inspection points, CDRL handling, defect-handling procedures.' },
+    { id: 'risk-management',       title: 'Risk Management',           help: 'Risk register. Mitigation plan. Contingency triggers.' },
+    { id: 'transition-mobilization',title:'Transition / Mobilization', help: 'Day-one operations plan. Phase-in approach. Incumbent transition.' },
+    { id: 'cost-price-volume',     title: 'Cost / Price Volume',       help: 'Cost build-up and pricing rationale. Final pricing is the user\'s decision — SourceDeck does not submit pricing.' },
+    { id: 'attachments-forms',     title: 'Attachments / Forms',       help: 'SF1449, reps and certs, OCI mitigation plan, subcontracting plan, etc. User assembles outside SourceDeck.' },
+    { id: 'final-internal-review', title: 'Final Internal Review',     help: 'Cross-section quality check before the user takes the package outside SourceDeck for submission.' }
+  ];
+
+  var STATUS_LABEL = {
+    'not-started':    'Not Started',
+    'drafted':        'Drafted',
+    'approved':       'Approved',
+    'needs-revision': 'Needs Revision',
+    'finalized':      'User Finalized'
+  };
+  var STATUS_PILL_STYLE = {
+    'not-started':    { bg: 'rgba(255,255,255,0.05)', border: 'var(--border)',          color: 'var(--sub)' },
+    'drafted':        { bg: 'rgba(176,138,60,0.12)',  border: 'rgba(176,138,60,0.32)',  color: 'var(--gold2)' },
+    'approved':       { bg: 'rgba(48,209,88,0.12)',   border: 'rgba(48,209,88,0.32)',   color: 'var(--green)' },
+    'needs-revision': { bg: 'rgba(255,176,32,0.14)',  border: 'rgba(255,176,32,0.32)',  color: 'var(--gold2)' },
+    'finalized':      { bg: 'rgba(27,77,110,0.14)',   border: 'rgba(27,77,110,0.32)',   color: 'var(--blue)' }
+  };
+
+  var STORE_KEY = 'sd.proposalWorkspace.v1';
+  var BRIDGE_KEY = 'proposalWorkspace';
+
+  function blankState(){
+    var s = { activeSection: null, sections: {} };
+    for (var i = 0; i < SECTIONS.length; i++){
+      s.sections[SECTIONS[i].id] = { status: 'not-started', notes: '', draft: '', updatedAt: null };
+    }
+    return s;
+  }
+
+  var _state = blankState();
+  var _ready = false;
+
+  async function loadState(){
+    var loaded = null;
+    if (window.sd && typeof window.sd.storeGet === 'function'){
+      try { loaded = await window.sd.storeGet(BRIDGE_KEY); } catch (e) { loaded = null; }
+    }
+    if (!loaded){
+      try {
+        var raw = localStorage.getItem(STORE_KEY);
+        if (raw) loaded = JSON.parse(raw);
+      } catch (e) { loaded = null; }
+    }
+    if (loaded && loaded.sections){
+      // Merge any new sections that did not exist in saved state.
+      var blank = blankState();
+      for (var k in blank.sections){
+        if (!loaded.sections[k]) loaded.sections[k] = blank.sections[k];
+      }
+      _state = loaded;
+    } else {
+      _state = blankState();
+    }
+    _ready = true;
+  }
+
+  async function saveState(){
+    var snapshot = JSON.parse(JSON.stringify(_state));
+    if (window.sd && typeof window.sd.storeSet === 'function'){
+      try { await window.sd.storeSet(BRIDGE_KEY, snapshot); } catch (e) { /* fall through */ }
+    }
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(snapshot)); } catch (e) { /* quota-fail tolerated */ }
+  }
+
+  // ── DOM helpers ───────────────────────────────────────────────────
+  function $(id){ return document.getElementById(id); }
+  function findSection(id){
+    for (var i = 0; i < SECTIONS.length; i++){ if (SECTIONS[i].id === id) return SECTIONS[i]; }
+    return null;
+  }
+
+  function statusPillFor(status){
+    var s = STATUS_PILL_STYLE[status] || STATUS_PILL_STYLE['not-started'];
+    return 'background:' + s.bg + ';border:1px solid ' + s.border + ';color:' + s.color + ';';
+  }
+
+  function renderSectionList(){
+    var listEl = $('pw-section-list');
+    if (!listEl) return;
+    var html = '';
+    for (var i = 0; i < SECTIONS.length; i++){
+      var def = SECTIONS[i];
+      var sec = _state.sections[def.id] || { status: 'not-started' };
+      var isActive = (_state.activeSection === def.id);
+      var pillStyle = statusPillFor(sec.status);
+      html +=
+        '<button type="button" class="nav-btn pw-section-btn" data-pw-section="' + def.id + '" onclick="pwOpenSection(\'' + def.id + '\')" ' +
+        'style="display:flex;align-items:center;justify-content:space-between;gap:8px;text-align:left;padding:8px 10px;border-radius:6px;' +
+        (isActive ? 'background:rgba(176,138,60,0.10);border:1px solid rgba(176,138,60,0.28);' : 'background:transparent;border:1px solid transparent;') +
+        '">' +
+          '<span style="flex:1;font-size:11.5px;font-weight:' + (isActive ? '700' : '500') + ';color:' + (isActive ? 'var(--text)' : 'var(--sub)') + '">' +
+            (i + 1) + '. ' + def.title +
+          '</span>' +
+          '<span class="sd-pw-status" style="font-size:8.5px;padding:2px 7px;border-radius:980px;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;' + pillStyle + '">' +
+            (STATUS_LABEL[sec.status] || sec.status) +
+          '</span>' +
+        '</button>';
+    }
+    listEl.innerHTML = html;
+  }
+
+  function renderSectionDetail(){
+    var emptyEl = $('pw-empty-state');
+    var detailEl = $('pw-section-detail');
+    if (!emptyEl || !detailEl) return;
+    var activeId = _state.activeSection;
+    if (!activeId){
+      emptyEl.style.display = '';
+      detailEl.style.display = 'none';
+      return;
+    }
+    var def = findSection(activeId);
+    if (!def){
+      emptyEl.style.display = '';
+      detailEl.style.display = 'none';
+      return;
+    }
+    var sec = _state.sections[activeId] || { status: 'not-started', notes: '', draft: '' };
+    emptyEl.style.display = 'none';
+    detailEl.style.display = '';
+
+    if ($('pw-section-title')) $('pw-section-title').textContent = def.title;
+    if ($('pw-section-help'))  $('pw-section-help').textContent  = def.help;
+
+    var pill = $('pw-section-status-pill');
+    if (pill){
+      pill.textContent = STATUS_LABEL[sec.status] || sec.status;
+      pill.setAttribute('data-status', sec.status);
+      pill.style.cssText = 'white-space:nowrap;font-size:10px;padding:4px 10px;border-radius:980px;text-transform:uppercase;letter-spacing:0.06em;' + statusPillFor(sec.status);
+    }
+
+    var notesEl = $('pw-section-notes');
+    if (notesEl && notesEl.value !== sec.notes) notesEl.value = sec.notes || '';
+    var draftEl = $('pw-section-draft');
+    if (draftEl && draftEl.value !== sec.draft) draftEl.value = sec.draft || '';
+
+    var finalized = (sec.status === 'finalized');
+    if (notesEl) notesEl.disabled = finalized;
+    if (draftEl) draftEl.disabled = finalized;
+    var banner = $('pw-finalized-banner');
+    if (banner) banner.style.display = finalized ? '' : 'none';
+
+    var aiBtn = $('pw-ai-draft-btn');
+    if (aiBtn){
+      // AI drafting requires an AI provider key. We do not call any
+      // provider from this renderer — the button is a placeholder that
+      // surfaces the boundary: only the user can request an AI draft,
+      // and only for the currently selected section.
+      var hasAi = pwHasAiProvider();
+      aiBtn.disabled = finalized || !hasAi;
+      aiBtn.title = hasAi
+        ? 'Request an AI draft for this section using your configured AI provider. SourceDeck will not generate a full proposal — single section only.'
+        : 'Add an AI provider key in Settings to enable AI drafting. Single section only — SourceDeck never generates a full proposal.';
+      aiBtn.textContent = hasAi
+        ? '🪄 Request AI Draft (this section)'
+        : '🪄 Request AI Draft (add AI key in Settings)';
+    }
+  }
+
+  function renderProposalWorkspace(){
+    if (!_ready) return;
+    renderSectionList();
+    renderSectionDetail();
+  }
+
+  function pwHasAiProvider(){
+    // The renderer does not own the credential boundary. Check the
+    // credential adapter if present; otherwise assume not configured.
+    try {
+      if (window.sd && window.sd.credentials && typeof window.sd.credentials.status === 'function'){
+        var s = window.sd.credentials.status() || {};
+        var p = s.present || {};
+        return !!(p.openai || p['openai-key'] || p.anthropic || p['anthropic-key'] || p.ibm || p['ibm-watsonx-key']);
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  // ── Public actions ────────────────────────────────────────────────
+  window.pwOpenSection = function(sectionId){
+    var def = findSection(sectionId);
+    if (!def) return;
+    // Flush any pending text from the previously active section first.
+    pwFlushActiveEdits();
+    _state.activeSection = sectionId;
+    saveState();
+    renderProposalWorkspace();
+  };
+
+  function pwFlushActiveEdits(){
+    var activeId = _state.activeSection;
+    if (!activeId) return;
+    var sec = _state.sections[activeId];
+    if (!sec) return;
+    var notesEl = $('pw-section-notes');
+    var draftEl = $('pw-section-draft');
+    if (notesEl) sec.notes = notesEl.value || '';
+    if (draftEl) sec.draft = draftEl.value || '';
+    sec.updatedAt = new Date().toISOString();
+  }
+
+  window.pwSetStatus = function(status){
+    var allowed = ['not-started','drafted','approved','needs-revision','finalized'];
+    if (allowed.indexOf(status) === -1) return;
+    var activeId = _state.activeSection;
+    if (!activeId) return;
+    var sec = _state.sections[activeId];
+    if (!sec) return;
+    pwFlushActiveEdits();
+    sec.status = status;
+    sec.updatedAt = new Date().toISOString();
+    saveState();
+    renderProposalWorkspace();
+  };
+
+  window.pwRequestAiDraft = function(){
+    if (!pwHasAiProvider()){
+      if (window.toast) try { window.toast('Add an AI provider key in Settings → API Keys to enable AI drafting. SourceDeck never generates a full proposal — single section only.', 'info'); } catch (e) {}
+      return;
+    }
+    var activeId = _state.activeSection;
+    if (!activeId){
+      if (window.toast) try { window.toast('Select a section before requesting an AI draft.', 'info'); } catch (e) {}
+      return;
+    }
+    // Phase 25E.2 ships the boundary contract + UI only. Live AI
+    // section drafting integration is a future phase: it must respect
+    // the single-section rule (no full-proposal generation), the
+    // user-approval gate, and the no-send/no-submit/no-upload posture.
+    if (window.toast) try { window.toast('AI section drafting integration is on the roadmap. The boundary is fixed: single section only, user approval required, no full-proposal generation.', 'info'); } catch (e) {}
+  };
+
+  window.pwExportInternalReview = function(){
+    pwFlushActiveEdits();
+    var stamp = new Date().toISOString().slice(0, 10);
+    var lines = [
+      '# Proposal Workspace — Internal Review Draft (' + stamp + ')',
+      '',
+      '> Internal review only. Not legal review, not compliance certification, not a submitted proposal.',
+      '> SourceDeck does not send, submit, or upload this document. The user is responsible for every external action.',
+      ''
+    ];
+    var approvedCount = 0, totalSections = SECTIONS.length;
+    for (var i = 0; i < SECTIONS.length; i++){
+      var def = SECTIONS[i];
+      var sec = _state.sections[def.id] || { status: 'not-started', notes: '', draft: '' };
+      lines.push('## ' + (i + 1) + '. ' + def.title);
+      lines.push('');
+      lines.push('Status: ' + (STATUS_LABEL[sec.status] || sec.status));
+      lines.push('');
+      if (sec.notes){
+        lines.push('### Notes / Special Instructions');
+        lines.push('');
+        lines.push(sec.notes);
+        lines.push('');
+      }
+      if (sec.draft){
+        lines.push('### Draft');
+        lines.push('');
+        lines.push(sec.draft);
+        lines.push('');
+      } else {
+        lines.push('_No draft yet for this section._');
+        lines.push('');
+      }
+      if (sec.status === 'approved' || sec.status === 'finalized') approvedCount++;
+    }
+    lines.push('---');
+    lines.push('');
+    lines.push('Approved/Finalized: ' + approvedCount + ' of ' + totalSections + ' sections.');
+    lines.push('');
+    lines.push('SourceDeck does not submit proposals, send emails, or upload to portals.');
+
+    var payload = lines.join('\n');
+    var filename = stamp.replace(/-/g,'') + '-proposal-workspace-INTERNAL-REVIEW-DRAFT.md';
+    try {
+      var blob = new Blob([payload], { type: 'text/markdown;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function(){
+        try { document.body.removeChild(a); } catch (e) {}
+        try { URL.revokeObjectURL(url); } catch (e) {}
+      }, 0);
+      if (window.toast) try { window.toast('Proposal Workspace internal review saved locally — not submitted, not uploaded, not emailed.', 'ok'); } catch (e) {}
+    } catch (e) {
+      if (window.toast) try { window.toast('Markdown export failed locally (no network call attempted).', 'err'); } catch (e2) {}
+    }
+  };
+
+  // ── Wire textarea autosave (typing flushes to state on input) ─────
+  function wireAutosave(){
+    var notesEl = $('pw-section-notes');
+    var draftEl = $('pw-section-draft');
+    var debouncer = null;
+    function debouncedSave(){
+      if (debouncer) clearTimeout(debouncer);
+      debouncer = setTimeout(function(){
+        pwFlushActiveEdits();
+        // Note: if the user is in not-started state, typing should
+        // promote the section to drafted automatically.
+        var activeId = _state.activeSection;
+        if (activeId){
+          var sec = _state.sections[activeId];
+          if (sec && sec.status === 'not-started' && (sec.notes || sec.draft)){
+            sec.status = 'drafted';
+            renderProposalWorkspace();
+          }
+        }
+        saveState();
+      }, 400);
+    }
+    if (notesEl) notesEl.addEventListener('input', debouncedSave);
+    if (draftEl) draftEl.addEventListener('input', debouncedSave);
+  }
+
+  // ── Boot ──────────────────────────────────────────────────────────
+  function boot(){
+    loadState().then(function(){
+      renderProposalWorkspace();
+      wireAutosave();
+    }).catch(function(){
+      // Even if load fails, render the blank state so the pane is usable.
+      _ready = true;
+      renderProposalWorkspace();
+      wireAutosave();
+    });
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 0);
+  }
 })();
 </script>
 </body>
