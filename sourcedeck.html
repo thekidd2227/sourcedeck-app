@@ -809,7 +809,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div class="nav-label">Other business tools · Operations</div>
       <button class="nav-btn" data-tab="cmd"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>Command Center</button>
       <button class="nav-btn" data-tab="dashboard"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>Dashboard</button>
-      <button class="nav-btn" data-tab="leads"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Lead Generator</button>
+      <button class="nav-btn" data-tab="leads"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Leads</button>
       <button class="nav-btn" data-tab="revenue"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Revenue</button>
       <button class="nav-btn" data-tab="email"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>Email Tracker</button>
     </div>
@@ -826,8 +826,15 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     </div>
     <div class="nav-section" data-other-business-tools>
       <div class="nav-label">Other business tools · Tools</div>
-      <button class="nav-btn" data-tab="createlead"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>Create Lead</button>
-      <button class="nav-btn" data-tab="aigenerate"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span>AI Lead Builder</button>
+      <!-- Phase 25E.7: Create Lead and AI Lead Builder are folded into
+           the Leads workspace. The data-tab buttons remain in DOM
+           (Phase 23C invariant: every commercial nav button + pane
+           stays present) but are hidden from the sidebar so the buyer
+           navigates from one Leads entry point. The underlying panes
+           (tab-createlead, tab-aigenerate) remain reachable via
+           in-pane links from the Leads workspace. -->
+      <button class="nav-btn" data-tab="createlead" data-phase-25e7="folded-into-leads" style="display:none"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>Create Lead</button>
+      <button class="nav-btn" data-tab="aigenerate" data-phase-25e7="folded-into-leads" style="display:none"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span>AI Lead Builder</button>
       <button class="nav-btn" data-tab="settings"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Settings</button>
     </div>
     <div class="nav-section" data-other-business-tools>
@@ -1026,11 +1033,20 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       </div>
     </div>
 
-    <!-- ═══════ LEADS ═══════ -->
+    <!-- ═══════ LEADS (Phase 25E.7 unified workspace) ═══════
+         Phase 25E.7 folds the pre-existing Create Lead and AI Lead
+         Builder sidebar entries into this one Leads workspace.
+         The underlying tab-createlead and tab-aigenerate panes are
+         preserved (Phase 23C invariant: every commercial nav button
+         + pane stays in the DOM) and are reachable via the in-pane
+         entry-point bar below.
+    -->
     <div class="tab-pane" id="tab-leads">
       <div class="pane-hdr">
-        <div><div class="pane-title"><span class="brief-head">Lead Generator</span></div><div class="pane-sub" id="leads-count">0 leads</div></div>
+        <div><div class="pane-title"><span class="brief-head">Leads</span></div><div class="pane-sub" id="leads-count">0 leads</div></div>
         <div class="pane-actions" style="flex-wrap:wrap;gap:7px">
+          <button class="btn btn-gold" onclick="openTab('createlead')" title="Open the Create Lead form (was a separate sidebar entry in pre-Phase-25E.7).">+ Create Lead</button>
+          <button class="btn btn-blue" onclick="openTab('aigenerate')" title="Open the AI Lead Builder (was a separate sidebar entry in pre-Phase-25E.7). Requires an AI provider key in Settings.">🪄 Generate Leads (AI)</button>
           <input class="input" id="ls" placeholder="Search..." style="width:130px" oninput="filterLeads()">
           <select class="select" id="sf" onchange="filterLeads()">
             <option value="">All Status</option>
