@@ -2128,6 +2128,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <a href="#gc-pp-cs-pp"       class="gc-section-pill" onclick="gcScrollTo(event,'gc-pp-cs-pp')"       style="padding:4px 9px;border-radius:980px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--sub);text-decoration:none">Past Performance · Capability · Prime</a>
             <a href="#gc-sub-gate"       class="gc-section-pill" onclick="gcScrollTo(event,'gc-sub-gate')"       style="padding:4px 9px;border-radius:980px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--sub);text-decoration:none">Submission Readiness</a>
             <a href="#gc-audit-log"      class="gc-section-pill" onclick="gcScrollTo(event,'gc-audit-log')"      style="padding:4px 9px;border-radius:980px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--sub);text-decoration:none">Audit Log</a>
+            <a href="#gc-far-reference"  class="gc-section-pill" onclick="gcScrollTo(event,'gc-far-reference')"  style="padding:4px 9px;border-radius:980px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--sub);text-decoration:none">FAR Reference</a>
           </div>
         </nav>
         <!-- ═══════════════════════════════════════════════════════════════
@@ -3538,6 +3539,161 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
             </tbody>
           </table>
         </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 25I — FAR Reference (acquisition.gov-grounded)
+
+             Boundary contract:
+             - SourceDeck is internal review support, NOT legal advice.
+             - acquisition.gov is the source of truth. We link out for
+               primary text; AI answers must cite FAR sections.
+             - NO compliance certification. NO "FAR certified" claim.
+             - NO upload of any document to acquisition.gov or any
+               external service. Local-only review.
+             - AI features use the user-configured AI provider key
+               (Phase 24L credential boundary). No new mandatory FAR
+               API key is introduced.
+             ═══════════════════════════════════════════════════════════════ -->
+        <section id="gc-far-reference" class="gc-far-reference" data-section="govcon-far-reference" style="margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+          <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">FAR Reference</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Ask FAR questions, review clauses, and check draft materials against acquisition.gov references</div>
+          </div>
+
+          <div style="background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:8px;padding:9px 13px;margin-bottom:14px;font-size:11px;color:var(--text);line-height:1.55">
+            <strong style="color:var(--gold2)">Internal review only.</strong>
+            SourceDeck provides internal review support only. This is not legal advice. Verify against the current solicitation and acquisition.gov FAR text before relying on it. SourceDeck does not certify any document as FAR-compliant.
+          </div>
+
+          <!-- ═══════ A. FAR Browse / Reference ═══════ -->
+          <div class="gc-or-panel" data-section="govcon-far-browse" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+            <div>
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">FAR Browse · Reference Links</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Source of truth: acquisition.gov</div>
+            </div>
+            <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px">
+              <input class="input" id="far-part-search" type="text" placeholder="FAR Part / Subpart / Section (e.g. 52.212-4)" style="min-width:280px;flex:1" oninput="farUpdateLinks()">
+              <button class="btn btn-gold" onclick="farOpenAcquisitionGov()" title="Open the matching FAR location on acquisition.gov">↗ Open FAR on Acquisition.gov</button>
+              <button class="btn btn-ghost" onclick="farOpenRegulationsSearch()" title="Open the acquisition.gov Regulations Search">🔎 Regulations Search</button>
+            </div>
+            <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:4px">
+              <span style="color:var(--sub)">Last source check:</span> <span id="far-last-checked" data-phase-25i-last-checked="true">Live on acquisition.gov — verify on every reading.</span> SourceDeck does not cache full FAR text; the link above opens the current online version.
+            </div>
+          </div>
+
+          <!-- ═══════ B. FAR AI FAQ ═══════ -->
+          <div class="gc-or-panel" data-section="govcon-far-ai-faq" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+            <div>
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">FAR AI FAQ</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Source-grounded · cites FAR sections · not legal advice</div>
+            </div>
+            <div class="form-group" style="margin-top:6px">
+              <label class="label">Ask a FAR question…</label>
+              <textarea class="textarea" id="far-faq-question" placeholder="e.g. What FAR clauses govern subcontracting plans for non-commercial contracts over the simplified-acquisition threshold?" style="min-height:70px"></textarea>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="form-group">
+                <label class="label">Context</label>
+                <select class="select" id="far-faq-context" style="width:100%">
+                  <option value="general">General FAR</option>
+                  <option value="micro-purchase">Micro-purchase / simplified acquisition</option>
+                  <option value="solicitation-instructions">Solicitation instructions</option>
+                  <option value="evaluation-factors">Evaluation factors</option>
+                  <option value="subcontracting-teaming">Subcontracting / teaming</option>
+                  <option value="small-business">Small business / set-asides</option>
+                  <option value="pricing-cost">Pricing / cost</option>
+                  <option value="past-performance">Past performance</option>
+                  <option value="communication-restrictions">Communication restrictions</option>
+                  <option value="clauses-forms">Clauses / forms</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="label">Pasted FAR source text (optional)</label>
+                <textarea class="textarea" id="far-faq-source-text" placeholder="Paste relevant FAR text from acquisition.gov to ground the answer. If left blank, the AI will be instructed to say so and refuse to fabricate FAR text." style="min-height:54px;font-family:'IBM Plex Mono',monospace;font-size:10.5px"></textarea>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px">
+              <button class="btn btn-blue" onclick="farAskAi()" id="far-faq-ask-btn">🪄 Ask AI</button>
+              <button class="btn btn-ghost" onclick="farClearFaq()">⊘ Clear</button>
+              <button class="btn btn-ghost" onclick="farCopyAsNote()" title="Copy the answer + citations as a saved FAR note">📋 Copy as Internal Note</button>
+              <span id="far-faq-provider-state" style="margin-left:auto;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace">Provider: checking…</span>
+            </div>
+            <div id="far-faq-answer-panel" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-top:6px">
+              <div class="sl" style="margin-bottom:6px">Answer (advisory, not legal advice)</div>
+              <div id="far-faq-answer" style="font-size:11.5px;color:var(--text);line-height:1.6;white-space:pre-wrap"></div>
+            </div>
+            <div id="far-faq-citations-panel" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-top:6px">
+              <div class="sl" style="margin-bottom:6px">FAR citations</div>
+              <div id="far-faq-citations" style="font-size:11px;color:var(--sub);line-height:1.55;font-family:'IBM Plex Mono',monospace"></div>
+            </div>
+            <div style="background:rgba(196,130,10,0.08);border:1px solid rgba(196,130,10,0.30);border-radius:6px;padding:7px 10px;margin-top:6px;font-size:10.5px;color:var(--text);line-height:1.55">
+              <strong style="color:var(--warn,#C4820A)">Advisory only.</strong>
+              SourceDeck provides internal review support only. This is not legal advice. Verify against the current solicitation and acquisition.gov FAR text before relying on it.
+            </div>
+          </div>
+
+          <!-- ═══════ C. FAR Compliance Review Upload ═══════ -->
+          <div class="gc-or-panel" data-section="govcon-far-upload-review" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+            <div>
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">FAR Compliance Review (Upload)</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Local-only · text extraction first · AI vision optional</div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px">
+              <div class="form-group">
+                <label class="label">Upload file (PDF / DOCX / TXT / MD / PNG / JPG / WebP)</label>
+                <input type="file" id="far-upload-file" accept=".pdf,.docx,.txt,.md,.png,.jpg,.jpeg,.webp,text/plain,text/markdown" onchange="farOnFileChosen(event)" style="font-size:11px">
+                <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.45">Text (.txt / .md) extracts in-renderer. DOCX / PDF / images: paste the extracted text into the box below or enable AI vision (warning shown first).</div>
+              </div>
+              <div class="form-group">
+                <label class="label">Or paste text to review</label>
+                <textarea class="textarea" id="far-upload-paste" placeholder="Paste the proposal section, clause, vendor agreement excerpt, or screenshot caption text here. Local-only review." style="min-height:84px;font-family:'IBM Plex Mono',monospace;font-size:10.5px"></textarea>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+              <div class="form-group">
+                <label class="label">Review type</label>
+                <select class="select" id="far-upload-review-type" style="width:100%">
+                  <option value="far-alignment">FAR alignment check</option>
+                  <option value="solicitation-instruction">Solicitation instruction check</option>
+                  <option value="clause-risk">Clause risk scan</option>
+                  <option value="proposal-section">Proposal section review</option>
+                  <option value="vendor-subcontractor-agreement">Vendor / subcontractor agreement review</option>
+                  <option value="pricing-cost-volume">Pricing / cost volume review</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="label">AI provider note</label>
+                <div style="background:rgba(196,130,10,0.08);border:1px solid rgba(196,130,10,0.30);border-radius:6px;padding:7px 10px;font-size:10.5px;color:var(--text);line-height:1.55">
+                  This may send the selected content to your configured AI provider. Do not upload secrets unless approved. No file is sent to any government site or external storage.
+                </div>
+              </div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:4px">
+              <button class="btn btn-blue" onclick="farRunComplianceReview()" id="far-upload-review-btn">🔎 Run review</button>
+              <button class="btn btn-ghost" onclick="farClearUpload()">⊘ Clear</button>
+              <span id="far-upload-meta" style="margin-left:auto;font-size:10px;color:var(--muted);font-family:'IBM Plex Mono',monospace">No content loaded</span>
+            </div>
+            <div id="far-upload-result-panel" style="display:none;background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:6px;padding:10px 12px;margin-top:6px">
+              <div class="sl" style="margin-bottom:6px">Review (advisory only)</div>
+              <div id="far-upload-result" style="font-size:11.5px;color:var(--text);line-height:1.6;white-space:pre-wrap"></div>
+            </div>
+            <div style="background:rgba(196,130,10,0.08);border:1px solid rgba(196,130,10,0.30);border-radius:6px;padding:7px 10px;margin-top:6px;font-size:10.5px;color:var(--text);line-height:1.55">
+              <strong style="color:var(--warn,#C4820A)">Advisory only.</strong>
+              SourceDeck does not certify any document as FAR-compliant. Reviews use phrasing like "appears aligned," "potential issue," "requires review," and "verify against FAR and solicitation." Do not infer certification.
+            </div>
+          </div>
+
+          <!-- ═══════ D. Saved FAR Notes ═══════ -->
+          <div class="gc-or-panel" data-section="govcon-far-saved-notes" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:8px">
+            <div>
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Saved FAR Notes</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Local-only · link to solicitation / proposal section / compliance matrix / vendor agreement</div>
+            </div>
+            <div id="far-notes-list" data-phase-25i-far-notes="true" style="display:flex;flex-direction:column;gap:6px;margin-top:4px">
+              <div style="font-size:11px;color:var(--muted);padding:8px 0;line-height:1.55">No saved FAR notes yet. Use <em>Copy as Internal Note</em> in the FAR AI FAQ or save a compliance review result above.</div>
+            </div>
+          </div>
+        </section>
       </div>
     </div>
 
@@ -3815,7 +3971,9 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
           <div class="pane-sub">Section-by-section internal review drafting · Human approval gate on every section</div>
         </div>
         <div class="pane-actions">
-          <button class="btn btn-ghost" onclick="pwExportInternalReview()" title="Export internal review markdown of all approved/finalized sections (local file only)">↗ Export Internal Review</button>
+          <button class="btn btn-ghost" onclick="pwExportInternalReview()" title="Export internal review markdown of all approved/finalized sections (local file only)">↗ Export Internal Review Draft (Markdown)</button>
+          <button class="btn btn-ghost" onclick="pwExportInternalReviewWord()" title="Export internal review as a Word-compatible document (local file only — no submission)">📄 Export Internal Review Draft (Word)</button>
+          <button class="btn btn-ghost" onclick="pwExportInternalReviewPdf()" title="Export internal review as PDF via the browser print dialog (local file only — no submission)">📑 Export Internal Review Draft (PDF)</button>
         </div>
       </div>
       <div class="pane-body">
@@ -16697,6 +16855,584 @@ document.addEventListener('DOMContentLoaded',()=>{
   } else {
     setTimeout(boot, 0);
   }
+})();
+</script>
+
+<script>
+/* Phase 25I — FAR Reference (acquisition.gov-grounded)
+   FAR Browse links + FAR AI FAQ + Compliance Review Upload +
+   Saved FAR Notes.
+
+   Boundary contract:
+   - acquisition.gov is the source of truth. We link out for the
+     primary FAR text; we never claim to ship a versioned local
+     FAR cache.
+   - AI features call the user-configured AI provider (Phase 24L
+     credential boundary). If no provider is configured, the UI
+     surfaces the boundary and refuses to fabricate FAR text.
+   - Compliance reviews use advisory phrasing only. SourceDeck
+     never says "certified compliant" / "legally sufficient" /
+     "FAR certified."
+   - No file is uploaded anywhere. All review runs locally; AI
+     calls go only to the user-configured provider (and only if
+     the user explicitly clicks the action).
+   - Phase 25A no-send / no-submit / no-upload posture extends.
+
+   Persistence:
+   - Primary: window.sd.storeGet/storeSet('farReference') via
+     the electron-store preload bridge.
+   - Fallback: localStorage 'sd.farReference.v1'.
+*/
+(function(){
+  'use strict';
+  var STORE_KEY  = 'sd.farReference.v1';
+  var BRIDGE_KEY = 'farReference';
+
+  function blank(){
+    return { notes: [] };
+  }
+  var _state = blank();
+  var _uploadedText = '';
+  var _uploadedFileName = '';
+
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+  function nowIso(){ return new Date().toISOString(); }
+  function newId(){
+    return 'far-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+  }
+  function escapeHtml(s){
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  async function loadState(){
+    var loaded = null;
+    if (window.sd && typeof window.sd.storeGet === 'function'){
+      try { loaded = await window.sd.storeGet(BRIDGE_KEY); } catch (e) { loaded = null; }
+    }
+    if (!loaded){
+      try {
+        var raw = localStorage.getItem(STORE_KEY);
+        if (raw) loaded = JSON.parse(raw);
+      } catch (e) { loaded = null; }
+    }
+    if (loaded && Array.isArray(loaded.notes)) _state.notes = loaded.notes;
+  }
+  function saveState(){
+    var snap = JSON.parse(JSON.stringify(_state));
+    if (window.sd && typeof window.sd.storeSet === 'function'){
+      try { window.sd.storeSet(BRIDGE_KEY, snap); } catch (e) {}
+    }
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(snap)); } catch (e) {}
+  }
+
+  // ── ACQUISITION.GOV LINKS ─────────────────────────────────────────
+  // The mission: acquisition.gov is the source of truth. We deep-link
+  // to FAR Part / Subpart / Section when the user types a value; we
+  // never claim to ship FAR text locally.
+  function buildAcquisitionGovUrl(query){
+    var q = String(query || '').trim();
+    if (!q) return 'https://www.acquisition.gov/far';
+    // Match patterns like "52.212-4", "Part 15", "15.305", "Subpart 15.3"
+    var sectionMatch = q.match(/^(\d{1,2})\.(\d{1,3})(-\d+)?$/);
+    if (sectionMatch) {
+      return 'https://www.acquisition.gov/far/' + sectionMatch[1] + '.' + sectionMatch[2] + (sectionMatch[3] || '');
+    }
+    return 'https://www.acquisition.gov/far?search=' + encodeURIComponent(q);
+  }
+  window.farUpdateLinks = function(){
+    // Pure UI helper — does not navigate. The buttons read the input
+    // on click via farOpenAcquisitionGov().
+  };
+  window.farOpenAcquisitionGov = function(){
+    var q = (document.getElementById('far-part-search') || {}).value || '';
+    var url = buildAcquisitionGovUrl(q);
+    try {
+      if (window.sd && window.sd.openExternal) window.sd.openExternal(url);
+      else window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+  window.farOpenRegulationsSearch = function(){
+    var url = 'https://www.acquisition.gov/content/regulations';
+    try {
+      if (window.sd && window.sd.openExternal) window.sd.openExternal(url);
+      else window.open(url, '_blank', 'noopener,noreferrer');
+    } catch (e) {
+      window.open(url, '_blank', 'noopener,noreferrer');
+    }
+  };
+
+  // ── AI PROVIDER STATE ─────────────────────────────────────────────
+  function aiProviderPresent(){
+    try {
+      if (window.sd && window.sd.credentials && typeof window.sd.credentials.status === 'function'){
+        var s = window.sd.credentials.status() || {};
+        var p = s.present || {};
+        return !!(p.openai || p['openai-key'] || p.anthropic || p['anthropic-key'] || p.ibm || p['ibm-watsonx-key']);
+      }
+    } catch (e) {}
+    return false;
+  }
+  function updateProviderState(){
+    var el = document.getElementById('far-faq-provider-state');
+    if (!el) return;
+    el.textContent = aiProviderPresent()
+      ? 'Provider: configured · answers route through your AI provider'
+      : 'Provider: not configured · add an AI key in Settings to ask FAR questions';
+  }
+
+  // ── FAR FAQ PROMPT BUILDER ────────────────────────────────────────
+  // Phase 25I ships the prompt-builder contract + UI. Live AI calls
+  // are routed by the existing services/ai/provider-factory bridge
+  // when the user-configured provider key is present. If not, the
+  // UI states the boundary and refuses to fabricate FAR text.
+  window.farBuildFaqPrompt = function(question, context, sourceText){
+    var lines = [];
+    lines.push('You are SourceDeck\'s FAR Reference assistant. Answer ONLY from the user-provided source text or known acquisition.gov FAR text.');
+    lines.push('');
+    lines.push('Hard rules:');
+    lines.push('- Answer only from provided FAR/acquisition.gov source text or say the source text is insufficient.');
+    lines.push('- Cite FAR Part/Subpart/Section and URL when available.');
+    lines.push('- Do not provide legal advice.');
+    lines.push('- Do not claim compliance.');
+    lines.push('- Give practical next steps for internal review.');
+    lines.push('- If unsure, say "I do not know" or "verify against current FAR and the solicitation."');
+    lines.push('');
+    lines.push('Context: ' + (context || 'general'));
+    lines.push('');
+    lines.push('User question:');
+    lines.push(String(question || '').trim());
+    lines.push('');
+    var src = String(sourceText || '').trim();
+    if (src){
+      lines.push('Pasted FAR source text (acquisition.gov):');
+      lines.push('"""');
+      lines.push(src);
+      lines.push('"""');
+    } else {
+      lines.push('No FAR source text was provided. If your answer would require FAR text that is not in your training data\'s acquisition.gov coverage, refuse and ask the user to paste the relevant FAR text.');
+    }
+    lines.push('');
+    lines.push('Format your reply in two parts:');
+    lines.push('1. Answer (plain language, advisory only).');
+    lines.push('2. FAR citations (Part, Subpart, Section + acquisition.gov URL when known).');
+    lines.push('');
+    lines.push('End the answer with: "Advisory only. Verify against the current solicitation and acquisition.gov FAR text."');
+    return lines.join('\n');
+  };
+
+  window.farAskAi = function(){
+    var question = (document.getElementById('far-faq-question') || {}).value || '';
+    var context  = (document.getElementById('far-faq-context')  || {}).value || 'general';
+    var src      = (document.getElementById('far-faq-source-text') || {}).value || '';
+    if (!question.trim()){
+      if (window.toast) try { window.toast('Type a FAR question first.', 'info'); } catch (e) {}
+      return;
+    }
+    if (!aiProviderPresent()){
+      var answerPanel    = document.getElementById('far-faq-answer-panel');
+      var answerEl       = document.getElementById('far-faq-answer');
+      var citationsPanel = document.getElementById('far-faq-citations-panel');
+      if (answerEl){
+        answerEl.textContent = 'Add an AI API key in Settings → API Keys to use FAR AI FAQ. You can still open acquisition.gov manually with the link above to read the FAR text yourself.';
+      }
+      if (answerPanel) answerPanel.style.display = '';
+      if (citationsPanel) citationsPanel.style.display = 'none';
+      return;
+    }
+    if (!src.trim()){
+      var ap = document.getElementById('far-faq-answer-panel');
+      var ae = document.getElementById('far-faq-answer');
+      var cp = document.getElementById('far-faq-citations-panel');
+      if (ae){
+        ae.textContent = 'No FAR source text was retrieved. Open acquisition.gov or paste FAR text before relying on the answer.\n\nSourceDeck does not fabricate FAR text. Click "Open FAR on Acquisition.gov," copy the relevant text into the "Pasted FAR source text" box, and try again.';
+      }
+      if (ap) ap.style.display = '';
+      if (cp) cp.style.display = 'none';
+      return;
+    }
+    // Build the prompt and dispatch through the user-configured AI
+    // provider. The bridge call is fire-and-display; the renderer
+    // does NOT make a direct fetch.
+    var prompt = window.farBuildFaqPrompt(question, context, src);
+    if (window.sd && window.sd.ai && typeof window.sd.ai.complete === 'function'){
+      var ap2 = document.getElementById('far-faq-answer-panel');
+      var ae2 = document.getElementById('far-faq-answer');
+      if (ae2){ ae2.textContent = 'Waiting for your AI provider…'; }
+      if (ap2){ ap2.style.display = ''; }
+      try {
+        window.sd.ai.complete({ prompt: prompt, purpose: 'far-faq' }).then(function(res){
+          var text = (res && (res.text || res.answer)) || '';
+          if (ae2) ae2.textContent = text || 'No answer returned by the AI provider.';
+          var citationsPanel = document.getElementById('far-faq-citations-panel');
+          var citationsEl    = document.getElementById('far-faq-citations');
+          var citations = String(text).match(/FAR\s*\d+(\.\d+)?(-\d+)?/g) || [];
+          if (citations.length && citationsEl && citationsPanel){
+            citationsEl.textContent = citations.join('  ·  ');
+            citationsPanel.style.display = '';
+          } else if (citationsPanel){
+            citationsPanel.style.display = 'none';
+          }
+        }).catch(function(){
+          if (ae2) ae2.textContent = 'AI provider call failed locally. Open acquisition.gov to read the FAR text directly.';
+        });
+      } catch (e) {
+        if (ae2) ae2.textContent = 'AI provider not reachable from the renderer. Open acquisition.gov to read the FAR text directly.';
+      }
+    } else {
+      var ap3 = document.getElementById('far-faq-answer-panel');
+      var ae3 = document.getElementById('far-faq-answer');
+      if (ae3) ae3.textContent = 'AI bridge (window.sd.ai.complete) is not available in this build. Use the "Open FAR on Acquisition.gov" link to read the FAR text directly, or copy the prompt below into your own AI provider.\n\n--- PROMPT ---\n' + prompt;
+      if (ap3) ap3.style.display = '';
+    }
+  };
+  window.farClearFaq = function(){
+    setVal('far-faq-question', '');
+    setVal('far-faq-source-text', '');
+    setVal('far-faq-context', 'general');
+    var ap = document.getElementById('far-faq-answer-panel');
+    var cp = document.getElementById('far-faq-citations-panel');
+    if (ap) ap.style.display = 'none';
+    if (cp) cp.style.display = 'none';
+  };
+  window.farCopyAsNote = function(){
+    var question = (document.getElementById('far-faq-question') || {}).value || '';
+    var answer   = (document.getElementById('far-faq-answer')   || {}).textContent || '';
+    var citations= (document.getElementById('far-faq-citations')|| {}).textContent || '';
+    if (!answer){
+      if (window.toast) try { window.toast('No answer to copy yet.', 'info'); } catch (e) {}
+      return;
+    }
+    var note = {
+      id:        newId(),
+      kind:      'far-faq',
+      question:  question,
+      answer:    answer,
+      citations: citations,
+      createdAt: nowIso(),
+      linkedSolicitationId:     '',
+      linkedProposalSectionId:  '',
+      linkedComplianceMatrixId: '',
+      linkedVendorAgreementId:  ''
+    };
+    _state.notes.push(note);
+    saveState();
+    renderFarNotes();
+    if (window.toast) try { window.toast('FAR note saved locally. Internal review only.', 'ok'); } catch (e) {}
+  };
+
+  // ── UPLOAD REVIEW ─────────────────────────────────────────────────
+  function refreshUploadMeta(){
+    var el = document.getElementById('far-upload-meta');
+    if (!el) return;
+    if (_uploadedText || (document.getElementById('far-upload-paste') || {}).value){
+      var len = (_uploadedText || (document.getElementById('far-upload-paste') || {}).value || '').length;
+      el.textContent = (_uploadedFileName || 'pasted text') + ' · ' + len + ' chars';
+    } else {
+      el.textContent = 'No content loaded';
+    }
+  }
+  window.farOnFileChosen = function(ev){
+    var file = ev && ev.target && ev.target.files && ev.target.files[0];
+    if (!file) return;
+    _uploadedFileName = file.name || '';
+    var ext = String(file.name || '').toLowerCase().split('.').pop();
+    var TEXT_EXT = ['txt', 'md'];
+    if (TEXT_EXT.indexOf(ext) !== -1){
+      var reader = new FileReader();
+      reader.onload = function(){
+        _uploadedText = String(reader.result || '');
+        refreshUploadMeta();
+        if (window.toast) try { window.toast('Text extracted locally: ' + _uploadedText.length + ' chars.', 'ok'); } catch (e) {}
+      };
+      reader.readAsText(file);
+    } else {
+      // DOCX / PDF / images — Phase 25I does not add a native parser
+      // dependency. Surface the boundary and ask for paste-text
+      // fallback. Future phase may add mammoth / pdf.js / AI vision.
+      _uploadedText = '';
+      refreshUploadMeta();
+      if (window.toast) try { window.toast('Phase 25I extracts text from .txt / .md locally. For DOCX / PDF / image, paste the relevant text into the box. No file is uploaded.', 'info'); } catch (e) {}
+    }
+  };
+  window.farClearUpload = function(){
+    _uploadedText = '';
+    _uploadedFileName = '';
+    setVal('far-upload-paste', '');
+    setVal('far-upload-review-type', 'far-alignment');
+    var p = document.getElementById('far-upload-result-panel');
+    if (p) p.style.display = 'none';
+    var f = document.getElementById('far-upload-file');
+    if (f) try { f.value = ''; } catch (e) {}
+    refreshUploadMeta();
+  };
+  window.farBuildReviewPrompt = function(text, reviewType){
+    var lines = [];
+    lines.push('You are SourceDeck\'s FAR compliance review assistant.');
+    lines.push('');
+    lines.push('Hard rules:');
+    lines.push('- Do NOT say "certified compliant" / "legally sufficient" / "FAR certified."');
+    lines.push('- Use phrasing like "appears aligned," "potential issue," "requires review," "verify against FAR and solicitation."');
+    lines.push('- Cite FAR Part / Subpart / Section when applicable.');
+    lines.push('- Flag uncertainty.');
+    lines.push('- Recommend next steps for internal review.');
+    lines.push('- Do not provide legal advice.');
+    lines.push('');
+    lines.push('Review type: ' + reviewType);
+    lines.push('');
+    lines.push('Document text:');
+    lines.push('"""');
+    lines.push(String(text || '').slice(0, 12000));
+    lines.push('"""');
+    lines.push('');
+    lines.push('Reply with five labeled sections:');
+    lines.push('1. Likely FAR topics');
+    lines.push('2. Possible issues (with FAR citations)');
+    lines.push('3. Uncertainty / needs human review');
+    lines.push('4. Recommended next steps for internal review');
+    lines.push('5. Disclaimer line: "Advisory only. Not a compliance certification."');
+    return lines.join('\n');
+  };
+  window.farRunComplianceReview = function(){
+    var pasted     = (document.getElementById('far-upload-paste') || {}).value || '';
+    var reviewType = (document.getElementById('far-upload-review-type') || {}).value || 'far-alignment';
+    var text = (_uploadedText && _uploadedText.length) ? _uploadedText : pasted;
+    if (!text.trim()){
+      if (window.toast) try { window.toast('Upload a .txt/.md or paste text first.', 'info'); } catch (e) {}
+      return;
+    }
+    var prompt = window.farBuildReviewPrompt(text, reviewType);
+    var panel = document.getElementById('far-upload-result-panel');
+    var out   = document.getElementById('far-upload-result');
+    if (!panel || !out) return;
+    panel.style.display = '';
+    if (!aiProviderPresent()){
+      out.textContent = 'Add an AI API key in Settings → API Keys to run AI-assisted FAR compliance review. You can still read the FAR text on acquisition.gov yourself.\n\nReview type chosen: ' + reviewType + '\nContent length: ' + text.length + ' chars (not sent).';
+      return;
+    }
+    if (window.sd && window.sd.ai && typeof window.sd.ai.complete === 'function'){
+      out.textContent = 'Waiting for your AI provider…';
+      try {
+        window.sd.ai.complete({ prompt: prompt, purpose: 'far-compliance-review' }).then(function(res){
+          var resultText = (res && (res.text || res.answer)) || '';
+          out.textContent = resultText || 'No review returned by the AI provider.';
+        }).catch(function(){
+          out.textContent = 'AI provider call failed locally. Open acquisition.gov to read the FAR text directly.';
+        });
+      } catch (e) {
+        out.textContent = 'AI provider not reachable from the renderer.';
+      }
+    } else {
+      out.textContent = 'AI bridge (window.sd.ai.complete) is not available in this build. Copy this prompt into your own AI provider, then paste the output back into a saved FAR note.\n\n--- PROMPT ---\n' + prompt;
+    }
+  };
+
+  // ── SAVED NOTES ───────────────────────────────────────────────────
+  function renderFarNotes(){
+    var host = document.getElementById('far-notes-list');
+    if (!host) return;
+    if (!_state.notes.length){
+      host.innerHTML = '<div style="font-size:11px;color:var(--muted);padding:8px 0;line-height:1.55">No saved FAR notes yet. Use <em>Copy as Internal Note</em> in the FAR AI FAQ or save a compliance review result above.</div>';
+      return;
+    }
+    var html = '';
+    for (var i = _state.notes.length - 1; i >= 0; i--){
+      var n = _state.notes[i];
+      html += '<div data-far-note-id="' + escapeHtml(n.id) + '" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:6px;padding:8px 11px">' +
+                '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start">' +
+                  '<div style="flex:1">' +
+                    '<div style="font-size:11.5px;font-weight:600;color:var(--text)">' + escapeHtml(n.question || '(untitled FAR note)') + '</div>' +
+                    '<div style="font-size:10px;color:var(--muted);margin-top:2px">Saved ' + escapeHtml(n.createdAt) + (n.citations ? ' · ' + escapeHtml(n.citations) : '') + '</div>' +
+                  '</div>' +
+                  '<button class="btn btn-ghost" onclick="farDeleteNote(\'' + escapeHtml(n.id) + '\')" style="padding:2px 7px;font-size:10px;color:var(--red)">🗑</button>' +
+                '</div>' +
+                '<div style="margin-top:6px;font-size:11px;color:var(--sub);line-height:1.55;white-space:pre-wrap">' + escapeHtml(n.answer || '') + '</div>' +
+              '</div>';
+    }
+    host.innerHTML = html;
+  }
+  window.farDeleteNote = function(id){
+    if (window.confirm && !window.confirm('Delete this saved FAR note?')) return;
+    _state.notes = _state.notes.filter(function(n){ return n.id !== id; });
+    saveState();
+    renderFarNotes();
+  };
+
+  // ── HELPERS ───────────────────────────────────────────────────────
+  function setVal(id, v){
+    var el = document.getElementById(id);
+    if (el) el.value = (v === undefined || v === null) ? '' : v;
+  }
+
+  // ── BOOT ──────────────────────────────────────────────────────────
+  function boot(){
+    loadState().then(function(){
+      renderFarNotes();
+      updateProviderState();
+      var paste = document.getElementById('far-upload-paste');
+      if (paste) paste.addEventListener('input', refreshUploadMeta);
+    }).catch(function(){
+      renderFarNotes();
+      updateProviderState();
+    });
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 0);
+  }
+})();
+</script>
+
+<script>
+/* Phase 25I — Proposal Workspace export (Word + PDF)
+   Extends Phase 25E.2's pwExportInternalReview() (Markdown) with
+   two additional export formats — both LOCAL ONLY, no submit, no
+   upload, no email. Zero new dependencies:
+   - Word: HTML wrapped with the .doc extension. Word opens it
+     correctly. The format is widely-supported across versions.
+   - PDF: opens a print-friendly window so the operator uses the
+     browser's "Save as PDF" dialog. Zero-dependency, zero-network.
+*/
+(function(){
+  'use strict';
+  function escapeHtml(s){
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+  function todayIso(){
+    var d = new Date();
+    function pad(n){ return (n < 10 ? '0' : '') + n; }
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function loadWorkspaceState(){
+    try {
+      if (window.sd && typeof window.sd.storeGet === 'function'){
+        // electron-store is async; we read the localStorage fallback
+        // synchronously here because the export needs the snapshot in
+        // a single click. The fallback is kept in sync by Phase 25E.2.
+      }
+      var raw = localStorage.getItem('sd.proposalWorkspace.v1');
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return null;
+  }
+  function gatherSections(){
+    var state = loadWorkspaceState();
+    var ORDER = [
+      ['table-of-contents',     'Table of Contents'],
+      ['solicitation-summary',  'Solicitation Summary'],
+      ['compliance-matrix',     'Compliance Matrix'],
+      ['technical-approach',    'Technical Approach'],
+      ['management-approach',   'Management Approach'],
+      ['staffing-key-personnel','Staffing / Key Personnel'],
+      ['past-performance',      'Past Performance'],
+      ['quality-control',       'Quality Control'],
+      ['risk-management',       'Risk Management'],
+      ['transition-mobilization','Transition / Mobilization'],
+      ['cost-price-volume',     'Cost / Price Volume'],
+      ['attachments-forms',     'Attachments / Forms'],
+      ['final-internal-review', 'Final Internal Review']
+    ];
+    var sections = (state && state.sections) || {};
+    var out = [];
+    for (var i = 0; i < ORDER.length; i++){
+      var id = ORDER[i][0];
+      var title = ORDER[i][1];
+      var sec = sections[id] || { status: 'not-started', notes: '', draft: '' };
+      out.push({ id: id, title: title, status: sec.status, notes: sec.notes || '', draft: sec.draft || '' });
+    }
+    return out;
+  }
+  function buildExportHtml(){
+    var sections = gatherSections();
+    var stamp = todayIso();
+    var html = '';
+    html += '<!DOCTYPE html><html><head><meta charset="utf-8"><title>Proposal Workspace — Internal Review Draft (' + stamp + ')</title>';
+    html += '<style>body{font-family:Calibri,Arial,sans-serif;color:#111;line-height:1.5;padding:32px 40px;max-width:780px;margin:0 auto;}h1{font-size:22px;color:#1a1a1a;border-bottom:2px solid #c9941a;padding-bottom:6px;}h2{font-size:14px;color:#1a1a1a;margin-top:24px;border-bottom:1px solid #ccc;padding-bottom:4px;}h3{font-size:11px;color:#555;margin-top:14px;}.disclaimer{background:#fff8e6;border:1px solid #c9941a;padding:10px 14px;border-radius:6px;font-size:11px;color:#3a3a3a;margin:12px 0;}.status{display:inline-block;padding:2px 8px;border-radius:12px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;background:#eee;color:#555;}.draft{white-space:pre-wrap;font-size:11px;color:#222;background:#fafafa;padding:10px 12px;border:1px solid #ddd;border-radius:4px;}.notes{white-space:pre-wrap;font-size:10.5px;color:#444;font-style:italic;}.no-draft{font-size:11px;color:#888;font-style:italic;}.print-cta{margin:18px 0;}@media print{.print-cta{display:none;}}</style>';
+    html += '</head><body>';
+    html += '<h1>Proposal Workspace — Internal Review Draft</h1>';
+    html += '<div style="font-size:11px;color:#555;">Generated ' + escapeHtml(stamp) + '</div>';
+    html += '<div class="disclaimer"><strong>Internal review only.</strong> Drafts produced here are not legal review, not compliance certification, and not final proposals. SourceDeck does not send, submit, or upload this document. The user is responsible for every external action. Verify against the current solicitation and acquisition.gov FAR text before any external use.</div>';
+    html += '<div class="print-cta" style="background:#f0f8ff;border:1px solid #4da6ff;padding:8px 12px;border-radius:4px;font-size:11px;color:#1a1a1a;">📑 To save as PDF: use your browser\'s <em>File → Print → Save as PDF</em> menu. Nothing is uploaded.</div>';
+    var approved = 0;
+    for (var i = 0; i < sections.length; i++){
+      var s = sections[i];
+      html += '<h2>' + (i + 1) + '. ' + escapeHtml(s.title) + '  <span class="status">' + escapeHtml(s.status) + '</span></h2>';
+      if (s.notes){
+        html += '<h3>Notes / Special Instructions</h3>';
+        html += '<div class="notes">' + escapeHtml(s.notes) + '</div>';
+      }
+      if (s.draft){
+        html += '<h3>Draft</h3>';
+        html += '<div class="draft">' + escapeHtml(s.draft) + '</div>';
+      } else {
+        html += '<div class="no-draft">No draft yet for this section.</div>';
+      }
+      if (s.status === 'approved' || s.status === 'finalized') approved++;
+    }
+    html += '<hr style="margin-top:32px;"><div style="font-size:11px;color:#555;">Approved/Finalized: ' + approved + ' of ' + sections.length + ' sections.</div>';
+    html += '<div style="font-size:10px;color:#888;margin-top:6px;">SourceDeck does not submit proposals, send emails, or upload to portals.</div>';
+    html += '</body></html>';
+    return html;
+  }
+  window.pwExportInternalReviewWord = function(){
+    // Word/Outlook open HTML-with-.doc-extension correctly across
+    // Office 365, Word 2016+, and the LibreOffice/Pages import.
+    var html = buildExportHtml();
+    var stamp = todayIso();
+    var filename = stamp.replace(/-/g, '') + '-proposal-workspace-INTERNAL-REVIEW-DRAFT.doc';
+    try {
+      var blob = new Blob([html], { type: 'application/msword' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(function(){
+        try { document.body.removeChild(a); } catch (e) {}
+        try { URL.revokeObjectURL(url); } catch (e) {}
+      }, 0);
+      if (window.toast) try { window.toast('Internal review Word draft saved locally. Not submitted, not uploaded, not emailed.', 'ok'); } catch (e) {}
+    } catch (e) {
+      if (window.toast) try { window.toast('Word export failed locally (no network call attempted).', 'err'); } catch (e2) {}
+    }
+  };
+  window.pwExportInternalReviewPdf = function(){
+    // Open the print-styled HTML in a new window so the operator
+    // uses the browser's "Save as PDF" dialog. Zero-dependency,
+    // zero-network. The new window auto-triggers print().
+    var html = buildExportHtml();
+    try {
+      var win = window.open('', '_blank', 'width=900,height=1100');
+      if (!win){
+        if (window.toast) try { window.toast('PDF export needs popup permission. Allow popups, then click Export Internal Review Draft (PDF) again.', 'info'); } catch (e) {}
+        return;
+      }
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      // Give the new window a beat to render, then prompt print.
+      setTimeout(function(){
+        try { win.focus(); win.print(); } catch (e) {}
+      }, 250);
+      if (window.toast) try { window.toast('Use your browser\'s Save as PDF dialog. Nothing is uploaded.', 'ok'); } catch (e) {}
+    } catch (e) {
+      if (window.toast) try { window.toast('PDF export failed locally (no network call attempted).', 'err'); } catch (e2) {}
+    }
+  };
 })();
 </script>
 </body>
