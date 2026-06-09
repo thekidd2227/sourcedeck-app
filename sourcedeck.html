@@ -795,7 +795,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
          only flips visibility classes; it never removes a tab from the
          DOM and never breaks keyboard navigation. -->
     <div class="nav-section" id="nav-section-show-tools-toggle" data-section="govcon-show-all-tools-toggle">
-      <button type="button" class="nav-btn" id="gc-show-all-tools-btn" data-tools-collapsed="false" onclick="gcToggleAllTools()" style="font-size:10.5px;color:var(--sub);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:0.08em">Other business tools — <span id="gc-show-all-tools-state">Shown</span></button>
+      <button type="button" class="nav-btn" id="gc-show-all-tools-btn" data-tools-collapsed="true" onclick="gcToggleAllTools()" style="font-size:10.5px;color:var(--sub);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:0.08em">Other business tools — <span id="gc-show-all-tools-state">Hidden</span></button>
     </div>
     <div class="nav-section" id="nav-section-operations" data-other-business-tools>
 
@@ -14341,11 +14341,13 @@ document.addEventListener('DOMContentLoaded',()=>{
     var nowCollapsed = !(btn && btn.getAttribute('data-tools-collapsed') === 'true');
     applyState(nowCollapsed);
   };
-  // Default = expanded so every commercial tab is visible on cold open.
+  // Phase 25E.1: Default = collapsed so the buyer-facing nav presents
+  // only GovCon Capture OS surfaces on cold open. The operator can
+  // click "Other business tools" to reveal the commercial-mode tabs.
   if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function(){ applyState(false); });
+    document.addEventListener('DOMContentLoaded', function(){ applyState(true); });
   } else {
-    setTimeout(function(){ applyState(false); }, 0);
+    setTimeout(function(){ applyState(true); }, 0);
   }
 })();
 </script>
