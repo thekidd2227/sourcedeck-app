@@ -17,7 +17,14 @@ const REQUIRED_ASAR_FILES = [
   '/main.js',
   '/preload.js',
   '/sourcedeck.html',
+  '/sourcedeck-mark.svg',
   '/chartnav-integration.js',
+  // Phase 25E.8: api/index.js is require()'d by main.js. Missing it
+  // produced "Cannot find module './api'" at boot in the Phase 25D /
+  // Phase 25E rebuild because earlier bundles were built before
+  // main.js added the require. Now pinned so a future regression
+  // fails fast at gate time, not at the buyer's launch dialog.
+  '/api/index.js',
 ];
 
 function info(msg)  { console.log('[release-check] ' + msg); }
