@@ -796,6 +796,14 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div class="nav-label">Help</div>
       <button class="nav-btn" data-tab="help"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>Help / FAQ</button>
     </div>
+    <!-- Phase 25H: Calendar — standalone SourceDeck module. Sits in
+         its own always-on nav section (outside the Phase 25E.1
+         "Other business tools" collapsible container) so the buyer
+         reaches Calendar in one click on cold open. -->
+    <div class="nav-section" id="nav-section-calendar" data-section="calendar-nav">
+      <div class="nav-label">Calendar</div>
+      <button class="nav-btn" data-tab="calendar"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Calendar</button>
+    </div>
     <!-- Phase 23C: Show All Tools toggle — defaults to expanded so
          every commercial tab remains visible by default; an operator
          can collapse non-GovCon sections for a buyer demo. The toggle
@@ -3927,6 +3935,176 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
         <div style="margin-top:14px;font-size:10.5px;color:var(--muted);line-height:1.55">
           Need more help? Ask your pilot operator first (Tier 1, business-day response). For product defects or credential-boundary questions, your operator can escalate to Tier 2 engineering on your behalf (48-hour response).
         </div>
+      </div>
+    </div>
+
+    <!-- ═══════ CALENDAR MODULE (Phase 25H) ═══════
+         Standalone SourceDeck Calendar.
+
+         Boundary contract (Phase 25A + Phase 25H):
+         - All event data lives locally on the operator's Mac.
+         - .ics import parses in-renderer; no upload, no fetch().
+         - Paste-text import parses in-renderer.
+         - Manual events created/edited locally.
+         - NO Google Calendar API / Microsoft Graph / iCloud sync /
+           OAuth in this phase. Future CalDAV path is documented only.
+         - NO calendar invites sent. NO external calendar update.
+         - SourceDeck does not send / submit / upload — Phase 25A
+           posture applies verbatim.
+
+         Persistence:
+         - Primary: window.sd.storeGet/storeSet('calendar') via the
+           electron-store preload bridge.
+         - Fallback: localStorage 'sd.calendar.v1'.
+         - Event shape: { id, uid, source, title, date, start, end,
+           allDay, location, description, linkedSolicitationId,
+           linkedVendorId, linkedProposalSectionId, taskType, status,
+           notes, createdAt, updatedAt }.
+    -->
+    <div class="tab-pane" id="tab-calendar">
+      <div class="pane-hdr">
+        <div>
+          <div class="pane-title"><span class="brief-head">Calendar</span></div>
+          <div class="pane-sub">Events, deadlines, vendor follow-ups, and proposal work · <span id="cal-status-label">Local calendar — 0 events</span></div>
+        </div>
+        <div class="pane-actions" style="flex-wrap:wrap;gap:6px">
+          <input type="file" id="cal-ics-file" accept=".ics,text/calendar" style="display:none" onchange="calOnIcsFileChosen(event)">
+          <button class="btn btn-ghost" onclick="calOpenIcsPicker()" title="Import events from a local .ics file. The file is parsed in-renderer; nothing is uploaded.">📅 Import .ics File</button>
+          <button class="btn btn-ghost" onclick="calOpenPasteModal()" title="Paste ICS text or simple event lines. Parsed locally.">📋 Paste Calendar Text</button>
+          <button class="btn btn-blue"  onclick="calOpenEventModal(null)" title="Add a manual event.">+ Add Event</button>
+          <button class="btn btn-ghost" onclick="calClearImported()" title="Remove all events whose source is 'imported-ics'.">⊘ Clear Imported</button>
+        </div>
+      </div>
+      <div class="pane-body">
+
+        <!-- Phase 25H: privacy + no-send disclaimer -->
+        <div style="background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:8px;padding:9px 13px;margin-bottom:12px;font-size:11px;color:var(--text);line-height:1.55">
+          <strong style="color:var(--gold2)">Local-only calendar.</strong>
+          Events live on your Mac. SourceDeck does not send calendar invites, sync to Google / Outlook / iCloud, or upload your calendar anywhere. <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">.ics</code> import is the open standard; OAuth-based providers are deferred to a future phase per <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">docs/product/phase-25h-open-calendar-import-options.md</code>.
+        </div>
+
+        <!-- View toggle -->
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:12px;flex-wrap:wrap">
+          <button class="btn btn-ghost cal-view-btn" data-cal-view="today" onclick="calSetView('today')">Today</button>
+          <button class="btn btn-ghost cal-view-btn" data-cal-view="week"  onclick="calSetView('week')">Week</button>
+          <button class="btn btn-ghost cal-view-btn" data-cal-view="month" onclick="calSetView('month')">Month</button>
+          <button class="btn btn-ghost cal-view-btn" data-cal-view="list"  onclick="calSetView('list')">List</button>
+          <div style="flex:1"></div>
+          <button class="btn btn-ghost" onclick="calGotoToday()" title="Jump to today">⤴ Today</button>
+          <button class="btn btn-ghost" onclick="calStepRange(-1)" title="Previous">◀</button>
+          <span id="cal-range-label" style="font-size:11px;color:var(--sub);min-width:170px;text-align:center;font-family:'IBM Plex Mono',monospace;letter-spacing:0.04em">—</span>
+          <button class="btn btn-ghost" onclick="calStepRange(1)"  title="Next">▶</button>
+        </div>
+
+        <!-- Active view container -->
+        <div id="cal-view-container" style="min-height:300px">
+          <div id="cal-empty-state" style="text-align:center;padding:48px 16px;color:var(--muted);font-size:12px;line-height:1.6">
+            <div style="font-size:28px;margin-bottom:10px">📅</div>
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:16px;color:var(--text);margin-bottom:6px">No calendar events yet</div>
+            <div style="max-width:420px;margin:0 auto">Import an .ics file, paste calendar text, or add an event manually.</div>
+          </div>
+        </div>
+
+        <!-- Manual event modal -->
+        <div id="cal-event-modal" data-cal-modal="event" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;align-items:center;justify-content:center;padding:20px">
+          <div class="card" style="max-width:620px;width:100%;max-height:88vh;overflow:auto;padding:18px 20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div class="card-title" id="cal-event-modal-title" style="color:var(--gold2)">Add event</div>
+              <button class="btn btn-ghost" onclick="calCloseEventModal()" style="padding:4px 9px">✕</button>
+            </div>
+            <div class="form-group" style="margin-bottom:8px"><label class="label">Title</label><input class="input" id="cal-f-title" placeholder="Event title"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+              <div class="form-group"><label class="label">Date</label><input class="input" id="cal-f-date" type="date"></div>
+              <div class="form-group"><label class="label">Start</label><input class="input" id="cal-f-start" type="time"></div>
+              <div class="form-group"><label class="label">End</label><input class="input" id="cal-f-end" type="time"></div>
+            </div>
+            <div class="form-group" style="margin-bottom:8px"><label class="label" style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="cal-f-allday"> All day</label></div>
+            <div class="form-group" style="margin-bottom:8px"><label class="label">Location</label><input class="input" id="cal-f-location" placeholder="Optional"></div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:8px">
+              <div class="form-group">
+                <label class="label">Task type</label>
+                <select class="select" id="cal-f-tasktype" style="width:100%">
+                  <option value="calendar-event">Calendar event</option>
+                  <option value="vendor-follow-up">Vendor follow-up</option>
+                  <option value="quote-due">Quote due</option>
+                  <option value="appointment">Appointment</option>
+                  <option value="site-visit">Site visit</option>
+                  <option value="qa-deadline">Q&amp;A deadline</option>
+                  <option value="proposal-deadline">Proposal deadline</option>
+                  <option value="internal-review">Internal review</option>
+                  <option value="subcontractor-meeting">Subcontractor meeting</option>
+                  <option value="proposal-section-work">Proposal section work</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label class="label">Status</label>
+                <select class="select" id="cal-f-status" style="width:100%">
+                  <option value="scheduled">Scheduled</option>
+                  <option value="completed">Completed</option>
+                  <option value="missed">Missed</option>
+                  <option value="reschedule">Reschedule</option>
+                  <option value="canceled">Canceled</option>
+                </select>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:8px">
+              <div class="form-group"><label class="label">Linked solicitation ID</label><input class="input" id="cal-f-link-sol"  placeholder="Optional"></div>
+              <div class="form-group"><label class="label">Linked vendor / sub</label><input class="input" id="cal-f-link-vendor" placeholder="Optional"></div>
+              <div class="form-group">
+                <label class="label">Linked proposal section</label>
+                <select class="select" id="cal-f-link-section" style="width:100%">
+                  <option value="">(none)</option>
+                  <option value="table-of-contents">Table of Contents</option>
+                  <option value="solicitation-summary">Solicitation Summary</option>
+                  <option value="compliance-matrix">Compliance Matrix</option>
+                  <option value="technical-approach">Technical Approach</option>
+                  <option value="management-approach">Management Approach</option>
+                  <option value="staffing-key-personnel">Staffing / Key Personnel</option>
+                  <option value="past-performance">Past Performance</option>
+                  <option value="quality-control">Quality Control</option>
+                  <option value="risk-management">Risk Management</option>
+                  <option value="transition-mobilization">Transition / Mobilization</option>
+                  <option value="cost-price-volume">Cost / Price Volume</option>
+                  <option value="attachments-forms">Attachments / Forms</option>
+                  <option value="final-internal-review">Final Internal Review</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-group" style="margin-bottom:8px"><label class="label">Notes / reminder text</label><textarea class="textarea" id="cal-f-notes" placeholder="Optional notes. Reminder is text-only; SourceDeck does not push notifications externally." style="min-height:70px"></textarea></div>
+            <div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:10px">
+              <button class="btn btn-blue" onclick="calSaveEventForm()" id="cal-event-save-btn">💾 Save event</button>
+              <button class="btn btn-ghost" onclick="calMarkComplete()" id="cal-event-complete-btn">✓ Mark complete</button>
+              <button class="btn btn-ghost" onclick="calRescheduleEvent()" id="cal-event-reschedule-btn">↻ Reschedule</button>
+              <button class="btn btn-ghost" onclick="calDeleteEvent()" id="cal-event-delete-btn" style="color:var(--red);margin-left:auto">🗑 Delete</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Paste calendar text modal -->
+        <div id="cal-paste-modal" data-cal-modal="paste" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1000;align-items:center;justify-content:center;padding:20px">
+          <div class="card" style="max-width:620px;width:100%;max-height:88vh;overflow:auto;padding:18px 20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+              <div class="card-title" style="color:var(--gold2)">Paste Calendar Text</div>
+              <button class="btn btn-ghost" onclick="calClosePasteModal()" style="padding:4px 9px">✕</button>
+            </div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:8px">Paste raw ICS text (starts with <code>BEGIN:VCALENDAR</code>) or simple event lines. We parse locally and let you review before saving — nothing auto-saves.</div>
+            <textarea class="textarea" id="cal-paste-text" placeholder="BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:Site visit
+DTSTART:20260612T090000Z
+DTEND:20260612T100000Z
+END:VEVENT
+END:VCALENDAR" style="min-height:180px;font-family:'IBM Plex Mono',monospace;font-size:11px"></textarea>
+            <div style="display:flex;gap:6px;margin-top:10px">
+              <button class="btn btn-blue" onclick="calParseAndImportPaste()">🔎 Parse &amp; Review</button>
+              <button class="btn btn-ghost" onclick="calClosePasteModal()">Cancel</button>
+            </div>
+            <div id="cal-paste-result" style="margin-top:12px;font-size:11px;color:var(--sub);line-height:1.55"></div>
+          </div>
+        </div>
+
       </div>
     </div>
 
@@ -15740,6 +15918,785 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     setActive(targetId);
   };
+})();
+</script>
+
+<script>
+/* Phase 25H — SourceDeck Calendar Module
+   Standalone local-only calendar.
+
+   Boundary contract (Phase 25A + Phase 25H):
+   - All event data lives locally on the operator's Mac.
+   - .ics import parses in-renderer; no fetch(), no XMLHttpRequest.
+   - Paste-text import parses in-renderer.
+   - Manual events created/edited locally.
+   - NO Google Calendar API / Microsoft Graph / iCloud / OAuth in
+     this phase. Future CalDAV path is documented only.
+   - NO calendar invites sent. NO external calendar update.
+   - Phase 25A no-send/no-submit/no-upload posture applies verbatim.
+
+   Persistence:
+   - Primary: window.sd.storeGet/storeSet('calendar') via the
+     electron-store preload bridge.
+   - Fallback: localStorage 'sd.calendar.v1'.
+
+   State shape:
+   {
+     activeView: 'today' | 'week' | 'month' | 'list',
+     anchorDate: 'YYYY-MM-DD',
+     events: [
+       { id, uid, source, title, date, start, end, allDay,
+         location, description, linkedSolicitationId,
+         linkedVendorId, linkedProposalSectionId, taskType,
+         status, notes, createdAt, updatedAt }
+     ]
+   }
+*/
+(function(){
+  'use strict';
+
+  var STORE_KEY  = 'sd.calendar.v1';
+  var BRIDGE_KEY = 'calendar';
+
+  // ── ICS PARSER ────────────────────────────────────────────────────
+  // RFC 5545 (subset). Supports:
+  // - Folded lines (CRLF + space/tab continuation)
+  // - VEVENT blocks
+  // - SUMMARY, DTSTART, DTEND, DESCRIPTION, LOCATION, UID, RRULE,
+  //   DTSTAMP (read-only)
+  // - DATE values (YYYYMMDD) and DATE-TIME values (YYYYMMDDTHHMMSS
+  //   with optional Z suffix for UTC)
+  // - Recurring events are imported with the first instance only;
+  //   RRULE is stored as a description annotation. Full recurrence
+  //   expansion is deferred to a future phase.
+  // Safety: pure string manipulation. No fetch, no XHR, no Worker.
+  function unfoldLines(text){
+    // RFC 5545 §3.1: CRLF + (SPACE | TAB) = line continuation.
+    var raw = String(text || '').replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+    var lines = raw.split('\n');
+    var out = [];
+    for (var i = 0; i < lines.length; i++){
+      var ln = lines[i];
+      if (ln.length === 0) continue;
+      if ((ln.charAt(0) === ' ' || ln.charAt(0) === '\t') && out.length){
+        out[out.length - 1] += ln.substring(1);
+      } else {
+        out.push(ln);
+      }
+    }
+    return out;
+  }
+  function parseIcsDate(value){
+    // value like "20260612" or "20260612T090000" or "20260612T090000Z"
+    if (!value) return { date: '', time: '', allDay: true };
+    var v = String(value).replace(/[^0-9TZ]/g, '');
+    var dateMatch = v.match(/^(\d{4})(\d{2})(\d{2})(?:T(\d{2})(\d{2})(\d{2})(Z)?)?/);
+    if (!dateMatch) return { date: '', time: '', allDay: true };
+    var date = dateMatch[1] + '-' + dateMatch[2] + '-' + dateMatch[3];
+    if (!dateMatch[4]) return { date: date, time: '', allDay: true };
+    var time = dateMatch[4] + ':' + dateMatch[5];
+    return { date: date, time: time, allDay: false };
+  }
+  function unescapeIcsText(s){
+    if (s === undefined || s === null) return '';
+    return String(s)
+      .replace(/\\n/g, '\n')
+      .replace(/\\N/g, '\n')
+      .replace(/\\,/g, ',')
+      .replace(/\\;/g, ';')
+      .replace(/\\\\/g, '\\');
+  }
+  function parseIcsField(line){
+    // "FIELDNAME;PARAM=VAL;PARAM=VAL:value"
+    var colonIdx = line.indexOf(':');
+    if (colonIdx === -1) return null;
+    var leftPart = line.substring(0, colonIdx);
+    var value = line.substring(colonIdx + 1);
+    var pieces = leftPart.split(';');
+    var name = pieces.shift().toUpperCase();
+    var params = {};
+    for (var i = 0; i < pieces.length; i++){
+      var eq = pieces[i].indexOf('=');
+      if (eq === -1) continue;
+      params[pieces[i].substring(0, eq).toUpperCase()] = pieces[i].substring(eq + 1);
+    }
+    return { name: name, params: params, value: value };
+  }
+  window.calParseIcs = function(text){
+    var lines = unfoldLines(text);
+    var events = [];
+    var current = null;
+    for (var i = 0; i < lines.length; i++){
+      var ln = lines[i];
+      if (ln === 'BEGIN:VEVENT') { current = {}; continue; }
+      if (ln === 'END:VEVENT') {
+        if (current) events.push(finalizeIcsEvent(current));
+        current = null;
+        continue;
+      }
+      if (!current) continue;
+      var field = parseIcsField(ln);
+      if (!field) continue;
+      if (field.name === 'SUMMARY')     current.summary = unescapeIcsText(field.value);
+      else if (field.name === 'DTSTART')current.dtstart = field.value;
+      else if (field.name === 'DTEND')  current.dtend = field.value;
+      else if (field.name === 'DESCRIPTION') current.description = unescapeIcsText(field.value);
+      else if (field.name === 'LOCATION')    current.location = unescapeIcsText(field.value);
+      else if (field.name === 'UID')         current.uid = field.value;
+      else if (field.name === 'RRULE')       current.rrule = field.value;
+      else if (field.name === 'DTSTAMP')     current.dtstamp = field.value;
+    }
+    return events;
+  };
+  function finalizeIcsEvent(raw){
+    var startObj = parseIcsDate(raw.dtstart || '');
+    var endObj   = parseIcsDate(raw.dtend   || raw.dtstart || '');
+    var description = raw.description || '';
+    if (raw.rrule){
+      description = (description ? description + '\n\n' : '') +
+        'Recurring event imported (RRULE=' + raw.rrule + '). Phase 25H imports the first instance only — full recurrence expansion is a future-phase enhancement.';
+    }
+    return {
+      uid:         raw.uid || '',
+      title:       raw.summary || '(untitled)',
+      date:        startObj.date,
+      start:       startObj.time,
+      end:         endObj.time,
+      allDay:      !!startObj.allDay,
+      location:    raw.location || '',
+      description: description
+    };
+  }
+
+  // ── STORAGE ───────────────────────────────────────────────────────
+  function blankState(){
+    return {
+      activeView: 'today',
+      anchorDate: todayIso(),
+      events: []
+    };
+  }
+  var _state = blankState();
+  var _editingEventId = null;
+  var _saveTimer = null;
+
+  function todayIso(){
+    var d = new Date();
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function pad(n){ return (n < 10 ? '0' : '') + n; }
+
+  async function loadState(){
+    var loaded = null;
+    if (window.sd && typeof window.sd.storeGet === 'function'){
+      try { loaded = await window.sd.storeGet(BRIDGE_KEY); } catch (e) { loaded = null; }
+    }
+    if (!loaded){
+      try {
+        var raw = localStorage.getItem(STORE_KEY);
+        if (raw) loaded = JSON.parse(raw);
+      } catch (e) { loaded = null; }
+    }
+    if (loaded && typeof loaded === 'object'){
+      var b = blankState();
+      if (loaded.activeView) b.activeView = loaded.activeView;
+      if (loaded.anchorDate) b.anchorDate = loaded.anchorDate;
+      if (Array.isArray(loaded.events)) b.events = loaded.events;
+      _state = b;
+    }
+  }
+  function saveState(){
+    if (_saveTimer) clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(function(){
+      var snap = JSON.parse(JSON.stringify(_state));
+      if (window.sd && typeof window.sd.storeSet === 'function'){
+        try { window.sd.storeSet(BRIDGE_KEY, snap); } catch (e) {}
+      }
+      try { localStorage.setItem(STORE_KEY, JSON.stringify(snap)); } catch (e) {}
+    }, 200);
+  }
+
+  // Expose data + ICS helpers to renderer tooling.
+  window.__sdCalendar = {
+    getState: function(){ return _state; },
+    parseIcs: function(text){ return window.calParseIcs(text); }
+  };
+
+  // ── EVENT CRUD ────────────────────────────────────────────────────
+  function newId(){
+    return 'evt-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 7);
+  }
+  function makeEvent(partial){
+    var now = new Date().toISOString();
+    return Object.assign({
+      id:                       newId(),
+      uid:                      '',
+      source:                   'manual',
+      title:                    '',
+      date:                     todayIso(),
+      start:                    '',
+      end:                      '',
+      allDay:                   false,
+      location:                 '',
+      description:              '',
+      linkedSolicitationId:     '',
+      linkedVendorId:           '',
+      linkedProposalSectionId:  '',
+      taskType:                 'calendar-event',
+      status:                   'scheduled',
+      notes:                    '',
+      createdAt:                now,
+      updatedAt:                now
+    }, partial || {});
+  }
+  function findEvent(id){
+    for (var i = 0; i < _state.events.length; i++){
+      if (_state.events[i].id === id) return _state.events[i];
+    }
+    return null;
+  }
+  function findByUidDate(uid, date){
+    if (!uid) return null;
+    for (var i = 0; i < _state.events.length; i++){
+      var e = _state.events[i];
+      if (e.uid && e.uid === uid && e.date === date) return e;
+    }
+    return null;
+  }
+  window.calAddOrUpdateImportedEvent = function(parsedIcs){
+    // Phase 25H: dedupe by (UID + start date). If found, update;
+    // otherwise insert.
+    var existing = findByUidDate(parsedIcs.uid, parsedIcs.date);
+    if (existing){
+      Object.assign(existing, {
+        title:       parsedIcs.title       || existing.title,
+        start:       parsedIcs.start       || existing.start,
+        end:         parsedIcs.end         || existing.end,
+        allDay:      typeof parsedIcs.allDay === 'boolean' ? parsedIcs.allDay : existing.allDay,
+        location:    parsedIcs.location    || existing.location,
+        description: parsedIcs.description || existing.description,
+        updatedAt:   new Date().toISOString()
+      });
+      return { status: 'updated', event: existing };
+    }
+    var ev = makeEvent({
+      uid:         parsedIcs.uid || '',
+      source:      'imported-ics',
+      title:       parsedIcs.title       || '(untitled)',
+      date:        parsedIcs.date        || todayIso(),
+      start:       parsedIcs.start       || '',
+      end:         parsedIcs.end         || '',
+      allDay:      !!parsedIcs.allDay,
+      location:    parsedIcs.location    || '',
+      description: parsedIcs.description || ''
+    });
+    _state.events.push(ev);
+    return { status: 'created', event: ev };
+  };
+
+  // ── ICS FILE PICKER ───────────────────────────────────────────────
+  window.calOpenIcsPicker = function(){
+    var picker = document.getElementById('cal-ics-file');
+    if (picker) picker.click();
+  };
+  window.calOnIcsFileChosen = function(ev){
+    var file = ev && ev.target && ev.target.files && ev.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function(){
+      try {
+        var text = String(reader.result || '');
+        var parsed = window.calParseIcs(text);
+        var created = 0, updated = 0;
+        for (var i = 0; i < parsed.length; i++){
+          var result = window.calAddOrUpdateImportedEvent(parsed[i]);
+          if (result.status === 'created') created++;
+          else if (result.status === 'updated') updated++;
+        }
+        saveState();
+        renderCalendar();
+        if (window.toast) try { window.toast(parsed.length + ' event(s) parsed locally · ' + created + ' new · ' + updated + ' updated. Nothing was sent or uploaded.', 'ok'); } catch (e) {}
+      } catch (e) {
+        if (window.toast) try { window.toast('ICS parse failed locally. The file was not uploaded.', 'err'); } catch (e2) {}
+      } finally {
+        try { ev.target.value = ''; } catch (e) {}
+      }
+    };
+    reader.onerror = function(){
+      if (window.toast) try { window.toast('ICS file read failed locally.', 'err'); } catch (e) {}
+    };
+    reader.readAsText(file);
+  };
+  window.calClearImported = function(){
+    if (!window.confirm) return; // safety
+    if (!window.confirm('Remove all events imported from .ics? Manual events are kept.')) return;
+    var before = _state.events.length;
+    _state.events = _state.events.filter(function(e){ return e.source !== 'imported-ics'; });
+    saveState();
+    renderCalendar();
+    if (window.toast) try { window.toast('Cleared ' + (before - _state.events.length) + ' imported event(s).', 'ok'); } catch (e) {}
+  };
+
+  // ── PASTE MODAL ───────────────────────────────────────────────────
+  window.calOpenPasteModal = function(){
+    var m = document.getElementById('cal-paste-modal');
+    if (m) m.style.display = 'flex';
+    var t = document.getElementById('cal-paste-text'); if (t) t.value = '';
+    var r = document.getElementById('cal-paste-result'); if (r) r.innerHTML = '';
+  };
+  window.calClosePasteModal = function(){
+    var m = document.getElementById('cal-paste-modal');
+    if (m) m.style.display = 'none';
+  };
+  window.calParseAndImportPaste = function(){
+    var text = (document.getElementById('cal-paste-text') || {}).value || '';
+    var result = document.getElementById('cal-paste-result');
+    if (!text.trim()){
+      if (result) result.textContent = 'Paste calendar text first.';
+      return;
+    }
+    var isIcs = /^BEGIN:VCALENDAR/i.test(text.trim());
+    var parsed = isIcs ? window.calParseIcs(text) : [];
+    if (!isIcs){
+      // Future enhancement: parse non-ICS event lines. Phase 25H ships
+      // ICS-only parsing; non-ICS text is shown back as a candidate
+      // for manual creation rather than auto-saving (Phase 25H §5).
+      if (result) result.innerHTML = '<strong style="color:var(--gold2)">Not ICS format.</strong> Phase 25H parses ICS only. Click <em>+ Add Event</em> to enter the details manually. The pasted text was discarded — nothing was uploaded.';
+      return;
+    }
+    if (!parsed.length){
+      if (result) result.textContent = 'No VEVENT blocks found in the pasted ICS.';
+      return;
+    }
+    // Show preview list with Save All button.
+    var html = '<div style="margin-bottom:6px;color:var(--gold2);font-weight:600">Parsed ' + parsed.length + ' event(s). Review before saving:</div>';
+    for (var i = 0; i < parsed.length; i++){
+      var p = parsed[i];
+      html += '<div style="border:1px solid var(--border);border-radius:6px;padding:6px 9px;margin-bottom:5px">' +
+                '<div style="font-weight:600">' + escapeHtml(p.title) + '</div>' +
+                '<div style="color:var(--muted);font-size:10px">' + escapeHtml(p.date || '(no date)') + ' ' + escapeHtml(p.start || '') + (p.end ? ' – ' + escapeHtml(p.end) : '') + '</div>' +
+              '</div>';
+    }
+    html += '<div style="display:flex;gap:6px;margin-top:8px"><button class="btn btn-blue" onclick="calSaveParsedPaste()">💾 Save ' + parsed.length + ' event(s)</button><button class="btn btn-ghost" onclick="calClosePasteModal()">Cancel</button></div>';
+    window.__sdCalendarPasteParsed = parsed;
+    if (result) result.innerHTML = html;
+  };
+  window.calSaveParsedPaste = function(){
+    var parsed = window.__sdCalendarPasteParsed || [];
+    var created = 0, updated = 0;
+    for (var i = 0; i < parsed.length; i++){
+      var r = window.calAddOrUpdateImportedEvent(parsed[i]);
+      if (r.status === 'created') created++;
+      else if (r.status === 'updated') updated++;
+    }
+    window.__sdCalendarPasteParsed = null;
+    saveState();
+    renderCalendar();
+    window.calClosePasteModal();
+    if (window.toast) try { window.toast('Saved ' + parsed.length + ' event(s) locally · ' + created + ' new · ' + updated + ' updated.', 'ok'); } catch (e) {}
+  };
+
+  // ── MANUAL EVENT MODAL ────────────────────────────────────────────
+  window.calOpenEventModal = function(eventId){
+    _editingEventId = eventId || null;
+    var titleEl = document.getElementById('cal-event-modal-title');
+    if (titleEl) titleEl.textContent = eventId ? 'Edit event' : 'Add event';
+    var ev = eventId ? findEvent(eventId) : null;
+    setFormValue('cal-f-title',       ev ? ev.title       : '');
+    setFormValue('cal-f-date',        ev ? ev.date        : todayIso());
+    setFormValue('cal-f-start',       ev ? ev.start       : '');
+    setFormValue('cal-f-end',         ev ? ev.end         : '');
+    setFormChecked('cal-f-allday',    ev ? !!ev.allDay    : false);
+    setFormValue('cal-f-location',    ev ? ev.location    : '');
+    setFormValue('cal-f-tasktype',    ev ? ev.taskType    : 'calendar-event');
+    setFormValue('cal-f-status',      ev ? ev.status      : 'scheduled');
+    setFormValue('cal-f-link-sol',    ev ? ev.linkedSolicitationId    : '');
+    setFormValue('cal-f-link-vendor', ev ? ev.linkedVendorId          : '');
+    setFormValue('cal-f-link-section',ev ? ev.linkedProposalSectionId : '');
+    setFormValue('cal-f-notes',       ev ? ev.notes       : '');
+    var m = document.getElementById('cal-event-modal');
+    if (m) m.style.display = 'flex';
+  };
+  window.calCloseEventModal = function(){
+    _editingEventId = null;
+    var m = document.getElementById('cal-event-modal');
+    if (m) m.style.display = 'none';
+  };
+  window.calSaveEventForm = function(){
+    var fields = {
+      title:                   readFormValue('cal-f-title').trim(),
+      date:                    readFormValue('cal-f-date'),
+      start:                   readFormValue('cal-f-start'),
+      end:                     readFormValue('cal-f-end'),
+      allDay:                  readFormChecked('cal-f-allday'),
+      location:                readFormValue('cal-f-location'),
+      taskType:                readFormValue('cal-f-tasktype') || 'calendar-event',
+      status:                  readFormValue('cal-f-status')   || 'scheduled',
+      linkedSolicitationId:    readFormValue('cal-f-link-sol'),
+      linkedVendorId:          readFormValue('cal-f-link-vendor'),
+      linkedProposalSectionId: readFormValue('cal-f-link-section'),
+      notes:                   readFormValue('cal-f-notes'),
+      updatedAt:               new Date().toISOString()
+    };
+    if (!fields.title){
+      if (window.toast) try { window.toast('Event title is required.', 'err'); } catch (e) {}
+      return;
+    }
+    if (_editingEventId){
+      var existing = findEvent(_editingEventId);
+      if (existing) Object.assign(existing, fields);
+    } else {
+      _state.events.push(makeEvent(Object.assign({ source: 'manual' }, fields)));
+    }
+    saveState();
+    renderCalendar();
+    window.calCloseEventModal();
+    if (window.toast) try { window.toast('Event saved locally. Nothing was sent or uploaded.', 'ok'); } catch (e) {}
+  };
+  window.calMarkComplete = function(){
+    if (!_editingEventId) return;
+    var ev = findEvent(_editingEventId);
+    if (!ev) return;
+    ev.status = 'completed';
+    ev.updatedAt = new Date().toISOString();
+    setFormValue('cal-f-status', 'completed');
+    saveState();
+    renderCalendar();
+  };
+  window.calRescheduleEvent = function(){
+    if (!_editingEventId) return;
+    var ev = findEvent(_editingEventId);
+    if (!ev) return;
+    ev.status = 'reschedule';
+    ev.updatedAt = new Date().toISOString();
+    setFormValue('cal-f-status', 'reschedule');
+    saveState();
+    renderCalendar();
+    if (window.toast) try { window.toast('Status set to "reschedule". Update the date/time and save.', 'info'); } catch (e) {}
+  };
+  window.calDeleteEvent = function(){
+    if (!_editingEventId) return;
+    if (window.confirm && !window.confirm('Delete this event? This cannot be undone.')) return;
+    _state.events = _state.events.filter(function(e){ return e.id !== _editingEventId; });
+    saveState();
+    renderCalendar();
+    window.calCloseEventModal();
+  };
+
+  // ── VIEW NAVIGATION ───────────────────────────────────────────────
+  window.calSetView = function(viewId){
+    if (['today','week','month','list'].indexOf(viewId) === -1) return;
+    _state.activeView = viewId;
+    saveState();
+    renderCalendar();
+  };
+  window.calGotoToday = function(){
+    _state.anchorDate = todayIso();
+    saveState();
+    renderCalendar();
+  };
+  window.calStepRange = function(dir){
+    var d = parseIsoDate(_state.anchorDate || todayIso());
+    if (_state.activeView === 'today')      d.setDate(d.getDate() + dir);
+    else if (_state.activeView === 'week')  d.setDate(d.getDate() + dir * 7);
+    else if (_state.activeView === 'month') d.setMonth(d.getMonth() + dir);
+    else                                    d.setDate(d.getDate() + dir);
+    _state.anchorDate = isoDate(d);
+    saveState();
+    renderCalendar();
+  };
+  function isoDate(d){
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function parseIsoDate(s){
+    var m = String(s || '').match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!m) return new Date();
+    return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]));
+  }
+
+  // ── RENDER ────────────────────────────────────────────────────────
+  function eventsForDate(iso){
+    return _state.events.filter(function(e){ return e.date === iso; })
+      .sort(function(a, b){ return (a.start || '').localeCompare(b.start || ''); });
+  }
+  function eventsInRange(startIso, endIso){
+    return _state.events.filter(function(e){
+      return e.date >= startIso && e.date <= endIso;
+    }).sort(function(a, b){
+      var c = (a.date || '').localeCompare(b.date || '');
+      if (c !== 0) return c;
+      return (a.start || '').localeCompare(b.start || '');
+    });
+  }
+  function statusPillStyle(status){
+    var palette = {
+      'scheduled':  { bg: 'rgba(176,138,60,0.12)',  border: 'rgba(176,138,60,0.32)', color: 'var(--gold2)' },
+      'completed':  { bg: 'rgba(48,209,88,0.12)',   border: 'rgba(48,209,88,0.32)',  color: 'var(--green,#30d158)' },
+      'missed':     { bg: 'rgba(255,107,107,0.14)', border: 'rgba(255,107,107,0.32)', color: '#ff6b6b' },
+      'reschedule': { bg: 'rgba(255,176,32,0.14)',  border: 'rgba(255,176,32,0.32)', color: '#ffb020' },
+      'canceled':   { bg: 'rgba(255,255,255,0.05)', border: 'var(--border)',          color: 'var(--muted)' }
+    };
+    var s = palette[status] || palette['scheduled'];
+    return 'background:' + s.bg + ';border:1px solid ' + s.border + ';color:' + s.color + ';';
+  }
+  function escapeHtml(s){
+    return String(s || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+  function eventCard(ev, opts){
+    opts = opts || {};
+    var when = ev.allDay ? 'All day' : (escapeHtml(ev.start) + (ev.end ? ' – ' + escapeHtml(ev.end) : ''));
+    var linksHtml = '';
+    if (ev.linkedSolicitationId)    linksHtml += '<span class="cal-link-chip" style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(27,77,110,0.14);border:1px solid rgba(27,77,110,0.32);color:var(--blue);margin-right:4px">Sol: ' + escapeHtml(ev.linkedSolicitationId) + '</span>';
+    if (ev.linkedVendorId)          linksHtml += '<span class="cal-link-chip" style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(176,138,60,0.12);border:1px solid rgba(176,138,60,0.32);color:var(--gold2);margin-right:4px">Vendor: ' + escapeHtml(ev.linkedVendorId) + '</span>';
+    if (ev.linkedProposalSectionId) linksHtml += '<span class="cal-link-chip" style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(155,89,182,0.14);border:1px solid rgba(155,89,182,0.32);color:#bf5af2;margin-right:4px">Section: ' + escapeHtml(ev.linkedProposalSectionId) + '</span>';
+    return '<div class="cal-event-card" data-cal-event-id="' + escapeHtml(ev.id) + '" onclick="calOpenEventModal(\'' + escapeHtml(ev.id) + '\')" style="cursor:pointer;background:var(--panel2,#0f1e32);border:1px solid var(--border);border-radius:6px;padding:8px 11px;margin-bottom:6px">' +
+             '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
+               '<div style="flex:1">' +
+                 '<div style="font-weight:600;font-size:12.5px;color:var(--text)">' + escapeHtml(ev.title) + '</div>' +
+                 '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + (opts.showDate ? escapeHtml(ev.date) + ' · ' : '') + when + (ev.location ? ' · ' + escapeHtml(ev.location) : '') + '</div>' +
+                 (linksHtml ? '<div style="margin-top:4px">' + linksHtml + '</div>' : '') +
+               '</div>' +
+               '<span class="sd-cal-status-pill" style="font-size:8.5px;padding:2px 7px;border-radius:980px;text-transform:uppercase;letter-spacing:0.06em;' + statusPillStyle(ev.status) + '">' + escapeHtml(ev.status || 'scheduled') + '</span>' +
+             '</div>' +
+           '</div>';
+  }
+  function renderToday(container){
+    var iso = _state.anchorDate || todayIso();
+    var label = document.getElementById('cal-range-label');
+    if (label) label.textContent = friendlyDate(iso);
+    var events = eventsForDate(iso);
+    if (!events.length){
+      container.innerHTML = '<div style="text-align:center;padding:48px 16px;color:var(--muted);font-size:12px">No events on ' + escapeHtml(friendlyDate(iso)) + '. Use <strong>+ Add Event</strong> or import a calendar.</div>';
+      return;
+    }
+    var html = '<div class="card" style="padding:10px 12px"><div class="sl" style="margin-bottom:8px">' + escapeHtml(friendlyDate(iso)) + '</div>';
+    for (var i = 0; i < events.length; i++) html += eventCard(events[i], { showDate: false });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+  function renderWeek(container){
+    var anchor = parseIsoDate(_state.anchorDate || todayIso());
+    // Week starts Sunday.
+    var weekStart = new Date(anchor);
+    weekStart.setDate(weekStart.getDate() - weekStart.getDay());
+    var weekEnd = new Date(weekStart);
+    weekEnd.setDate(weekEnd.getDate() + 6);
+    var label = document.getElementById('cal-range-label');
+    if (label) label.textContent = friendlyDate(isoDate(weekStart)) + ' – ' + friendlyDate(isoDate(weekEnd));
+    var html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:8px">';
+    for (var i = 0; i < 7; i++){
+      var d = new Date(weekStart); d.setDate(d.getDate() + i);
+      var iso = isoDate(d);
+      var dayEvents = eventsForDate(iso);
+      var isToday = (iso === todayIso());
+      html += '<div class="card" style="padding:8px 9px;border:' + (isToday ? '1px solid rgba(176,138,60,0.40)' : '1px solid var(--border)') + '">' +
+                '<div class="sl" style="margin-bottom:6px;font-size:9px">' + ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][i] + ' ' + (d.getMonth() + 1) + '/' + d.getDate() + '</div>';
+      if (!dayEvents.length){
+        html += '<div style="color:var(--muted);font-size:10px;padding:14px 0;text-align:center">—</div>';
+      } else {
+        for (var j = 0; j < dayEvents.length; j++) html += eventCard(dayEvents[j], { showDate: false });
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  }
+  function renderMonth(container){
+    var anchor = parseIsoDate(_state.anchorDate || todayIso());
+    var monthStart = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+    var monthEnd   = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
+    var gridStart  = new Date(monthStart);
+    gridStart.setDate(gridStart.getDate() - gridStart.getDay());
+    var label = document.getElementById('cal-range-label');
+    if (label) label.textContent = ['January','February','March','April','May','June','July','August','September','October','November','December'][anchor.getMonth()] + ' ' + anchor.getFullYear();
+    var html = '<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;font-size:9px;color:var(--muted);margin-bottom:4px">' +
+                 ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(function(d){ return '<div style="padding:4px 6px;text-align:center;text-transform:uppercase;letter-spacing:0.08em">' + d + '</div>'; }).join('') +
+               '</div><div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px">';
+    for (var w = 0; w < 6; w++){
+      for (var d = 0; d < 7; d++){
+        var cell = new Date(gridStart); cell.setDate(cell.getDate() + w * 7 + d);
+        var iso = isoDate(cell);
+        var inMonth = (cell.getMonth() === anchor.getMonth());
+        var dayEvents = eventsForDate(iso);
+        var isToday = (iso === todayIso());
+        html += '<div onclick="calMonthCellClick(\'' + iso + '\')" style="cursor:pointer;padding:6px 7px;min-height:62px;border:1px solid ' + (isToday ? 'rgba(176,138,60,0.40)' : 'var(--border)') + ';border-radius:5px;background:' + (inMonth ? 'var(--panel2,#0f1e32)' : 'transparent') + '">' +
+                  '<div style="font-size:10px;font-weight:600;color:' + (inMonth ? 'var(--text)' : 'var(--muted)') + '">' + cell.getDate() + '</div>';
+        for (var i = 0; i < Math.min(dayEvents.length, 3); i++){
+          html += '<div style="font-size:9px;color:var(--sub);margin-top:2px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">• ' + escapeHtml(dayEvents[i].title) + '</div>';
+        }
+        if (dayEvents.length > 3) html += '<div style="font-size:9px;color:var(--muted);margin-top:2px">+ ' + (dayEvents.length - 3) + ' more</div>';
+        html += '</div>';
+      }
+    }
+    html += '</div>';
+    container.innerHTML = html;
+  }
+  function renderList(container){
+    var label = document.getElementById('cal-range-label');
+    if (label) label.textContent = 'All events · ' + _state.events.length + ' total';
+    if (!_state.events.length){
+      container.innerHTML = '<div style="text-align:center;padding:48px 16px;color:var(--muted);font-size:12px">No events yet.</div>';
+      return;
+    }
+    var sorted = _state.events.slice().sort(function(a, b){
+      var c = (a.date || '').localeCompare(b.date || '');
+      if (c !== 0) return c;
+      return (a.start || '').localeCompare(b.start || '');
+    });
+    var html = '<div class="card" style="padding:10px 12px">';
+    for (var i = 0; i < sorted.length; i++) html += eventCard(sorted[i], { showDate: true });
+    html += '</div>';
+    container.innerHTML = html;
+  }
+  window.calMonthCellClick = function(iso){
+    _state.anchorDate = iso;
+    _state.activeView = 'today';
+    saveState();
+    renderCalendar();
+  };
+  function friendlyDate(iso){
+    var d = parseIsoDate(iso);
+    return ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()] + ' ' +
+           (d.getMonth() + 1) + '/' + d.getDate() + '/' + d.getFullYear();
+  }
+  function updateViewButtons(){
+    var btns = document.querySelectorAll('.cal-view-btn');
+    for (var i = 0; i < btns.length; i++){
+      var v = btns[i].getAttribute('data-cal-view');
+      btns[i].style.background = (v === _state.activeView) ? 'rgba(176,138,60,0.10)' : '';
+      btns[i].style.borderColor = (v === _state.activeView) ? 'rgba(176,138,60,0.32)' : '';
+      btns[i].style.color = (v === _state.activeView) ? 'var(--text)' : '';
+    }
+  }
+  function updateStatusLabel(){
+    var el = document.getElementById('cal-status-label');
+    if (!el) return;
+    var manualCount   = _state.events.filter(function(e){ return e.source === 'manual';      }).length;
+    var importedCount = _state.events.filter(function(e){ return e.source === 'imported-ics'; }).length;
+    var total = _state.events.length;
+    el.textContent = total === 0
+      ? 'Local calendar — 0 events'
+      : 'Local calendar — ' + total + ' event' + (total === 1 ? '' : 's') + ' (' + manualCount + ' manual · ' + importedCount + ' imported)';
+  }
+  function renderCalendar(){
+    updateStatusLabel();
+    updateViewButtons();
+    var container = document.getElementById('cal-view-container');
+    if (!container) return;
+    var emptyState = document.getElementById('cal-empty-state');
+    if (emptyState) emptyState.style.display = _state.events.length ? 'none' : '';
+    if (!_state.events.length){
+      // Keep the empty state inside the container; hide other views.
+      // The empty state is the default child of cal-view-container.
+      // (No re-render needed.)
+      return;
+    }
+    if      (_state.activeView === 'today') renderToday(container);
+    else if (_state.activeView === 'week')  renderWeek(container);
+    else if (_state.activeView === 'month') renderMonth(container);
+    else                                    renderList(container);
+  }
+  window.calRender = renderCalendar;
+
+  // ── FORM HELPERS ──────────────────────────────────────────────────
+  function setFormValue(id, v){
+    var el = document.getElementById(id);
+    if (!el) return;
+    el.value = v === undefined || v === null ? '' : v;
+  }
+  function setFormChecked(id, v){
+    var el = document.getElementById(id);
+    if (el) el.checked = !!v;
+  }
+  function readFormValue(id){
+    var el = document.getElementById(id);
+    return el ? (el.value || '') : '';
+  }
+  function readFormChecked(id){
+    var el = document.getElementById(id);
+    return el ? !!el.checked : false;
+  }
+
+  // ── BOOT ──────────────────────────────────────────────────────────
+  function boot(){
+    loadState().then(renderCalendar).catch(renderCalendar);
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 0);
+  }
+})();
+</script>
+
+<script>
+/* Phase 25H — Today's Work Plan integration
+   Surfaces today's calendar events at the top of the Daily
+   Operating Rhythm pane. Read-only mirror; the source of truth
+   is the Calendar module. */
+(function(){
+  'use strict';
+  function todayIso(){
+    var d = new Date();
+    var pad = function(n){ return (n < 10 ? '0' : '') + n; };
+    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
+  }
+  function getCalendarEvents(){
+    try {
+      if (window.__sdCalendar && typeof window.__sdCalendar.getState === 'function'){
+        var s = window.__sdCalendar.getState();
+        if (s && Array.isArray(s.events)) return s.events;
+      }
+      var raw = localStorage.getItem('sd.calendar.v1');
+      if (raw){
+        var parsed = JSON.parse(raw);
+        if (parsed && Array.isArray(parsed.events)) return parsed.events;
+      }
+    } catch (e) {}
+    return [];
+  }
+  function renderTodayWorkPlan(){
+    var host = document.getElementById('do-checklist');
+    if (!host) return;
+    var iso = todayIso();
+    var events = getCalendarEvents().filter(function(e){ return e.date === iso; });
+    if (!events.length){
+      host.innerHTML = '<div data-phase-25h="today-work-plan-empty" style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No calendar events for today. Open the <a href="#" onclick="event.preventDefault(); if(window.openTab) openTab(\'calendar\');" style="color:var(--gold2);text-decoration:underline">Calendar</a> to import an .ics or add an event manually.</div>';
+      return;
+    }
+    events.sort(function(a, b){ return (a.start || '').localeCompare(b.start || ''); });
+    var html = '<div data-phase-25h="today-work-plan-list" style="display:flex;flex-direction:column;gap:5px">';
+    for (var i = 0; i < events.length; i++){
+      var ev = events[i];
+      var when = ev.allDay ? 'All day' : ((ev.start || '') + (ev.end ? ' – ' + ev.end : ''));
+      html += '<div style="padding:6px 9px;border:1px solid var(--border);border-radius:5px;background:var(--panel2,#0f1e32)">' +
+                '<div style="font-size:11.5px;font-weight:600;color:var(--text)">' + escapeHtml(ev.title) + '</div>' +
+                '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + escapeHtml(when) + ' · ' + escapeHtml(ev.taskType || 'calendar-event') + ' · ' + escapeHtml(ev.status || 'scheduled') + '</div>' +
+              '</div>';
+    }
+    html += '</div>';
+    host.innerHTML = html;
+  }
+  function escapeHtml(s){
+    return String(s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+  window.calRenderTodayWorkPlan = renderTodayWorkPlan;
+  function boot(){
+    renderTodayWorkPlan();
+    // Re-render after a short delay to pick up calendar state once
+    // its loadState promise resolves on cold open.
+    setTimeout(renderTodayWorkPlan, 300);
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 0);
+  }
 })();
 </script>
 </body>
