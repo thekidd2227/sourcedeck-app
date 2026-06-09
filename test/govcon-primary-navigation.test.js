@@ -78,7 +78,7 @@ test('every non-GovCon nav-section carries "Other business tools · …" label',
     'Other business tools · Alerts',
     'Other business tools · Workflow',
     'Other business tools · Tools',
-    'Other business tools · Client',
+    'Other business tools · Pilot',
     'Other business tools · Intelligence',
     'Other business tools · Healthcare'
   ]) {
