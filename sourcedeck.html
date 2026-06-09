@@ -831,8 +831,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <button class="nav-btn" data-tab="settings"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Settings</button>
     </div>
     <div class="nav-section" data-other-business-tools>
-      <div class="nav-label">Other business tools · Client</div>
-      <button class="nav-btn" data-tab="delivery"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Client Delivery</button>
+      <div class="nav-label">Other business tools · Pilot</div>
+      <button class="nav-btn" data-tab="delivery"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><circle cx="12" cy="12" r="10"/></svg></span>Pilot Tracker</button>
     </div>
     <div class="nav-section" data-other-business-tools>
       <div class="nav-label">Other business tools · Intelligence</div>
@@ -1848,117 +1848,122 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       </div>
     </div>
 
-    <!-- ═══ CLIENT DELIVERY OS ═══ -->
+    <!-- ═══ PILOT TRACKER (Phase 25E.5) ═══
+         Replaces the pre-Phase-25E "Client Delivery OS" pane. The
+         data-tab="delivery" id is preserved so the existing openTab()
+         wiring continues to function (the tab id is internal; only
+         the buyer-visible label, pane title, and content change).
+
+         Purpose: track the Phase 25B 7-day internal trial. Shows
+         the current trial day, setup completion state, open issues
+         the operator has recorded, the day's checklist, the
+         go/no-go score, and the next action. No real-client data
+         appears here — this is the operator/buyer pilot status
+         surface, not a client-services dashboard.
+    -->
     <div class="tab-pane" id="tab-delivery">
       <div class="pane-hdr">
-        <div><div class="pane-title"><span class="brief-head">Client Delivery OS</span></div><div class="pane-sub">Post-contact delivery pipeline · Diagnose → Expand</div></div>
+        <div>
+          <div class="pane-title"><span class="brief-head">Pilot Tracker</span></div>
+          <div class="pane-sub">Phase 25B 7-day internal trial status · Day 0 → Day 7 → Go/No-Go decision</div>
+        </div>
         <div class="pane-actions">
-          <button class="btn btn-gold" onclick="refreshDelivery()">↻ Refresh</button>
-          <button class="btn btn-ghost" onclick="newDiagnostic()">+ New Diagnostic</button>
+          <button class="btn btn-ghost" onclick="openTab('help')" title="Open Help / FAQ">📖 Open Help / FAQ</button>
         </div>
       </div>
       <div class="pane-body">
-        <!-- Delivery Health KPIs -->
-        <div class="sl">Delivery Health Dashboard</div>
-        <div class="grid-4 mb-20" id="del-kpis">
-          <div class="kpi gold-kpi kpi-glow-gold"><div class="kpi-val" id="del-active">0</div><div class="kpi-label">Active Clients</div></div>
-          <div class="kpi green-kpi kpi-glow-green"><div class="kpi-val" id="del-ontrack">0</div><div class="kpi-label">On Track</div></div>
-          <div class="kpi red-kpi kpi-glow-red"><div class="kpi-val" id="del-atrisk">0</div><div class="kpi-label">At Risk</div></div>
-          <div class="kpi blue-kpi kpi-glow-blue"><div class="kpi-val" id="del-completed">0</div><div class="kpi-label">Completed</div></div>
+        <div style="background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--text);line-height:1.55">
+          <strong style="color:var(--gold2)">Phase 25B internal trial.</strong>
+          This is your local trial tracker. State persists on your Mac only — nothing here is sent, submitted, or uploaded. The full Phase 25B framework (Day 0 baseline, Day 1–Day 7 checklists, troubleshooting log, go/no-go scorecard, runner commands, operator scenarios) lives in <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">docs/trial/</code> and in your Desktop trial package.
         </div>
 
-        <!-- Stage Pipeline -->
-        <div class="sl">Stage Pipeline</div>
-        <div class="card mb-20">
-          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:14px" id="del-stage-bar">
-            <div class="badge bg" style="cursor:pointer" onclick="filterDelivery('all')">All</div>
-            <div class="badge bb" style="cursor:pointer" onclick="filterDelivery('Diagnose')">Diagnose</div>
-            <div class="badge bw" style="cursor:pointer" onclick="filterDelivery('Prioritize')">Prioritize</div>
-            <div class="badge bp" style="cursor:pointer" onclick="filterDelivery('Design')">Design</div>
-            <div class="badge bg" style="cursor:pointer" onclick="filterDelivery('Build')">Build</div>
-            <div class="badge bb" style="cursor:pointer" onclick="filterDelivery('Test')">Test</div>
-            <div class="badge bgn" style="cursor:pointer" onclick="filterDelivery('Launch')">Launch</div>
-            <div class="badge bw" style="cursor:pointer" onclick="filterDelivery('Stabilize')">Stabilize</div>
-            <div class="badge bg" style="cursor:pointer" onclick="filterDelivery('Expand')">Expand</div>
+        <div class="grid-4 mb-20">
+          <div class="kpi gold-kpi kpi-glow-gold">
+            <div class="kpi-val" id="pt-trial-day">Day 0</div>
+            <div class="kpi-label">Current Trial Day</div>
           </div>
-          <div class="tbl-wrap" style="max-height:400px">
-            <table class="tbl">
-              <thead><tr>
-                <th>Client</th><th>Stage</th><th>Health</th><th>Owner</th><th>Last Update</th><th>Actions</th>
-              </tr></thead>
-              <tbody id="del-pipeline-body">
-                <tr><td colspan="6" style="text-align:center;color:var(--muted);padding:40px">No active deliveries. Clients move here after post-contact conversion.</td></tr>
-              </tbody>
-            </table>
+          <div class="kpi green-kpi kpi-glow-green">
+            <div class="kpi-val" id="pt-setup-state">—</div>
+            <div class="kpi-label">Setup Wizard</div>
+          </div>
+          <div class="kpi red-kpi kpi-glow-red">
+            <div class="kpi-val" id="pt-issue-count">0</div>
+            <div class="kpi-label">Open Issues</div>
+          </div>
+          <div class="kpi blue-kpi kpi-glow-blue">
+            <div class="kpi-val" id="pt-gng-score">—</div>
+            <div class="kpi-label">Go/No-Go</div>
           </div>
         </div>
 
-        <!-- Diagnostic Queue -->
-        <div class="grid-2 mb-20">
+        <div class="grid-2" style="grid-template-columns:1fr 1fr;gap:14px">
           <div>
-            <div class="sl">Diagnostic Queue</div>
-            <div class="card" id="del-diag-queue">
-              <div style="color:var(--muted);font-size:11px;padding:20px 0;text-align:center">No pending diagnostics</div>
-            </div>
-          </div>
-          <div>
-            <div class="sl">Findings Board</div>
-            <div class="card" id="del-findings">
-              <div style="color:var(--muted);font-size:11px;padding:20px 0;text-align:center">No active findings</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Blueprint Pipeline & Implementation Board -->
-        <div class="grid-2 mb-20">
-          <div>
-            <div class="sl">Blueprint Pipeline</div>
-            <div class="card" id="del-blueprints">
-              <div style="color:var(--muted);font-size:11px;padding:20px 0;text-align:center">No blueprints in progress</div>
-            </div>
-          </div>
-          <div>
-            <div class="sl">Implementation Board</div>
-            <div class="card" id="del-impl">
-              <div style="color:var(--muted);font-size:11px;padding:20px 0;text-align:center">No implementations active</div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Risk Radar & Expansion Readiness -->
-        <div class="grid-2 mb-20">
-          <div>
-            <div class="sl">Risk Radar</div>
-            <div class="card" id="del-risk">
-              <div style="display:flex;flex-direction:column;gap:8px">
-                <div class="kv"><span class="k">Open Risks</span><span class="v" id="del-risk-count" style="color:var(--green)">0</span></div>
-                <div class="kv"><span class="k">Critical</span><span class="v" id="del-risk-crit" style="color:var(--green)">0</span></div>
-                <div class="kv"><span class="k">Avg Days to Mitigate</span><span class="v" id="del-risk-days">—</span></div>
+            <div class="card mb-14">
+              <div class="sl">Current Trial Day</div>
+              <div class="form-group" style="margin-top:8px">
+                <label class="label">Pick the day you are on</label>
+                <select class="select" id="pt-day-select" onchange="ptOnDayChange()" style="width:100%">
+                  <option value="0">Day 0 — Baseline + cold launch checks</option>
+                  <option value="1">Day 1 — First-run onboarding</option>
+                  <option value="2">Day 2 — Opportunity discovery workflow</option>
+                  <option value="3">Day 3 — Solicitation / compliance workflow</option>
+                  <option value="4">Day 4 — Vendor / pricing / past performance</option>
+                  <option value="5">Day 5 — Prime / stakeholder / submission readiness</option>
+                  <option value="6">Day 6 — Internal review export + recovery</option>
+                  <option value="7">Day 7 — Final burn-in decision</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin-top:10px">
+                <label class="label">Today's checklist note</label>
+                <textarea class="textarea" id="pt-day-note" placeholder="Paste the day's checklist or write your own task list. The Desktop trial package has the full checklist text." style="min-height:90px" oninput="ptSaveDebounced()"></textarea>
               </div>
             </div>
-          </div>
-          <div>
-            <div class="sl">Expansion Readiness</div>
-            <div class="card" id="del-expand">
-              <div style="display:flex;flex-direction:column;gap:8px">
-                <div class="kv"><span class="k">Ready for Expansion</span><span class="v" id="del-expand-ready">0</span></div>
-                <div class="kv"><span class="k">In Stabilization</span><span class="v" id="del-expand-stab">0</span></div>
-                <div class="kv"><span class="k">Expansion Velocity</span><span class="v" id="del-expand-vel">—</span></div>
-              </div>
+
+            <div class="card">
+              <div class="sl">Setup Status</div>
+              <div id="pt-setup-detail" style="font-size:11.5px;color:var(--sub);padding:8px 0;line-height:1.6">Reading setup state…</div>
             </div>
           </div>
-        </div>
 
-        <!-- Stage History Log -->
-        <div class="sl">Stage History</div>
-        <div class="card">
-          <div class="tbl-wrap" style="max-height:250px">
-            <table class="tbl">
-              <thead><tr><th>Client</th><th>From</th><th>To</th><th>Date</th><th>By</th></tr></thead>
-              <tbody id="del-history-body">
-                <tr><td colspan="5" style="text-align:center;color:var(--muted);padding:20px">No stage transitions recorded</td></tr>
-              </tbody>
-            </table>
+          <div>
+            <div class="card mb-14">
+              <div class="sl">Open Issues</div>
+              <div style="font-size:10.5px;color:var(--muted);margin-bottom:6px;line-height:1.5">
+                Count issues you have logged in <code style="font-family:'IBM Plex Mono',monospace;font-size:9.5px">05 Troubleshooting/phase-25b-troubleshooting-log-template.md</code> on your Desktop. Severity tiers: CRITICAL · HIGH · MEDIUM · LOW.
+              </div>
+              <div class="form-group">
+                <label class="label">Open critical / high / medium / low</label>
+                <div style="display:flex;gap:6px">
+                  <input class="input" id="pt-issues-critical" type="number" min="0" placeholder="Crit" style="width:25%" oninput="ptSaveDebounced()">
+                  <input class="input" id="pt-issues-high"     type="number" min="0" placeholder="High" style="width:25%" oninput="ptSaveDebounced()">
+                  <input class="input" id="pt-issues-medium"   type="number" min="0" placeholder="Med"  style="width:25%" oninput="ptSaveDebounced()">
+                  <input class="input" id="pt-issues-low"      type="number" min="0" placeholder="Low"  style="width:25%" oninput="ptSaveDebounced()">
+                </div>
+              </div>
+            </div>
+
+            <div class="card mb-14">
+              <div class="sl">Go / No-Go Score</div>
+              <div style="font-size:10.5px;color:var(--muted);margin-bottom:6px;line-height:1.5">
+                Mark the Day 7 decision. Auto-forces <strong>Stop Pilot</strong> if any open critical or any safety-boundary trigger fired during the trial.
+              </div>
+              <div class="form-group">
+                <label class="label">Pick one</label>
+                <select class="select" id="pt-gng-select" onchange="ptSaveDebounced()" style="width:100%">
+                  <option value="">— Not decided yet —</option>
+                  <option value="ready">READY to seek first pilot buyer</option>
+                  <option value="needs-fixes">NEEDS FIXES before buyer outreach</option>
+                  <option value="stop">STOP PILOT — do not show buyers</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="sl">Next Action</div>
+              <div class="form-group" style="margin-top:6px">
+                <textarea class="textarea" id="pt-next-action" placeholder="One concrete next step. Examples: 'Run Day 1 setup-wizard cold-open check', 'Re-pack mac bundle after PR #102 merge', 'Escalate REL-020 to operator'." style="min-height:80px" oninput="ptSaveDebounced()"></textarea>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -15462,6 +15467,179 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.__sdHelpFaqData = FAQ;
 
   function boot(){ renderFaq(''); }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 0);
+  }
+})();
+</script>
+
+<script>
+/* Phase 25E.5 — Pilot Tracker
+   Local state for the Phase 25B 7-day internal trial. Tracks:
+   - current trial day (0-7)
+   - today's checklist note
+   - open issue counts by severity (critical/high/medium/low)
+   - go/no-go decision
+   - next action note
+   The Setup Wizard completion state is read from the existing
+   Phase 24K localStorage flag `sd.govcon.setupComplete`.
+
+   Persistence:
+   - Primary: window.sd.storeGet/storeSet('pilotTracker') via the
+     electron-store preload bridge.
+   - Fallback: localStorage 'sd.pilotTracker.v1'.
+
+   Boundary: nothing here is sent, submitted, or uploaded.
+   Pilot Tracker state lives on the operator's Mac only.
+*/
+(function(){
+  'use strict';
+  var STORE_KEY  = 'sd.pilotTracker.v1';
+  var BRIDGE_KEY = 'pilotTracker';
+
+  function blank(){
+    return {
+      day: 0,
+      dayNote: '',
+      issuesCritical: 0,
+      issuesHigh: 0,
+      issuesMedium: 0,
+      issuesLow: 0,
+      gng: '',
+      nextAction: '',
+      updatedAt: null
+    };
+  }
+  var _state = blank();
+  var _saveTimer = null;
+
+  function $(id){ return document.getElementById(id); }
+
+  async function load(){
+    var data = null;
+    if (window.sd && typeof window.sd.storeGet === 'function'){
+      try { data = await window.sd.storeGet(BRIDGE_KEY); } catch (e) { data = null; }
+    }
+    if (!data){
+      try {
+        var raw = localStorage.getItem(STORE_KEY);
+        if (raw) data = JSON.parse(raw);
+      } catch (e) { data = null; }
+    }
+    if (data && typeof data === 'object'){
+      var b = blank();
+      for (var k in b){ if (k in data) b[k] = data[k]; }
+      _state = b;
+    }
+  }
+  async function save(){
+    var snap = JSON.parse(JSON.stringify(_state));
+    snap.updatedAt = new Date().toISOString();
+    _state = snap;
+    if (window.sd && typeof window.sd.storeSet === 'function'){
+      try { await window.sd.storeSet(BRIDGE_KEY, snap); } catch (e) {}
+    }
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(snap)); } catch (e) {}
+  }
+
+  function setupCompleteState(){
+    // Phase 24K Final Confirmation persists this flag when the buyer
+    // checks all 5 boxes in Step 11. Pilot Tracker surfaces it
+    // read-only so the operator can confirm the buyer finished setup.
+    try {
+      var v = localStorage.getItem('sd.govcon.setupComplete');
+      if (v === 'true' || v === '1') return 'Complete';
+      if (v === 'false' || v === '0') return 'Incomplete';
+      return 'Not yet';
+    } catch (e) { return 'Unknown'; }
+  }
+
+  function renderPilotTracker(){
+    var daySel    = $('pt-day-select');
+    var dayKpi    = $('pt-trial-day');
+    var dayNote   = $('pt-day-note');
+    var setupKpi  = $('pt-setup-state');
+    var setupDet  = $('pt-setup-detail');
+    var critEl    = $('pt-issues-critical');
+    var highEl    = $('pt-issues-high');
+    var medEl     = $('pt-issues-medium');
+    var lowEl     = $('pt-issues-low');
+    var issueKpi  = $('pt-issue-count');
+    var gngSel    = $('pt-gng-select');
+    var gngKpi    = $('pt-gng-score');
+    var nextEl    = $('pt-next-action');
+
+    if (daySel)  daySel.value  = String(_state.day);
+    if (dayKpi)  dayKpi.textContent = 'Day ' + _state.day;
+    if (dayNote && dayNote.value !== _state.dayNote) dayNote.value = _state.dayNote || '';
+
+    var setup = setupCompleteState();
+    if (setupKpi) setupKpi.textContent = setup === 'Complete' ? '✓' : setup === 'Incomplete' ? '⚠' : '—';
+    if (setupDet){
+      if (setup === 'Complete') setupDet.textContent = 'Phase 24K Final Confirmation is complete. All 5 boxes were checked in Setup Wizard Step 11. Buyer is ready to begin the trial.';
+      else if (setup === 'Incomplete') setupDet.textContent = 'Setup Wizard was opened but Final Confirmation is not complete. Run the wizard from Settings → Run Setup Wizard.';
+      else setupDet.textContent = 'Setup Wizard has not been completed yet. Run it from Settings → Run Setup Wizard so the Phase 24K Final Confirmation can be checked.';
+    }
+
+    if (critEl) critEl.value = _state.issuesCritical || '';
+    if (highEl) highEl.value = _state.issuesHigh || '';
+    if (medEl)  medEl.value  = _state.issuesMedium || '';
+    if (lowEl)  lowEl.value  = _state.issuesLow || '';
+    var total = (Number(_state.issuesCritical) || 0)
+              + (Number(_state.issuesHigh)     || 0)
+              + (Number(_state.issuesMedium)   || 0)
+              + (Number(_state.issuesLow)      || 0);
+    if (issueKpi) issueKpi.textContent = String(total);
+
+    if (gngSel) gngSel.value = _state.gng || '';
+    if (gngKpi){
+      var crit = Number(_state.issuesCritical) || 0;
+      // Auto-force STOP if any open critical or if the operator
+      // selected stop directly.
+      var forced = (crit > 0) ? 'stop' : _state.gng;
+      var labels = { 'ready': 'READY', 'needs-fixes': 'NEEDS FIXES', 'stop': 'STOP', '': '—' };
+      gngKpi.textContent = labels[forced] || '—';
+    }
+
+    if (nextEl && nextEl.value !== _state.nextAction) nextEl.value = _state.nextAction || '';
+  }
+
+  window.ptOnDayChange = function(){
+    var daySel = $('pt-day-select');
+    var d = daySel ? parseInt(daySel.value, 10) : 0;
+    if (isNaN(d) || d < 0 || d > 7) d = 0;
+    _state.day = d;
+    save();
+    renderPilotTracker();
+  };
+
+  window.ptSaveDebounced = function(){
+    if (_saveTimer) clearTimeout(_saveTimer);
+    _saveTimer = setTimeout(function(){
+      var dayNote = $('pt-day-note');
+      var critEl  = $('pt-issues-critical');
+      var highEl  = $('pt-issues-high');
+      var medEl   = $('pt-issues-medium');
+      var lowEl   = $('pt-issues-low');
+      var gngSel  = $('pt-gng-select');
+      var nextEl  = $('pt-next-action');
+      if (dayNote) _state.dayNote = dayNote.value || '';
+      if (critEl)  _state.issuesCritical = Number(critEl.value) || 0;
+      if (highEl)  _state.issuesHigh     = Number(highEl.value) || 0;
+      if (medEl)   _state.issuesMedium   = Number(medEl.value)  || 0;
+      if (lowEl)   _state.issuesLow      = Number(lowEl.value)  || 0;
+      if (gngSel)  _state.gng = gngSel.value || '';
+      if (nextEl)  _state.nextAction = nextEl.value || '';
+      save();
+      renderPilotTracker();
+    }, 400);
+  };
+
+  function boot(){
+    load().then(renderPilotTracker).catch(renderPilotTracker);
+  }
   if (document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', boot);
   } else {
