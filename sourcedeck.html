@@ -1690,19 +1690,22 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               </div>
             </div>
             <div class="card">
-              <div class="sl">Automation Config</div>
+              <div class="sl">Automation Config <span style="font-size:9px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(optional legacy integrations)</span></div>
+              <div style="font-size:10.5px;color:var(--muted);line-height:1.55;padding:0 0 8px;margin-top:-4px">
+                Phase 25E.6: SourceDeck owns workflow automation locally. These third-party integrations are optional — leave blank to skip.
+              </div>
               <div style="display:flex;flex-direction:column;gap:11px">
                 <div class="form-group">
-                  <label class="label">Make.com Booking Webhook</label>
-                  <input class="input" id="s-bookwh" value="">
+                  <label class="label">Make.com Booking Webhook <span style="font-size:9px;color:var(--muted)">(optional)</span></label>
+                  <input class="input" id="s-bookwh" value="" placeholder="https://hook.make.com/... — leave blank to skip">
                 </div>
                 <div class="form-group">
-                  <label class="label">Instantly Campaign ID</label>
-                  <input class="input" id="s-instantly" value="" placeholder="Your Instantly campaign ID">
+                  <label class="label">Instantly Campaign ID <span style="font-size:9px;color:var(--muted)">(optional)</span></label>
+                  <input class="input" id="s-instantly" value="" placeholder="Instantly campaign ID — leave blank to skip">
                 </div>
                 <div class="form-group">
-                  <label class="label">Assessment Webhook</label>
-                  <input class="input" id="s-asswh" value="" placeholder="https://your-endpoint/assessment" readonly style="opacity:0.6">
+                  <label class="label">Assessment Webhook <span style="font-size:9px;color:var(--muted)">(optional)</span></label>
+                  <input class="input" id="s-asswh" value="" placeholder="https://your-endpoint/assessment — leave blank to skip" readonly style="opacity:0.6">
                 </div>
               </div>
             </div>
