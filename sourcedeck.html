@@ -1245,10 +1245,18 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <!-- ═══════ RESPONSE DESK ═══════ -->
     <div class="tab-pane" id="tab-reply">
       <div class="pane-hdr">
-        <div><div class="pane-title"><span class="brief-head">Response Desk</span></div><div class="pane-sub">Inbound reply triage · intent detection · next-action routing · draft-only responses</div></div>
+        <div><div class="pane-title"><span class="brief-head">Response Desk</span></div></div>
       </div>
       <div class="pane-body">
-        <!-- Phase 21D: import-first workflow header -->
+        <!-- Phase 25L-3 — Response Desk import-first header. Subtitle
+             removed (was: "Inbound reply triage · intent detection ·
+             next-action routing · draft-only responses"). Import Email
+             is provider-gated: if a secure email integration is set up
+             in Settings → Email Import it uses that; otherwise the user
+             pastes the reply manually. ICS / calendar import does NOT
+             live here — Calendar setup belongs in Settings → Calendar
+             Import. Importing an .ics file does not give SourceDeck
+             access to email. -->
         <div style="font-size:10.5px;color:var(--muted);background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:var(--r2);padding:11px 13px;margin-bottom:12px;line-height:1.55">
           <strong style="color:var(--sub)">Import an email reply, review the context, then let Response Desk classify intent and draft next actions. Nothing is sent automatically.</strong>
           <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
@@ -1257,7 +1265,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           </div>
           <div style="font-size:10px;color:var(--muted);margin-top:9px;line-height:1.5">
             <span id="rd-source-label" style="font-weight:700;color:var(--sub)">Source: Not yet selected</span>
-            <div style="margin-top:4px">Import Email is local/manual until inbox integration is connected. Paste mode remains as a fallback. Connected inbox import can route replies automatically when configured.</div>
+            <div style="margin-top:4px">Import Email uses your configured email integration if set up in Settings → Email Import. Otherwise, paste the reply manually. No email integration configured. Paste the reply manually or set up email import in Settings when available. SourceDeck does not auto-scan email and never requests Gmail, iCloud, or Outlook passwords.</div>
           </div>
         </div>
         <div class="grid-2">
@@ -1807,6 +1815,29 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               </div>
               <div style="font-size:9.5px;color:var(--muted);margin-top:9px;line-height:1.5">
                 Local-only import. SourceDeck does not send invites, sync, or upload your calendar anywhere. To refresh events, export a new .ics file and import again. Importing an .ics file does <strong>not</strong> give SourceDeck access to your email inbox — calendar import and email import are separate.
+              </div>
+            </div>
+
+            <!-- Phase 25L-3 — Email Import settings placeholder. Future
+                 secure Gmail / Outlook OAuth integration lives here. In
+                 the current build the integration is not active and
+                 Response Desk Import Email is manual paste / upload
+                 only. SourceDeck never requests Gmail, iCloud, or
+                 Outlook passwords. -->
+            <div class="card mb-14" id="settings-email-import-card" data-settings-section="email-import">
+              <div class="sl">Email Import</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-bottom:10px">
+                Future secure Gmail/Outlook OAuth integration. Not active in this build unless configured by the operator. For now, paste replies manually in Response Desk. SourceDeck never requests Gmail, iCloud, or Outlook passwords.
+              </div>
+              <div style="font-size:10px;color:var(--muted);line-height:1.55;margin-bottom:8px">
+                Importing an .ics calendar file does <strong>not</strong> give SourceDeck access to your email inbox. Calendar import and email import are separate.
+              </div>
+              <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+                <span id="s-email-import-state" data-settings-email-import-state="true" style="font:600 9.5px/1.4 'Azeret Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:3px 8px;border-radius:4px;background:rgba(255,255,255,0.04);border:1px solid var(--border)">Not configured</span>
+                <span style="font-size:10px;color:var(--muted)">Connect Gmail or Outlook in a future secure OAuth phase. For now, paste replies manually.</span>
+              </div>
+              <div style="font-size:9.5px;color:var(--muted);margin-top:9px;line-height:1.55">
+                SourceDeck does not auto-scan email. SourceDeck never sends email. SourceDeck does not upload your mailbox anywhere.
               </div>
             </div>
 
@@ -8716,11 +8747,17 @@ async function renderEmailTracker(){
   _emailTrackerState.totalToday=todayAll.length;
   _emailTrackerState.events=prodEvents;
 
-  // Sub-header — honest state (no fake claims)
+  // Phase 25L-3 — neutralize the buyer-facing Airtable Email Events
+  // ledger error. When the ledger is not configured (or the fetch
+  // fails), render a calm "no email integration configured" state in
+  // place of the red ⚠ banner that previously surfaced an internal
+  // Airtable HTTP error to the buyer. The honest state is preserved
+  // for the operator via _emailTrackerState.error; the UI just stops
+  // shouting about it.
   const sub=document.querySelector('#tab-email .pane-sub');
   if(sub){
     if(_emailTrackerState.status==='error'){
-      sub.innerHTML='<span style="color:var(--red);font-weight:700">⚠ Ledger: '+(_emailTrackerState.error||'unknown')+'</span>';
+      sub.innerHTML='No email integration configured · Set up Email Import in Settings when available';
     }else{
       const lastSync=_emailTrackerState.lastSync?new Date(_emailTrackerState.lastSync).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'America/New_York'}):'never';
       const lastEvent=_emailTrackerState.lastEventAt?new Date(_emailTrackerState.lastEventAt).toLocaleString('en-US',{month:'short',day:'numeric',hour:'2-digit',minute:'2-digit',timeZone:'America/New_York'}):'never';
@@ -8748,7 +8785,9 @@ async function renderEmailTracker(){
   if(d12Label)d12Label.textContent='Bounces Today';
 
   if(_emailTrackerState.status==='error'){
-    if(tb)tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--red);padding:30px"><div style="font-weight:700;font-size:13px;margin-bottom:8px">⚠ EMAIL EVENTS LEDGER UNAVAILABLE</div><div style="font-size:11px;color:var(--muted)">'+(_emailTrackerState.error||'unknown')+'</div></td></tr>';
+    // Phase 25L-3 — calm placeholder. The operator-facing error is
+    // still available in _emailTrackerState.error for diagnostics.
+    if(tb)tb.innerHTML='<tr><td colspan="7" style="text-align:center;color:var(--muted);padding:30px"><div style="font-weight:600;font-size:12px;margin-bottom:6px">No email integration configured</div><div style="font-size:10.5px;line-height:1.55">Connect Gmail or Outlook in a future secure OAuth phase via Settings → Email Import. For now, paste replies manually in Response Desk.</div></td></tr>';
     return;
   }
 
