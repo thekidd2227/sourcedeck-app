@@ -3942,6 +3942,66 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
           Drafts produced here are not legal review, not compliance certification, and not final proposals. SourceDeck does not send, submit, or upload anything to SAM.gov, PIEE, eBuy, GSA, or any agency portal. The user is responsible for every external action.
         </div>
 
+        <!-- Phase 25L.2 — Solicitation Intake. Upload an RFQ / RFP /
+             solicitation file (PDF / DOCX / TXT / MD) or paste the raw
+             text, then click Extract Key Details. The extractor runs
+             locally and produces a structured 5-category breakdown:
+             (1) Solicitation Metadata & Summary, (2) Place of Performance,
+             (3) Subcontractor ID & Proposal Prep, (4) Compliance &
+             Submission Requirements, (5) Site Visit Details & Logistics.
+             FAR references are advisory only — SourceDeck does not claim
+             legal advice or compliance certification. -->
+        <div class="card mb-14" id="pw-solicitation-intake" data-pw-solicitation-intake="true" style="border-left:3px solid var(--gold)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+            <div style="flex:1;min-width:280px">
+              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Solicitation Intake</div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:4px">Upload Solicitation / RFQ / RFP</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.55">Upload an .pdf / .docx / .txt / .md file or paste the raw text. SourceDeck extracts key details into 5 FAR-aligned categories. Local only — no government upload, no portal submission, no email send. Do not upload classified, CUI, PHI, or sensitive source-selection material unless you are authorized and your configured AI provider is approved.</div>
+            </div>
+            <input type="file" id="pw-sol-file" accept=".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown" style="display:none" onchange="pwSolOnFileChosen(event)">
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <button type="button" class="btn btn-ghost" id="pw-sol-upload-btn" onclick="pwSolOpenFilePicker()" title="Upload solicitation / RFQ / RFP file (.pdf / .docx / .txt / .md)">📎 Upload Solicitation / RFQ / RFP</button>
+            <button type="button" class="btn btn-ghost" id="pw-sol-paste-btn" onclick="pwSolTogglePasteArea()" title="Paste the raw solicitation text">📋 Paste Solicitation Text</button>
+            <button type="button" class="btn btn-gold" id="pw-sol-extract-btn" onclick="pwSolExtractKeyDetails()" title="Extract key details into 5 FAR-aligned categories">🔎 Extract Key Details</button>
+            <button type="button" class="btn btn-ghost" id="pw-sol-clear-btn" onclick="pwSolClearUploaded()" title="Clear uploaded solicitation and reset extraction" style="color:var(--red);margin-left:auto">⊘ Clear Uploaded Solicitation</button>
+          </div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:10px;font-size:11px;color:var(--sub)">
+            <span>Linked pursuit:</span>
+            <input class="input" id="pw-sol-link-pursuit" placeholder="Optional pursuit / GovCon record ID — e.g. opp_2026-FY26-Q3-...">
+          </div>
+          <div id="pw-sol-paste-area" data-pw-sol-paste-area="true" style="display:none;margin-bottom:10px">
+            <label class="label" style="display:flex;justify-content:space-between;align-items:center">
+              <span>Paste solicitation text</span>
+              <span style="font-size:9px;color:var(--muted);text-transform:none;letter-spacing:0">Local only · parsed in renderer · nothing uploaded</span>
+            </label>
+            <textarea class="textarea" id="pw-sol-paste-text" placeholder="Paste the full solicitation, RFQ, or RFP text here. Include Section L, Section M, statement of work, performance work statement, instructions to offerors, evaluation criteria, FAR clauses, deadlines, points of contact, place of performance, and any attachments worth referencing." style="min-height:160px;font-family:'IBM Plex Mono',monospace;font-size:11px"></textarea>
+          </div>
+          <div id="pw-sol-upload-status" data-pw-sol-status="true" style="font-size:10.5px;color:var(--muted);line-height:1.55;padding:8px 0">
+            No solicitation uploaded yet. Upload a file or paste text, then click <strong>Extract Key Details</strong>.
+          </div>
+        </div>
+
+        <!-- Phase 25L.2 — Extraction display. Renders 5 FAR-aligned
+             category cards once the user runs Extract Key Details.
+             Each card is clickable: clicking opens a section workspace
+             where the user reads the extracted text, adds notes, and
+             requests an AI draft for that section. -->
+        <div class="card mb-14" id="pw-solicitation-extraction" data-pw-extraction-display="true" style="display:none;border-left:3px solid var(--blue)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+            <div>
+              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--blue,#60a5fa);margin-bottom:4px">Extracted Key Details</div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text)">5 FAR-aligned categories</div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);line-height:1.5;max-width:400px">Click any category to open a section workspace. SourceDeck advisory only — does not claim legal advice or compliance certification. FAR references are guidance only.</div>
+          </div>
+          <div id="pw-extraction-cards" data-pw-extraction-cards="true" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px"></div>
+          <div id="pw-extraction-ambiguity" data-pw-extraction-ambiguity="true" style="margin-top:12px;padding:10px 12px;background:rgba(255,176,32,0.06);border:1px solid rgba(255,176,32,0.30);border-radius:6px;font-size:11px;color:var(--sub);line-height:1.55;display:none">
+            <div style="font-weight:600;color:#ffb020;margin-bottom:6px">Ambiguity / High-risk flags</div>
+            <ul id="pw-extraction-ambiguity-list" style="margin:0;padding-left:18px"></ul>
+          </div>
+        </div>
+
         <div class="grid-2" style="grid-template-columns:240px 1fr;gap:14px;align-items:start">
 
           <!-- Section navigation rail -->
@@ -15651,6 +15711,775 @@ document.addEventListener('DOMContentLoaded',()=>{
       _ready = true;
       renderProposalWorkspace();
       wireAutosave();
+    });
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 0);
+  }
+})();
+</script>
+
+<script>
+/* Phase 25L.2 — Proposal Workspace · Solicitation Intake + Extraction.
+
+   Adds a Solicitation Intake panel to the Proposal Workspace that
+   accepts an .pdf / .docx / .txt / .md upload or pasted raw text,
+   runs a local heuristic extractor over the text, and renders 5
+   FAR-aligned category cards:
+
+     1. Solicitation Metadata & Summary  (Title · Agency · Sol # ·
+        purpose summary · detailed SOW under Main Tasks / Objectives /
+        Deliverables / Assumptions · technical requirements ·
+        performance standards · compliance criteria · locations ·
+        timelines · deadlines · ambiguities · FAR Part 15 / 12)
+     2. Place of Performance             (primary address · alternate ·
+        on-site / off-site / hybrid · FAR 52.215-6)
+     3. Subcontractor ID & Proposal Prep (qualifications · technical
+        specs · evaluation criteria · subcontracting opportunities ·
+        FAR Subpart 19.7)
+     4. Compliance & Submission Requirements (deadlines · formatting ·
+        attachments · POCs · penalties · FAR 15.204 / 52.212-1)
+     5. Site Visit Details & Logistics  (dates · times · RSVP · POCs ·
+        addresses · security / safety · FAR 52.237-1)
+
+   Each category card is clickable: clicking opens a section workspace
+   (notes / draft / status state machine identical to the existing
+   Phase 25E.2 proposal-section drafting flow) so the user can author
+   that proposal section from the extracted context.
+
+   Boundaries (Phase 25A + Phase 25L preserved):
+   - Local only — extraction runs in the renderer; no network call
+     except optional AI provider invocation triggered explicitly by
+     the user, governed by the existing credential adapter.
+   - No portal upload, no government upload, no email send.
+   - FAR references are advisory only — SourceDeck does not claim
+     legal advice or compliance certification.
+   - Heuristic extraction; user verification required for every value.
+
+   Persistence: window.sd.storeGet/storeSet ('proposalWorkspace.solExtraction')
+   under the electron-store keyspace, with a localStorage fallback.
+*/
+(function(){
+  'use strict';
+
+  // FAR-aligned category definitions. Order matches the spec.
+  var CATEGORIES = [
+    {
+      id: 'metadata-summary',
+      title: 'Solicitation Metadata & Summary',
+      farReference: 'FAR Part 15 / FAR Part 12 (alignment varies)',
+      help: 'Title · Issuing agency · Solicitation number · Concise purpose summary · Detailed Scope of Work (Main Tasks / Objectives / Deliverables / Assumptions) · Technical requirements · Performance standards · Compliance criteria · Locations · Timelines · Deadlines · Inconsistencies · Ambiguities.',
+      fields: ['title','agency','solicitationNumber','summary','mainTasks','objectives','deliverables','assumptions','technicalRequirements','performanceStandards','complianceCriteria','locations','timelines','deadlines','ambiguities']
+    },
+    {
+      id: 'place-of-performance',
+      title: 'Place of Performance',
+      farReference: 'FAR 52.215-6',
+      help: 'Primary physical address · Alternate / secondary locations · Geographic restrictions · On-site / off-site / hybrid · References to Place of Performance clauses in Section C, L, or attachments · Facility names / project identifiers · Ambiguity flags.',
+      fields: ['primaryAddress','alternateLocations','geographicRestrictions','workMode','clauseReferences','facilityNames','ambiguityFlags']
+    },
+    {
+      id: 'subcontractor-id-prep',
+      title: 'Subcontractor ID & Proposal Prep',
+      farReference: 'FAR Subpart 19.7',
+      help: 'Required qualifications / certifications / expertise · Technical specifications · Materials / equipment · Compliance requirements · Evaluation criteria · Subcontracting opportunities · Small business participation · Subcontractor-relevant sections · Proposal drafting steps.',
+      fields: ['qualifications','technicalSpecs','materialsEquipment','complianceRequirements','evaluationCriteria','subcontractingOpportunities','smallBusinessParticipation','subcontractorSections','draftingSteps']
+    },
+    {
+      id: 'compliance-submission',
+      title: 'Compliance & Submission Requirements',
+      farReference: 'FAR 15.204 · FAR 52.212-1',
+      help: 'Submission deadlines · Formatting requirements · Mandatory attachments · Points of contact · Compliance checklist · Penalties / disqualification risks · Milestone dependencies · Date inconsistencies.',
+      fields: ['submissionDeadlines','formattingRequirements','mandatoryAttachments','pointsOfContact','complianceChecklist','penalties','milestoneDependencies','dateInconsistencies']
+    },
+    {
+      id: 'site-visit-logistics',
+      title: 'Site Visit Details & Logistics',
+      farReference: 'FAR 52.237-1',
+      help: 'Site visit dates / times · RSVP deadlines · Duration / timezone · POC name / title / email / phone · Full site addresses · Frequency / volume · Security / safety / permit requirements · Mandatory attendance / documentation / penalties · Special clauses / safety protocols.',
+      fields: ['siteVisitDates','rsvpDeadlines','duration','siteVisitPoc','siteAddresses','frequencyVolume','securitySafety','attendanceRequirements','specialClauses']
+    }
+  ];
+
+  var STATUS_LABEL = {
+    'not-started':     'Not Started',
+    'drafted':         'Drafted',
+    'approved':        'Approved',
+    'needs-revision':  'Needs Revision',
+    'finalized':       'Finalized'
+  };
+  var STATUS_PILL_STYLE = {
+    'not-started':    { bg: 'rgba(255,255,255,0.05)', border: 'var(--border)',           color: 'var(--sub)' },
+    'drafted':        { bg: 'rgba(176,138,60,0.12)',  border: 'rgba(176,138,60,0.32)',   color: 'var(--gold2)' },
+    'approved':       { bg: 'rgba(48,209,88,0.12)',   border: 'rgba(48,209,88,0.32)',    color: 'var(--green,#30d158)' },
+    'needs-revision': { bg: 'rgba(255,176,32,0.14)',  border: 'rgba(255,176,32,0.32)',   color: '#ffb020' },
+    'finalized':      { bg: 'rgba(27,77,110,0.14)',   border: 'rgba(27,77,110,0.32)',    color: 'var(--blue)' }
+  };
+
+  var STORE_KEY = 'sd.proposalWorkspace.solExtraction.v1';
+  var BRIDGE_KEY = 'proposalWorkspace.solExtraction';
+
+  function blankState(){
+    var s = {
+      rawText: '',
+      fileName: '',
+      fileMime: '',
+      linkedPursuitId: '',
+      extractedAt: null,
+      extracted: {},
+      ambiguities: [],
+      activeCategory: null,
+      categories: {}
+    };
+    for (var i = 0; i < CATEGORIES.length; i++){
+      s.categories[CATEGORIES[i].id] = { status: 'not-started', notes: '', draft: '', updatedAt: null };
+    }
+    return s;
+  }
+
+  var _state = blankState();
+  var _ready = false;
+
+  async function loadState(){
+    var loaded = null;
+    if (window.sd && typeof window.sd.storeGet === 'function'){
+      try { loaded = await window.sd.storeGet(BRIDGE_KEY); } catch (e) { loaded = null; }
+    }
+    if (!loaded){
+      try {
+        var raw = localStorage.getItem(STORE_KEY);
+        if (raw) loaded = JSON.parse(raw);
+      } catch (e) { loaded = null; }
+    }
+    if (loaded && loaded.categories){
+      var blank = blankState();
+      for (var k in blank.categories){
+        if (!loaded.categories[k]) loaded.categories[k] = blank.categories[k];
+      }
+      _state = loaded;
+    } else {
+      _state = blankState();
+    }
+    _ready = true;
+  }
+
+  async function saveState(){
+    var snapshot = JSON.parse(JSON.stringify(_state));
+    if (window.sd && typeof window.sd.storeSet === 'function'){
+      try { await window.sd.storeSet(BRIDGE_KEY, snapshot); } catch (e) { /* fall through */ }
+    }
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(snapshot)); } catch (e) {}
+  }
+
+  function $(id){ return document.getElementById(id); }
+  function escapeHtml(s){
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+  function findCategory(id){
+    for (var i = 0; i < CATEGORIES.length; i++){ if (CATEGORIES[i].id === id) return CATEGORIES[i]; }
+    return null;
+  }
+
+  // ── Heuristic extraction ──────────────────────────────────────────
+  // Pure regex / keyword routines run over the raw solicitation text.
+  // No network. Each extraction is intentionally conservative: when a
+  // pattern is uncertain, the routine emits an ambiguity flag rather
+  // than guessing. The user is responsible for verifying every value.
+  function extractKeyDetails(rawText){
+    var text = String(rawText || '');
+    var ambiguities = [];
+
+    function findFirst(re){
+      var m = text.match(re);
+      return m ? String(m[1] || m[0]).trim() : '';
+    }
+    function findAll(re){
+      var out = [];
+      var m;
+      while ((m = re.exec(text)) !== null){
+        out.push(String(m[1] || m[0]).trim());
+        if (!re.global) break;
+      }
+      return out;
+    }
+    function listAfter(headingRe){
+      var m = text.match(headingRe);
+      if (!m) return [];
+      var idx = m.index + m[0].length;
+      var slice = text.slice(idx, idx + 1400);
+      var lines = slice.split(/\r?\n/).map(function(l){ return l.trim(); });
+      var collected = [];
+      for (var i = 0; i < lines.length; i++){
+        var l = lines[i];
+        if (!l) { if (collected.length) break; continue; }
+        if (/^[A-Z][A-Z\s\-_]{6,}:?$/.test(l) && collected.length) break;
+        collected.push(l);
+        if (collected.length >= 12) break;
+      }
+      return collected;
+    }
+
+    // Title — try several headings.
+    var title = findFirst(/^\s*(?:title|subject)\s*:\s*(.+)$/im)
+             || findFirst(/^\s*solicitation\s+title\s*:\s*(.+)$/im)
+             || findFirst(/^\s{0,4}([A-Z][^\n]{8,120})\s*$/m)
+             || '';
+    if (!title) ambiguities.push('Title could not be identified — confirm manually.');
+
+    // Issuing agency.
+    var agency = findFirst(/(?:issuing\s+agency|agency|department)\s*:\s*(.+)/i)
+              || findFirst(/(department\s+of\s+[A-Z][a-zA-Z &,]+)/)
+              || '';
+    if (!agency) ambiguities.push('Issuing agency could not be identified — confirm manually.');
+
+    // Solicitation number.
+    var solNumber = findFirst(/solicitation\s+(?:no\.?|number|#)\s*[:\-]?\s*([A-Z0-9\-_\/]+)/i)
+                 || findFirst(/(?:RFQ|RFP|RFI|IFB|SOW|PWS)\s*[#:]?\s*([A-Z0-9\-_\/]{4,})/i)
+                 || '';
+    if (!solNumber) ambiguities.push('Solicitation number not detected — confirm manually.');
+
+    // Summary — first paragraph.
+    var paragraphs = text.split(/\n\s*\n/).map(function(p){ return p.trim(); }).filter(Boolean);
+    var summary = paragraphs[0] || '';
+    if (summary.length > 600) summary = summary.slice(0, 600) + '…';
+
+    // SOW sub-buckets.
+    var mainTasks       = listAfter(/(?:main\s+tasks|tasks|task\s+order|scope\s+of\s+work|statement\s+of\s+work|performance\s+work\s+statement)[\s:.\-]*/i);
+    var objectives      = listAfter(/(?:objectives?|goals?)\s*[:\-]/i);
+    var deliverables    = listAfter(/deliverables?\s*[:\-]/i);
+    var assumptions     = listAfter(/(?:assumptions|constraints|exclusions|limitations)\s*[:\-]/i);
+    var technicalReqs   = listAfter(/(?:technical\s+requirements|specifications|technical\s+specifications)\s*[:\-]/i);
+    var performanceStd  = listAfter(/(?:performance\s+standards|quality\s+assurance|service\s+level)\s*[:\-]/i);
+    var complianceCrit  = listAfter(/(?:compliance|evaluation\s+criteria)\s*[:\-]/i);
+
+    // Locations / timelines / deadlines (top-level under Metadata & Summary).
+    var locations = findAll(/(?:location|address|site|facility)\s*[:\-]\s*([^\n]+)/gi).slice(0, 6);
+    var timelines = listAfter(/(?:phase|timeline|period\s+of\s+performance|schedule)\s*[:\-]/i);
+    var deadlines = findAll(/(?:due|deadline|closing|response\s+date|q&?a\s+(?:date|deadline))\s*[:\-]?\s*([^\n]+)/gi).slice(0, 10);
+    if (!deadlines.length) ambiguities.push('No explicit deadlines detected — verify all dates.');
+
+    // Place of Performance specifics.
+    var primaryAddress = findFirst(/place\s+of\s+performance\s*[:\-]\s*([^\n]+)/i) || '';
+    var alternateLocations = findAll(/(?:alternate|secondary)\s+location\s*[:\-]\s*([^\n]+)/gi);
+    var geographicRestrictions = findAll(/(?:geographic|location)\s+restrictions?\s*[:\-]?\s*([^\n]+)/gi);
+    var workMode = '';
+    if (/\bon[-\s]?site\b/i.test(text) && /\boff[-\s]?site|remote\b/i.test(text)) workMode = 'Hybrid (on-site + off-site)';
+    else if (/\bon[-\s]?site\b/i.test(text)) workMode = 'On-site';
+    else if (/\boff[-\s]?site|remote|telework\b/i.test(text)) workMode = 'Off-site / remote';
+    if (!primaryAddress) ambiguities.push('Place of Performance address not detected — confirm manually.');
+
+    // Subcontractor / small business.
+    var qualifications = findAll(/(?:required\s+qualifications?|certifications?|capability)\s*[:\-]\s*([^\n]+)/gi).slice(0, 10);
+    var subcontractingOpportunities = findAll(/(?:subcontract(?:ing)?|teaming)\s+(?:opportunit(?:y|ies)|requirement|plan)\s*[:\-]?\s*([^\n]+)/gi).slice(0, 8);
+    var smallBizParticipation = findAll(/(?:small\s+business|SDVOSB|WOSB|HUBZone|8\(a\))\s*[:\-]?\s*([^\n]+)/gi).slice(0, 8);
+
+    // Compliance & submission.
+    var submissionDeadlines = deadlines.slice(0, 6);
+    var formattingRequirements = listAfter(/(?:format(?:ting)?|page\s+limit|font|margin)\s*[:\-]/i);
+    var mandatoryAttachments = listAfter(/(?:attachments?|exhibits?|enclosures?|forms?)\s*[:\-]/i);
+    var pointsOfContact = findAll(/(?:point\s+of\s+contact|POC|contracting\s+officer|technical\s+POC)\s*[:\-]\s*([^\n]+)/gi).slice(0, 8);
+    var penalties = listAfter(/(?:penalt(?:y|ies)|disqualif|noncompliance)\s*[:\-]/i);
+
+    // Site visit.
+    var siteVisitDates = findAll(/site\s+visit\s+(?:date|time|on)\s*[:\-]?\s*([^\n]+)/gi);
+    var rsvpDeadlines = findAll(/(?:RSVP|register\s+by|registration\s+deadline)\s*[:\-]?\s*([^\n]+)/gi);
+    var siteVisitPoc = findAll(/(?:site\s+visit\s+(?:POC|contact|coordinator))\s*[:\-]?\s*([^\n]+)/gi);
+    var siteAddresses = findAll(/(?:site\s+address|visit\s+location)\s*[:\-]\s*([^\n]+)/gi);
+    var securitySafety = listAfter(/(?:security|safety|permit|access\s+badge)\s*(?:requirements?)?\s*[:\-]/i);
+    var attendanceRequirements = findAll(/(?:attendance|mandatory\s+attendance|sign[-\s]?in)\s*[:\-]?\s*([^\n]+)/gi);
+    var hasSiteVisit = /\bsite\s+visit\b/i.test(text) || siteVisitDates.length > 0;
+    if (!hasSiteVisit) ambiguities.push('No site visit detected — confirm whether one is required.');
+
+    var extracted = {
+      'metadata-summary': {
+        title:                   title,
+        agency:                  agency,
+        solicitationNumber:      solNumber,
+        summary:                 summary,
+        mainTasks:               mainTasks,
+        objectives:              objectives,
+        deliverables:            deliverables,
+        assumptions:             assumptions,
+        technicalRequirements:   technicalReqs,
+        performanceStandards:    performanceStd,
+        complianceCriteria:      complianceCrit,
+        locations:               locations,
+        timelines:               timelines,
+        deadlines:               deadlines,
+        ambiguities:             ambiguities.slice()
+      },
+      'place-of-performance': {
+        primaryAddress:          primaryAddress,
+        alternateLocations:      alternateLocations,
+        geographicRestrictions:  geographicRestrictions,
+        workMode:                workMode,
+        clauseReferences:        findAll(/(?:section\s+[CLM]\b|attachment\s+[A-Z0-9])/g),
+        facilityNames:           findAll(/(?:facility|building|installation)\s*[:\-]\s*([^\n]+)/gi).slice(0, 5),
+        ambiguityFlags:          primaryAddress ? [] : ['Primary address not detected — verify manually.']
+      },
+      'subcontractor-id-prep': {
+        qualifications:                qualifications,
+        technicalSpecs:                technicalReqs,
+        materialsEquipment:            listAfter(/(?:materials|equipment|tools)\s*[:\-]/i),
+        complianceRequirements:        complianceCrit,
+        evaluationCriteria:            listAfter(/evaluation\s+criteria\s*[:\-]/i),
+        subcontractingOpportunities:   subcontractingOpportunities,
+        smallBusinessParticipation:    smallBizParticipation,
+        subcontractorSections:         findAll(/(?:subcontractor|teaming|joint\s+venture)\s+section\s*[:\-]?\s*([^\n]+)/gi),
+        draftingSteps: [
+          'Map SOW tasks → required subcontractor capabilities',
+          'Identify small business / SDVOSB / WOSB / 8(a) participation targets',
+          'Draft Teaming arrangement summary',
+          'Add subcontractor past performance citations',
+          'Prepare Subcontracting Plan if required (FAR Subpart 19.7)'
+        ]
+      },
+      'compliance-submission': {
+        submissionDeadlines:    submissionDeadlines,
+        formattingRequirements: formattingRequirements,
+        mandatoryAttachments:   mandatoryAttachments,
+        pointsOfContact:        pointsOfContact,
+        complianceChecklist:    complianceCrit,
+        penalties:              penalties,
+        milestoneDependencies:  timelines,
+        dateInconsistencies:    []
+      },
+      'site-visit-logistics': {
+        siteVisitDates:         siteVisitDates,
+        rsvpDeadlines:          rsvpDeadlines,
+        duration:               findFirst(/(?:duration|length)\s*[:\-]\s*([^\n]+)/i),
+        siteVisitPoc:           siteVisitPoc,
+        siteAddresses:          siteAddresses,
+        frequencyVolume:        findFirst(/(?:frequency|volume)\s*[:\-]\s*([^\n]+)/i),
+        securitySafety:         securitySafety,
+        attendanceRequirements: attendanceRequirements,
+        specialClauses:         findAll(/(?:special\s+clause|safety\s+protocol)\s*[:\-]?\s*([^\n]+)/gi)
+      }
+    };
+
+    return { extracted: extracted, ambiguities: ambiguities };
+  }
+
+  // ── Render ────────────────────────────────────────────────────────
+  function statusPillFor(status){
+    var s = STATUS_PILL_STYLE[status] || STATUS_PILL_STYLE['not-started'];
+    return 'background:' + s.bg + ';border:1px solid ' + s.border + ';color:' + s.color + ';';
+  }
+
+  function renderUploadStatus(){
+    var el = $('pw-sol-upload-status');
+    if (!el) return;
+    if (_state.extractedAt){
+      el.innerHTML = 'Solicitation loaded · extracted at ' + escapeHtml(_state.extractedAt) +
+        (_state.fileName ? ' · file: <code style="font-family:\'IBM Plex Mono\',monospace;font-size:10px">' + escapeHtml(_state.fileName) + '</code>' : '') +
+        (_state.linkedPursuitId ? ' · linked pursuit: <code style="font-family:\'IBM Plex Mono\',monospace;font-size:10px">' + escapeHtml(_state.linkedPursuitId) + '</code>' : '') +
+        '. Click any extracted category below to draft that section.';
+    } else if (_state.rawText){
+      el.innerHTML = 'Text loaded (' + _state.rawText.length + ' chars). Click <strong>Extract Key Details</strong> to run extraction.';
+    } else {
+      el.innerHTML = 'No solicitation uploaded yet. Upload a file or paste text, then click <strong>Extract Key Details</strong>.';
+    }
+    var linkInput = $('pw-sol-link-pursuit');
+    if (linkInput && !linkInput.value) linkInput.value = _state.linkedPursuitId || '';
+  }
+
+  function renderExtractionCards(){
+    var card = $('pw-solicitation-extraction');
+    var grid = $('pw-extraction-cards');
+    if (!card || !grid) return;
+    if (!_state.extractedAt){
+      card.style.display = 'none';
+      return;
+    }
+    card.style.display = '';
+    var html = '';
+    for (var i = 0; i < CATEGORIES.length; i++){
+      var c = CATEGORIES[i];
+      var data = _state.extracted[c.id] || {};
+      var cs = _state.categories[c.id] || { status: 'not-started' };
+      var preview = buildPreviewLine(c.id, data);
+      var isActive = (_state.activeCategory === c.id);
+      html +=
+        '<div class="pw-extraction-card" data-pw-extraction-card="' + escapeHtml(c.id) + '" onclick="pwSolOpenCategory(\'' + escapeHtml(c.id) + '\')" ' +
+        'style="cursor:pointer;background:var(--panel2,#0f1e32);border:1px solid ' + (isActive ? 'rgba(176,138,60,0.40)' : 'var(--border)') + ';border-radius:8px;padding:11px 13px;transition:var(--t)">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">' +
+            '<div style="flex:1">' +
+              '<div style="font:700 9px/1 \'Azeret Mono\',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px">Category ' + (i + 1) + '</div>' +
+              '<div style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:13px;color:var(--text);line-height:1.3">' + escapeHtml(c.title) + '</div>' +
+            '</div>' +
+            '<span class="sd-pw-status" data-pw-cat-status="' + escapeHtml(c.id) + '" style="font-size:8.5px;padding:2px 7px;border-radius:980px;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;' + statusPillFor(cs.status) + '">' +
+              (STATUS_LABEL[cs.status] || cs.status) +
+            '</span>' +
+          '</div>' +
+          '<div style="font-size:10.5px;color:var(--sub);line-height:1.5;margin-bottom:6px;max-height:48px;overflow:hidden">' + escapeHtml(preview) + '</div>' +
+          '<div style="font:600 8.5px/1.3 \'Azeret Mono\',monospace;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">' + escapeHtml(c.farReference) + ' · click to draft</div>' +
+        '</div>';
+    }
+    grid.innerHTML = html;
+    var ambBlock = $('pw-extraction-ambiguity');
+    var ambList = $('pw-extraction-ambiguity-list');
+    if (ambBlock && ambList){
+      var ambs = (_state.ambiguities || []);
+      if (ambs.length){
+        ambBlock.style.display = '';
+        ambList.innerHTML = ambs.map(function(s){ return '<li>' + escapeHtml(s) + '</li>'; }).join('');
+      } else {
+        ambBlock.style.display = 'none';
+        ambList.innerHTML = '';
+      }
+    }
+    // Render the editor below cards.
+    renderCategoryEditor();
+  }
+
+  function buildPreviewLine(catId, data){
+    if (catId === 'metadata-summary'){
+      var bits = [];
+      if (data.title)              bits.push(data.title);
+      if (data.solicitationNumber) bits.push('#' + data.solicitationNumber);
+      if (data.agency)             bits.push(data.agency);
+      if (!bits.length && data.summary) bits.push(String(data.summary).slice(0, 120));
+      return bits.join(' · ') || 'Title / agency / sol # not detected.';
+    }
+    if (catId === 'place-of-performance'){
+      return (data.primaryAddress || data.workMode || 'Place of Performance not detected.');
+    }
+    if (catId === 'subcontractor-id-prep'){
+      var n = (data.qualifications || []).length + (data.subcontractingOpportunities || []).length;
+      return n + ' subcontracting / qualification signal(s) detected.';
+    }
+    if (catId === 'compliance-submission'){
+      var d = (data.submissionDeadlines || []).length;
+      return d + ' submission deadline(s) · ' + (data.pointsOfContact || []).length + ' POC(s) detected.';
+    }
+    if (catId === 'site-visit-logistics'){
+      var sd = (data.siteVisitDates || []).length;
+      return sd ? sd + ' site visit date(s) detected.' : 'No site visit details detected — confirm if required.';
+    }
+    return '';
+  }
+
+  function renderCategoryEditor(){
+    var grid = $('pw-extraction-cards');
+    if (!grid) return;
+    var existing = document.getElementById('pw-extraction-editor');
+    if (!_state.activeCategory){
+      if (existing) existing.remove();
+      return;
+    }
+    var cat = findCategory(_state.activeCategory);
+    if (!cat){ if (existing) existing.remove(); return; }
+    var data = _state.extracted[cat.id] || {};
+    var cs = _state.categories[cat.id] || { status: 'not-started', notes: '', draft: '' };
+    var finalized = (cs.status === 'finalized');
+    var hasAi = pwSolHasAiProvider();
+
+    var extractedHtml = renderExtractedFields(cat.id, data);
+
+    var html =
+      '<div class="card" id="pw-extraction-editor" data-pw-extraction-editor="' + escapeHtml(cat.id) + '" style="grid-column:1/-1;margin-top:10px;border-left:3px solid var(--blue)">' +
+        '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px">' +
+          '<div style="flex:1">' +
+            '<div style="font:700 9px/1 \'Azeret Mono\',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--blue,#60a5fa);margin-bottom:4px">Section workspace · ' + escapeHtml(cat.farReference) + '</div>' +
+            '<div class="card-title" style="color:var(--gold2);font-family:\'Syne\',sans-serif">' + escapeHtml(cat.title) + '</div>' +
+            '<div style="font-size:10.5px;color:var(--muted);line-height:1.5;margin-top:2px">' + escapeHtml(cat.help) + '</div>' +
+          '</div>' +
+          '<span class="sd-pill" data-pw-cat-editor-status="' + escapeHtml(cat.id) + '" style="font-size:10px;padding:4px 10px;border-radius:980px;white-space:nowrap;text-transform:uppercase;letter-spacing:0.06em;' + statusPillFor(cs.status) + '">' +
+            (STATUS_LABEL[cs.status] || cs.status) +
+          '</span>' +
+        '</div>' +
+
+        '<div class="card" style="background:var(--panel2,#0f1e32);padding:10px 12px;margin-bottom:10px">' +
+          '<div style="font:700 9px/1 \'Azeret Mono\',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Extracted text</div>' +
+          extractedHtml +
+        '</div>' +
+
+        '<div class="form-group" style="margin-bottom:10px">' +
+          '<label class="label" style="display:flex;justify-content:space-between;align-items:center">' +
+            '<span>Notes / special instructions</span>' +
+            '<span style="font-size:9px;color:var(--muted);text-transform:none;letter-spacing:0">Used as AI draft context.</span>' +
+          '</label>' +
+          '<textarea class="textarea" id="pw-sol-notes" data-pw-sol-notes="true" placeholder="Section-specific guidance — e.g. specific past-performance contracts to cite, FAR clauses to anchor against, evaluation criteria to address." style="min-height:80px"' + (finalized ? ' disabled' : '') + '>' + escapeHtml(cs.notes || '') + '</textarea>' +
+        '</div>' +
+
+        '<div class="form-group" style="margin-bottom:10px">' +
+          '<label class="label" style="display:flex;justify-content:space-between;align-items:center">' +
+            '<span>Draft</span>' +
+            '<span style="font-size:9px;color:var(--muted);text-transform:none;letter-spacing:0">Internal review draft only — not for external submission.</span>' +
+          '</label>' +
+          '<textarea class="textarea" id="pw-sol-draft" data-pw-sol-draft="true" placeholder="Type or paste your section draft here. Request an AI draft (below) if an AI provider key is configured in Settings." style="min-height:200px"' + (finalized ? ' disabled' : '') + '>' + escapeHtml(cs.draft || '') + '</textarea>' +
+        '</div>' +
+
+        '<div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center">' +
+          '<button class="btn btn-blue" data-pw-sol-action="draft-this-section" onclick="pwSolDraftCategory()"' + (hasAi && !finalized ? '' : ' disabled') + '>🪄 Draft this section</button>' +
+          '<button class="btn btn-ghost" data-pw-sol-action="mark-drafted" onclick="pwSolSetStatus(\'drafted\')">Mark as Drafted</button>' +
+          '<button class="btn btn-ghost" data-pw-sol-action="approve" onclick="pwSolSetStatus(\'approved\')" style="color:var(--green)">✓ Approve</button>' +
+          '<button class="btn btn-ghost" data-pw-sol-action="needs-revision" onclick="pwSolSetStatus(\'needs-revision\')" style="color:var(--gold2)">↻ Needs revision</button>' +
+          '<button class="btn btn-ghost" data-pw-sol-action="retry-with-notes" onclick="pwSolRetryWithNotes()" style="color:var(--blue,#60a5fa)" title="Re-run draft using updated notes as additional context">↻ Retry with notes</button>' +
+          '<button class="btn btn-ghost" data-pw-sol-action="finalize" onclick="pwSolSetStatus(\'finalized\')" style="color:var(--blue)">🔒 User Finalize</button>' +
+          '<button class="btn btn-ghost" data-pw-sol-action="reset-section" onclick="pwSolSetStatus(\'not-started\')" style="color:var(--muted);margin-left:auto">⊘ Reset section</button>' +
+        '</div>' +
+
+        '<div style="margin-top:10px;font-size:10px;color:var(--muted);line-height:1.55">' +
+          'Single section only — SourceDeck never generates a complete proposal in one click. FAR references are advisory; SourceDeck does not provide legal advice and does not claim compliance certification. The user verifies every value before any external action. SourceDeck does not submit, send, or upload.' +
+        '</div>' +
+      '</div>';
+
+    if (existing) existing.outerHTML = html;
+    else grid.insertAdjacentHTML('afterend', html);
+
+    wireEditorAutosave();
+  }
+
+  function renderExtractedFields(catId, data){
+    function row(label, value){
+      if (value == null || value === '' || (Array.isArray(value) && !value.length)) return '';
+      var v = Array.isArray(value)
+        ? '<ul style="margin:2px 0 0;padding-left:16px;color:var(--sub)">' + value.map(function(x){ return '<li>' + escapeHtml(x) + '</li>'; }).join('') + '</ul>'
+        : '<span style="color:var(--sub)">' + escapeHtml(value) + '</span>';
+      return '<div style="margin-bottom:6px"><span style="font:600 9px/1.3 \'Azeret Mono\',monospace;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">' + escapeHtml(label) + '</span><div style="font-size:11px;line-height:1.5;margin-top:2px">' + v + '</div></div>';
+    }
+    var html = '';
+    if (catId === 'metadata-summary'){
+      html += row('Title', data.title);
+      html += row('Issuing agency', data.agency);
+      html += row('Solicitation number', data.solicitationNumber);
+      html += row('Purpose summary', data.summary);
+      html += row('Main tasks', data.mainTasks);
+      html += row('Objectives', data.objectives);
+      html += row('Deliverables', data.deliverables);
+      html += row('Assumptions / constraints', data.assumptions);
+      html += row('Technical requirements', data.technicalRequirements);
+      html += row('Performance standards', data.performanceStandards);
+      html += row('Compliance criteria', data.complianceCriteria);
+      html += row('Locations', data.locations);
+      html += row('Timelines / phases', data.timelines);
+      html += row('Deadlines (verify all)', data.deadlines);
+      html += row('Ambiguities flagged', data.ambiguities);
+    } else if (catId === 'place-of-performance'){
+      html += row('Primary address', data.primaryAddress);
+      html += row('Alternate / secondary locations', data.alternateLocations);
+      html += row('Geographic restrictions', data.geographicRestrictions);
+      html += row('Work mode', data.workMode);
+      html += row('Clause references (Section C / L / attachments)', data.clauseReferences);
+      html += row('Facility names', data.facilityNames);
+      html += row('Ambiguity flags', data.ambiguityFlags);
+    } else if (catId === 'subcontractor-id-prep'){
+      html += row('Required qualifications / certifications', data.qualifications);
+      html += row('Technical specifications', data.technicalSpecs);
+      html += row('Materials / equipment', data.materialsEquipment);
+      html += row('Compliance requirements', data.complianceRequirements);
+      html += row('Evaluation criteria', data.evaluationCriteria);
+      html += row('Subcontracting opportunities', data.subcontractingOpportunities);
+      html += row('Small business participation', data.smallBusinessParticipation);
+      html += row('Subcontractor-relevant sections', data.subcontractorSections);
+      html += row('Proposal drafting steps', data.draftingSteps);
+    } else if (catId === 'compliance-submission'){
+      html += row('Submission deadlines', data.submissionDeadlines);
+      html += row('Formatting requirements', data.formattingRequirements);
+      html += row('Mandatory attachments', data.mandatoryAttachments);
+      html += row('Points of contact', data.pointsOfContact);
+      html += row('Compliance checklist', data.complianceChecklist);
+      html += row('Penalties / disqualification risks', data.penalties);
+      html += row('Milestone dependencies', data.milestoneDependencies);
+      html += row('Date inconsistencies', data.dateInconsistencies);
+    } else if (catId === 'site-visit-logistics'){
+      html += row('Site visit dates / times', data.siteVisitDates);
+      html += row('RSVP deadlines', data.rsvpDeadlines);
+      html += row('Duration', data.duration);
+      html += row('Site visit POC', data.siteVisitPoc);
+      html += row('Site addresses', data.siteAddresses);
+      html += row('Frequency / volume', data.frequencyVolume);
+      html += row('Security / safety / permit requirements', data.securitySafety);
+      html += row('Mandatory attendance / documentation / penalties', data.attendanceRequirements);
+      html += row('Special clauses / safety protocols', data.specialClauses);
+    }
+    return html || '<div style="font-size:11px;color:var(--muted)">No structured fields extracted for this category. Refer to the raw solicitation text.</div>';
+  }
+
+  function pwSolHasAiProvider(){
+    try {
+      if (window.sd && window.sd.credentials && typeof window.sd.credentials.status === 'function'){
+        var s = window.sd.credentials.status() || {};
+        var p = s.present || {};
+        return !!(p.openai || p['openai-key'] || p.anthropic || p['anthropic-key'] || p.ibm || p['ibm-watsonx-key']);
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  function wireEditorAutosave(){
+    var notesEl = $('pw-sol-notes');
+    var draftEl = $('pw-sol-draft');
+    var debouncer = null;
+    function debouncedSave(){
+      if (debouncer) clearTimeout(debouncer);
+      debouncer = setTimeout(function(){
+        var activeId = _state.activeCategory;
+        if (!activeId) return;
+        var cs = _state.categories[activeId] || { status: 'not-started', notes: '', draft: '' };
+        if (notesEl) cs.notes = notesEl.value || '';
+        if (draftEl) cs.draft = draftEl.value || '';
+        cs.updatedAt = new Date().toISOString();
+        if (cs.status === 'not-started' && (cs.notes || cs.draft)){
+          cs.status = 'drafted';
+          renderExtractionCards();
+        }
+        _state.categories[activeId] = cs;
+        saveState();
+      }, 400);
+    }
+    if (notesEl) notesEl.addEventListener('input', debouncedSave);
+    if (draftEl) draftEl.addEventListener('input', debouncedSave);
+  }
+
+  // ── Public actions ────────────────────────────────────────────────
+  window.pwSolOpenFilePicker = function(){
+    var p = $('pw-sol-file');
+    if (p) p.click();
+  };
+  window.pwSolOnFileChosen = function(ev){
+    var file = ev && ev.target && ev.target.files && ev.target.files[0];
+    if (!file) return;
+    _state.fileName = file.name || '';
+    _state.fileMime = file.type || '';
+    var name = (file.name || '').toLowerCase();
+    var mime = (file.type || '').toLowerCase();
+    var isTextLike = /\.txt$|\.md$/.test(name) || /^text\//.test(mime) || mime === 'text/markdown';
+    if (isTextLike){
+      var reader = new FileReader();
+      reader.onload = function(){
+        _state.rawText = String(reader.result || '');
+        saveState();
+        renderUploadStatus();
+        if (window.toast) try { window.toast('Solicitation text loaded locally. Click Extract Key Details.', 'ok'); } catch (e) {}
+      };
+      reader.readAsText(file);
+    } else {
+      // PDF / DOCX parsing is not available in the renderer. Surface
+      // the boundary and steer the user to the paste-text fallback.
+      renderUploadStatus();
+      var pasteArea = $('pw-sol-paste-area');
+      if (pasteArea) pasteArea.style.display = '';
+      if (window.toast){
+        try {
+          window.toast('PDF / DOCX parsing is not enabled in this build. Paste the solicitation text into the textarea below.', 'info');
+        } catch (e) {}
+      }
+    }
+  };
+  window.pwSolTogglePasteArea = function(){
+    var area = $('pw-sol-paste-area');
+    if (!area) return;
+    var willShow = area.style.display === 'none';
+    area.style.display = willShow ? '' : 'none';
+    if (willShow){
+      var ta = $('pw-sol-paste-text');
+      if (ta) ta.focus();
+    }
+  };
+  window.pwSolExtractKeyDetails = function(){
+    var pasteEl = $('pw-sol-paste-text');
+    var pasted = pasteEl ? String(pasteEl.value || '') : '';
+    var text = pasted || _state.rawText || '';
+    if (!text.trim()){
+      if (window.toast) try { window.toast('Upload a file or paste solicitation text before extracting.', 'info'); } catch (e) {}
+      return;
+    }
+    _state.rawText = text;
+    var linkInput = $('pw-sol-link-pursuit');
+    if (linkInput) _state.linkedPursuitId = String(linkInput.value || '').trim();
+    var result = extractKeyDetails(text);
+    _state.extracted = result.extracted;
+    _state.ambiguities = result.ambiguities;
+    _state.extractedAt = new Date().toISOString();
+    // Reset category status when a new extraction lands.
+    for (var i = 0; i < CATEGORIES.length; i++){
+      var cid = CATEGORIES[i].id;
+      var prev = _state.categories[cid] || { status: 'not-started', notes: '', draft: '' };
+      _state.categories[cid] = {
+        status: prev.status === 'finalized' ? 'finalized' : 'not-started',
+        notes: prev.notes || '',
+        draft: prev.draft || '',
+        updatedAt: new Date().toISOString()
+      };
+    }
+    saveState();
+    renderUploadStatus();
+    renderExtractionCards();
+    if (window.toast) try { window.toast('Extraction complete. 5 FAR-aligned categories ready. Click any to draft that section.', 'ok'); } catch (e) {}
+  };
+  window.pwSolClearUploaded = function(){
+    var ok = false;
+    try { ok = window.confirm('Clear the uploaded solicitation and all extracted data? Per-section drafts you have not finalized will be removed.'); } catch (e) { ok = true; }
+    if (!ok) return;
+    _state = blankState();
+    saveState();
+    renderUploadStatus();
+    renderExtractionCards();
+    var pasteEl = $('pw-sol-paste-text'); if (pasteEl) pasteEl.value = '';
+    var linkInput = $('pw-sol-link-pursuit'); if (linkInput) linkInput.value = '';
+    if (window.toast) try { window.toast('Uploaded solicitation cleared.', 'ok'); } catch (e) {}
+  };
+  window.pwSolOpenCategory = function(catId){
+    if (!findCategory(catId)) return;
+    _state.activeCategory = catId;
+    saveState();
+    renderExtractionCards();
+    // Scroll the editor into view.
+    setTimeout(function(){
+      var editor = document.getElementById('pw-extraction-editor');
+      if (editor && typeof editor.scrollIntoView === 'function'){
+        try { editor.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+      }
+    }, 60);
+  };
+  window.pwSolSetStatus = function(status){
+    var allowed = ['not-started','drafted','approved','needs-revision','finalized'];
+    if (allowed.indexOf(status) === -1) return;
+    var activeId = _state.activeCategory;
+    if (!activeId) return;
+    var cs = _state.categories[activeId] || { status: 'not-started', notes: '', draft: '' };
+    cs.status = status;
+    cs.updatedAt = new Date().toISOString();
+    _state.categories[activeId] = cs;
+    saveState();
+    renderExtractionCards();
+  };
+  window.pwSolDraftCategory = function(){
+    if (!pwSolHasAiProvider()){
+      if (window.toast) try { window.toast('Add an AI provider key in Settings → API Keys to enable AI drafting. Single section only — SourceDeck never generates a full proposal.', 'info'); } catch (e) {}
+      return;
+    }
+    var activeId = _state.activeCategory;
+    if (!activeId) return;
+    // Phase 25L.2 ships the boundary contract + UI only. Live AI
+    // category drafting is deferred to a follow-up phase: it must
+    // respect the single-section rule, the user-approval gate, and
+    // the no-send/no-submit/no-upload posture.
+    if (window.toast) try { window.toast('AI section drafting will pass the extracted context + your notes to your configured AI provider. Live integration is on the roadmap; the boundary is fixed: single section only, user approval required, no full-proposal generation.', 'info'); } catch (e) {}
+  };
+  window.pwSolRetryWithNotes = function(){
+    // Re-run the draft request using current notes as additional
+    // context. Same boundary as pwSolDraftCategory().
+    window.pwSolDraftCategory();
+  };
+
+  // ── Boot ──────────────────────────────────────────────────────────
+  function boot(){
+    loadState().then(function(){
+      renderUploadStatus();
+      renderExtractionCards();
+    }).catch(function(){
+      _ready = true;
+      renderUploadStatus();
     });
   }
   if (document.readyState === 'loading'){
