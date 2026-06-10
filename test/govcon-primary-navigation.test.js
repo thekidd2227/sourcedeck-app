@@ -2,15 +2,16 @@
  * Phase 23C — GovCon Primary Navigation regression test.
  *
  * Asserts:
- *   - the GovCon nav-section sits at the TOP of the sidebar (before
- *     the Operations section);
- *   - the "GovCon Capture OS" separator label exists;
- *   - every non-GovCon nav-section now carries the "Other business
- *     tools · …" label prefix (so the buyer sees clear separation);
- *   - the "Show All Tools" toggle exists and is wired to
- *     gcToggleAllTools();
- *   - every commercial nav button + pane remains in the DOM (the
- *     toggle hides them via display: none but never removes them);
+ *   - the GovCon nav-section sits near the TOP of the sidebar (Phase
+ *     25L moves Dashboard ABOVE GovCon — both stay above any other
+ *     surface and the buyer's cold-open active pane is still
+ *     tab-govcon);
+ *   - Phase 25L superseded the "GovCon Capture OS" copy and the
+ *     "Other business tools · …" label cluster (cluster removed in
+ *     Phase 25L.1; superseded assertions retired below);
+ *   - every commercial nav button + pane remains in the DOM (Phase
+ *     23C invariant — Phase 25L moves removed-from-active-nav buttons
+ *     into a hidden reachability buffer rather than deleting them);
  *   - the default active tab is now `tab-govcon` (Dashboard remains
  *     reachable but is no longer the cold-open active pane);
  *   - Phase 22B/22C/22D/22E/22F surfaces remain intact;
@@ -46,33 +47,38 @@ function test(name, fn) {
 console.log('\n=== Phase 23C — GovCon Primary Navigation ===\n');
 
 // 1. GovCon nav button appears in the primary navigation group.
-test('GovCon nav-section is positioned at the TOP of the sidebar', () => {
-  // The first nav-section after <div class="sidebar"> must be the GovCon
-  // primary section. Find sidebar start and walk forward.
+// Phase 25L moves Dashboard ABOVE GovCon; GovCon now lives in the
+// second sidebar nav-section, not the first. The invariant that
+// survives Phase 25L: GovCon sits ABOVE the (hidden) reachability
+// buffer that holds removed-from-active-nav buttons.
+test('GovCon nav-section is positioned near the TOP of the sidebar (Phase 25L: Dashboard sits above GovCon)', () => {
   const sidebarIdx = HTML.indexOf('<div class="sidebar">');
   assert.ok(sidebarIdx > 0, 'sidebar container not found');
-  const slice = HTML.slice(sidebarIdx, sidebarIdx + 4000);
-  // The first nav-section we encounter must be the Phase 23C
-  // govcon-primary one.
-  const firstSectionMatch = slice.match(/<div class="nav-section"[^>]*>/);
-  assert.ok(firstSectionMatch, 'no nav-section found inside sidebar');
-  assert.ok(
-    /id="nav-section-govcon-primary"/.test(firstSectionMatch[0]),
-    'first nav-section in sidebar is NOT the Phase 23C GovCon primary section; got: ' + firstSectionMatch[0]
-  );
-  // GovCon nav button must be inside that section.
+  const dashIdx   = HTML.indexOf('id="nav-section-dashboard"');
+  const govconIdx = HTML.indexOf('id="nav-section-govcon-primary"');
+  const removedIdx = HTML.indexOf('id="nav-section-removed-25l"');
+  assert.ok(dashIdx > sidebarIdx, 'Dashboard nav-section not inside sidebar');
+  assert.ok(govconIdx > dashIdx, 'GovCon nav-section must sit AFTER Dashboard (Phase 25L cleanup)');
+  assert.ok(removedIdx > govconIdx, 'GovCon nav-section must sit BEFORE the Phase 25L removed-from-active-nav buffer');
+  // GovCon nav button must be inside the GovCon nav-section.
   const govconBtnIdx = HTML.indexOf('data-tab="govcon"');
   assert.ok(govconBtnIdx > sidebarIdx, 'govcon nav button not found inside sidebar');
 });
 
-// 2. GovCon Capture OS label/separator exists.
-test('"GovCon Capture OS" separator label exists at top of sidebar', () => {
-  assert.ok(/<div class="nav-label">GovCon Capture OS<\/div>/.test(HTML),
-    '"GovCon Capture OS" nav-label missing');
+// 2. Phase 25L superseded the "GovCon Capture OS" label. Sidebar
+// nav-label now reads "GovCon" (and brand-ver in the topbar likewise).
+test('Phase 25L superseded the "GovCon Capture OS" sidebar label (relabeled to "GovCon")', () => {
+  assert.ok(/<div class="nav-label">GovCon<\/div>/.test(HTML),
+    '"GovCon" sidebar nav-label missing');
+  assert.ok(!/<div class="nav-label">GovCon Capture OS<\/div>/.test(HTML),
+    '"GovCon Capture OS" nav-label should be retired by Phase 25L');
 });
 
-// 3. "Other business tools" label/separator exists on the non-GovCon sections.
-test('every non-GovCon nav-section carries "Other business tools · …" label', () => {
+// 3. Phase 25L removed the "Other business tools · …" cluster. The
+// buttons themselves move into #nav-section-removed-25l (a hidden
+// reachability buffer) so openTab() programmatic targets still
+// resolve — Phase 23C invariant: never orphan a pane.
+test('Phase 25L retired the "Other business tools · …" cluster', () => {
   for (const label of [
     'Other business tools · Operations',
     'Other business tools · Alerts',
@@ -82,22 +88,22 @@ test('every non-GovCon nav-section carries "Other business tools · …" label',
     'Other business tools · Intelligence',
     'Other business tools · Healthcare'
   ]) {
-    assert.ok(HTML.includes('<div class="nav-label">' + label + '</div>'),
-      'missing nav-label: ' + label);
+    assert.ok(!HTML.includes('<div class="nav-label">' + label + '</div>'),
+      '"' + label + '" nav-label should be retired by Phase 25L');
   }
+  // The hidden reachability buffer must exist.
+  assert.ok(/id="nav-section-removed-25l"/.test(HTML),
+    'Phase 25L reachability buffer #nav-section-removed-25l missing');
+  assert.ok(/data-phase-25l="removed-from-active-nav"/.test(HTML),
+    'Phase 25L reachability buffer marker missing');
 });
 
-// 4. Show All Tools toggle exists.
-test('"Show All Tools" toggle button exists and is wired to gcToggleAllTools()', () => {
-  assert.ok(/id="gc-show-all-tools-btn"/.test(HTML), 'Show All Tools button missing');
-  assert.ok(/onclick="gcToggleAllTools\(\)"/.test(HTML), 'gcToggleAllTools() onclick missing');
-  assert.ok(/id="gc-show-all-tools-state"/.test(HTML), 'Show All Tools state surface missing');
-  // The toggle JS must define gcToggleAllTools and applyState.
-  assert.ok(/window\.gcToggleAllTools\s*=\s*function/.test(HTML),
-    'gcToggleAllTools() function definition missing');
-  // Every section that should collapse must carry data-other-business-tools.
-  const sections = (HTML.match(/data-other-business-tools/g) || []).length;
-  assert.ok(sections >= 6, 'expected ≥6 nav-sections marked data-other-business-tools; found ' + sections);
+// 4. Phase 25L retired the "Show All Tools" toggle (clutter removed).
+test('Phase 25L retired the "Show All Tools" toggle', () => {
+  assert.ok(!/id="gc-show-all-tools-btn"/.test(HTML),
+    'Show All Tools button should be retired by Phase 25L');
+  assert.ok(!/data-other-business-tools/.test(HTML),
+    'data-other-business-tools markers should be retired by Phase 25L');
 });
 
 // 5. Every commercial nav button remains present.
@@ -142,13 +148,15 @@ test('GovCon tab-pane is the default active pane on cold open', () => {
     'Stale Phase ≤23B init default `let tab=\'dashboard\'` must be gone');
 });
 
-// 8. Phase 23B GovCon Mode indicator remains.
-test('Phase 23B GovCon Mode indicator remains intact', () => {
+// 8. Phase 23B GovCon Mode indicator remains. Phase 25L relabels the
+// brand sub-label from "GovCon Capture OS" to "GovCon" but the
+// indicator section itself stays intact.
+test('Phase 23B GovCon Mode indicator remains intact (Phase 25L: brand-ver relabeled to "GovCon")', () => {
   assert.ok(/id="gc-mode-indicator"/.test(HTML), 'Phase 23B gc-mode-indicator missing');
   assert.ok(/GovCon Mode — Capture OS workflow/.test(HTML), 'Phase 23B headline missing');
-  // Brand sub-label also remains.
-  assert.ok(/<div class="brand-ver"[^>]*>GovCon Capture OS<\/div>/.test(HTML),
-    'Phase 23B brand sub-label "GovCon Capture OS" missing');
+  // Phase 25L: brand sub-label now reads "GovCon" (was "GovCon Capture OS").
+  assert.ok(/<div class="brand-ver"[^>]*>GovCon<\/div>/.test(HTML),
+    'Phase 25L brand sub-label "GovCon" missing');
 });
 
 // 9. Phase 23A Demo Mode remains.

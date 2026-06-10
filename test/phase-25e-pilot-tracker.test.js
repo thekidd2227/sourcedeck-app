@@ -53,8 +53,20 @@ test('nav button label is "Pilot Tracker"', () => {
   );
 });
 
-test('nav section label flipped to "Other business tools · Pilot"', () => {
-  assert.match(HTML, /Other business tools · Pilot/);
+// Phase 25L superseded the Phase 25E "Other business tools · Pilot"
+// sidebar label. Pilot Tracker is removed from active sidebar nav; its
+// nav button now lives in the Phase 25L hidden reachability buffer
+// (#nav-section-removed-25l) so openTab('delivery') still resolves and
+// the pane itself remains in DOM.
+test('Phase 25L retired the "Other business tools · Pilot" sidebar cluster', () => {
+  assert.doesNotMatch(HTML, /Other business tools · Pilot/,
+    '"Other business tools · Pilot" sidebar label should be retired by Phase 25L');
+  // Pilot Tracker nav button must still exist (in the hidden buffer).
+  assert.match(HTML, /data-tab="delivery"[^>]*data-phase-25l-removed="true"/,
+    'Pilot Tracker nav button must be preserved in the Phase 25L reachability buffer');
+  // The pane itself must remain in DOM.
+  assert.match(HTML, /id="tab-delivery"/,
+    'Pilot Tracker pane must remain in DOM');
   assert.doesNotMatch(
     HTML,
     /<div class="nav-label">Other business tools · Client<\/div>/,

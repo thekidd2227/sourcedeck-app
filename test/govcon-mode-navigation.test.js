@@ -27,7 +27,12 @@ function test(name, fn) {
 
 console.log('\n=== Phase 23B — GovCon Mode Navigation Polish ===\n');
 
-// 1. GovCon Mode indicator exists.
+// 1. GovCon Mode indicator exists. Phase 25L relabels the topbar
+// brand-ver from "GovCon Capture OS" to "GovCon" (the indicator
+// section itself stays intact, including the inline "Other business
+// tools … remain available in the sidebar" microcopy — that microcopy
+// lives inside the GovCon pane body, not the sidebar nav-label cluster
+// that Phase 25L retired).
 test('GovCon Mode indicator section exists', () => {
   assert.ok(/id="gc-mode-indicator"/.test(HTML), 'gc-mode-indicator section missing');
   assert.ok(/data-section="govcon-mode-indicator"/.test(HTML), 'data-section anchor missing');
@@ -35,9 +40,9 @@ test('GovCon Mode indicator section exists', () => {
   // The indicator must explicitly acknowledge other tabs remain accessible.
   assert.ok(/Other business tools[\s\S]*?remain available in the sidebar/.test(HTML),
     '"Other business tools … remain available in the sidebar" microcopy missing');
-  // Brand sub-label updated.
-  assert.ok(/<div class="brand-ver"[^>]*>GovCon Capture OS<\/div>/.test(HTML),
-    'brand sub-label "GovCon Capture OS" missing');
+  // Phase 25L: brand sub-label now reads "GovCon" (was "GovCon Capture OS").
+  assert.ok(/<div class="brand-ver"[^>]*>GovCon<\/div>/.test(HTML),
+    'Phase 25L brand sub-label "GovCon" missing');
 });
 
 // 2. GovCon tab remains accessible.

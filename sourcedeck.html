@@ -744,7 +744,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div class="logo-mark"><img src="sourcedeck-mark.svg" alt="SourceDeck logo"></div>
     <div>
       <div class="brand-name" id="brand-name-el">SourceDeck</div>
-      <div class="brand-ver" id="brand-ver-el">GovCon Capture OS</div>
+      <div class="brand-ver" id="brand-ver-el">GovCon</div>
     </div>
   </div>
   <div class="topbar-sep"></div>
@@ -774,95 +774,90 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 <div class="app-body">
   <!-- SIDEBAR -->
   <div class="sidebar">
-    <!-- ═══════════════════════════════════════════════════════════════
-         PHASE 23C — GovCon Primary Navigation
-         GovCon section moved to the top of the sidebar so a buyer's
-         first sidebar eye-fixation lands on GovCon. Every commercial
-         tab below remains reachable (no tab removed; no pane orphaned;
-         no keyboard navigation broken). A "Show All Tools" toggle
-         expands a collapsed view if the operator wants to compress
-         non-GovCon sections during a buyer demo.
-         ═══════════════════════════════════════════════════════════════ -->
+    <!-- Phase 25L — clean GovCon Capture OS navigation. Sidebar surface
+         is exactly 8 buyer-facing items in fixed order:
+           1. Dashboard         (operating hub)
+           2. GovCon            (Find / Qualify / Solicitation / Scope /
+                                 Team-Vendors / Draft / Review / FAR Ref /
+                                 Submission Readiness / Internal Review
+                                 Export — all internal sections inside
+                                 the GovCon pane, not sidebar items)
+           3. Leads             (potential buyers / partners / contacts)
+           4. Calendar          (local SourceDeck events; .ics import; no
+                                 live provider sync)
+           5. Response Desk     (manual inbound reply triage)
+           6. Proposal Workspace
+           7. Settings
+           8. Help / FAQ
+         Removed-from-active-nav (Command Center, Command, Email Tracker,
+         Pilot Tracker, Opportunities, Deal Workspace, Pipeline, Reports,
+         Daily Ops, Overdue, Revenue, Ad Engine, Socials, Outreach,
+         Prime Partners) are preserved as hidden nav buttons so the
+         underlying panes remain reachable via openTab() — Phase 23C
+         invariant: never orphan a pane. They no longer occupy sidebar
+         real estate. Today's Tasks, Overdue, Pipeline, and Reports are
+         surfaced inside Dashboard as consolidation cards. -->
+    <div class="nav-section" id="nav-section-dashboard" data-section="dashboard-nav">
+      <div class="nav-label">Operating Hub</div>
+      <button class="nav-btn" data-tab="dashboard"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>Dashboard</button>
+    </div>
     <div class="nav-section" id="nav-section-govcon-primary" data-section="govcon-primary-nav">
-      <div class="nav-label">GovCon Capture OS</div>
+      <div class="nav-label">GovCon</div>
       <button class="nav-btn active" data-tab="govcon"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><path d="M3 10h18"/><path d="M3 18h18"/><path d="M5 6h14l1 4H4l1-4z"/><rect x="3" y="18" width="18" height="3" rx="1"/></svg></span>GovCon</button>
-      <button class="nav-btn" data-tab="outreach"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span>Outreach</button>
-      <button class="nav-btn" data-tab="primes"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 17l5-5-5-5"/><path d="M8 7l-5 5 5 5"/><path d="M14 4l-4 16"/></svg></span>Prime Partners</button>
     </div>
-    <!-- Phase 25E.4: Help / FAQ — always visible, regardless of the
-         Phase 25E.1 "Other business tools" toggle state. Buyers need
-         help one click away on cold open. -->
-    <div class="nav-section" id="nav-section-help" data-section="help-nav">
-      <div class="nav-label">Help</div>
-      <button class="nav-btn" data-tab="help"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>Help / FAQ</button>
+    <div class="nav-section" id="nav-section-leads" data-section="leads-nav">
+      <div class="nav-label">Leads</div>
+      <button class="nav-btn" data-tab="leads"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Leads</button>
     </div>
-    <!-- Phase 25H: Calendar — standalone SourceDeck module. Sits in
-         its own always-on nav section (outside the Phase 25E.1
-         "Other business tools" collapsible container) so the buyer
-         reaches Calendar in one click on cold open. -->
     <div class="nav-section" id="nav-section-calendar" data-section="calendar-nav">
       <div class="nav-label">Calendar</div>
       <button class="nav-btn" data-tab="calendar"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Calendar</button>
     </div>
-    <!-- Phase 23C: Show All Tools toggle — defaults to expanded so
-         every commercial tab remains visible by default; an operator
-         can collapse non-GovCon sections for a buyer demo. The toggle
-         only flips visibility classes; it never removes a tab from the
-         DOM and never breaks keyboard navigation. -->
-    <div class="nav-section" id="nav-section-show-tools-toggle" data-section="govcon-show-all-tools-toggle">
-      <button type="button" class="nav-btn" id="gc-show-all-tools-btn" data-tools-collapsed="true" onclick="gcToggleAllTools()" style="font-size:10.5px;color:var(--sub);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:0.08em">Other business tools — <span id="gc-show-all-tools-state">Hidden</span></button>
-    </div>
-    <div class="nav-section" id="nav-section-operations" data-other-business-tools>
-
-      <div class="nav-label">Other business tools · Operations</div>
-      <button class="nav-btn" data-tab="cmd"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>Command Center</button>
-      <button class="nav-btn" data-tab="dashboard"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>Dashboard</button>
-      <button class="nav-btn" data-tab="leads"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Leads</button>
-      <button class="nav-btn" data-tab="revenue"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Revenue</button>
-      <button class="nav-btn" data-tab="email"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>Email Tracker</button>
-    </div>
-    <div class="nav-section" data-other-business-tools>
-      <div class="nav-label">Other business tools · Alerts</div>
-      <button class="nav-btn" data-tab="overdue" id="overdue-nav"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>Overdue <span class="nav-badge" id="oc">0</span></button>
+    <div class="nav-section" id="nav-section-reply" data-section="response-desk-nav">
+      <div class="nav-label">Response Desk</div>
       <button class="nav-btn" data-tab="reply"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Response Desk</button>
     </div>
-    <div class="nav-section" data-other-business-tools>
-      <div class="nav-label">Other business tools · Workflow</div>
-      <button class="nav-btn" data-tab="content"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></span>Ad Engine</button>
-      <button class="nav-btn" data-tab="dailyops"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>Daily Ops</button>
-      <button class="nav-btn" data-tab="socials"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>Socials</button>
+    <div class="nav-section" id="nav-section-execution" data-section="proposal-workspace-nav">
+      <div class="nav-label">Proposal Workspace</div>
+      <button class="nav-btn" data-tab="execution"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Proposal Workspace</button>
     </div>
-    <div class="nav-section" data-other-business-tools>
-      <div class="nav-label">Other business tools · Tools</div>
-      <!-- Phase 25E.7: Create Lead and AI Lead Builder are folded into
-           the Leads workspace. The data-tab buttons remain in DOM
-           (Phase 23C invariant: every commercial nav button + pane
-           stays present) but are hidden from the sidebar so the buyer
-           navigates from one Leads entry point. The underlying panes
-           (tab-createlead, tab-aigenerate) remain reachable via
-           in-pane links from the Leads workspace. -->
-      <button class="nav-btn" data-tab="createlead" data-phase-25e7="folded-into-leads" style="display:none"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>Create Lead</button>
-      <button class="nav-btn" data-tab="aigenerate" data-phase-25e7="folded-into-leads" style="display:none"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span>AI Lead Builder</button>
+    <div class="nav-section" id="nav-section-settings" data-section="settings-nav">
+      <div class="nav-label">Settings</div>
       <button class="nav-btn" data-tab="settings"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Settings</button>
     </div>
-    <div class="nav-section" data-other-business-tools>
-      <div class="nav-label">Other business tools · Pilot</div>
-      <button class="nav-btn" data-tab="delivery"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><circle cx="12" cy="12" r="10"/></svg></span>Pilot Tracker</button>
+    <div class="nav-section" id="nav-section-help" data-section="help-nav">
+      <div class="nav-label">Help</div>
+      <button class="nav-btn" data-tab="help"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>Help / FAQ</button>
     </div>
-    <div class="nav-section" data-other-business-tools>
-      <div class="nav-label">Other business tools · Intelligence</div>
-      <button class="nav-btn" data-tab="command"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>Command</button>
-      <button class="nav-btn" data-tab="opportunities"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>Opportunities</button>
-      <button class="nav-btn" data-tab="dealwork"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>Deal Workspace</button>
-      <button class="nav-btn" data-tab="pipeline"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Pipeline</button>
-      <button class="nav-btn" data-tab="execution"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Proposal Workspace</button>
-      <button class="nav-btn" data-tab="proof"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Reports</button>
+    <!-- Phase 25L removed-from-active-nav buffer. Buttons remain in DOM
+         to satisfy Phase 23C reachability (openTab('cmd'), openTab('overdue'),
+         etc. still work programmatically); they no longer appear in the
+         sidebar surface. Today's Tasks, Overdue, Pipeline, and Reports
+         are surfaced inside Dashboard via consolidation cards instead. -->
+    <div class="nav-section" id="nav-section-removed-25l" data-phase-25l="removed-from-active-nav" style="display:none" aria-hidden="true">
+      <button class="nav-btn" data-tab="outreach" data-phase-25l-removed="true">Outreach</button>
+      <button class="nav-btn" data-tab="primes" data-phase-25l-removed="true">Prime Partners</button>
+      <button class="nav-btn" data-tab="cmd" data-phase-25l-removed="true">Command Center</button>
+      <button class="nav-btn" data-tab="command" data-phase-25l-removed="true">Command</button>
+      <button class="nav-btn" data-tab="email" data-phase-25l-removed="true">Email Tracker</button>
+      <button class="nav-btn" data-tab="overdue" id="overdue-nav" data-phase-25l-removed="true">Overdue <span class="nav-badge" id="oc">0</span></button>
+      <button class="nav-btn" data-tab="content" data-phase-25l-removed="true">Ad Engine</button>
+      <button class="nav-btn" data-tab="dailyops" data-phase-25l-removed="true">Daily Ops</button>
+      <button class="nav-btn" data-tab="socials" data-phase-25l-removed="true">Socials</button>
+      <button class="nav-btn" data-tab="createlead" data-phase-25e7="folded-into-leads" data-phase-25l-removed="true" style="display:none">Create Lead</button>
+      <button class="nav-btn" data-tab="aigenerate" data-phase-25e7="folded-into-leads" data-phase-25l-removed="true" style="display:none">AI Lead Builder</button>
+      <button class="nav-btn" data-tab="delivery" data-phase-25l-removed="true">Pilot Tracker</button>
+      <button class="nav-btn" data-tab="opportunities" data-phase-25l-removed="true">Opportunities</button>
+      <button class="nav-btn" data-tab="dealwork" data-phase-25l-removed="true">Deal Workspace</button>
+      <button class="nav-btn" data-tab="pipeline" data-phase-25l-removed="true">Pipeline</button>
+      <button class="nav-btn" data-tab="proof" data-phase-25l-removed="true">Reports</button>
+      <button class="nav-btn" data-tab="revenue" data-phase-25l-removed="true">Revenue</button>
     </div>
     <!-- ── CAPABILITIES — Optional product modes. Hidden by default;
          shown when a capability is enabled via the capability card or
          operator provisioning. Clinical/EHR mode is the first capability. -->
     <div class="nav-section" id="nav-capabilities" style="display:none">
-      <div class="nav-label">Other business tools · Healthcare</div>
+      <div class="nav-label">Capabilities · Healthcare</div>
       <button class="nav-btn" data-tab="clinical"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>Clinical / EHR</button>
     </div>
   </div>
@@ -953,8 +948,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div class="tab-pane" id="tab-dashboard">
       <div class="pane-hdr">
         <div>
-          <div class="pane-title"><span class="brief-head">Command Dashboard</span></div>
-          <div class="pane-sub">Revenue-first decision engine</div>
+          <div class="pane-title"><span class="brief-head">Dashboard</span></div>
+          <div class="pane-sub">Operating hub · pursuits · pipeline · today's tasks · overdue · launchpad to GovCon, Calendar, Proposal Workspace, Response Desk, Leads</div>
         </div>
         <div class="pane-actions">
           <button class="btn btn-gold" onclick="openTab('leads')">+ New Lead</button>
@@ -963,6 +958,74 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       </div>
       <div class="pane-body">
         <div id="workspace-readiness-banner" class="workspace-readiness" hidden></div>
+
+        <!-- Phase 25L — Operating Hub Launchpad. Replaces the removed
+             top-level Overdue / Daily Ops / Pipeline / Reports / Deal
+             Workspace sidebar surfaces with consolidation cards that
+             link/button into the right destination. Dashboard stays a
+             launchpad, not a mega-page: counts only, no full module
+             tables rendered here. -->
+        <div class="card mb-20" id="dash-launchpad" data-dash-launchpad="true" style="border-left:3px solid var(--gold)">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+            <div>
+              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Operating Hub</div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text)">Today's Work Plan</div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);line-height:1.5;max-width:420px">Launchpad to GovCon, Calendar, Proposal Workspace, Response Desk, and Leads. Today's Tasks, Overdue, Pipeline, and Reports live as cards here so the sidebar stays clean.</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:10px">
+            <div class="card" data-dash-card="active-pursuits" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Active pursuits</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--gold2);margin-bottom:4px" id="dash-card-pursuits">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('govcon')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open GovCon">Open GovCon →</button>
+            </div>
+            <div class="card" data-dash-card="overdue-items" style="padding:11px 13px;background:var(--panel2,#0f1e32);border-color:rgba(239,68,68,0.15)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:5px">Overdue items</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--red);margin-bottom:4px" id="dash-card-overdue">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('overdue')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Overdue Actions">View Overdue →</button>
+            </div>
+            <div class="card" data-dash-card="todays-tasks" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Today's Tasks</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--text);margin-bottom:4px" id="dash-card-today-tasks">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('dailyops')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Today's Tasks">Open Today's Tasks →</button>
+            </div>
+            <div class="card" data-dash-card="pipeline-value" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Pipeline value</div>
+              <div style="font:800 18px/1 'Instrument Sans',sans-serif;color:var(--gold2);margin-bottom:4px" id="dash-card-pipeline">$0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('pipeline')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Pipeline">View Pipeline →</button>
+            </div>
+            <div class="card" data-dash-card="proposal-deadlines" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Proposal deadlines</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:#60a5fa;margin-bottom:4px" id="dash-card-prop-deadlines">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('execution')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Proposal Workspace">Open Proposal Workspace →</button>
+            </div>
+            <div class="card" data-dash-card="vendor-followups" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Vendor follow-ups</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--text);margin-bottom:4px" id="dash-card-vendor-followups">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('execution')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Proposal Workspace · Team / Vendors">Open Proposal Workspace →</button>
+            </div>
+            <div class="card" data-dash-card="calendar-events" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Calendar events</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--text);margin-bottom:4px" id="dash-card-calendar">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('calendar')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Calendar">Open Calendar →</button>
+            </div>
+            <div class="card" data-dash-card="open-risks" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Open risks · replies</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--text);margin-bottom:4px" id="dash-card-open-risks">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('reply')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Response Desk">Open Response Desk →</button>
+            </div>
+            <div class="card" data-dash-card="leads-summary" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Leads</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--text);margin-bottom:4px" id="dash-card-leads">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('leads')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Leads">Open Leads →</button>
+            </div>
+            <div class="card" data-dash-card="reports-summary" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Reports</div>
+              <div style="font:800 13px/1.3 'Instrument Sans',sans-serif;color:var(--text);margin-bottom:6px" id="dash-card-reports-blurb">Pipeline · revenue · activity</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('proof')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Reports">View Reports →</button>
+            </div>
+          </div>
+        </div>
 
         <!-- KPI ROW -->
         <div class="grid-4 mb-20">
@@ -1184,10 +1247,16 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <!-- ═══════ RESPONSE DESK ═══════ -->
     <div class="tab-pane" id="tab-reply">
       <div class="pane-hdr">
-        <div><div class="pane-title"><span class="brief-head">Response Desk</span></div><div class="pane-sub">Inbound reply triage · intent detection · next-action routing · draft-only responses</div></div>
+        <div><div class="pane-title"><span class="brief-head">Response Desk</span></div></div>
       </div>
       <div class="pane-body">
-        <!-- Phase 21D: import-first workflow header -->
+        <!-- Phase 25L — Response Desk header. Import-first workflow with
+             provider-gated language: Import Email uses the configured
+             email integration if one is set up in Settings → Email Import;
+             otherwise the user pastes the reply manually. No ICS/calendar
+             import lives here — calendar setup belongs in Settings →
+             Calendar Import. Importing an .ics file does not give SourceDeck
+             access to email. -->
         <div style="font-size:10.5px;color:var(--muted);background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:var(--r2);padding:11px 13px;margin-bottom:12px;line-height:1.55">
           <strong style="color:var(--sub)">Import an email reply, review the context, then let Response Desk classify intent and draft next actions. Nothing is sent automatically.</strong>
           <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap">
@@ -1196,7 +1265,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           </div>
           <div style="font-size:10px;color:var(--muted);margin-top:9px;line-height:1.5">
             <span id="rd-source-label" style="font-weight:700;color:var(--sub)">Source: Not yet selected</span>
-            <div style="margin-top:4px">Import Email is local/manual until inbox integration is connected. Paste mode remains as a fallback. Connected inbox import can route replies automatically when configured.</div>
+            <div style="margin-top:4px">Import Email uses your configured email integration if set up in Settings. Otherwise, paste the reply manually. No email integration configured. Paste the reply manually or set up email import in Settings when available.</div>
           </div>
         </div>
         <div class="grid-2">
@@ -1697,12 +1766,24 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 <div class="form-group">
                   <label class="label">Airtable PAT <span style="font-size:9px;color:var(--muted)">(optional legacy CRM integration)</span></label>
                   <input class="input" id="s-atpat" type="password" value="" placeholder="pati54Z... — leave blank to skip">
-                  <div style="font-size:9px;color:var(--muted);margin-top:4px">Phase 25E.3: SourceDeck owns lead management locally. Airtable is supported as an optional legacy export integration only — not required for normal use.</div>
+                  <div style="font-size:9px;color:var(--muted);margin-top:4px">SourceDeck owns lead management locally. Airtable is supported as an optional legacy export integration only — not required for normal use.</div>
                 </div>
                 <div class="form-group">
                   <label class="label">SAM.gov API Key</label>
                   <input class="input" id="s-samkey" type="password" value="" placeholder="SAM.gov API key (stored securely; never leaves your device)" autocomplete="off">
-                  <div style="font-size:9px;color:var(--muted);margin-top:4px">Used by the SAM.gov Opportunity Outreach scan and SAM Sprint. Phase 24K: also available in the Setup Wizard during onboarding. The SAM search screen does not prompt for credentials.</div>
+                  <div style="font-size:9px;color:var(--muted);margin-top:4px">Used by the SAM.gov Opportunity Outreach scan and SAM Sprint. Also available in the Setup Wizard during onboarding. The SAM search screen does not prompt for credentials.</div>
+                </div>
+                <!-- Phase 25L — Hunter.io API key. Optional only; SourceDeck
+                     never uses Hunter.io automatically. Contact enrichment
+                     is user-triggered from the subcontractor / vendor
+                     research workflow inside Proposal Workspace. The key
+                     is never printed, exported, or logged. If absent,
+                     SourceDeck falls back to a manual contact-research
+                     workflow. -->
+                <div class="form-group">
+                  <label class="label">Hunter.io API Key <span style="font-size:9px;color:var(--muted)">(optional)</span></label>
+                  <input class="input" id="s-hunter" type="password" value="" placeholder="Hunter.io API key — leave blank to skip" autocomplete="off">
+                  <div style="font-size:9px;color:var(--muted);margin-top:4px">Hunter.io helps find public business email contacts for companies. Add your Hunter.io API key only if you have a Hunter.io account. SourceDeck uses it only when you click contact-enrichment actions. Optional only — leave blank to use manual contact research instead. SourceDeck does not print, export, or log this key.</div>
                 </div>
                 <div class="form-group">
                   <label class="label">Setup Wizard</label>
@@ -1713,10 +1794,47 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 </div>
               </div>
             </div>
+
+            <!-- Phase 25L — Calendar Import settings. Configuration-level
+                 import controls live here so the operational Calendar page
+                 stays focused on event browsing and editing. .ics import
+                 only — no Google / Outlook / iCloud OAuth in this phase. -->
+            <div class="card mb-14" id="settings-calendar-import-card" data-settings-section="calendar-import">
+              <div class="sl">Calendar Import</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-bottom:10px">
+                Import .ics calendar files locally. SourceDeck does not use Google, Outlook, or iCloud OAuth in this phase. Events imported here appear in the Calendar tab and Today's Work Plan inside Dashboard. Editing or deleting an imported event affects the local SourceDeck copy only — your external calendar is not changed.
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <button type="button" class="btn btn-ghost" onclick="openTab('calendar'); calOpenIcsPicker();" style="font-size:11.5px">📅 Import .ics File</button>
+                <button type="button" class="btn btn-ghost" onclick="openTab('calendar'); calOpenPasteModal();" style="font-size:11.5px">📋 Paste Calendar Text</button>
+                <button type="button" class="btn btn-ghost" onclick="openTab('calendar'); calToggleIcsHelp();" style="font-size:11.5px" title="How do I get an .ics file?">? How do I get an .ics file?</button>
+              </div>
+              <div style="font-size:9.5px;color:var(--muted);margin-top:9px;line-height:1.5">
+                Local-only import. SourceDeck does not send invites, sync, or upload your calendar anywhere. To refresh, export a new .ics file and import again.
+              </div>
+            </div>
+
+            <!-- Phase 25L — Email Import settings placeholder. Future
+                 secure Gmail/Outlook OAuth integration. In this phase,
+                 Response Desk Import Email is manual paste/upload only. -->
+            <div class="card mb-14" id="settings-email-import-card" data-settings-section="email-import">
+              <div class="sl">Email Import</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-bottom:10px">
+                Future secure Gmail/Outlook OAuth integration. Not active in this build unless configured by the operator. For now, paste replies manually in Response Desk. SourceDeck never requests Gmail, iCloud, or Outlook passwords.
+              </div>
+              <div style="font-size:10px;color:var(--muted);line-height:1.55;margin-bottom:8px">
+                Importing an .ics calendar file does <strong>not</strong> give SourceDeck access to your email inbox. Calendar import and email import are separate.
+              </div>
+              <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center">
+                <span style="font:600 9.5px/1.4 'Azeret Mono',monospace;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);padding:3px 8px;border-radius:4px;background:rgba(255,255,255,0.04);border:1px solid var(--border)">Not configured</span>
+                <span style="font-size:10px;color:var(--muted)">Connect Gmail or Outlook in a future secure OAuth phase. For now, paste replies manually.</span>
+              </div>
+            </div>
+
             <div class="card">
               <div class="sl">Automation Config <span style="font-size:9px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(optional legacy integrations)</span></div>
               <div style="font-size:10.5px;color:var(--muted);line-height:1.55;padding:0 0 8px;margin-top:-4px">
-                Phase 25E.6: SourceDeck owns workflow automation locally. These third-party integrations are optional — leave blank to skip.
+                SourceDeck owns workflow automation locally. These third-party integrations are optional — leave blank to skip.
               </div>
               <div style="display:flex;flex-direction:column;gap:11px">
                 <div class="form-group">
@@ -2224,7 +2342,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <div class="gc-cc-card" data-cc="solready" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Solicitation Readiness</div>
               <div id="gc-cc-solready-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
-              <div id="gc-cc-solready-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation workspaces prepared yet. The Solicitation Workspace ships in Phase 22C.</div>
+              <div id="gc-cc-solready-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation workspaces prepared yet. Solicitation Workspace lives inside the GovCon Solicitation section.</div>
             </div>
             <div class="gc-cc-card" data-cc="vendor" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Vendor Needs (capture board)</div>
@@ -3924,7 +4042,7 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
       </div>
       <div class="pane-body">
         <div style="background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--text);line-height:1.55">
-          <strong style="color:var(--gold2)">Phase 25E.4:</strong> Plain-English help written at a fourth-grade reading level. Read the full manual at <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">docs/manuals/sourcedeck-user-manual-4th-grade.md</code>. If a word still feels hard, tell your operator.
+          <strong style="color:var(--gold2)">Help / FAQ.</strong> Plain-English answers written at a fourth-grade reading level. Read the full manual at <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">docs/manuals/sourcedeck-user-manual-4th-grade.md</code>. If a word still feels hard, tell your operator.
         </div>
         <div class="form-group" style="margin-bottom:12px">
           <label class="label">Search</label>
@@ -3969,6 +4087,7 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
         </div>
         <div class="pane-actions" style="flex-wrap:wrap;gap:6px">
           <input type="file" id="cal-ics-file" accept=".ics,text/calendar" style="display:none" onchange="calOnIcsFileChosen(event)">
+          <button type="button" class="btn btn-ghost" id="cal-ics-help-btn" data-cal-ics-help-toggle="true" onclick="calToggleIcsHelp()" title="How do I get an .ics file?" aria-expanded="false" aria-controls="cal-ics-help-panel" style="padding:4px 9px">? How do I get an .ics file?</button>
           <button class="btn btn-ghost" onclick="calOpenIcsPicker()" title="Import events from a local .ics file. The file is parsed in-renderer; nothing is uploaded.">📅 Import .ics File</button>
           <button class="btn btn-ghost" onclick="calOpenPasteModal()" title="Paste ICS text or simple event lines. Parsed locally.">📋 Paste Calendar Text</button>
           <button class="btn btn-blue"  onclick="calOpenEventModal(null)" title="Add a manual event.">+ Add Event</button>
@@ -3977,10 +4096,78 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
       </div>
       <div class="pane-body">
 
-        <!-- Phase 25H: privacy + no-send disclaimer -->
+        <!-- Local-only calendar disclaimer. Events live on the user's Mac;
+             SourceDeck does not send invites or sync to Google / Outlook /
+             iCloud. .ics import is the open standard; OAuth providers are
+             deferred per docs/product/phase-25l-calendar-email-settings-boundary.md. -->
         <div style="background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:8px;padding:9px 13px;margin-bottom:12px;font-size:11px;color:var(--text);line-height:1.55">
           <strong style="color:var(--gold2)">Local-only calendar.</strong>
-          Events live on your Mac. SourceDeck does not send calendar invites, sync to Google / Outlook / iCloud, or upload your calendar anywhere. <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">.ics</code> import is the open standard; OAuth-based providers are deferred to a future phase per <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">docs/product/phase-25h-open-calendar-import-options.md</code>.
+          Events live on your Mac. SourceDeck does not send calendar invites, sync to Google / Outlook / iCloud, or upload your calendar anywhere. <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">.ics</code> import is the open standard; OAuth-based providers are deferred to a future secure phase. Calendar import setup also lives in Settings → Calendar Import.
+        </div>
+
+        <!-- Phase 25L — ICS help panel. Collapsed by default; the "How do I
+             get an .ics file?" button toggles visibility. Explains what an
+             .ics file is, that import is local-only (not live sync), and
+             gives step-by-step export instructions for Google, Apple/iCloud,
+             and Outlook. Also clarifies that importing a .ics file does NOT
+             give SourceDeck access to the user's email inbox — calendar
+             import and email import are separate. -->
+        <div id="cal-ics-help-panel" data-cal-ics-help-panel="true" role="region" aria-label="How to get an .ics calendar file" hidden style="background:var(--panel2,#0f1e32);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:14px;font-size:11.5px;line-height:1.6;color:var(--text)">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px">
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--gold2)">How do I get an .ics file?</div>
+            <button type="button" class="btn btn-ghost" onclick="calToggleIcsHelp()" style="padding:3px 8px;font-size:10.5px" title="Close help">✕</button>
+          </div>
+
+          <div style="font-weight:600;color:var(--text);margin-top:4px">What is an ICS file?</div>
+          <p style="margin:4px 0 8px;color:var(--sub)">An .ics file is a standard calendar file used by Google Calendar, Apple/iCloud Calendar, Outlook, Calendly, and many scheduling systems. SourceDeck imports the file locally so events can appear in your SourceDeck Calendar and Today's Work Plan. This is import, not live sync.</p>
+
+          <div style="font-weight:600;color:var(--text);margin-top:8px">Can I import any calendar?</div>
+          <p style="margin:4px 0 8px;color:var(--sub)">You can import any calendar that can export or download an .ics / iCalendar file. Google Calendar, Apple/iCloud Calendar, Outlook, Microsoft 365, Calendly, and many scheduling tools support .ics export. If a calendar cannot export .ics, use manual event entry or paste calendar text.</p>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-top:10px">
+            <div style="background:rgba(0,113,227,0.04);border:1px solid var(--border);border-radius:6px;padding:10px 12px">
+              <div style="font-weight:600;color:var(--blue,#60a5fa);font-size:11.5px;margin-bottom:6px">Google Calendar</div>
+              <ol style="margin:0;padding-left:18px;color:var(--sub);font-size:11px;line-height:1.55">
+                <li>Open Google Calendar in a browser.</li>
+                <li>Open Settings.</li>
+                <li>Choose Import &amp; Export.</li>
+                <li>Export your calendar.</li>
+                <li>Download/save the .ics file.</li>
+                <li>In SourceDeck, click Import .ics File.</li>
+              </ol>
+            </div>
+            <div style="background:rgba(176,138,60,0.04);border:1px solid var(--border);border-radius:6px;padding:10px 12px">
+              <div style="font-weight:600;color:var(--gold2);font-size:11.5px;margin-bottom:6px">Apple Calendar / iCloud</div>
+              <ol style="margin:0;padding-left:18px;color:var(--sub);font-size:11px;line-height:1.55">
+                <li>Open Apple Calendar or iCloud Calendar.</li>
+                <li>Select the calendar.</li>
+                <li>Use File → Export → Export, or the calendar sharing/export option.</li>
+                <li>Save the .ics file.</li>
+                <li>In SourceDeck, click Import .ics File.</li>
+              </ol>
+            </div>
+            <div style="background:rgba(0,120,212,0.04);border:1px solid var(--border);border-radius:6px;padding:10px 12px">
+              <div style="font-weight:600;color:var(--blue2,#0078d4);font-size:11.5px;margin-bottom:6px">Outlook</div>
+              <ol style="margin:0;padding-left:18px;color:var(--sub);font-size:11px;line-height:1.55">
+                <li>Open Outlook Calendar.</li>
+                <li>Use Save Calendar, Export Calendar, or Publish Calendar depending on the version.</li>
+                <li>Download/save the .ics file.</li>
+                <li>In SourceDeck, click Import .ics File.</li>
+              </ol>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;padding:9px 12px;background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:6px;color:var(--sub);font-size:11px;line-height:1.6">
+            <div style="font-weight:600;color:var(--gold2);margin-bottom:4px">Safety</div>
+            <ul style="margin:0;padding-left:18px">
+              <li>SourceDeck imports a local copy only.</li>
+              <li>SourceDeck does not change your external calendar.</li>
+              <li>SourceDeck does not send invites.</li>
+              <li>SourceDeck does not sync to Google, Outlook, or iCloud in this phase.</li>
+              <li>To refresh events, export and import a new .ics file.</li>
+              <li>Importing an .ics file does <strong>not</strong> give SourceDeck access to your email inbox. Calendar import and email import are separate.</li>
+            </ul>
+          </div>
         </div>
 
         <!-- View toggle -->
@@ -4403,7 +4590,7 @@ END:VCALENDAR" style="min-height:180px;font-family:'IBM Plex Mono',monospace;fon
         <div class="gcwiz-help">SourceDeck helps you organize GovCon pursuits from opportunity discovery to internal-review package. You stay in control of every send, upload, submission, and decision.</div>
         <div class="gcwiz-note"><strong>What this wizard sets up:</strong> your business profile, GovCon targeting filters, API keys (including SAM.gov), and approval rules. You can skip optional steps and return later from Settings → Run Setup Wizard.</div>
         <div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:10px">SourceDeck prepares internal review materials. It never sends outreach, submits bids/quotes/proposals, or uploads to SAM.gov / PIEE / eBuy / GSA on your behalf. Every action requires your explicit human approval.</div>
-        <div class="gcwiz-help" style="margin-top:10px">After completing this wizard, the GovCon Capture OS becomes your default workspace.</div>
+        <div class="gcwiz-help" style="margin-top:10px">After completing this wizard, GovCon becomes your default workspace.</div>
       </div>
       <!-- Step 2 — Business Profile (was Step 1) -->
       <div class="gcwiz-step" data-step="2">
@@ -4549,7 +4736,7 @@ END:VCALENDAR" style="min-height:180px;font-family:'IBM Plex Mono',monospace;fon
       <!-- Step 10 — Quick Setup Tour (Phase 24K) -->
       <div class="gcwiz-step" data-step="10">
         <h4>10. Quick Setup Tour</h4>
-        <div class="gcwiz-help">A one-screen tour of the GovCon Capture OS surfaces you'll use most. Each feature is local-only, advisory, and requires human approval — SourceDeck never sends, submits, or uploads on your behalf.</div>
+        <div class="gcwiz-help">A one-screen tour of the GovCon surfaces you'll use most. Each feature is local-only, advisory, and requires human approval — SourceDeck never sends, submits, or uploads on your behalf.</div>
         <div class="gcwiz-note" id="gcwiz-tour-video"><strong>Quick Setup Video:</strong> Video walkthrough pending. Use the quick text tour below.</div>
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;font-size:11px;line-height:1.55">
           <div data-tour-feature="capture-command-center"><strong>Capture Command Center</strong> — Central pursuit board showing active pursuits, deadlines, Q&amp;A windows, bid/no-bid review counts. Add opportunities as you intake them; advisory recommendations only.</div>
@@ -4708,6 +4895,7 @@ async function saveSettings(){
     AT_PAT_OVERRIDE: document.getElementById('s-atpat')?.value?.trim()||'',
     BOOK_WH_OVERRIDE: document.getElementById('s-bookwh')?.value?.trim()||'',
     SAM_API_KEY: document.getElementById('s-samkey')?.value?.trim()||'',
+    HUNTER_API_KEY: document.getElementById('s-hunter')?.value?.trim()||'',
   };
   // Airtable PAT migrates to the safe credential adapter
   // (window.sd.credentials). It NEVER lands in localStorage.
@@ -4764,6 +4952,17 @@ async function saveSettings(){
       }
     } catch (_) {}
   }
+  // Phase 25L — Hunter.io API key migrates to safeStorage. Optional only;
+  // SourceDeck never uses Hunter.io automatically. The key is never
+  // printed, exported, or logged. Renderer never holds the raw value.
+  if (keys.HUNTER_API_KEY && window.sd && window.sd.credentials) {
+    try {
+      const r = await window.sd.credentials.set('hunter-io', keys.HUNTER_API_KEY);
+      if (r && r.ok) {
+        const el = document.getElementById('s-hunter'); if (el) el.value = '';
+      }
+    } catch (_) {}
+  }
   // BookWh still uses localStorage (not a secret credential)
   if (keys.BOOK_WH_OVERRIDE) localStorage.setItem('lcc_BOOK_WH_OVERRIDE', keys.BOOK_WH_OVERRIDE);
   const r = document.getElementById('settings-result');
@@ -4799,6 +4998,12 @@ function loadSettings(){
         CLAUDE_KEY = '<anthropic_credential_present>';
         const el = document.getElementById('s-claude');
         if (el && !el.value) el.placeholder = 'Claude key saved (write-only)';
+      }
+      // Phase 25L — Hunter.io key presence indication. Key value is never
+      // surfaced back to the UI; only a "saved" placeholder is shown.
+      if (s && s.present && s.present['hunter-io']) {
+        const el = document.getElementById('s-hunter');
+        if (el && !el.value) el.placeholder = 'Hunter.io key saved (write-only)';
       }
     }).catch(()=>{});
   }
@@ -6867,6 +7072,60 @@ function renderDashboard(){
     </div>`).join('')||'<div style="color:var(--muted);font-size:11px;padding:8px 0">No hot leads yet.</div>';
 
   renderActivityFeed();
+  renderDashboardLaunchpad({ pipeline, overdue: overdue + noEmail, proposals });
+}
+
+// Phase 25L — Operating Hub Launchpad. Updates the consolidation cards
+// rendered above the existing KPI rows. Reads from already-computed
+// renderDashboard() locals plus the local Calendar event store and the
+// allLeads array. Pure DOM writes; no network. Safe to call with partial
+// stats — missing elements are skipped.
+function renderDashboardLaunchpad(stats){
+  stats = stats || {};
+  function setText(id, val){ var el = document.getElementById(id); if (el) el.textContent = String(val); }
+  // Active pursuits: leads not in Won/Lost.
+  var active = (Array.isArray(allLeads) ? allLeads : []).filter(function(l){
+    var stage = (l.fields && l.fields['Current Stage']) || '';
+    return stage !== 'Won' && stage !== 'Lost';
+  }).length;
+  setText('dash-card-pursuits', active);
+  setText('dash-card-overdue', stats.overdue != null ? stats.overdue : 0);
+  // Today's tasks — count of today's calendar events when the calendar
+  // module is loaded; otherwise 0.
+  var todayTasks = 0;
+  try {
+    if (window.sourceDeckCalendar && typeof window.sourceDeckCalendar.fetchEvents === 'function') {
+      var iso = new Date().toISOString().slice(0,10);
+      var todays = window.sourceDeckCalendar.fetchEvents({ from: iso, to: iso }) || [];
+      todayTasks = todays.length;
+    }
+  } catch (e) {}
+  setText('dash-card-today-tasks', todayTasks);
+  setText('dash-card-pipeline', typeof f$ === 'function' ? f$(stats.pipeline || 0) : '$' + (stats.pipeline || 0));
+  setText('dash-card-prop-deadlines', stats.proposals != null ? stats.proposals : 0);
+  // Vendor follow-ups: count calendar events with task type 'vendor-follow-up'.
+  var vendorFollowUps = 0;
+  try {
+    if (window.sourceDeckCalendar && typeof window.sourceDeckCalendar.fetchAllEvents === 'function') {
+      var allEv = window.sourceDeckCalendar.fetchAllEvents() || [];
+      vendorFollowUps = allEv.filter(function(e){ return (e && e.taskType) === 'vendor-follow-up'; }).length;
+    }
+  } catch (e) {}
+  setText('dash-card-vendor-followups', vendorFollowUps);
+  // Calendar events: total local count.
+  var calCount = 0;
+  try {
+    if (window.sourceDeckCalendar && typeof window.sourceDeckCalendar.fetchAllEvents === 'function') {
+      calCount = (window.sourceDeckCalendar.fetchAllEvents() || []).length;
+    }
+  } catch (e) {}
+  setText('dash-card-calendar', calCount);
+  // Open risks / replies: leads in Replied status need triage.
+  var openRisks = (Array.isArray(allLeads) ? allLeads : []).filter(function(l){
+    return (l.fields && l.fields['Status']) === 'Replied';
+  }).length;
+  setText('dash-card-open-risks', openRisks);
+  setText('dash-card-leads', (Array.isArray(allLeads) ? allLeads.length : 0));
 }
 
 function renderActivityFeed(){
@@ -13149,10 +13408,10 @@ document.addEventListener('DOMContentLoaded',()=>{
       bnRow('Deadline risk', deadlineRisk, daysToDue == null ? 'Set a due date in the intake form.' : String(daysToDue) + ' day(s) to due.'),
       bnRow('NAICS match', naicsMatch ? 'set' : 'missing', opp.naics ? safeText(opp.naics) : 'Add NAICS in the intake form.'),
       bnRow('Set-aside match', setAsideMatch ? 'set' : 'missing', opp.setAside ? safeText(opp.setAside) : 'Add set-aside in the intake form.'),
-      bnRow('Past performance fit', '—', 'Wires to Past Performance Library in Phase 22E.'),
+      bnRow('Past performance fit', '—', 'Wires to the GovCon Past Performance Library.'),
       bnRow('Vendor dependency', needsVendor ? 'flagged' : 'none', 'Vendor outreach requires human approval.'),
-      bnRow('Pricing complexity', '—', 'Pricing Worksheet ships in Phase 22D.'),
-      bnRow('Compliance risk', '—', 'Compliance Matrix Builder ships in Phase 22C.')
+      bnRow('Pricing complexity', '—', 'Wires to the GovCon Pricing Worksheet.'),
+      bnRow('Compliance risk', '—', 'Wires to the GovCon Compliance Matrix.')
     ];
     out.innerHTML = '<div>' + rows.join('') + '</div>'
       + '<div style="margin-top:10px;font-size:11px;color:var(--text);font-family:\'Instrument Sans\',sans-serif">'
@@ -13482,7 +13741,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (window.toast) try { window.toast('Row ' + state.matrix[idx].id + ' marked Reviewed. Human review responsibility belongs to the operator.', 'ok'); } catch (e) {}
   };
   window.gcSolExportPlaceholder = function(){
-    if (window.toast) try { window.toast('Export Matrix placeholder — export bundle ships in Phase 22F. SourceDeck does not submit bids.', 'info'); } catch (e) {}
+    if (window.toast) try { window.toast('Export Matrix placeholder — internal review export only. SourceDeck does not submit bids.', 'info'); } catch (e) {}
   };
   window.gcSolRender = renderAll;
   if (document.readyState === 'loading') {
@@ -14671,40 +14930,17 @@ document.addEventListener('DOMContentLoaded',()=>{
 })();
 </script>
 <script>
-/* Phase 23C — GovCon Primary Navigation: "Show All Tools" toggle.
-   Collapses every nav-section labeled "Other business tools" so the
-   sidebar visually demotes the commercial-CRM groups during a buyer
-   demo. Does NOT remove any nav button. Does NOT orphan any pane.
-   Operator clicks the toggle to expand the commercial groups again.
-   Default: expanded (Shown). Pure browser code; no network. */
+/* Phase 25L — supersedes the Phase 23C "Show All Tools" toggle.
+   The sidebar surface is now exactly 8 buyer-facing items in fixed
+   order (Dashboard → GovCon → Leads → Calendar → Response Desk →
+   Proposal Workspace → Settings → Help / FAQ). Removed-from-active-nav
+   buttons live in #nav-section-removed-25l (a hidden reachability
+   buffer) so any programmatic openTab() target still resolves.
+   gcToggleAllTools is preserved as a no-op stub so legacy callers do
+   not break. */
 (function(){
   'use strict';
-  function getSections(){
-    return Array.from(document.querySelectorAll('.nav-section[data-other-business-tools]'));
-  }
-  function applyState(collapsed){
-    var sections = getSections();
-    for (var i = 0; i < sections.length; i++) {
-      sections[i].style.display = collapsed ? 'none' : '';
-    }
-    var btn = document.getElementById('gc-show-all-tools-btn');
-    if (btn) btn.setAttribute('data-tools-collapsed', collapsed ? 'true' : 'false');
-    var state = document.getElementById('gc-show-all-tools-state');
-    if (state) state.textContent = collapsed ? 'Hidden' : 'Shown';
-  }
-  window.gcToggleAllTools = function(){
-    var btn = document.getElementById('gc-show-all-tools-btn');
-    var nowCollapsed = !(btn && btn.getAttribute('data-tools-collapsed') === 'true');
-    applyState(nowCollapsed);
-  };
-  // Phase 25E.1: Default = collapsed so the buyer-facing nav presents
-  // only GovCon Capture OS surfaces on cold open. The operator can
-  // click "Other business tools" to reveal the commercial-mode tabs.
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function(){ applyState(true); });
-  } else {
-    setTimeout(function(){ applyState(true); }, 0);
-  }
+  window.gcToggleAllTools = function(){ /* Phase 25L: no-op stub. */ };
 })();
 </script>
 <script>
@@ -16194,6 +16430,24 @@ document.addEventListener('DOMContentLoaded',()=>{
     return { status: 'created', event: ev };
   };
 
+  // ── ICS HELP PANEL TOGGLE (Phase 25L) ─────────────────────────────
+  // Toggles the "How do I get an .ics file?" help panel above the Calendar
+  // page. Pure DOM toggle; no network. Idempotent — safe to call from any
+  // surface (Calendar pane, Settings → Calendar Import).
+  window.calToggleIcsHelp = function(){
+    var panel = document.getElementById('cal-ics-help-panel');
+    var btn = document.getElementById('cal-ics-help-btn');
+    if (!panel) return;
+    var willShow = panel.hasAttribute('hidden');
+    if (willShow) {
+      panel.removeAttribute('hidden');
+      if (btn) btn.setAttribute('aria-expanded', 'true');
+    } else {
+      panel.setAttribute('hidden', '');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+  };
+
   // ── ICS FILE PICKER ───────────────────────────────────────────────
   window.calOpenIcsPicker = function(){
     var picker = document.getElementById('cal-ics-file');
@@ -16374,9 +16628,15 @@ document.addEventListener('DOMContentLoaded',()=>{
     renderCalendar();
     if (window.toast) try { window.toast('Status set to "reschedule". Update the date/time and save.', 'info'); } catch (e) {}
   };
-  window.calDeleteEvent = function(){
+  window.calDeleteEvent = function(opts){
+    opts = opts || {};
     if (!_editingEventId) return;
-    if (window.confirm && !window.confirm('Delete this event? This cannot be undone.')) return;
+    // Phase 25L — when called from the modal's own Delete button we still
+    // confirm here; when called from a card-level handler the caller has
+    // already shown the Phase 25L confirmation copy and passes skipConfirm.
+    if (!opts.skipConfirm && window.confirm && !window.confirm(
+      'Delete this SourceDeck calendar event?\n\nThis removes it from SourceDeck only. It does not delete it from Google, iCloud, Outlook, or any external calendar.'
+    )) return;
     _state.events = _state.events.filter(function(e){ return e.id !== _editingEventId; });
     saveState();
     renderCalendar();
@@ -16454,8 +16714,14 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (ev.linkedSolicitationId)    linksHtml += '<span class="cal-link-chip" style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(27,77,110,0.14);border:1px solid rgba(27,77,110,0.32);color:var(--blue);margin-right:4px">Sol: ' + escapeHtml(ev.linkedSolicitationId) + '</span>';
     if (ev.linkedVendorId)          linksHtml += '<span class="cal-link-chip" style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(176,138,60,0.12);border:1px solid rgba(176,138,60,0.32);color:var(--gold2);margin-right:4px">Vendor: ' + escapeHtml(ev.linkedVendorId) + '</span>';
     if (ev.linkedProposalSectionId) linksHtml += '<span class="cal-link-chip" style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(155,89,182,0.14);border:1px solid rgba(155,89,182,0.32);color:#bf5af2;margin-right:4px">Section: ' + escapeHtml(ev.linkedProposalSectionId) + '</span>';
-    return '<div class="cal-event-card" data-cal-event-id="' + escapeHtml(ev.id) + '" onclick="calOpenEventModal(\'' + escapeHtml(ev.id) + '\')" style="cursor:pointer;background:var(--panel2,#0f1e32);border:1px solid var(--border);border-radius:6px;padding:8px 11px;margin-bottom:6px">' +
-             '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
+    var evIdAttr = escapeHtml(ev.id);
+    // Phase 25L — every Calendar event card surfaces inline Edit + Delete
+    // controls (and a local-only footer note) so the user never has to dig
+    // into the modal just to fix a typo or remove a stale import. Delete is
+    // local-only: it removes the SourceDeck copy of the event and does NOT
+    // call out to Google / iCloud / Outlook / any external calendar.
+    return '<div class="cal-event-card" data-cal-event-id="' + evIdAttr + '" data-cal-event-card="true" style="background:var(--panel2,#0f1e32);border:1px solid var(--border);border-radius:6px;padding:8px 11px;margin-bottom:6px">' +
+             '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;cursor:pointer" onclick="calOpenEventModal(\'' + evIdAttr + '\')">' +
                '<div style="flex:1">' +
                  '<div style="font-weight:600;font-size:12.5px;color:var(--text)">' + escapeHtml(ev.title) + '</div>' +
                  '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + (opts.showDate ? escapeHtml(ev.date) + ' · ' : '') + when + (ev.location ? ' · ' + escapeHtml(ev.location) : '') + '</div>' +
@@ -16463,7 +16729,41 @@ document.addEventListener('DOMContentLoaded',()=>{
                '</div>' +
                '<span class="sd-cal-status-pill" style="font-size:8.5px;padding:2px 7px;border-radius:980px;text-transform:uppercase;letter-spacing:0.06em;' + statusPillStyle(ev.status) + '">' + escapeHtml(ev.status || 'scheduled') + '</span>' +
              '</div>' +
+             '<div class="cal-event-card-actions" data-cal-card-actions="true" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px;padding-top:7px;border-top:1px dashed var(--border2,rgba(255,255,255,0.08))">' +
+               '<button type="button" class="btn btn-ghost cal-card-btn-edit" data-cal-action="edit" data-cal-event-id="' + evIdAttr + '" onclick="event.stopPropagation();calOpenEventModal(\'' + evIdAttr + '\')" style="padding:3px 9px;font-size:10.5px" title="Open this event in the editor">✎ Edit</button>' +
+               '<button type="button" class="btn btn-ghost cal-card-btn-complete" data-cal-action="complete" data-cal-event-id="' + evIdAttr + '" onclick="event.stopPropagation();calCardMarkComplete(\'' + evIdAttr + '\')" style="padding:3px 9px;font-size:10.5px" title="Mark this event complete (local only)">✓ Mark Complete</button>' +
+               '<button type="button" class="btn btn-ghost cal-card-btn-reschedule" data-cal-action="reschedule" data-cal-event-id="' + evIdAttr + '" onclick="event.stopPropagation();calCardReschedule(\'' + evIdAttr + '\')" style="padding:3px 9px;font-size:10.5px" title="Reschedule this event">↻ Reschedule</button>' +
+               '<button type="button" class="btn btn-ghost cal-card-btn-delete" data-cal-action="delete" data-cal-event-id="' + evIdAttr + '" onclick="event.stopPropagation();calCardDelete(\'' + evIdAttr + '\')" style="padding:3px 9px;font-size:10.5px;color:var(--red);margin-left:auto" title="Delete this SourceDeck calendar event (local only)">🗑 Delete</button>' +
+             '</div>' +
+             '<div class="cal-event-card-local-note" data-cal-local-note="true" style="margin-top:6px;font-size:9.5px;line-height:1.45;color:var(--muted);font-style:italic">Local SourceDeck event only. Editing or deleting here does not change your external calendar.</div>' +
            '</div>';
+  }
+  // Phase 25L — card-level handlers. Reuse the modal helpers under the hood
+  // (calOpenEventModal, calMarkComplete, calRescheduleEvent, calDeleteEvent)
+  // so behavior stays consistent with the in-modal buttons. Delete confirms
+  // before destroying the local copy and explicitly tells the user no
+  // external calendar is touched.
+  function calCardMarkComplete(eventId){
+    if (!eventId) return;
+    try { calOpenEventModal(eventId); } catch (e) {}
+    try { calMarkComplete(); } catch (e) {}
+  }
+  function calCardReschedule(eventId){
+    if (!eventId) return;
+    try { calOpenEventModal(eventId); } catch (e) {}
+    try { calRescheduleEvent(); } catch (e) {}
+  }
+  function calCardDelete(eventId){
+    if (!eventId) return;
+    var ok = false;
+    try {
+      ok = window.confirm(
+        'Delete this SourceDeck calendar event?\n\nThis removes it from SourceDeck only. It does not delete it from Google, iCloud, Outlook, or any external calendar.'
+      );
+    } catch (e) { ok = true; }
+    if (!ok) return;
+    try { calOpenEventModal(eventId); } catch (e) {}
+    try { calDeleteEvent({ skipConfirm: true }); } catch (e) {}
   }
   function renderToday(container){
     var iso = _state.anchorDate || todayIso();
