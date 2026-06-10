@@ -35,9 +35,9 @@ test('GovCon Mode indicator section exists', () => {
   // The indicator must explicitly acknowledge other tabs remain accessible.
   assert.ok(/Other business tools[\s\S]*?remain available in the sidebar/.test(HTML),
     '"Other business tools … remain available in the sidebar" microcopy missing');
-  // Brand sub-label updated.
-  assert.ok(/<div class="brand-ver"[^>]*>GovCon Capture OS<\/div>/.test(HTML),
-    'brand sub-label "GovCon Capture OS" missing');
+  // Phase 25L-1: brand sub-label now reads "GovCon" (was "GovCon Capture OS").
+  assert.ok(/<div class="brand-ver"[^>]*>GovCon<\/div>/.test(HTML),
+    'Phase 25L-1 brand sub-label "GovCon" missing');
 });
 
 // 2. GovCon tab remains accessible.

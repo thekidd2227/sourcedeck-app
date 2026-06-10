@@ -222,15 +222,17 @@ test('Phase 23C GovCon primary navigation preserved', () => {
     'Renderer init must still default to govcon');
 });
 
-// 10. Show All Tools toggle remains (Phase 23C preserved).
-test('Phase 23C Show All Tools toggle preserved', () => {
-  assert.ok(/id="gc-show-all-tools-btn"/.test(HTML),
-    'Phase 23C Show All Tools toggle button missing');
+// 10. Phase 25L-1 supersedes Phase 23C "Show All Tools" toggle. The
+// toggle and data-other-business-tools cluster are retired; the
+// gcToggleAllTools window function remains as a no-op stub so any
+// legacy caller does not throw.
+test('Phase 25L-1 superseded the Phase 23C "Show All Tools" toggle', () => {
+  assert.ok(!/id="gc-show-all-tools-btn"/.test(HTML),
+    'Phase 23C Show All Tools button should be retired by Phase 25L-1');
+  assert.ok(!/data-other-business-tools/.test(HTML),
+    'data-other-business-tools markers should be retired by Phase 25L-1');
   assert.ok(/window\.gcToggleAllTools\s*=\s*function/.test(HTML),
-    'Phase 23C gcToggleAllTools implementation missing');
-  const sections = (HTML.match(/data-other-business-tools/g) || []).length;
-  assert.ok(sections >= 6,
-    'expected at least 6 data-other-business-tools sections, found ' + sections);
+    'gcToggleAllTools() stub missing — must remain as no-op for legacy callers');
 });
 
 // 11. All 21 commercial nav buttons + 21 commercial panes remain reachable.
@@ -260,8 +262,9 @@ test('Phase 23A Demo Mode remains accessible', () => {
 test('Phase 23B GovCon Mode indicator remains', () => {
   assert.ok(/id="gc-mode-indicator"/.test(HTML), 'Phase 23B gc-mode-indicator missing');
   assert.ok(/GovCon Mode — Capture OS workflow/.test(HTML), 'Phase 23B headline missing');
-  assert.ok(/<div class="brand-ver"[^>]*>GovCon Capture OS<\/div>/.test(HTML),
-    'Phase 23B brand sub-label "GovCon Capture OS" missing');
+  // Phase 25L-1: brand sub-label now reads "GovCon" (was "GovCon Capture OS").
+  assert.ok(/<div class="brand-ver"[^>]*>GovCon<\/div>/.test(HTML),
+    'Phase 25L-1 brand sub-label "GovCon" missing');
 });
 
 // 14. Phase 23C default GovCon cold-open remains (already covered by #9 but kept for explicit spec mapping).

@@ -744,7 +744,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div class="logo-mark"><img src="sourcedeck-mark.svg" alt="SourceDeck logo"></div>
     <div>
       <div class="brand-name" id="brand-name-el">SourceDeck</div>
-      <div class="brand-ver" id="brand-ver-el">GovCon Capture OS</div>
+      <div class="brand-ver" id="brand-ver-el">GovCon</div>
     </div>
   </div>
   <div class="topbar-sep"></div>
@@ -774,95 +774,88 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 <div class="app-body">
   <!-- SIDEBAR -->
   <div class="sidebar">
-    <!-- ═══════════════════════════════════════════════════════════════
-         PHASE 23C — GovCon Primary Navigation
-         GovCon section moved to the top of the sidebar so a buyer's
-         first sidebar eye-fixation lands on GovCon. Every commercial
-         tab below remains reachable (no tab removed; no pane orphaned;
-         no keyboard navigation broken). A "Show All Tools" toggle
-         expands a collapsed view if the operator wants to compress
-         non-GovCon sections during a buyer demo.
-         ═══════════════════════════════════════════════════════════════ -->
+    <!-- Phase 25L-1 — clean GovCon Capture OS navigation. Sidebar
+         surface is exactly 8 buyer-facing items in fixed order:
+           1. Dashboard         (operating-hub launchpad — above GovCon)
+           2. GovCon            (cold-open active pane — Phase 23C
+                                 invariant preserved; "GovCon Capture OS"
+                                 sidebar label renamed to "GovCon")
+           3. Leads
+           4. Calendar
+           5. Response Desk
+           6. Proposal Workspace
+           7. Settings
+           8. Help / FAQ
+         Removed-from-active-nav: Command Center, Command, Email Tracker,
+         Pilot Tracker, Opportunities, Deal Workspace, Pipeline, Reports,
+         Daily Ops, Overdue, Revenue, Ad Engine, Socials, Outreach,
+         Prime Partners. Their nav buttons are preserved as hidden DOM
+         (#nav-section-removed-25l1) so any programmatic openTab() still
+         resolves — Phase 23C reachability invariant: never orphan a
+         pane. Overdue, Today's Tasks, Pipeline, Reports, Deal Workspace
+         summaries surface inside Dashboard as consolidation cards. -->
+    <div class="nav-section" id="nav-section-dashboard" data-section="dashboard-nav">
+      <div class="nav-label">Operating Hub</div>
+      <button class="nav-btn" data-tab="dashboard"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>Dashboard</button>
+    </div>
     <div class="nav-section" id="nav-section-govcon-primary" data-section="govcon-primary-nav">
-      <div class="nav-label">GovCon Capture OS</div>
+      <div class="nav-label">GovCon</div>
       <button class="nav-btn active" data-tab="govcon"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><path d="M3 10h18"/><path d="M3 18h18"/><path d="M5 6h14l1 4H4l1-4z"/><rect x="3" y="18" width="18" height="3" rx="1"/></svg></span>GovCon</button>
-      <button class="nav-btn" data-tab="outreach"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg></span>Outreach</button>
-      <button class="nav-btn" data-tab="primes"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 17l5-5-5-5"/><path d="M8 7l-5 5 5 5"/><path d="M14 4l-4 16"/></svg></span>Prime Partners</button>
     </div>
-    <!-- Phase 25E.4: Help / FAQ — always visible, regardless of the
-         Phase 25E.1 "Other business tools" toggle state. Buyers need
-         help one click away on cold open. -->
-    <div class="nav-section" id="nav-section-help" data-section="help-nav">
-      <div class="nav-label">Help</div>
-      <button class="nav-btn" data-tab="help"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>Help / FAQ</button>
+    <div class="nav-section" id="nav-section-leads" data-section="leads-nav">
+      <div class="nav-label">Leads</div>
+      <button class="nav-btn" data-tab="leads"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Leads</button>
     </div>
-    <!-- Phase 25H: Calendar — standalone SourceDeck module. Sits in
-         its own always-on nav section (outside the Phase 25E.1
-         "Other business tools" collapsible container) so the buyer
-         reaches Calendar in one click on cold open. -->
     <div class="nav-section" id="nav-section-calendar" data-section="calendar-nav">
       <div class="nav-label">Calendar</div>
       <button class="nav-btn" data-tab="calendar"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>Calendar</button>
     </div>
-    <!-- Phase 23C: Show All Tools toggle — defaults to expanded so
-         every commercial tab remains visible by default; an operator
-         can collapse non-GovCon sections for a buyer demo. The toggle
-         only flips visibility classes; it never removes a tab from the
-         DOM and never breaks keyboard navigation. -->
-    <div class="nav-section" id="nav-section-show-tools-toggle" data-section="govcon-show-all-tools-toggle">
-      <button type="button" class="nav-btn" id="gc-show-all-tools-btn" data-tools-collapsed="true" onclick="gcToggleAllTools()" style="font-size:10.5px;color:var(--sub);font-family:'IBM Plex Mono',monospace;text-transform:uppercase;letter-spacing:0.08em">Other business tools — <span id="gc-show-all-tools-state">Hidden</span></button>
-    </div>
-    <div class="nav-section" id="nav-section-operations" data-other-business-tools>
-
-      <div class="nav-label">Other business tools · Operations</div>
-      <button class="nav-btn" data-tab="cmd"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>Command Center</button>
-      <button class="nav-btn" data-tab="dashboard"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg></span>Dashboard</button>
-      <button class="nav-btn" data-tab="leads"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Leads</button>
-      <button class="nav-btn" data-tab="revenue"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></span>Revenue</button>
-      <button class="nav-btn" data-tab="email"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg></span>Email Tracker</button>
-    </div>
-    <div class="nav-section" data-other-business-tools>
-      <div class="nav-label">Other business tools · Alerts</div>
-      <button class="nav-btn" data-tab="overdue" id="overdue-nav"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg></span>Overdue <span class="nav-badge" id="oc">0</span></button>
+    <div class="nav-section" id="nav-section-reply" data-section="response-desk-nav">
+      <div class="nav-label">Response Desk</div>
       <button class="nav-btn" data-tab="reply"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Response Desk</button>
     </div>
-    <div class="nav-section" data-other-business-tools>
-      <div class="nav-label">Other business tools · Workflow</div>
-      <button class="nav-btn" data-tab="content"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2" ry="2"/></svg></span>Ad Engine</button>
-      <button class="nav-btn" data-tab="dailyops"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg></span>Daily Ops</button>
-      <button class="nav-btn" data-tab="socials"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg></span>Socials</button>
+    <div class="nav-section" id="nav-section-execution" data-section="proposal-workspace-nav">
+      <div class="nav-label">Proposal Workspace</div>
+      <button class="nav-btn" data-tab="execution"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Proposal Workspace</button>
     </div>
-    <div class="nav-section" data-other-business-tools>
-      <div class="nav-label">Other business tools · Tools</div>
-      <!-- Phase 25E.7: Create Lead and AI Lead Builder are folded into
-           the Leads workspace. The data-tab buttons remain in DOM
-           (Phase 23C invariant: every commercial nav button + pane
-           stays present) but are hidden from the sidebar so the buyer
-           navigates from one Leads entry point. The underlying panes
-           (tab-createlead, tab-aigenerate) remain reachable via
-           in-pane links from the Leads workspace. -->
-      <button class="nav-btn" data-tab="createlead" data-phase-25e7="folded-into-leads" style="display:none"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg></span>Create Lead</button>
-      <button class="nav-btn" data-tab="aigenerate" data-phase-25e7="folded-into-leads" style="display:none"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span>AI Lead Builder</button>
+    <div class="nav-section" id="nav-section-settings" data-section="settings-nav">
+      <div class="nav-label">Settings</div>
       <button class="nav-btn" data-tab="settings"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>Settings</button>
     </div>
-    <div class="nav-section" data-other-business-tools>
-      <div class="nav-label">Other business tools · Pilot</div>
-      <button class="nav-btn" data-tab="delivery"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><circle cx="12" cy="12" r="10"/></svg></span>Pilot Tracker</button>
+    <div class="nav-section" id="nav-section-help" data-section="help-nav">
+      <div class="nav-label">Help</div>
+      <button class="nav-btn" data-tab="help"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>Help / FAQ</button>
     </div>
-    <div class="nav-section" data-other-business-tools>
-      <div class="nav-label">Other business tools · Intelligence</div>
-      <button class="nav-btn" data-tab="command"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg></span>Command</button>
-      <button class="nav-btn" data-tab="opportunities"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg></span>Opportunities</button>
-      <button class="nav-btn" data-tab="dealwork"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>Deal Workspace</button>
-      <button class="nav-btn" data-tab="pipeline"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg></span>Pipeline</button>
-      <button class="nav-btn" data-tab="execution"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Proposal Workspace</button>
-      <button class="nav-btn" data-tab="proof"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>Reports</button>
+    <!-- Phase 25L-1 removed-from-active-nav buffer. Buttons remain in
+         DOM to satisfy Phase 23C reachability (openTab('cmd'),
+         openTab('overdue'), etc. still work programmatically). They no
+         longer appear in the sidebar surface. Overdue, Today's Tasks,
+         Pipeline, Reports, and Deal Workspace summaries surface inside
+         Dashboard via consolidation cards instead. -->
+    <div class="nav-section" id="nav-section-removed-25l1" data-phase-25l1="removed-from-active-nav" style="display:none" aria-hidden="true">
+      <button class="nav-btn" data-tab="outreach" data-phase-25l1-removed="true">Outreach</button>
+      <button class="nav-btn" data-tab="primes" data-phase-25l1-removed="true">Prime Partners</button>
+      <button class="nav-btn" data-tab="cmd" data-phase-25l1-removed="true">Command Center</button>
+      <button class="nav-btn" data-tab="command" data-phase-25l1-removed="true">Command</button>
+      <button class="nav-btn" data-tab="email" data-phase-25l1-removed="true">Email Tracker</button>
+      <button class="nav-btn" data-tab="overdue" id="overdue-nav" data-phase-25l1-removed="true">Overdue <span class="nav-badge" id="oc">0</span></button>
+      <button class="nav-btn" data-tab="content" data-phase-25l1-removed="true">Ad Engine</button>
+      <button class="nav-btn" data-tab="dailyops" data-phase-25l1-removed="true">Daily Ops</button>
+      <button class="nav-btn" data-tab="socials" data-phase-25l1-removed="true">Socials</button>
+      <button class="nav-btn" data-tab="createlead" data-phase-25e7="folded-into-leads" data-phase-25l1-removed="true" style="display:none">Create Lead</button>
+      <button class="nav-btn" data-tab="aigenerate" data-phase-25e7="folded-into-leads" data-phase-25l1-removed="true" style="display:none">AI Lead Builder</button>
+      <button class="nav-btn" data-tab="delivery" data-phase-25l1-removed="true">Pilot Tracker</button>
+      <button class="nav-btn" data-tab="opportunities" data-phase-25l1-removed="true">Opportunities</button>
+      <button class="nav-btn" data-tab="dealwork" data-phase-25l1-removed="true">Deal Workspace</button>
+      <button class="nav-btn" data-tab="pipeline" data-phase-25l1-removed="true">Pipeline</button>
+      <button class="nav-btn" data-tab="proof" data-phase-25l1-removed="true">Reports</button>
+      <button class="nav-btn" data-tab="revenue" data-phase-25l1-removed="true">Revenue</button>
     </div>
     <!-- ── CAPABILITIES — Optional product modes. Hidden by default;
          shown when a capability is enabled via the capability card or
          operator provisioning. Clinical/EHR mode is the first capability. -->
     <div class="nav-section" id="nav-capabilities" style="display:none">
-      <div class="nav-label">Other business tools · Healthcare</div>
+      <div class="nav-label">Capabilities · Healthcare</div>
       <button class="nav-btn" data-tab="clinical"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></svg></span>Clinical / EHR</button>
     </div>
   </div>
@@ -953,8 +946,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div class="tab-pane" id="tab-dashboard">
       <div class="pane-hdr">
         <div>
-          <div class="pane-title"><span class="brief-head">Command Dashboard</span></div>
-          <div class="pane-sub">Revenue-first decision engine</div>
+          <div class="pane-title"><span class="brief-head">Dashboard</span></div>
+          <div class="pane-sub">Operating hub · pursuits · pipeline · today's tasks · overdue · launchpad to GovCon, Calendar, Proposal Workspace, Response Desk, Leads</div>
         </div>
         <div class="pane-actions">
           <button class="btn btn-gold" onclick="openTab('leads')">+ New Lead</button>
@@ -963,6 +956,74 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       </div>
       <div class="pane-body">
         <div id="workspace-readiness-banner" class="workspace-readiness" hidden></div>
+
+        <!-- Phase 25L-1 — Operating Hub Launchpad. Surfaces the removed
+             top-level Overdue / Daily Ops / Pipeline / Reports / Deal
+             Workspace nav items as consolidation cards with a one-click
+             openTab() into the right destination. Dashboard stays a
+             launchpad, not a mega-page: counts + links only, no full
+             module tables rendered here. -->
+        <div class="card mb-20" id="dash-launchpad" data-dash-launchpad="true" style="border-left:3px solid var(--gold)">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+            <div>
+              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Operating Hub</div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text)">Today's Work Plan</div>
+            </div>
+            <div style="font-size:10px;color:var(--muted);line-height:1.5;max-width:420px">Launchpad to GovCon, Calendar, Proposal Workspace, Response Desk, and Leads. Today's Tasks, Overdue, Pipeline, Reports, and Deal Workspace summaries live as cards here so the sidebar stays clean.</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:10px">
+            <div class="card" data-dash-card="active-pursuits" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Active pursuits</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--gold2);margin-bottom:4px" id="dash-card-pursuits">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('govcon')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open GovCon">Open GovCon →</button>
+            </div>
+            <div class="card" data-dash-card="overdue-items" style="padding:11px 13px;background:var(--panel2,#0f1e32);border-color:rgba(239,68,68,0.15)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:5px">Overdue items</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--red);margin-bottom:4px" id="dash-card-overdue">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('overdue')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Overdue Actions">View Overdue →</button>
+            </div>
+            <div class="card" data-dash-card="todays-tasks" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Today's Tasks</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--text);margin-bottom:4px" id="dash-card-today-tasks">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('dailyops')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Today's Tasks">Open Today's Tasks →</button>
+            </div>
+            <div class="card" data-dash-card="pipeline-value" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Pipeline value</div>
+              <div style="font:800 18px/1 'Instrument Sans',sans-serif;color:var(--gold2);margin-bottom:4px" id="dash-card-pipeline">$0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('pipeline')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Pipeline">View Pipeline →</button>
+            </div>
+            <div class="card" data-dash-card="proposal-deadlines" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Proposal deadlines</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:#60a5fa;margin-bottom:4px" id="dash-card-prop-deadlines">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('execution')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Proposal Workspace">Open Proposal Workspace →</button>
+            </div>
+            <div class="card" data-dash-card="deal-workspace" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Deal Workspace</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--text);margin-bottom:4px" id="dash-card-deal-workspace">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('dealwork')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Deal Workspace">Open Deal Workspace →</button>
+            </div>
+            <div class="card" data-dash-card="calendar-events" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Calendar events</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--text);margin-bottom:4px" id="dash-card-calendar">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('calendar')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Calendar">Open Calendar →</button>
+            </div>
+            <div class="card" data-dash-card="open-risks" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Open risks · replies</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--text);margin-bottom:4px" id="dash-card-open-risks">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('reply')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Response Desk">Open Response Desk →</button>
+            </div>
+            <div class="card" data-dash-card="leads-summary" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Leads</div>
+              <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--text);margin-bottom:4px" id="dash-card-leads">0</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('leads')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Leads">Open Leads →</button>
+            </div>
+            <div class="card" data-dash-card="reports-summary" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Reports</div>
+              <div style="font:800 13px/1.3 'Instrument Sans',sans-serif;color:var(--text);margin-bottom:6px" id="dash-card-reports-blurb">Pipeline · revenue · activity</div>
+              <button type="button" class="btn btn-ghost" onclick="openTab('proof')" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Reports">View Reports →</button>
+            </div>
+          </div>
+        </div>
 
         <!-- KPI ROW -->
         <div class="grid-4 mb-20">
@@ -1697,12 +1758,12 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 <div class="form-group">
                   <label class="label">Airtable PAT <span style="font-size:9px;color:var(--muted)">(optional legacy CRM integration)</span></label>
                   <input class="input" id="s-atpat" type="password" value="" placeholder="pati54Z... — leave blank to skip">
-                  <div style="font-size:9px;color:var(--muted);margin-top:4px">Phase 25E.3: SourceDeck owns lead management locally. Airtable is supported as an optional legacy export integration only — not required for normal use.</div>
+                  <div style="font-size:9px;color:var(--muted);margin-top:4px">SourceDeck owns lead management locally. Airtable is supported as an optional legacy export integration only — not required for normal use.</div>
                 </div>
                 <div class="form-group">
                   <label class="label">SAM.gov API Key</label>
                   <input class="input" id="s-samkey" type="password" value="" placeholder="SAM.gov API key (stored securely; never leaves your device)" autocomplete="off">
-                  <div style="font-size:9px;color:var(--muted);margin-top:4px">Used by the SAM.gov Opportunity Outreach scan and SAM Sprint. Phase 24K: also available in the Setup Wizard during onboarding. The SAM search screen does not prompt for credentials.</div>
+                  <div style="font-size:9px;color:var(--muted);margin-top:4px">Used by the SAM.gov Opportunity Outreach scan and SAM Sprint. Also available in the Setup Wizard during onboarding. The SAM search screen does not prompt for credentials.</div>
                 </div>
                 <div class="form-group">
                   <label class="label">Setup Wizard</label>
@@ -1716,7 +1777,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <div class="card">
               <div class="sl">Automation Config <span style="font-size:9px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(optional legacy integrations)</span></div>
               <div style="font-size:10.5px;color:var(--muted);line-height:1.55;padding:0 0 8px;margin-top:-4px">
-                Phase 25E.6: SourceDeck owns workflow automation locally. These third-party integrations are optional — leave blank to skip.
+                SourceDeck owns workflow automation locally. These third-party integrations are optional — leave blank to skip.
               </div>
               <div style="display:flex;flex-direction:column;gap:11px">
                 <div class="form-group">
@@ -2224,7 +2285,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <div class="gc-cc-card" data-cc="solready" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Solicitation Readiness</div>
               <div id="gc-cc-solready-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
-              <div id="gc-cc-solready-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation workspaces prepared yet. The Solicitation Workspace ships in Phase 22C.</div>
+              <div id="gc-cc-solready-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation workspaces prepared yet. Solicitation Workspace lives inside the GovCon Solicitation section.</div>
             </div>
             <div class="gc-cc-card" data-cc="vendor" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Vendor Needs (capture board)</div>
@@ -3924,7 +3985,7 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
       </div>
       <div class="pane-body">
         <div style="background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--text);line-height:1.55">
-          <strong style="color:var(--gold2)">Phase 25E.4:</strong> Plain-English help written at a fourth-grade reading level. Read the full manual at <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">docs/manuals/sourcedeck-user-manual-4th-grade.md</code>. If a word still feels hard, tell your operator.
+          <strong style="color:var(--gold2)">Help / FAQ.</strong> Plain-English answers written at a fourth-grade reading level. Read the full manual at <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">docs/manuals/sourcedeck-user-manual-4th-grade.md</code>. If a word still feels hard, tell your operator.
         </div>
         <div class="form-group" style="margin-bottom:12px">
           <label class="label">Search</label>
@@ -4403,7 +4464,7 @@ END:VCALENDAR" style="min-height:180px;font-family:'IBM Plex Mono',monospace;fon
         <div class="gcwiz-help">SourceDeck helps you organize GovCon pursuits from opportunity discovery to internal-review package. You stay in control of every send, upload, submission, and decision.</div>
         <div class="gcwiz-note"><strong>What this wizard sets up:</strong> your business profile, GovCon targeting filters, API keys (including SAM.gov), and approval rules. You can skip optional steps and return later from Settings → Run Setup Wizard.</div>
         <div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:10px">SourceDeck prepares internal review materials. It never sends outreach, submits bids/quotes/proposals, or uploads to SAM.gov / PIEE / eBuy / GSA on your behalf. Every action requires your explicit human approval.</div>
-        <div class="gcwiz-help" style="margin-top:10px">After completing this wizard, the GovCon Capture OS becomes your default workspace.</div>
+        <div class="gcwiz-help" style="margin-top:10px">After completing this wizard, GovCon becomes your default workspace.</div>
       </div>
       <!-- Step 2 — Business Profile (was Step 1) -->
       <div class="gcwiz-step" data-step="2">
@@ -4549,7 +4610,7 @@ END:VCALENDAR" style="min-height:180px;font-family:'IBM Plex Mono',monospace;fon
       <!-- Step 10 — Quick Setup Tour (Phase 24K) -->
       <div class="gcwiz-step" data-step="10">
         <h4>10. Quick Setup Tour</h4>
-        <div class="gcwiz-help">A one-screen tour of the GovCon Capture OS surfaces you'll use most. Each feature is local-only, advisory, and requires human approval — SourceDeck never sends, submits, or uploads on your behalf.</div>
+        <div class="gcwiz-help">A one-screen tour of the GovCon surfaces you'll use most. Each feature is local-only, advisory, and requires human approval — SourceDeck never sends, submits, or uploads on your behalf.</div>
         <div class="gcwiz-note" id="gcwiz-tour-video"><strong>Quick Setup Video:</strong> Video walkthrough pending. Use the quick text tour below.</div>
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;font-size:11px;line-height:1.55">
           <div data-tour-feature="capture-command-center"><strong>Capture Command Center</strong> — Central pursuit board showing active pursuits, deadlines, Q&amp;A windows, bid/no-bid review counts. Add opportunities as you intake them; advisory recommendations only.</div>
@@ -6867,6 +6928,51 @@ function renderDashboard(){
     </div>`).join('')||'<div style="color:var(--muted);font-size:11px;padding:8px 0">No hot leads yet.</div>';
 
   renderActivityFeed();
+  renderDashboardLaunchpad({ pipeline, overdue: overdue + noEmail, proposals });
+}
+
+// Phase 25L-1 — Operating Hub Launchpad. Populates the consolidation
+// cards above the existing KPI grid. Reads from already-computed
+// renderDashboard() locals + the allLeads array + (when available) the
+// local Calendar event store. Pure DOM writes; no network. Safe to call
+// with partial stats — missing elements are skipped.
+function renderDashboardLaunchpad(stats){
+  stats = stats || {};
+  function setText(id, val){ var el = document.getElementById(id); if (el) el.textContent = String(val); }
+  var active = (Array.isArray(allLeads) ? allLeads : []).filter(function(l){
+    var stage = (l.fields && l.fields['Current Stage']) || '';
+    return stage !== 'Won' && stage !== 'Lost';
+  }).length;
+  setText('dash-card-pursuits', active);
+  setText('dash-card-overdue', stats.overdue != null ? stats.overdue : 0);
+  var todayTasks = 0;
+  try {
+    if (window.sourceDeckCalendar && typeof window.sourceDeckCalendar.fetchEvents === 'function') {
+      var iso = new Date().toISOString().slice(0,10);
+      var todays = window.sourceDeckCalendar.fetchEvents({ from: iso, to: iso }) || [];
+      todayTasks = todays.length;
+    }
+  } catch (e) {}
+  setText('dash-card-today-tasks', todayTasks);
+  setText('dash-card-pipeline', typeof f$ === 'function' ? f$(stats.pipeline || 0) : '$' + (stats.pipeline || 0));
+  setText('dash-card-prop-deadlines', stats.proposals != null ? stats.proposals : 0);
+  var dealStages = ['Proposal Sent','Discovery','Qualified','Demo','Pricing','Negotiation','Contract'];
+  var dealCount = (Array.isArray(allLeads) ? allLeads : []).filter(function(l){
+    return dealStages.indexOf((l.fields && l.fields['Current Stage']) || '') !== -1;
+  }).length;
+  setText('dash-card-deal-workspace', dealCount);
+  var calCount = 0;
+  try {
+    if (window.sourceDeckCalendar && typeof window.sourceDeckCalendar.fetchAllEvents === 'function') {
+      calCount = (window.sourceDeckCalendar.fetchAllEvents() || []).length;
+    }
+  } catch (e) {}
+  setText('dash-card-calendar', calCount);
+  var openRisks = (Array.isArray(allLeads) ? allLeads : []).filter(function(l){
+    return (l.fields && l.fields['Status']) === 'Replied';
+  }).length;
+  setText('dash-card-open-risks', openRisks);
+  setText('dash-card-leads', (Array.isArray(allLeads) ? allLeads.length : 0));
 }
 
 function renderActivityFeed(){
@@ -13149,10 +13255,10 @@ document.addEventListener('DOMContentLoaded',()=>{
       bnRow('Deadline risk', deadlineRisk, daysToDue == null ? 'Set a due date in the intake form.' : String(daysToDue) + ' day(s) to due.'),
       bnRow('NAICS match', naicsMatch ? 'set' : 'missing', opp.naics ? safeText(opp.naics) : 'Add NAICS in the intake form.'),
       bnRow('Set-aside match', setAsideMatch ? 'set' : 'missing', opp.setAside ? safeText(opp.setAside) : 'Add set-aside in the intake form.'),
-      bnRow('Past performance fit', '—', 'Wires to Past Performance Library in Phase 22E.'),
+      bnRow('Past performance fit', '—', 'Wires to the GovCon Past Performance Library.'),
       bnRow('Vendor dependency', needsVendor ? 'flagged' : 'none', 'Vendor outreach requires human approval.'),
-      bnRow('Pricing complexity', '—', 'Pricing Worksheet ships in Phase 22D.'),
-      bnRow('Compliance risk', '—', 'Compliance Matrix Builder ships in Phase 22C.')
+      bnRow('Pricing complexity', '—', 'Wires to the GovCon Pricing Worksheet.'),
+      bnRow('Compliance risk', '—', 'Wires to the GovCon Compliance Matrix.')
     ];
     out.innerHTML = '<div>' + rows.join('') + '</div>'
       + '<div style="margin-top:10px;font-size:11px;color:var(--text);font-family:\'Instrument Sans\',sans-serif">'
@@ -13482,7 +13588,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (window.toast) try { window.toast('Row ' + state.matrix[idx].id + ' marked Reviewed. Human review responsibility belongs to the operator.', 'ok'); } catch (e) {}
   };
   window.gcSolExportPlaceholder = function(){
-    if (window.toast) try { window.toast('Export Matrix placeholder — export bundle ships in Phase 22F. SourceDeck does not submit bids.', 'info'); } catch (e) {}
+    if (window.toast) try { window.toast('Export Matrix placeholder — internal review export only. SourceDeck does not submit bids.', 'info'); } catch (e) {}
   };
   window.gcSolRender = renderAll;
   if (document.readyState === 'loading') {
@@ -14671,40 +14777,16 @@ document.addEventListener('DOMContentLoaded',()=>{
 })();
 </script>
 <script>
-/* Phase 23C — GovCon Primary Navigation: "Show All Tools" toggle.
-   Collapses every nav-section labeled "Other business tools" so the
-   sidebar visually demotes the commercial-CRM groups during a buyer
-   demo. Does NOT remove any nav button. Does NOT orphan any pane.
-   Operator clicks the toggle to expand the commercial groups again.
-   Default: expanded (Shown). Pure browser code; no network. */
+/* Phase 25L-1 — supersedes the Phase 23C "Show All Tools" toggle. The
+   sidebar is now exactly 8 buyer-facing items in fixed order
+   (Dashboard → GovCon → Leads → Calendar → Response Desk → Proposal
+   Workspace → Settings → Help / FAQ). Removed-from-active-nav buttons
+   live in #nav-section-removed-25l1 (hidden reachability buffer) so
+   any programmatic openTab() target still resolves. gcToggleAllTools
+   is preserved as a no-op stub so legacy callers do not break. */
 (function(){
   'use strict';
-  function getSections(){
-    return Array.from(document.querySelectorAll('.nav-section[data-other-business-tools]'));
-  }
-  function applyState(collapsed){
-    var sections = getSections();
-    for (var i = 0; i < sections.length; i++) {
-      sections[i].style.display = collapsed ? 'none' : '';
-    }
-    var btn = document.getElementById('gc-show-all-tools-btn');
-    if (btn) btn.setAttribute('data-tools-collapsed', collapsed ? 'true' : 'false');
-    var state = document.getElementById('gc-show-all-tools-state');
-    if (state) state.textContent = collapsed ? 'Hidden' : 'Shown';
-  }
-  window.gcToggleAllTools = function(){
-    var btn = document.getElementById('gc-show-all-tools-btn');
-    var nowCollapsed = !(btn && btn.getAttribute('data-tools-collapsed') === 'true');
-    applyState(nowCollapsed);
-  };
-  // Phase 25E.1: Default = collapsed so the buyer-facing nav presents
-  // only GovCon Capture OS surfaces on cold open. The operator can
-  // click "Other business tools" to reveal the commercial-mode tabs.
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function(){ applyState(true); });
-  } else {
-    setTimeout(function(){ applyState(true); }, 0);
-  }
+  window.gcToggleAllTools = function(){ /* Phase 25L-1: no-op stub. */ };
 })();
 </script>
 <script>
