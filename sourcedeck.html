@@ -1774,6 +1774,27 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 </div>
               </div>
             </div>
+
+            <!-- Phase 25L-2 — Calendar Import settings. Sits directly
+                 after the API Keys card so configuration-level import
+                 controls live here, not on the operational Calendar
+                 page. .ics import only — no Google / Outlook / iCloud
+                 OAuth in this phase. -->
+            <div class="card mb-14" id="settings-calendar-import-card" data-settings-section="calendar-import">
+              <div class="sl">Calendar Import</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-bottom:10px">
+                Import .ics calendar files locally. SourceDeck does not use Google, Outlook, or iCloud OAuth in this phase. Events imported here appear in the Calendar tab and Today's Work Plan inside Dashboard. Editing or deleting an imported event affects the local SourceDeck copy only — your external calendar is not changed. SourceDeck never requests Gmail, iCloud, or Outlook passwords.
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+                <button type="button" class="btn btn-ghost" id="s-cal-import-btn" data-settings-action="open-ics-picker" onclick="openTab('calendar'); calOpenIcsPicker();" style="font-size:11.5px">📅 Import .ics File</button>
+                <button type="button" class="btn btn-ghost" id="s-cal-paste-btn" data-settings-action="open-ics-paste" onclick="openTab('calendar'); calOpenPasteModal();" style="font-size:11.5px">📋 Paste Calendar Text</button>
+                <button type="button" class="btn btn-ghost" id="s-cal-help-btn" data-settings-action="open-ics-help" onclick="openTab('calendar'); calToggleIcsHelp();" style="font-size:11.5px" title="How do I get an .ics file?">? How do I get an .ics file?</button>
+              </div>
+              <div style="font-size:9.5px;color:var(--muted);margin-top:9px;line-height:1.5">
+                Local-only import. SourceDeck does not send invites, sync, or upload your calendar anywhere. To refresh events, export a new .ics file and import again. Importing an .ics file does <strong>not</strong> give SourceDeck access to your email inbox — calendar import and email import are separate.
+              </div>
+            </div>
+
             <div class="card">
               <div class="sl">Automation Config <span style="font-size:9px;color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(optional legacy integrations)</span></div>
               <div style="font-size:10.5px;color:var(--muted);line-height:1.55;padding:0 0 8px;margin-top:-4px">
@@ -4030,6 +4051,7 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
         </div>
         <div class="pane-actions" style="flex-wrap:wrap;gap:6px">
           <input type="file" id="cal-ics-file" accept=".ics,text/calendar" style="display:none" onchange="calOnIcsFileChosen(event)">
+          <button type="button" class="btn btn-ghost" id="cal-ics-help-btn" data-cal-ics-help-toggle="true" onclick="calToggleIcsHelp()" title="How do I get an .ics file?" aria-expanded="false" aria-controls="cal-ics-help-panel" style="padding:4px 9px">? How do I get an .ics file?</button>
           <button class="btn btn-ghost" onclick="calOpenIcsPicker()" title="Import events from a local .ics file. The file is parsed in-renderer; nothing is uploaded.">📅 Import .ics File</button>
           <button class="btn btn-ghost" onclick="calOpenPasteModal()" title="Paste ICS text or simple event lines. Parsed locally.">📋 Paste Calendar Text</button>
           <button class="btn btn-blue"  onclick="calOpenEventModal(null)" title="Add a manual event.">+ Add Event</button>
@@ -4038,10 +4060,90 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
       </div>
       <div class="pane-body">
 
-        <!-- Phase 25H: privacy + no-send disclaimer -->
+        <!-- Phase 25L-2 — local-only calendar disclaimer. Events live on
+             the user's Mac; SourceDeck does not send invites or sync to
+             Google / Outlook / iCloud. .ics import is the open standard;
+             OAuth providers are deferred to a future secure phase. Full
+             calendar import configuration also lives in Settings →
+             Calendar Import. -->
         <div style="background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:8px;padding:9px 13px;margin-bottom:12px;font-size:11px;color:var(--text);line-height:1.55">
           <strong style="color:var(--gold2)">Local-only calendar.</strong>
-          Events live on your Mac. SourceDeck does not send calendar invites, sync to Google / Outlook / iCloud, or upload your calendar anywhere. <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">.ics</code> import is the open standard; OAuth-based providers are deferred to a future phase per <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">docs/product/phase-25h-open-calendar-import-options.md</code>.
+          Events live on your Mac. SourceDeck does not send calendar invites, sync to Google / Outlook / iCloud, or upload your calendar anywhere. <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">.ics</code> import is the open standard; OAuth-based providers are deferred to a future secure phase. Calendar import setup and full step-by-step .ics export instructions also live in Settings → Calendar Import.
+        </div>
+
+        <!-- Phase 25L-2 — ICS help panel. Collapsed by default; the
+             "How do I get an .ics file?" button toggles visibility.
+             Explains what an .ics file is, that import is local-only
+             (not live sync), and gives step-by-step export instructions
+             for Google, Apple/iCloud, Outlook, and Calendly. Also
+             clarifies that importing an .ics file does NOT give
+             SourceDeck access to the user's email inbox. -->
+        <div id="cal-ics-help-panel" data-cal-ics-help-panel="true" role="region" aria-label="How to get an .ics calendar file" hidden style="background:var(--panel2,#0f1e32);border:1px solid var(--border);border-radius:8px;padding:14px 16px;margin-bottom:14px;font-size:11.5px;line-height:1.6;color:var(--text)">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px">
+            <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--gold2)">How do I get an .ics file?</div>
+            <button type="button" class="btn btn-ghost" onclick="calToggleIcsHelp()" style="padding:3px 8px;font-size:10.5px" title="Close help">✕</button>
+          </div>
+
+          <div style="font-weight:600;color:var(--text);margin-top:4px">What is an ICS file?</div>
+          <p style="margin:4px 0 8px;color:var(--sub)">An .ics file is a standard calendar file used by Google Calendar, Apple/iCloud Calendar, Outlook, Calendly, and many scheduling systems. SourceDeck imports the file locally so events can appear in your SourceDeck Calendar and Today's Work Plan. This is import, not live sync.</p>
+
+          <div style="font-weight:600;color:var(--text);margin-top:8px">Can I import any calendar?</div>
+          <p style="margin:4px 0 8px;color:var(--sub)">You can import any calendar that can export or download an .ics / iCalendar file. Google Calendar, Apple/iCloud Calendar, Outlook, Microsoft 365, Calendly, and many scheduling tools support .ics export. If a calendar cannot export .ics, use manual event entry or paste calendar text.</p>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:10px">
+            <div style="background:rgba(0,113,227,0.04);border:1px solid var(--border);border-radius:6px;padding:10px 12px">
+              <div style="font-weight:600;color:var(--blue,#60a5fa);font-size:11.5px;margin-bottom:6px">Google Calendar</div>
+              <ol style="margin:0;padding-left:18px;color:var(--sub);font-size:11px;line-height:1.55">
+                <li>Open Google Calendar in a browser.</li>
+                <li>Open Settings.</li>
+                <li>Choose Import &amp; Export.</li>
+                <li>Export your calendar.</li>
+                <li>Download/save the .ics file.</li>
+                <li>In SourceDeck, click Import .ics File.</li>
+              </ol>
+            </div>
+            <div style="background:rgba(176,138,60,0.04);border:1px solid var(--border);border-radius:6px;padding:10px 12px">
+              <div style="font-weight:600;color:var(--gold2);font-size:11.5px;margin-bottom:6px">Apple Calendar / iCloud</div>
+              <ol style="margin:0;padding-left:18px;color:var(--sub);font-size:11px;line-height:1.55">
+                <li>Open Apple Calendar or iCloud Calendar.</li>
+                <li>Select the calendar.</li>
+                <li>Use File → Export → Export, or the calendar sharing/export option.</li>
+                <li>Save the .ics file.</li>
+                <li>In SourceDeck, click Import .ics File.</li>
+              </ol>
+            </div>
+            <div style="background:rgba(0,120,212,0.04);border:1px solid var(--border);border-radius:6px;padding:10px 12px">
+              <div style="font-weight:600;color:var(--blue2,#0078d4);font-size:11.5px;margin-bottom:6px">Outlook</div>
+              <ol style="margin:0;padding-left:18px;color:var(--sub);font-size:11px;line-height:1.55">
+                <li>Open Outlook Calendar.</li>
+                <li>Use Save Calendar, Export Calendar, or Publish Calendar depending on the version.</li>
+                <li>Download/save the .ics file.</li>
+                <li>In SourceDeck, click Import .ics File.</li>
+              </ol>
+            </div>
+            <div style="background:rgba(48,209,88,0.04);border:1px solid var(--border);border-radius:6px;padding:10px 12px">
+              <div style="font-weight:600;color:var(--green,#30d158);font-size:11.5px;margin-bottom:6px">Calendly &amp; other tools</div>
+              <ol style="margin:0;padding-left:18px;color:var(--sub);font-size:11px;line-height:1.55">
+                <li>Open the calendar's export / subscribe option.</li>
+                <li>Choose .ics / iCalendar.</li>
+                <li>Download the file.</li>
+                <li>In SourceDeck, click Import .ics File.</li>
+                <li>If only a webcal:// URL is offered, save it to .ics first.</li>
+              </ol>
+            </div>
+          </div>
+
+          <div style="margin-top:12px;padding:9px 12px;background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:6px;color:var(--sub);font-size:11px;line-height:1.6">
+            <div style="font-weight:600;color:var(--gold2);margin-bottom:4px">Safety</div>
+            <ul style="margin:0;padding-left:18px">
+              <li>SourceDeck imports a local copy only.</li>
+              <li>SourceDeck does not change your external calendar.</li>
+              <li>SourceDeck does not send invites.</li>
+              <li>SourceDeck does not sync to Google, Outlook, or iCloud in this phase.</li>
+              <li>To refresh events, export and import a new .ics file.</li>
+              <li>Importing an .ics file does <strong>not</strong> give SourceDeck access to your email inbox. Calendar import and email import are separate.</li>
+            </ul>
+          </div>
         </div>
 
         <!-- View toggle -->
@@ -16277,6 +16379,24 @@ document.addEventListener('DOMContentLoaded',()=>{
   };
 
   // ── ICS FILE PICKER ───────────────────────────────────────────────
+  // ── ICS HELP PANEL TOGGLE (Phase 25L-2) ────────────────────────────
+  // Toggles the "How do I get an .ics file?" help panel above the
+  // Calendar pane. Pure DOM toggle; no network. Idempotent — safe to
+  // call from any surface (Calendar pane, Settings → Calendar Import).
+  window.calToggleIcsHelp = function(){
+    var panel = document.getElementById('cal-ics-help-panel');
+    var btn = document.getElementById('cal-ics-help-btn');
+    if (!panel) return;
+    var willShow = panel.hasAttribute('hidden');
+    if (willShow) {
+      panel.removeAttribute('hidden');
+      if (btn) btn.setAttribute('aria-expanded', 'true');
+    } else {
+      panel.setAttribute('hidden', '');
+      if (btn) btn.setAttribute('aria-expanded', 'false');
+    }
+  };
+
   window.calOpenIcsPicker = function(){
     var picker = document.getElementById('cal-ics-file');
     if (picker) picker.click();
@@ -16456,9 +16576,16 @@ document.addEventListener('DOMContentLoaded',()=>{
     renderCalendar();
     if (window.toast) try { window.toast('Status set to "reschedule". Update the date/time and save.', 'info'); } catch (e) {}
   };
-  window.calDeleteEvent = function(){
+  window.calDeleteEvent = function(opts){
+    opts = opts || {};
     if (!_editingEventId) return;
-    if (window.confirm && !window.confirm('Delete this event? This cannot be undone.')) return;
+    // Phase 25L-2 — confirmation copy spells out the SourceDeck-only
+    // scope so the user knows external calendars are not changed. Card-
+    // level callers pass skipConfirm because they already displayed
+    // this same copy in their own confirm() prompt.
+    if (!opts.skipConfirm && window.confirm && !window.confirm(
+      'Delete this SourceDeck calendar event?\n\nThis removes it from SourceDeck only. It does not delete it from Google, iCloud, Outlook, or any external calendar.'
+    )) return;
     _state.events = _state.events.filter(function(e){ return e.id !== _editingEventId; });
     saveState();
     renderCalendar();
@@ -16536,8 +16663,16 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (ev.linkedSolicitationId)    linksHtml += '<span class="cal-link-chip" style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(27,77,110,0.14);border:1px solid rgba(27,77,110,0.32);color:var(--blue);margin-right:4px">Sol: ' + escapeHtml(ev.linkedSolicitationId) + '</span>';
     if (ev.linkedVendorId)          linksHtml += '<span class="cal-link-chip" style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(176,138,60,0.12);border:1px solid rgba(176,138,60,0.32);color:var(--gold2);margin-right:4px">Vendor: ' + escapeHtml(ev.linkedVendorId) + '</span>';
     if (ev.linkedProposalSectionId) linksHtml += '<span class="cal-link-chip" style="font-size:9px;padding:2px 6px;border-radius:3px;background:rgba(155,89,182,0.14);border:1px solid rgba(155,89,182,0.32);color:#bf5af2;margin-right:4px">Section: ' + escapeHtml(ev.linkedProposalSectionId) + '</span>';
-    return '<div class="cal-event-card" data-cal-event-id="' + escapeHtml(ev.id) + '" onclick="calOpenEventModal(\'' + escapeHtml(ev.id) + '\')" style="cursor:pointer;background:var(--panel2,#0f1e32);border:1px solid var(--border);border-radius:6px;padding:8px 11px;margin-bottom:6px">' +
-             '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px">' +
+    var evIdAttr = escapeHtml(ev.id);
+    // Phase 25L-2 — every Calendar event card surfaces inline action
+    // controls so the user never has to dig into the modal just to fix
+    // a typo or remove a stale import. Delete is local-only: it removes
+    // the SourceDeck copy and does NOT call out to Google / iCloud /
+    // Outlook / any external calendar. Imported ICS events are
+    // editable locally; editing them here does not update the external
+    // calendar source.
+    return '<div class="cal-event-card" data-cal-event-id="' + evIdAttr + '" data-cal-event-card="true" style="background:var(--panel2,#0f1e32);border:1px solid var(--border);border-radius:6px;padding:8px 11px;margin-bottom:6px">' +
+             '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;cursor:pointer" onclick="calCardView(\'' + evIdAttr + '\')">' +
                '<div style="flex:1">' +
                  '<div style="font-weight:600;font-size:12.5px;color:var(--text)">' + escapeHtml(ev.title) + '</div>' +
                  '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + (opts.showDate ? escapeHtml(ev.date) + ' · ' : '') + when + (ev.location ? ' · ' + escapeHtml(ev.location) : '') + '</div>' +
@@ -16545,7 +16680,50 @@ document.addEventListener('DOMContentLoaded',()=>{
                '</div>' +
                '<span class="sd-cal-status-pill" style="font-size:8.5px;padding:2px 7px;border-radius:980px;text-transform:uppercase;letter-spacing:0.06em;' + statusPillStyle(ev.status) + '">' + escapeHtml(ev.status || 'scheduled') + '</span>' +
              '</div>' +
+             '<div class="cal-event-card-actions" data-cal-card-actions="true" style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;margin-top:8px;padding-top:7px;border-top:1px dashed var(--border2,rgba(255,255,255,0.08))">' +
+               '<button type="button" class="btn btn-ghost cal-card-btn-view" data-cal-action="view" data-cal-event-id="' + evIdAttr + '" onclick="event.stopPropagation();calCardView(\'' + evIdAttr + '\')" style="padding:3px 9px;font-size:10.5px" title="View this event">👁 View</button>' +
+               '<button type="button" class="btn btn-ghost cal-card-btn-edit" data-cal-action="edit" data-cal-event-id="' + evIdAttr + '" onclick="event.stopPropagation();calCardEdit(\'' + evIdAttr + '\')" style="padding:3px 9px;font-size:10.5px" title="Edit this event">✎ Edit</button>' +
+               '<button type="button" class="btn btn-ghost cal-card-btn-complete" data-cal-action="complete" data-cal-event-id="' + evIdAttr + '" onclick="event.stopPropagation();calCardMarkComplete(\'' + evIdAttr + '\')" style="padding:3px 9px;font-size:10.5px" title="Mark this event complete (local only)">✓ Mark Complete</button>' +
+               '<button type="button" class="btn btn-ghost cal-card-btn-reschedule" data-cal-action="reschedule" data-cal-event-id="' + evIdAttr + '" onclick="event.stopPropagation();calCardReschedule(\'' + evIdAttr + '\')" style="padding:3px 9px;font-size:10.5px" title="Reschedule this event">↻ Reschedule</button>' +
+               '<button type="button" class="btn btn-ghost cal-card-btn-delete" data-cal-action="delete" data-cal-event-id="' + evIdAttr + '" onclick="event.stopPropagation();calCardDelete(\'' + evIdAttr + '\')" style="padding:3px 9px;font-size:10.5px;color:var(--red);margin-left:auto" title="Delete this SourceDeck calendar event (local only)">🗑 Delete</button>' +
+             '</div>' +
+             '<div class="cal-event-card-local-note" data-cal-local-note="true" style="margin-top:6px;font-size:9.5px;line-height:1.45;color:var(--muted);font-style:italic">Local SourceDeck event only. Editing or deleting here does not change your external calendar.</div>' +
            '</div>';
+  }
+  // Phase 25L-2 — card-level handlers. Reuse the modal helpers under
+  // the hood (calOpenEventModal, calMarkComplete, calRescheduleEvent,
+  // calDeleteEvent) so behavior stays consistent with the in-modal
+  // buttons. Delete confirms before destroying the local copy and
+  // explicitly tells the user no external calendar is touched.
+  function calCardView(eventId){
+    if (!eventId) return;
+    try { calOpenEventModal(eventId); } catch (e) {}
+  }
+  function calCardEdit(eventId){
+    if (!eventId) return;
+    try { calOpenEventModal(eventId); } catch (e) {}
+  }
+  function calCardMarkComplete(eventId){
+    if (!eventId) return;
+    try { calOpenEventModal(eventId); } catch (e) {}
+    try { calMarkComplete(); } catch (e) {}
+  }
+  function calCardReschedule(eventId){
+    if (!eventId) return;
+    try { calOpenEventModal(eventId); } catch (e) {}
+    try { calRescheduleEvent(); } catch (e) {}
+  }
+  function calCardDelete(eventId){
+    if (!eventId) return;
+    var ok = false;
+    try {
+      ok = window.confirm(
+        'Delete this SourceDeck calendar event?\n\nThis removes it from SourceDeck only. It does not delete it from Google, iCloud, Outlook, or any external calendar.'
+      );
+    } catch (e) { ok = true; }
+    if (!ok) return;
+    try { calOpenEventModal(eventId); } catch (e) {}
+    try { calDeleteEvent({ skipConfirm: true }); } catch (e) {}
   }
   function renderToday(container){
     var iso = _state.anchorDate || todayIso();
