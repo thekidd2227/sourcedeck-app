@@ -1633,7 +1633,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <!-- ═══ AI GENERATE ═══ -->
     <div class="tab-pane" id="tab-aigenerate">
       <div class="pane-hdr">
-        <div><div class="pane-title"><span class="brief-head">AI Lead Builder</span></div><div class="pane-sub">AI-assisted prospect research → save to your CRM</div></div>
+        <div><div class="pane-title"><span class="brief-head">AI Lead Builder</span></div></div>
         <div class="pane-actions" id="ag-bulk-actions" style="display:none;flex-wrap:wrap;gap:6px">
           <span id="ag-sel-count" style="font-size:9px;color:var(--gold2);font-family:'Azeret Mono',monospace;align-self:center"></span>
           <button class="btn btn-blue" onclick="agValidateAll()" title="DNS MX validation gate — must pass before push">🔬 Validate (MX)</button>
@@ -1645,6 +1645,21 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         </div>
       </div>
       <div class="pane-body">
+        <!-- Phase 25O — concise scope + provider/status copy. Lives
+             inside the Target Profile card (not under the title) so
+             the buyer reads the boundary at the moment they're about
+             to describe their ideal lead. -->
+        <div class="card mb-14" id="ag-scope-card" data-ag-scope-card="true" style="border-left:3px solid var(--gold)">
+          <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:6px">AI Lead Builder · Scope</div>
+          <div id="ag-scope-explanation" data-ag-scope-explanation="true" style="font-size:12px;color:var(--text);line-height:1.55;margin-bottom:8px">
+            Create organization leads only. SourceDeck can help research businesses, government agencies, prime contractors, subcontractors/vendors, and commercial prospects. It does not generate residential consumer leads.
+          </div>
+          <ul style="margin:0;padding-left:18px;font-size:11px;color:var(--sub);line-height:1.6">
+            <li id="ag-provider-required" data-ag-provider-required="true">Live lead lookup requires a configured provider in Settings.</li>
+            <li id="ag-hunter-optional" data-ag-hunter-optional="true">Hunter.io is optional for contact enrichment.</li>
+            <li id="ag-no-provider-fallback" data-ag-no-provider-fallback="true">If no provider is configured, SourceDeck can draft a lead-search plan, but it cannot pull verified live leads.</li>
+          </ul>
+        </div>
         <div class="grid-2">
           <div>
             <div class="card mb-14">
