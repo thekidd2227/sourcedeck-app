@@ -58,15 +58,28 @@ test('Create Lead primary CTA reads "Save Lead", not "Push to Airtable"', () => 
   );
 });
 
-test('AI Lead Builder pane subtitle no longer leads with "Airtable"', () => {
+test('AI Lead Builder pane subtitle no longer leads with "Airtable" (Phase 25O retired the entire subtitle)', () => {
+  // Phase 25E.3 retired the Airtable-led subtitle. Phase 25O then
+  // retired the replacement subtitle entirely; the header now shows
+  // only "AI Lead Builder", and the scope copy lives inside the
+  // Target Profile scope card. Neither the Airtable-era subtitle nor
+  // the Phase 25E.3 subtitle should appear in source anymore.
   assert.doesNotMatch(
     HTML,
     /AI-assisted prospect research\s*→\s*push to your CRM \/ Airtable/,
     'Phase 25E.3 retired the Airtable-led subtitle on AI Lead Builder'
   );
+  assert.doesNotMatch(
+    HTML,
+    /AI-assisted prospect research → save to your CRM/,
+    'Phase 25O retired the full subtitle; header is title-only'
+  );
+  // The retired-subtitle copy is replaced by the Phase 25O scope card
+  // explanation inside the pane body.
   assert.match(
     HTML,
-    /AI Lead Builder<\/span>[\s\S]{0,80}AI-assisted prospect research → save to your CRM/
+    /data-ag-scope-explanation="true"/,
+    'Phase 25O scope explanation surface is present'
   );
 });
 
