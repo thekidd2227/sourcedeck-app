@@ -972,6 +972,20 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <div style="font-size:10px;color:var(--muted);line-height:1.5;max-width:420px">Launchpad to GovCon, Calendar, Proposal Workspace, Response Desk, and Leads. Today's Tasks, Overdue, Pipeline, Reports, and Deal Workspace summaries live as cards here so the sidebar stays clean.</div>
           </div>
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:10px">
+            <!-- Phase 25M — "Start a pursuit" intake. Three routes
+                 into a new pursuit: SAM.gov in-app search, manually
+                 uploaded solicitation / RFQ / RFP, or pasted text.
+                 Surface the intake at the top of the Dashboard so
+                 buyers don't have to hunt for it. -->
+            <div class="card" data-dash-card="start-pursuit" style="padding:11px 13px;background:var(--panel2,#0f1e32);border:1px solid rgba(176,138,60,0.32)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold2);margin-bottom:5px">Start a pursuit</div>
+              <div style="font:600 12px/1.4 'Syne',sans-serif;color:var(--text);margin-bottom:7px">Search SAM.gov, upload a solicitation, or paste solicitation text.</div>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <button type="button" class="btn btn-gold" data-dash-start-action="search-sam" onclick="openTab('govcon'); gcScrollTo(event,'gc-sam-pipeline');" style="padding:4px 9px;font-size:10.5px;width:100%" title="Search SAM.gov">🔎 Search SAM.gov</button>
+                <button type="button" class="btn btn-ghost" data-dash-start-action="upload-solicitation" onclick="openTab('execution'); setTimeout(function(){ if (typeof pwSolOpenFilePicker === 'function') pwSolOpenFilePicker(); }, 100);" style="padding:4px 9px;font-size:10.5px;width:100%" title="Upload solicitation / RFQ / RFP">📎 Upload Solicitation / RFQ / RFP</button>
+                <button type="button" class="btn btn-ghost" data-dash-start-action="paste-solicitation" onclick="openTab('execution'); setTimeout(function(){ if (typeof pwSolTogglePasteArea === 'function') pwSolTogglePasteArea(); }, 100);" style="padding:4px 9px;font-size:10.5px;width:100%" title="Paste solicitation text">📋 Paste Solicitation Text</button>
+              </div>
+            </div>
             <div class="card" data-dash-card="active-pursuits" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
               <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Active pursuits</div>
               <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--gold2);margin-bottom:4px" id="dash-card-pursuits">0</div>
@@ -2378,6 +2392,90 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
              transmission. SourceDeck does not submit bids, quotes, or
              government responses.
              ═══════════════════════════════════════════════════════════════ -->
+        <!-- Phase 25M — GovCon Pipeline. User-triggered, in-app SAM.gov
+             opportunity search rendered inside SourceDeck. Uses the
+             existing sd.govcon.samSearch IPC + the saved SAM.gov key
+             through the secure credential boundary. No auto-search on
+             load, no portal upload, no bid submission. Search results
+             render in a results list with Save / Mark Pursue actions
+             that go through sd.govcon.opportunities.upsert. -->
+        <section id="gc-sam-pipeline" class="gc-sam-pipeline" data-section="govcon-sam-pipeline" data-phase-25m="sam-pipeline" style="margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+            <div>
+              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">GovCon Pipeline</div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text)">Search SAM.gov · Save · Pursue</div>
+            </div>
+            <span id="gc-sam-key-status" data-gc-sam-key-status="true" style="font:600 10px/1.4 'Azeret Mono',monospace;letter-spacing:0.06em;padding:4px 10px;border-radius:980px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted)">SAM.gov key: checking…</span>
+          </div>
+          <div id="gc-sam-key-missing-banner" data-gc-sam-key-missing="true" style="display:none;font-size:11px;color:var(--text);line-height:1.55;background:rgba(255,176,32,0.06);border:1px solid rgba(255,176,32,0.30);border-radius:6px;padding:9px 12px;margin-bottom:10px">
+            <strong style="color:#ffb020">SAM.gov key missing.</strong> Add it in Setup or Settings → API Keys to enable in-app search. SourceDeck never displays the raw key.
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin-bottom:10px">
+            <div class="form-group" style="margin:0">
+              <label class="label">Keyword</label>
+              <input class="input" id="gc-sam-f-keyword" data-gc-sam-filter="keyword" placeholder="e.g. janitorial">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="label">NAICS</label>
+              <input class="input" id="gc-sam-f-naics" data-gc-sam-filter="naics" placeholder="e.g. 561720">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="label">Set-aside</label>
+              <select class="select" id="gc-sam-f-setaside" data-gc-sam-filter="setaside" style="width:100%">
+                <option value="">Any</option>
+                <option value="SBA">Small Business</option>
+                <option value="SDVOSBC">SDVOSB</option>
+                <option value="WOSB">WOSB / EDWOSB</option>
+                <option value="HZC">HUBZone</option>
+                <option value="8A">8(a)</option>
+                <option value="VSA">VOSB</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="label">Place of Performance</label>
+              <input class="input" id="gc-sam-f-pop" data-gc-sam-filter="placeOfPerformance" placeholder="e.g. CA, San Diego">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="label">Closing within (days)</label>
+              <input class="input" id="gc-sam-f-due" data-gc-sam-filter="dueWithinDays" type="number" min="1" max="365" value="30">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="label">Status / type</label>
+              <select class="select" id="gc-sam-f-status" data-gc-sam-filter="status" style="width:100%">
+                <option value="">Any</option>
+                <option value="active">Active solicitations</option>
+                <option value="archived">Archived</option>
+                <option value="awarded">Awarded</option>
+              </select>
+            </div>
+          </div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+            <button type="button" class="btn btn-gold" id="gc-sam-search-btn" data-gc-sam-action="search" onclick="gcSamSearchRun()">🔎 Search SAM.gov</button>
+            <button type="button" class="btn btn-ghost" id="gc-sam-refresh-btn" data-gc-sam-action="refresh" onclick="gcSamSearchRun({ refresh: true })" title="Re-run the current filters">↻ Refresh</button>
+            <button type="button" class="btn btn-ghost" id="gc-sam-clear-btn" data-gc-sam-action="clear-filters" onclick="gcSamClearFilters()" title="Clear all filters">⊘ Clear filters</button>
+            <span id="gc-sam-result-meta" data-gc-sam-result-meta="true" style="margin-left:auto;font:500 10px 'Azeret Mono',monospace;color:var(--muted);letter-spacing:0.06em">No search run yet.</span>
+          </div>
+          <div class="tbl-wrap" style="max-height:380px">
+            <table class="tbl">
+              <thead><tr>
+                <th style="min-width:170px">Title · Agency</th>
+                <th>Solicitation #</th>
+                <th>NAICS</th>
+                <th>Set-aside</th>
+                <th>Posted</th>
+                <th>Due</th>
+                <th>Place of Performance</th>
+                <th>Status</th>
+                <th style="width:230px">Actions</th>
+              </tr></thead>
+              <tbody id="gc-sam-results-tbody" data-gc-sam-results-tbody="true"></tbody>
+            </table>
+          </div>
+          <div style="margin-top:8px;font-size:10px;color:var(--muted);line-height:1.55">
+            User-triggered search only · no auto-search on page load · no portal upload · no bid submission. Use Open SAM.gov Source to view the original notice in your default browser.
+          </div>
+        </section>
+
         <section id="gc-mode-indicator" class="gc-mode-indicator" data-section="govcon-mode-indicator" style="margin-bottom:12px;border:1px solid rgba(176,138,60,0.30);border-radius:var(--r2);padding:10px 13px;background:linear-gradient(145deg,rgba(176,138,60,0.06),rgba(23,32,51,0.05))">
           <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
             <div>
@@ -4070,6 +4168,58 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
           Drafts produced here are not legal review, not compliance certification, and not final proposals. SourceDeck does not send, submit, or upload anything to SAM.gov, PIEE, eBuy, GSA, or any agency portal. The user is responsible for every external action.
         </div>
 
+        <!-- Phase 25M — Solicitation Intake + Selector. Three routes:
+             (1) SAM.gov-imported opportunities saved via the GovCon
+             Pipeline; (2) manually uploaded .pdf / .docx / .txt / .md;
+             (3) pasted text. The selector pulls saved opportunities
+             from sd.govcon.opportunities.list() and lists local upload
+             / paste records persisted under
+             sd.proposalWorkspace.solicitationIntake. Extract Key
+             Details runs locally and surfaces the 6 FAR-aligned
+             sections below. -->
+        <div class="card mb-14" id="pw-solicitation-intake" data-pw-solicitation-intake="true" style="border-left:3px solid var(--gold)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+            <div>
+              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Solicitation Intake</div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text)">Choose a solicitation to work on</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px">Select an opportunity you saved from SAM.gov, upload a solicitation file locally, or paste the raw text. Extraction is local · no portal upload · no email send · no bid submission.</div>
+            </div>
+            <input type="file" id="pw-sol-file" accept=".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown" style="display:none" onchange="pwSolOnFileChosen(event)">
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
+            <div class="form-group" style="margin:0">
+              <label class="label">Select solicitation</label>
+              <select class="select" id="pw-sol-selector" data-pw-sol-selector="true" onchange="pwSolSelectChange()" style="width:100%">
+                <option value="">— None selected —</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="label">Source</label>
+              <span id="pw-sol-current-source" data-pw-sol-current-source="true" style="display:inline-block;padding:6px 10px;font-size:11px;border-radius:6px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted)">—</span>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="label">Status</label>
+              <span id="pw-sol-current-status" data-pw-sol-current-status="true" style="display:inline-block;padding:6px 10px;font-size:11px;border-radius:6px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted)">not started</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+            <button type="button" class="btn btn-ghost" id="pw-sol-upload-btn" data-pw-sol-action="upload" onclick="pwSolOpenFilePicker()" title="Upload solicitation / RFQ / RFP">📎 Upload Solicitation / RFQ / RFP</button>
+            <button type="button" class="btn btn-ghost" id="pw-sol-paste-btn" data-pw-sol-action="paste" onclick="pwSolTogglePasteArea()" title="Paste solicitation text">📋 Paste Solicitation Text</button>
+            <button type="button" class="btn btn-gold" id="pw-sol-extract-btn" data-pw-sol-action="extract" onclick="pwSolExtractKeyDetails()" title="Extract key details into FAR-aligned sections">🔎 Extract Key Details</button>
+            <button type="button" class="btn btn-ghost" id="pw-sol-clear-btn" data-pw-sol-action="clear" onclick="pwSolClearSelected()" title="Clear the selected solicitation" style="color:var(--red);margin-left:auto">⊘ Clear selected solicitation</button>
+          </div>
+          <div id="pw-sol-paste-area" data-pw-sol-paste-area="true" style="display:none;margin-bottom:10px">
+            <label class="label">Paste solicitation text</label>
+            <textarea class="textarea" id="pw-sol-paste-text" placeholder="Paste the full solicitation, RFQ, or RFP text here. Include Section L, Section M, statement of work, performance work statement, instructions to offerors, evaluation criteria, FAR clauses, deadlines, points of contact, place of performance, and any attachments worth referencing." style="min-height:160px;font-family:'IBM Plex Mono',monospace;font-size:11px"></textarea>
+          </div>
+          <div id="pw-sol-intake-empty" data-pw-sol-empty="true" style="font-size:11px;color:var(--muted);line-height:1.55;padding:10px 0;text-align:center">
+            No solicitation selected. Search SAM.gov, upload a solicitation, or paste solicitation text to begin.
+          </div>
+          <div id="pw-sol-extraction" data-pw-sol-extraction="true" style="display:none">
+            <div id="pw-sol-extraction-sections" data-pw-sol-extraction-sections="true" style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:6px"></div>
+          </div>
+        </div>
+
         <div class="grid-2" style="grid-template-columns:240px 1fr;gap:14px;align-items:start">
 
           <!-- Section navigation rail -->
@@ -4215,7 +4365,7 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
         </div>
         <div class="pane-actions" style="flex-wrap:wrap;gap:6px">
           <input type="file" id="cal-ics-file" accept=".ics,text/calendar" style="display:none" onchange="calOnIcsFileChosen(event)">
-          <button type="button" class="btn btn-ghost" id="cal-ics-help-btn" data-cal-ics-help-toggle="true" onclick="calToggleIcsHelp()" title="How do I get an .ics file?" aria-expanded="false" aria-controls="cal-ics-help-panel" style="padding:4px 9px">? How do I get an .ics file?</button>
+          <button type="button" class="cal-ics-help-q" id="cal-ics-help-btn" data-cal-ics-help-toggle="true" data-cal-ics-help-compact="true" onclick="calToggleIcsHelp()" onmouseenter="calToggleIcsHelp({open:true})" title="How do I get an .ics file?" aria-label="How do I get an .ics file?" aria-expanded="false" aria-controls="cal-ics-help-panel" style="width:22px;height:22px;border-radius:50%;border:1px solid var(--border);background:rgba(255,255,255,0.04);color:var(--muted);font:600 11px/1 'Azeret Mono',monospace;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;padding:0">?</button>
           <button class="btn btn-ghost" onclick="calOpenIcsPicker()" title="Import events from a local .ics file. The file is parsed in-renderer; nothing is uploaded.">📅 Import .ics File</button>
           <button class="btn btn-ghost" onclick="calOpenPasteModal()" title="Paste ICS text or simple event lines. Parsed locally.">📋 Paste Calendar Text</button>
           <button class="btn btn-blue"  onclick="calOpenEventModal(null)" title="Add a manual event.">+ Add Event</button>
@@ -11320,12 +11470,40 @@ async function _gcWizSaveKey(service, inputId, statusFn){
   const val = (input && input.value || '').trim();
   if (!val) { toast('Paste a key first','warn'); return; }
   if (!(window.sd && sd.credentials && sd.credentials.set)) { toast('Credential service unavailable','err'); return; }
+  let saved = false;
   try {
     const r = await sd.credentials.set(service, val);
     if (input) input.value = ''; // never retain raw key in the DOM
-    toast((r && r.ok) ? 'Key saved' : 'Could not save key', (r && r.ok) ? 'ok' : 'err');
+    saved = !!(r && r.ok);
+    toast(saved ? 'Key saved' : 'Could not save key', saved ? 'ok' : 'err');
   } catch(_) { if (input) input.value=''; toast('Could not save key','err'); }
+  // Phase 25M — optimistic + verified status refresh. The save call
+  // above resolves once the credential boundary has persisted the key,
+  // but sd.credentials.status() can return a stale snapshot for a
+  // tick. We update the visible status immediately based on the save
+  // result and then re-poll once to verify. This eliminates the
+  // "key saved but Setup still says missing" report.
+  if (saved){
+    _gcWizSetStatusSaved(service);
+  }
   if (statusFn) await statusFn();
+  if (saved && statusFn){
+    // One verification retry — handles the rare case where the
+    // credential adapter snapshot lags the write.
+    setTimeout(function(){ try { statusFn(); } catch(_){} }, 250);
+  }
+}
+// Phase 25M — paint the saved-status surface optimistically so the
+// UI confirms the save the instant credentials.set resolves OK. The
+// subsequent statusFn() poll keeps it honest if the write actually
+// failed at a deeper layer.
+function _gcWizSetStatusSaved(service){
+  if (service === 'sam-gov'){
+    const el = document.getElementById('gcwiz-sam-status');
+    if (el){ el.textContent = 'SAM.gov key saved'; el.className = 'gcwiz-status saved'; }
+    const settingsLabel = document.getElementById('out-samkey-status');
+    if (settingsLabel){ settingsLabel.textContent = 'SAM.gov key: configured ✓'; settingsLabel.style.color = '#3fb950'; }
+  }
 }
 async function _gcWizRemoveKey(service, inputId, statusFn){
   if (!(window.sd && sd.credentials && sd.credentials.remove)) return;
@@ -11337,6 +11515,213 @@ async function _gcWizRemoveKey(service, inputId, statusFn){
 async function gcWizSaveSam(){ await _gcWizSaveKey('sam-gov', 'gcwiz-sam', _gcWizUpdateSamStatus); }
 async function gcWizRemoveSam(){ await _gcWizRemoveKey('sam-gov', 'gcwiz-sam', _gcWizUpdateSamStatus); }
 window.gcWizSaveSam = gcWizSaveSam; window.gcWizRemoveSam = gcWizRemoveSam;
+
+// ── Phase 25M — GovCon SAM Pipeline (in-app search + save/pursue) ───
+// All UI lives inside SourceDeck (`#gc-sam-pipeline`). The SAM.gov
+// API key is consumed through the secure credential boundary
+// (`sd.govcon.samSearch` / `sd.credentials`) — the raw key never
+// enters the renderer. Search is user-triggered only; nothing runs
+// on page load. Save / Mark Pursue / Archive go through
+// `sd.govcon.opportunities.upsert`. Open SAM.gov Source uses
+// `window.open(url, '_blank', 'noopener,noreferrer')`.
+(function(){
+  'use strict';
+  var _lastResults = [];
+  var _lastFilters = null;
+
+  function $(id){ return document.getElementById(id); }
+  function escHtml(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function escAttr(s){ return escHtml(s); }
+
+  async function refreshSamKeyStatus(){
+    var pill = $('gc-sam-key-status');
+    var banner = $('gc-sam-key-missing-banner');
+    var btn = $('gc-sam-search-btn');
+    var present = false;
+    try {
+      if (window.sd && window.sd.credentials && window.sd.credentials.status){
+        var s = await window.sd.credentials.status();
+        present = !!(s && s.present && s.present['sam-gov']);
+      }
+    } catch (e) {}
+    if (pill){
+      pill.textContent = present ? 'SAM.gov key saved' : 'SAM.gov key missing — add in Setup or Settings';
+      pill.style.color = present ? 'var(--green,#30d158)' : '#ffb020';
+      pill.setAttribute('data-gc-sam-key-present', present ? 'true' : 'false');
+    }
+    if (banner) banner.style.display = present ? 'none' : '';
+    if (btn) btn.disabled = !present;
+    return present;
+  }
+  window.gcSamRefreshKeyStatus = refreshSamKeyStatus;
+
+  function gatherFilters(){
+    function v(id){ var el = $(id); return el ? String(el.value || '').trim() : ''; }
+    return {
+      keyword: v('gc-sam-f-keyword'),
+      naics: v('gc-sam-f-naics'),
+      setAside: v('gc-sam-f-setaside'),
+      placeOfPerformance: v('gc-sam-f-pop'),
+      dueWithinDays: parseInt(v('gc-sam-f-due'), 10) || null,
+      status: v('gc-sam-f-status')
+    };
+  }
+  window.gcSamClearFilters = function(){
+    ['gc-sam-f-keyword','gc-sam-f-naics','gc-sam-f-setaside','gc-sam-f-pop','gc-sam-f-status'].forEach(function(id){
+      var el = $(id); if (el) el.value = '';
+    });
+    var due = $('gc-sam-f-due'); if (due) due.value = '30';
+  };
+
+  function fmtDate(s){
+    if (!s) return '—';
+    try { var d = new Date(s); if (isNaN(d.getTime())) return String(s); return d.toISOString().slice(0,10); } catch (e) { return String(s); }
+  }
+
+  function renderRows(rows){
+    var tbody = $('gc-sam-results-tbody');
+    if (!tbody) return;
+    if (!rows || !rows.length){
+      tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--muted);padding:24px;font-size:11px">No opportunities yet. Configure filters and click Search SAM.gov.</td></tr>';
+      return;
+    }
+    var html = '';
+    for (var i = 0; i < rows.length; i++){
+      var r = rows[i] || {};
+      var id = escAttr(r.noticeId || r.solicitationNumber || ('row-' + i));
+      var status = (r._userStatus || r.userStatus || 'new');
+      html += '' +
+        '<tr data-gc-sam-row="' + escAttr(id) + '" data-gc-sam-row-status="' + escAttr(status) + '">' +
+          '<td>' +
+            '<div style="font-weight:600;font-size:12px;color:var(--text);line-height:1.35">' + escHtml(r.title || '(untitled)') + '</div>' +
+            '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + escHtml(r.agency || r.fullParentPathName || '') + '</div>' +
+            (r.description ? '<div style="font-size:10px;color:var(--sub);margin-top:4px;max-height:36px;overflow:hidden">' + escHtml(String(r.description).slice(0, 220)) + '</div>' : '') +
+          '</td>' +
+          '<td><div style="font-family:\'IBM Plex Mono\',monospace;font-size:10.5px">' + escHtml(r.solicitationNumber || r.noticeId || '—') + '</div></td>' +
+          '<td>' + escHtml(r.naicsCode || r.naics || '—') + '</td>' +
+          '<td>' + escHtml(r.typeOfSetAsideDescription || r.setAside || '—') + '</td>' +
+          '<td>' + escHtml(fmtDate(r.postedDate || r.publishDate)) + '</td>' +
+          '<td>' + escHtml(fmtDate(r.responseDeadLine || r.dueDate)) + '</td>' +
+          '<td>' + escHtml((r.placeOfPerformance && (r.placeOfPerformance.city || r.placeOfPerformance.state)) ? [r.placeOfPerformance.city, r.placeOfPerformance.state].filter(Boolean).join(', ') : (r.placeOfPerformance || '—')) + '</td>' +
+          '<td><span class="sd-pill" data-gc-sam-status="' + escAttr(status) + '" style="font-size:9px;padding:2px 7px;border-radius:980px;text-transform:uppercase;letter-spacing:0.06em;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--sub)">' + escHtml(status) + '</span></td>' +
+          '<td>' +
+            '<div style="display:flex;flex-direction:column;gap:3px">' +
+              '<button class="btn btn-ghost" data-gc-sam-action="view-details" data-gc-sam-row-id="' + escAttr(id) + '" onclick="gcSamViewDetails(\'' + escAttr(id) + '\')" style="padding:3px 7px;font-size:10px">👁 View Details</button>' +
+              '<button class="btn btn-ghost" data-gc-sam-action="save-to-sourcedeck" data-gc-sam-row-id="' + escAttr(id) + '" onclick="gcSamSaveOpportunity(\'' + escAttr(id) + '\')" style="padding:3px 7px;font-size:10px;color:var(--green,#30d158)">+ Save to SourceDeck</button>' +
+              '<button class="btn btn-ghost" data-gc-sam-action="mark-pursue" data-gc-sam-row-id="' + escAttr(id) + '" onclick="gcSamMarkPursue(\'' + escAttr(id) + '\')" style="padding:3px 7px;font-size:10px;color:var(--gold2)">★ Mark Pursue</button>' +
+              '<button class="btn btn-ghost" data-gc-sam-action="archive" data-gc-sam-row-id="' + escAttr(id) + '" onclick="gcSamArchiveOpportunity(\'' + escAttr(id) + '\')" style="padding:3px 7px;font-size:10px;color:var(--muted)">⊘ Archive</button>' +
+              '<button class="btn btn-ghost" data-gc-sam-action="open-sam-source" data-gc-sam-row-id="' + escAttr(id) + '" onclick="gcSamOpenSource(\'' + escAttr(id) + '\')" style="padding:3px 7px;font-size:10px">↗ Open SAM.gov Source</button>' +
+            '</div>' +
+          '</td>' +
+        '</tr>';
+    }
+    tbody.innerHTML = html;
+  }
+  window.gcSamRenderRows = renderRows;
+
+  function rowById(id){
+    for (var i = 0; i < _lastResults.length; i++){
+      if (_lastResults[i] && (_lastResults[i].noticeId === id || _lastResults[i].solicitationNumber === id)) return _lastResults[i];
+    }
+    return null;
+  }
+  function setMeta(text){
+    var el = $('gc-sam-result-meta'); if (el) el.textContent = text;
+  }
+
+  window.gcSamSearchRun = async function(opts){
+    opts = opts || {};
+    var present = await refreshSamKeyStatus();
+    if (!present){
+      if (window.toast) try { window.toast('SAM.gov key missing — add it in Setup or Settings to enable in-app search.', 'warn'); } catch (e) {}
+      return;
+    }
+    var filters = gatherFilters();
+    _lastFilters = filters;
+    setMeta('Searching SAM.gov…');
+    if (!(window.sd && window.sd.govcon && typeof window.sd.govcon.samSearch === 'function')){
+      setMeta('SAM search bridge unavailable in this build.');
+      if (window.toast) try { window.toast('SAM search bridge unavailable. Rebuild the trial package.', 'err'); } catch (e) {}
+      return;
+    }
+    var rows = [];
+    try {
+      var res = await window.sd.govcon.samSearch(filters);
+      rows = (res && (res.opportunities || res.results || res.records)) || res || [];
+      if (!Array.isArray(rows)) rows = [];
+    } catch (e){
+      setMeta('SAM search failed. Verify your key and filters.');
+      if (window.toast) try { window.toast('SAM search failed. See troubleshooting log for details.', 'err'); } catch (e2) {}
+      return;
+    }
+    _lastResults = rows;
+    renderRows(rows);
+    setMeta('Returned ' + rows.length + ' opportunit' + (rows.length === 1 ? 'y' : 'ies') + ' · last run ' + new Date().toLocaleString());
+  };
+
+  async function _upsertRow(id, patch){
+    var r = rowById(id); if (!r) return null;
+    var opp = {
+      id: 'sam:' + (r.noticeId || r.solicitationNumber || id),
+      source: 'SAM.gov',
+      title: r.title || '(untitled)',
+      agency: r.agency || r.fullParentPathName || '',
+      solicitationNumber: r.solicitationNumber || r.noticeId || '',
+      noticeId: r.noticeId || '',
+      naics: r.naicsCode || r.naics || '',
+      setAside: r.typeOfSetAsideDescription || r.setAside || '',
+      postedDate: r.postedDate || r.publishDate || '',
+      dueDate: r.responseDeadLine || r.dueDate || '',
+      placeOfPerformance: (r.placeOfPerformance && (r.placeOfPerformance.city || r.placeOfPerformance.state)) ? [r.placeOfPerformance.city, r.placeOfPerformance.state].filter(Boolean).join(', ') : (r.placeOfPerformance || ''),
+      sourceUrl: r.uiLink || r.url || '',
+      importedAt: new Date().toISOString(),
+      userStatus: patch && patch.userStatus ? patch.userStatus : 'saved'
+    };
+    try {
+      if (window.sd && window.sd.govcon && window.sd.govcon.opportunities && window.sd.govcon.opportunities.upsert){
+        await window.sd.govcon.opportunities.upsert(opp);
+      }
+    } catch (e) {}
+    r._userStatus = opp.userStatus;
+    renderRows(_lastResults);
+    return opp;
+  }
+  window.gcSamSaveOpportunity = async function(id){
+    var opp = await _upsertRow(id, { userStatus: 'saved' });
+    if (opp && window.toast) try { window.toast('Saved to SourceDeck · "' + opp.title.slice(0,40) + '"', 'ok'); } catch (e) {}
+    try { if (typeof window.renderDashboardLaunchpad === 'function') window.renderDashboardLaunchpad({}); } catch (e) {}
+  };
+  window.gcSamMarkPursue = async function(id){
+    var opp = await _upsertRow(id, { userStatus: 'pursuing' });
+    if (opp && window.toast) try { window.toast('Marked pursuing · appears in Dashboard active pursuits.', 'ok'); } catch (e) {}
+    try { if (typeof window.renderDashboardLaunchpad === 'function') window.renderDashboardLaunchpad({}); } catch (e) {}
+  };
+  window.gcSamArchiveOpportunity = async function(id){
+    var opp = await _upsertRow(id, { userStatus: 'archived' });
+    if (opp && window.toast) try { window.toast('Archived locally.', 'info'); } catch (e) {}
+  };
+  window.gcSamViewDetails = function(id){
+    var r = rowById(id); if (!r) return;
+    if (window.toast) try { window.toast('Title: ' + (r.title || '(untitled)') + ' · #' + (r.solicitationNumber || r.noticeId || '—'), 'info'); } catch (e) {}
+  };
+  window.gcSamOpenSource = function(id){
+    var r = rowById(id); if (!r) return;
+    var url = r.uiLink || r.url || '';
+    if (!url){
+      if (window.toast) try { window.toast('No SAM.gov source URL on this record.', 'warn'); } catch (e) {}
+      return;
+    }
+    try { window.open(url, '_blank', 'noopener,noreferrer'); } catch (e) {}
+  };
+
+  // No auto-search on load. We only refresh the key status indicator
+  // so the buyer knows whether they need to add a key first.
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', refreshSamKeyStatus);
+  } else {
+    setTimeout(refreshSamKeyStatus, 0);
+  }
+})();
 
 async function gcWizSaveAiKey(){ await _gcWizSaveKey(_gcv('gcwiz-ai-provider')||'openai', 'gcwiz-ai-key', _gcWizUpdateAiStatus); }
 async function gcWizRemoveAiKey(){ await _gcWizRemoveKey(_gcv('gcwiz-ai-provider')||'openai', 'gcwiz-ai-key', _gcWizUpdateAiStatus); }
@@ -15782,6 +16167,339 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 
 <script>
+/* Phase 25M — Proposal Workspace Solicitation Intake + Selector.
+
+   Three routes into a solicitation:
+     (1) SAM.gov-imported opportunities saved via the GovCon Pipeline
+         (sd.govcon.opportunities.list())
+     (2) Manually uploaded .pdf / .docx / .txt / .md
+     (3) Pasted text
+
+   Extraction is heuristic + local. PDF/DOCX parsing is accepted as a
+   file-attached fallback but the user is steered to paste-text for
+   structured extraction. Output is 6 FAR-aligned sections:
+     1. Solicitation Metadata & Summary
+     2. Scope of Work
+     3. Place of Performance
+     4. Subcontractor ID & Proposal Prep
+     5. Compliance & Submission Requirements
+     6. Site Visit Details & Logistics
+
+   Each section gets Notes · Draft · Approve · Needs revision · Retry
+   with notes · status. SourceDeck never generates a full proposal in
+   one click. No portal upload · no email send · no bid submission.
+*/
+(function(){
+  'use strict';
+
+  var CATEGORIES = [
+    { id: 'metadata-summary',     title: 'Solicitation Metadata & Summary',     far: 'FAR Part 15 / FAR Part 12 (advisory)' },
+    { id: 'scope-of-work',        title: 'Scope of Work',                       far: 'FAR Part 15 (advisory)' },
+    { id: 'place-of-performance', title: 'Place of Performance',                far: 'FAR 52.215-6 (advisory)' },
+    { id: 'subcontractor-prep',   title: 'Subcontractor ID & Proposal Prep',    far: 'FAR Subpart 19.7 (advisory)' },
+    { id: 'compliance-submission',title: 'Compliance & Submission Requirements',far: 'FAR 15.204 · FAR 52.212-1 (advisory)' },
+    { id: 'site-visit-logistics', title: 'Site Visit Details & Logistics',      far: 'FAR 52.237-1 (advisory)' }
+  ];
+  var STATUS_LABEL = { 'not-started':'Not Started','drafted':'Drafted','approved':'Approved','needs-revision':'Needs Revision','finalized':'Finalized' };
+
+  var STORE_KEY = 'sd.proposalWorkspace.solicitationIntake.v1';
+  var BRIDGE_KEY = 'proposalWorkspace.solicitationIntake';
+
+  function blankState(){
+    return { records: [], activeId: null };
+  }
+  var _state = blankState();
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+  async function loadState(){
+    var loaded = null;
+    try {
+      if (window.sd && typeof window.sd.storeGet === 'function') loaded = await window.sd.storeGet(BRIDGE_KEY);
+    } catch (e) {}
+    if (!loaded){
+      try { var raw = localStorage.getItem(STORE_KEY); if (raw) loaded = JSON.parse(raw); } catch (e) {}
+    }
+    if (loaded && Array.isArray(loaded.records)) _state = loaded;
+  }
+  async function saveState(){
+    var snap = JSON.parse(JSON.stringify(_state));
+    try { if (window.sd && typeof window.sd.storeSet === 'function') await window.sd.storeSet(BRIDGE_KEY, snap); } catch (e) {}
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(snap)); } catch (e) {}
+  }
+
+  async function listSavedOpportunities(){
+    try {
+      if (window.sd && window.sd.govcon && window.sd.govcon.opportunities && window.sd.govcon.opportunities.list){
+        var list = await window.sd.govcon.opportunities.list();
+        return (list || []).filter(function(o){ return o && (o.source === 'SAM.gov' || /^sam:/.test(String(o.id))); });
+      }
+    } catch (e) {}
+    return [];
+  }
+
+  async function renderSelector(){
+    var sel = $('pw-sol-selector');
+    if (!sel) return;
+    var saved = await listSavedOpportunities();
+    var html = '<option value="">— None selected —</option>';
+    if (saved.length){
+      html += '<optgroup label="SAM.gov imported">';
+      for (var i = 0; i < saved.length; i++){
+        var o = saved[i];
+        var id = 'sam:' + (o.id || o.noticeId || o.solicitationNumber || ('opp-' + i));
+        html += '<option value="' + esc(id) + '">' + esc(o.title || '(untitled)') + ' · ' + esc(o.solicitationNumber || o.noticeId || '—') + ' · ' + esc(o.agency || '') + '</option>';
+      }
+      html += '</optgroup>';
+    }
+    if (_state.records.length){
+      html += '<optgroup label="Uploaded / pasted">';
+      for (var j = 0; j < _state.records.length; j++){
+        var r = _state.records[j];
+        html += '<option value="' + esc(r.id) + '">' + esc(r.title || (r.source === 'paste' ? 'Pasted text' : r.fileName || 'Upload')) + ' · ' + esc(r.source) + '</option>';
+      }
+      html += '</optgroup>';
+    }
+    sel.innerHTML = html;
+    if (_state.activeId) sel.value = _state.activeId;
+    renderActive();
+  }
+
+  function renderActive(){
+    var src = $('pw-sol-current-source');
+    var stat = $('pw-sol-current-status');
+    var empty = $('pw-sol-intake-empty');
+    var ext = $('pw-sol-extraction');
+    var rec = activeRecord();
+    if (!rec){
+      if (src) src.textContent = '—';
+      if (stat) stat.textContent = 'not started';
+      if (empty) empty.style.display = '';
+      if (ext) ext.style.display = 'none';
+      return;
+    }
+    if (src) src.textContent = rec.source || '—';
+    if (stat) stat.textContent = rec.status || 'not started';
+    if (empty) empty.style.display = 'none';
+    if (ext){
+      if (rec.extracted){ ext.style.display = ''; renderExtractionSections(rec); }
+      else { ext.style.display = 'none'; }
+    }
+  }
+
+  function activeRecord(){
+    if (!_state.activeId) return null;
+    if (/^sam:/.test(_state.activeId)){
+      // SAM-imported records are owned by sd.govcon.opportunities,
+      // not local. Build a synthetic record from the dropdown text.
+      var sel = $('pw-sol-selector');
+      var label = sel ? (sel.options[sel.selectedIndex] && sel.options[sel.selectedIndex].text) || '' : '';
+      return { id: _state.activeId, source: 'SAM.gov', title: label, status: 'imported', rawText: '', extracted: null, sections: {} };
+    }
+    for (var i = 0; i < _state.records.length; i++){
+      if (_state.records[i].id === _state.activeId) return _state.records[i];
+    }
+    return null;
+  }
+
+  function newRecord(source, fields){
+    var id = source + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+    var rec = {
+      id: id, source: source, createdAt: new Date().toISOString(),
+      title: (fields && fields.title) || '',
+      fileName: (fields && fields.fileName) || '',
+      rawText: (fields && fields.rawText) || '',
+      status: 'not started',
+      extracted: null,
+      sections: {}
+    };
+    CATEGORIES.forEach(function(c){ rec.sections[c.id] = { status: 'not-started', notes: '', draft: '' }; });
+    return rec;
+  }
+
+  // ── Heuristic extraction (compact) ───────────────────────────────
+  function extract(text){
+    var t = String(text || '');
+    function ff(re){ var m = t.match(re); return m ? String(m[1] || m[0]).trim() : ''; }
+    function la(re){
+      var m = t.match(re); if (!m) return [];
+      var slice = t.slice(m.index + m[0].length, m.index + m[0].length + 1200);
+      return slice.split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean).slice(0, 10);
+    }
+    var title = ff(/^\s*(?:title|subject)\s*:\s*(.+)$/im) || '';
+    var agency = ff(/(?:agency|department)\s*:\s*(.+)/i) || ff(/(department\s+of\s+[A-Z][a-zA-Z &,]+)/);
+    var solNum = ff(/solicitation\s+(?:no\.?|number|#)\s*[:\-]?\s*([A-Z0-9\-_\/]+)/i);
+    var summary = (t.split(/\n\s*\n/)[0] || '').slice(0, 600);
+    return {
+      'metadata-summary':      { title: title, agency: agency, solicitationNumber: solNum, summary: summary, deadlines: la(/deadlines?\s*[:\-]/i) },
+      'scope-of-work':         { mainTasks: la(/(?:main\s+tasks|tasks|statement\s+of\s+work|scope\s+of\s+work)\s*[:\-]/i), objectives: la(/objectives?\s*[:\-]/i), deliverables: la(/deliverables?\s*[:\-]/i) },
+      'place-of-performance':  { primaryAddress: ff(/place\s+of\s+performance\s*[:\-]\s*([^\n]+)/i), workMode: /\bremote|off-site|hybrid|on-site\b/i.test(t) ? (t.match(/\bremote|off-site|hybrid|on-site\b/i) || [''])[0] : '' },
+      'subcontractor-prep':    { qualifications: la(/qualifications?\s*[:\-]/i), smallBusiness: la(/(?:small\s+business|SDVOSB|WOSB|HUBZone)\s*[:\-]/i) },
+      'compliance-submission': { submissionDeadlines: la(/(?:submission\s+deadlines?|due)\s*[:\-]/i), formattingRequirements: la(/format(?:ting)?\s*[:\-]/i), pointsOfContact: la(/(?:point\s+of\s+contact|POC)\s*[:\-]/i) },
+      'site-visit-logistics':  { siteVisitDates: la(/site\s+visit\s+date\s*[:\-]/i), rsvpDeadlines: la(/RSVP\s*[:\-]/i) }
+    };
+  }
+
+  function renderExtractionSections(rec){
+    var host = $('pw-sol-extraction-sections');
+    if (!host || !rec || !rec.extracted) return;
+    var html = '';
+    for (var i = 0; i < CATEGORIES.length; i++){
+      var c = CATEGORIES[i];
+      var data = rec.extracted[c.id] || {};
+      var sec = rec.sections[c.id] || { status: 'not-started', notes: '', draft: '' };
+      var keys = Object.keys(data).filter(function(k){ var v = data[k]; return v && (typeof v === 'string' ? v.length : (Array.isArray(v) ? v.length : true)); });
+      var bullets = keys.map(function(k){
+        var v = data[k];
+        var rendered = Array.isArray(v) ? '<ul style="margin:2px 0;padding-left:16px">' + v.map(function(x){ return '<li>' + esc(x) + '</li>'; }).join('') + '</ul>' : esc(v);
+        return '<div style="margin-bottom:4px"><span style="font:600 9px/1.3 \'Azeret Mono\',monospace;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">' + esc(k) + '</span><div style="font-size:11px;color:var(--sub);line-height:1.5">' + rendered + '</div></div>';
+      }).join('');
+      html += '' +
+        '<div class="card" data-pw-sol-section="' + esc(c.id) + '" style="padding:11px 13px;background:var(--panel2,#0f1e32)">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px;margin-bottom:6px">' +
+            '<div>' +
+              '<div style="font:700 9.5px/1 \'Azeret Mono\',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:3px">' + esc(c.far) + '</div>' +
+              '<div style="font-family:\'Syne\',sans-serif;font-weight:700;font-size:13px;color:var(--text)">' + esc(c.title) + '</div>' +
+            '</div>' +
+            '<span data-pw-sol-section-status="' + esc(c.id) + '" style="font-size:9px;padding:2px 7px;border-radius:980px;text-transform:uppercase;letter-spacing:0.06em;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--sub)">' + esc(STATUS_LABEL[sec.status] || sec.status) + '</span>' +
+          '</div>' +
+          '<div style="font-size:11px;color:var(--text);line-height:1.5;margin-bottom:6px">' + (bullets || '<span style="color:var(--muted);font-style:italic">No structured fields extracted — refer to the raw solicitation text.</span>') + '</div>' +
+          '<details style="margin-top:6px"><summary style="cursor:pointer;font-size:10.5px;color:var(--muted)">Notes &amp; draft</summary>' +
+            '<div style="margin-top:6px">' +
+              '<label class="label" style="font-size:9.5px">Notes</label>' +
+              '<textarea class="textarea" data-pw-sol-section-notes="' + esc(c.id) + '" placeholder="Notes for this section" style="min-height:50px;font-size:11px">' + esc(sec.notes || '') + '</textarea>' +
+              '<label class="label" style="font-size:9.5px;margin-top:6px">Draft</label>' +
+              '<textarea class="textarea" data-pw-sol-section-draft="' + esc(c.id) + '" placeholder="Draft text for this section" style="min-height:90px;font-size:11px">' + esc(sec.draft || '') + '</textarea>' +
+              '<div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:6px">' +
+                '<button class="btn btn-blue" data-pw-sol-section-action="draft" data-pw-sol-section-id="' + esc(c.id) + '" onclick="pwSolSectionAction(\'' + esc(c.id) + '\',\'draft\')" style="padding:3px 8px;font-size:10px">🪄 Draft this section</button>' +
+                '<button class="btn btn-ghost" data-pw-sol-section-action="approve" data-pw-sol-section-id="' + esc(c.id) + '" onclick="pwSolSectionAction(\'' + esc(c.id) + '\',\'approve\')" style="padding:3px 8px;font-size:10px;color:var(--green,#30d158)">✓ Approve</button>' +
+                '<button class="btn btn-ghost" data-pw-sol-section-action="needs-revision" data-pw-sol-section-id="' + esc(c.id) + '" onclick="pwSolSectionAction(\'' + esc(c.id) + '\',\'needs-revision\')" style="padding:3px 8px;font-size:10px;color:var(--gold2)">↻ Needs revision</button>' +
+                '<button class="btn btn-ghost" data-pw-sol-section-action="retry-with-notes" data-pw-sol-section-id="' + esc(c.id) + '" onclick="pwSolSectionAction(\'' + esc(c.id) + '\',\'retry-with-notes\')" style="padding:3px 8px;font-size:10px;color:var(--blue,#60a5fa)">↻ Retry with notes</button>' +
+              '</div>' +
+            '</div>' +
+          '</details>' +
+        '</div>';
+    }
+    host.innerHTML = html;
+    // Wire autosave on notes/draft inputs.
+    var notes = host.querySelectorAll('[data-pw-sol-section-notes]');
+    var drafts = host.querySelectorAll('[data-pw-sol-section-draft]');
+    function attach(els, field){
+      for (var i = 0; i < els.length; i++){
+        (function(el){
+          el.addEventListener('input', function(){
+            var rec = activeRecord(); if (!rec) return;
+            var sid = el.getAttribute(field === 'notes' ? 'data-pw-sol-section-notes' : 'data-pw-sol-section-draft');
+            rec.sections[sid] = rec.sections[sid] || { status: 'not-started', notes: '', draft: '' };
+            rec.sections[sid][field] = el.value || '';
+            saveState();
+          });
+        })(els[i]);
+      }
+    }
+    attach(notes, 'notes');
+    attach(drafts, 'draft');
+  }
+
+  // ── Public actions ────────────────────────────────────────────────
+  window.pwSolOpenFilePicker = function(){
+    var p = $('pw-sol-file'); if (p) p.click();
+  };
+  window.pwSolOnFileChosen = function(ev){
+    var f = ev && ev.target && ev.target.files && ev.target.files[0]; if (!f) return;
+    var name = (f.name || '').toLowerCase();
+    var mime = (f.type || '').toLowerCase();
+    var isText = /\.txt$|\.md$/.test(name) || /^text\//.test(mime) || mime === 'text/markdown';
+    var rec = newRecord('Upload', { fileName: f.name, title: f.name });
+    if (isText){
+      var r = new FileReader();
+      r.onload = function(){
+        rec.rawText = String(r.result || '');
+        _state.records.push(rec);
+        _state.activeId = rec.id;
+        saveState().then(renderSelector);
+        if (window.toast) try { window.toast('Solicitation loaded locally · click Extract Key Details', 'ok'); } catch (e) {}
+      };
+      r.readAsText(f);
+    } else {
+      rec.rawText = '';
+      _state.records.push(rec);
+      _state.activeId = rec.id;
+      saveState().then(renderSelector);
+      var area = $('pw-sol-paste-area'); if (area) area.style.display = '';
+      if (window.toast) try { window.toast('File attached locally. Paste solicitation text to extract details in this build.', 'info'); } catch (e) {}
+    }
+  };
+  window.pwSolTogglePasteArea = function(){
+    var a = $('pw-sol-paste-area'); if (!a) return;
+    var willShow = a.style.display === 'none' || a.style.display === '';
+    a.style.display = willShow ? '' : 'none';
+    if (willShow){ var ta = $('pw-sol-paste-text'); if (ta) ta.focus(); }
+  };
+  window.pwSolExtractKeyDetails = function(){
+    var ta = $('pw-sol-paste-text');
+    var pasted = ta ? String(ta.value || '') : '';
+    var rec = activeRecord();
+    if (!rec || /^sam:/.test(rec.id)){
+      // Either no record selected OR a SAM-imported one with no local text.
+      // If user pasted text without selecting a record, create a paste record.
+      if (pasted.trim()){
+        rec = newRecord('Paste', { title: 'Pasted solicitation · ' + new Date().toISOString().slice(0,10), rawText: pasted });
+        _state.records.push(rec);
+        _state.activeId = rec.id;
+      } else {
+        if (window.toast) try { window.toast('Select an uploaded solicitation or paste text first.', 'warn'); } catch (e) {}
+        return;
+      }
+    }
+    if (pasted.trim() && !rec.rawText){ rec.rawText = pasted; }
+    rec.extracted = extract(rec.rawText);
+    rec.status = 'extracted';
+    rec.extractedAt = new Date().toISOString();
+    saveState().then(renderSelector);
+    renderActive();
+    if (window.toast) try { window.toast('Extracted into 6 FAR-aligned sections.', 'ok'); } catch (e) {}
+  };
+  window.pwSolClearSelected = function(){
+    var ok = false;
+    try { ok = window.confirm('Clear the selected solicitation locally? Any unfinalized drafts on this record will be removed.'); } catch (e) { ok = true; }
+    if (!ok) return;
+    var id = _state.activeId;
+    if (id && !/^sam:/.test(id)){
+      _state.records = _state.records.filter(function(r){ return r.id !== id; });
+    }
+    _state.activeId = null;
+    saveState().then(renderSelector);
+  };
+  window.pwSolSelectChange = function(){
+    var sel = $('pw-sol-selector'); if (!sel) return;
+    _state.activeId = sel.value || null;
+    saveState();
+    renderActive();
+  };
+  window.pwSolSectionAction = function(sectionId, action){
+    var rec = activeRecord(); if (!rec) return;
+    rec.sections[sectionId] = rec.sections[sectionId] || { status: 'not-started', notes: '', draft: '' };
+    if (action === 'approve') rec.sections[sectionId].status = 'approved';
+    else if (action === 'needs-revision') rec.sections[sectionId].status = 'needs-revision';
+    else if (action === 'draft' || action === 'retry-with-notes') rec.sections[sectionId].status = 'drafted';
+    saveState();
+    renderExtractionSections(rec);
+  };
+
+  function boot(){
+    loadState().then(renderSelector).catch(function(){ renderSelector(); });
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 0);
+  }
+})();
+</script>
+
+<script>
 /* Phase 25E.4 — Help / FAQ
    9 sections × 20 FAQ items (180 total) written at ~4th-grade
    reading level. The full long-form manual lives at
@@ -16761,11 +17479,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Toggles the "How do I get an .ics file?" help panel above the
   // Calendar pane. Pure DOM toggle; no network. Idempotent — safe to
   // call from any surface (Calendar pane, Settings → Calendar Import).
-  window.calToggleIcsHelp = function(){
+  window.calToggleIcsHelp = function(opts){
+    opts = opts || {};
     var panel = document.getElementById('cal-ics-help-panel');
     var btn = document.getElementById('cal-ics-help-btn');
     if (!panel) return;
-    var willShow = panel.hasAttribute('hidden');
+    var hidden = panel.hasAttribute('hidden');
+    // opts.open=true (hover hint) forces the panel open without toggling
+    // back to hidden if it's already showing.
+    var willShow = opts.open ? true : hidden;
     if (willShow) {
       panel.removeAttribute('hidden');
       if (btn) btn.setAttribute('aria-expanded', 'true');
@@ -17100,8 +17822,28 @@ document.addEventListener('DOMContentLoaded',()=>{
       );
     } catch (e) { ok = true; }
     if (!ok) return;
-    try { calOpenEventModal(eventId); } catch (e) {}
-    try { calDeleteEvent({ skipConfirm: true }); } catch (e) {}
+    // Phase 25M — direct state mutation. Pre-25M went through the
+    // modal (calOpenEventModal + calDeleteEvent) which depended on
+    // _editingEventId being set synchronously and caused a brief
+    // modal flash; some buyers reported delete appearing to "not
+    // work." This path mutates _state.events directly, saves, and
+    // re-renders without ever touching the modal.
+    var before = _state.events.length;
+    _state.events = _state.events.filter(function(e){ return e.id !== eventId; });
+    if (_state.events.length === before){
+      if (window.toast) try { window.toast('Delete failed — event not found locally.', 'err'); } catch (e) {}
+      return;
+    }
+    try { saveState(); } catch (e) {}
+    try { renderCalendar(); } catch (e) {}
+    // If the user happens to have the modal open against this event,
+    // close it. No-op if the modal is hidden or pointing elsewhere.
+    if (_editingEventId === eventId){
+      try { window.calCloseEventModal(); } catch (e) {}
+    }
+    // Notify dashboard / today's work plan to refresh counts.
+    try { if (typeof window.renderDashboardLaunchpad === 'function') window.renderDashboardLaunchpad({}); } catch (e) {}
+    if (window.toast) try { window.toast('Event deleted locally. External calendars are not changed.', 'ok'); } catch (e) {}
   }
   function renderToday(container){
     var iso = _state.anchorDate || todayIso();
