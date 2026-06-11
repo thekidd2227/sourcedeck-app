@@ -3,13 +3,18 @@
 /**
  * Phase 25F — GovCon Section Navigation
  *
- * Asserts a sticky in-pane section navigation pill bar exists at the
- * top of the GovCon pane and routes to each of the seven canonical
- * GovCon workspace sections via in-page anchors.
+ * SUPERSEDED BY PHASE 25N — the Phase 25F scroll-pill "Jump to"
+ * navigation was replaced with a real tab-page architecture in
+ * Phase 25N. The pre-25N invariants below have been updated to
+ * acknowledge the supersession:
  *
- * The GovCon pane itself remains one scroll surface (Phase 24
- * invariants preserved). The pill bar is an information-architecture
- * aid: clicking a pill smooth-scrolls to the matching <section>.
+ *   - The pill <nav id="gc-section-nav"> is retired; the new
+ *     <nav id="gc-tab-nav"> hosts real tab buttons.
+ *   - The seven canonical section <section> elements still live in
+ *     DOM (Phase 23C reachability invariant: never orphan a pane);
+ *     they are routed to focused tab pages via data-gc-tab-page or
+ *     to the hidden-internal buffer.
+ *   - window.gcScrollTo() is preserved for legacy callers.
  */
 
 const test = require('node:test');
@@ -20,36 +25,40 @@ const path = require('node:path');
 const REPO_ROOT = path.resolve(__dirname, '..');
 const HTML = fs.readFileSync(path.join(REPO_ROOT, 'sourcedeck.html'), 'utf8');
 
-test('GovCon section nav bar is present at the top of the tab-govcon pane', () => {
-  // The nav must live INSIDE the GovCon pane-body, immediately after
-  // the setup-banner. Slice between the pane opening and the GovCon
-  // Mode Indicator section to confirm.
+test('Phase 25N — GovCon tab nav supersedes the Phase 25F section-nav pill bar', () => {
+  // The Phase 25F <nav id="gc-section-nav"> is retired; Phase 25N
+  // ships <nav id="gc-tab-nav" data-phase-25n="govcon-tab-nav">
+  // with real tab buttons. The nav must still live INSIDE the
+  // GovCon pane, before any of the deprecated overview sections.
   const paneStart = HTML.indexOf('<div class="tab-pane active" id="tab-govcon">');
   assert.ok(paneStart !== -1, 'tab-govcon pane missing');
   const modeIndicatorStart = HTML.indexOf('id="gc-mode-indicator"', paneStart);
-  assert.ok(modeIndicatorStart !== -1, 'gc-mode-indicator anchor missing');
+  assert.ok(modeIndicatorStart !== -1, 'gc-mode-indicator anchor missing (must remain in DOM)');
   const slice = HTML.slice(paneStart, modeIndicatorStart);
-  assert.match(slice, /<nav id="gc-section-nav"/);
-  assert.match(slice, /data-phase-25f="govcon-section-nav"/);
-  assert.match(slice, /position:sticky/);
+  assert.match(slice, /<nav id="gc-tab-nav"/);
+  assert.match(slice, /data-phase-25n="govcon-tab-nav"/);
+  assert.match(slice, /role="tablist"/);
+  assert.doesNotMatch(slice, /id="gc-section-nav"/,
+    'Phase 25F id="gc-section-nav" should be replaced by Phase 25N id="gc-tab-nav"');
 });
 
-test('GovCon section nav contains all 7 canonical section pills', () => {
-  const REQUIRED_PILLS = [
-    { label: 'Overview',                                   href: 'gc-capture-cc' },
-    { label: 'Operating Rhythm',                           href: 'gc-operating-rhythm' },
-    { label: 'Solicitation',                               href: 'gc-sol-workspace' },
-    { label: 'Vendor &amp; Pricing',                       href: 'gc-vqr-pricing' },
-    { label: 'Past Performance · Capability · Prime',      href: 'gc-pp-cs-pp' },
-    { label: 'Submission Readiness',                       href: 'gc-sub-gate' },
-    { label: 'Audit Log',                                  href: 'gc-audit-log' },
+test('Phase 25N — required GovCon tab buttons map to the canonical sections', () => {
+  // The canonical sections are preserved in DOM. The tab buttons that
+  // route to them are renamed and re-shaped (real tab buttons, not
+  // scroll-link pills).
+  const REQUIRED_TAB_BUTTONS = [
+    { label: 'Solicitation',         tab: 'solicitation' },
+    { label: 'Vendors + Pricing',    tab: 'vendors-pricing' },
+    { label: 'Past Performance',     tab: 'past-performance' },
+    { label: 'Submission Readiness', tab: 'submission-readiness' },
+    { label: 'Audit Log',            tab: 'audit-log' },
   ];
-  for (const pill of REQUIRED_PILLS) {
-    const escapedLabel = pill.label.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  for (const t of REQUIRED_TAB_BUTTONS) {
+    const escLabel = t.label.replace(/[.*+?^${}()|[\]\\+]/g, '\\$&');
     assert.match(
       HTML,
-      new RegExp(`href="#${pill.href}"[^>]*onclick="gcScrollTo\\(event,'${pill.href}'\\)"[\\s\\S]{0,200}${escapedLabel}`),
-      `section pill "${pill.label}" must anchor to #${pill.href}`
+      new RegExp(`data-gc-tab="${t.tab}"[\\s\\S]{0,500}${escLabel}`),
+      `Phase 25N tab button "${t.label}" must exist with data-gc-tab="${t.tab}"`
     );
   }
 });
