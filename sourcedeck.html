@@ -2302,12 +2302,24 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div id="gc-tab-sam-key-missing" data-gc-sam-key-missing="true" style="display:none;font-size:11px;color:var(--text);line-height:1.55;background:rgba(255,176,32,0.06);border:1px solid rgba(255,176,32,0.30);border-radius:6px;padding:9px 12px;margin-bottom:12px">
             <strong style="color:#ffb020">SAM.gov key missing.</strong> Add it in Setup or Settings → API Keys to enable in-app search. SourceDeck never displays the raw key.
           </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px">
+          <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
             <button type="button" class="btn btn-gold" id="gc-tab-search-sam-btn" data-gc-find-action="search-sam" onclick="gcTabSearchSam()" title="Search SAM.gov using your configured key">🔎 Search SAM.gov</button>
+            <!-- Phase 25Q — result count selector. Capped at 100 so the
+                 single search call never exceeds the SAM.gov single-page
+                 limit; no auto-pagination. Default 25. -->
+            <label for="gc-tab-sam-limit" style="font-size:10.5px;color:var(--muted);font-family:'IBM Plex Mono',monospace;letter-spacing:0.04em;display:inline-flex;align-items:center;gap:6px">Results
+              <select class="select" id="gc-tab-sam-limit" data-gc-sam-limit="true" style="padding:4px 8px;font-size:11px">
+                <option value="25" selected>25</option>
+                <option value="50">50</option>
+                <option value="75">75</option>
+                <option value="100">100</option>
+              </select>
+            </label>
             <button type="button" class="btn btn-ghost" id="gc-tab-upload-btn" data-gc-find-action="upload-solicitation" onclick="openTab('execution'); setTimeout(function(){ if (typeof pwSolOpenFilePicker === 'function') pwSolOpenFilePicker(); }, 100);" title="Upload solicitation / RFQ / RFP">📎 Upload Solicitation</button>
             <button type="button" class="btn btn-ghost" id="gc-tab-paste-btn" data-gc-find-action="paste-solicitation" onclick="openTab('execution'); setTimeout(function(){ if (typeof pwSolTogglePasteArea === 'function') pwSolTogglePasteArea(); }, 100);" title="Paste solicitation text">📋 Paste Solicitation Text</button>
             <button type="button" class="btn btn-ghost" id="gc-tab-open-setup-btn" data-gc-find-action="open-setup" onclick="openGovconSetupWizard()" title="Open GovCon Setup Wizard" style="margin-left:auto">⚙ Open GovCon Setup</button>
           </div>
+          <div id="gc-tab-sam-search-status" data-gc-sam-search-status="true" style="display:none;font-size:11px;color:var(--sub);margin-bottom:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.03em"></div>
           <div id="gc-tab-find-empty" data-gc-find-empty="true" style="text-align:center;padding:48px 24px;border:1px dashed var(--border);border-radius:8px;color:var(--muted);background:rgba(255,255,255,0.02)">
             <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:6px">No saved or pursuing opportunities yet.</div>
             <div style="font-size:11.5px;line-height:1.55;max-width:480px;margin:0 auto">Search SAM.gov, upload a solicitation, or paste solicitation text to begin. Saved opportunities will appear under <strong>Saved Pursuits</strong>.</div>
@@ -17315,12 +17327,194 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.gcTabRenderSavedPursuits = renderSavedPursuits;
   window.gcTabRefreshSavedPursuitsPreview = refreshSavedPursuitsPreview;
 
+  // ── Phase 25Q — fresh search results cache. The defect Phase 25Q
+  //    repairs: pre-25Q gcTabSearchSam fetched results, surfaced the
+  //    count via toast, then called refreshSavedPursuitsPreview()
+  //    which only renders saved/pursuing rows. Fresh results never
+  //    rendered. Phase 25Q caches the raw results in a module-level
+  //    array and renders them directly into #gc-tab-find-results.
+  var _samFreshResults = [];
+
+  function _esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function _attr(s){ return _esc(s); }
+  function _fmtDate(s){
+    if (!s) return '—';
+    try { var d = new Date(s); if (isNaN(d.getTime())) return String(s); return d.toISOString().slice(0,10); } catch (e) { return String(s); }
+  }
+  function _samLimit(){
+    var sel = $('gc-tab-sam-limit');
+    var v = sel ? parseInt(sel.value, 10) : 25;
+    if (!v || isNaN(v)) v = 25;
+    if (v > 100) v = 100;
+    if (v < 1) v = 25;
+    return v;
+  }
+  function _samStatus(text){
+    var el = $('gc-tab-sam-search-status');
+    if (!el) return;
+    if (text == null || text === ''){
+      el.style.display = 'none';
+      el.textContent = '';
+    } else {
+      el.style.display = '';
+      el.textContent = String(text);
+    }
+  }
+  function _samRowId(r, i){
+    if (!r) return 'sam-' + i;
+    return String(r.noticeId || r.solicitationNumber || ('sam-' + i));
+  }
+  function _samFindRow(id){
+    if (id == null) return null;
+    for (var i = 0; i < _samFreshResults.length; i++){
+      var r = _samFreshResults[i];
+      if (_samRowId(r, i) === id) return r;
+    }
+    return null;
+  }
+  async function _samUpsert(id, userStatus){
+    var r = _samFindRow(id);
+    if (!r) return null;
+    var stableId = 'sam:' + _samRowId(r, 0);
+    var pop = '';
+    if (r.placeOfPerformance){
+      if (typeof r.placeOfPerformance === 'string') pop = r.placeOfPerformance;
+      else pop = [r.placeOfPerformance.city, r.placeOfPerformance.state, r.placeOfPerformance.country].filter(Boolean).join(', ');
+    }
+    var opp = {
+      id: stableId,
+      source: 'SAM.gov',
+      title: r.title || '(untitled)',
+      agency: r.agency || r.fullParentPathName || '',
+      solicitationNumber: r.solicitationNumber || r.noticeId || '',
+      noticeId: r.noticeId || '',
+      naics: r.naicsCode || r.naics || '',
+      setAside: r.typeOfSetAsideDescription || r.setAside || '',
+      postedDate: r.postedDate || r.publishDate || '',
+      dueDate: r.responseDeadLine || r.dueDate || '',
+      placeOfPerformance: pop,
+      sourceUrl: r.uiLink || r.url || '',
+      summary: (r.description || '').toString().slice(0, 400),
+      importedAt: new Date().toISOString(),
+      userStatus: userStatus
+    };
+    try {
+      if (window.sd && window.sd.govcon && window.sd.govcon.opportunities && window.sd.govcon.opportunities.upsert){
+        await window.sd.govcon.opportunities.upsert(opp);
+      }
+    } catch (e) {}
+    r._userStatus = userStatus;
+    renderSamFreshResults(_samFreshResults);
+    return opp;
+  }
+  function _samRowHtml(r, i){
+    var id = _attr(_samRowId(r, i));
+    var pop = '';
+    if (r.placeOfPerformance){
+      if (typeof r.placeOfPerformance === 'string') pop = r.placeOfPerformance;
+      else pop = [r.placeOfPerformance.city, r.placeOfPerformance.state, r.placeOfPerformance.country].filter(Boolean).join(', ');
+    }
+    var status = r._userStatus || 'new';
+    var summary = (r.description || '').toString().slice(0, 240);
+    return '' +
+      '<tr data-gc-sam-fresh-row="' + id + '" data-gc-sam-fresh-status="' + _attr(status) + '">' +
+        '<td>' +
+          '<div style="font-weight:600;font-size:12px;color:var(--text);line-height:1.35">' + _esc(r.title || '(untitled)') + '</div>' +
+          '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + _esc(r.agency || r.fullParentPathName || '') + '</div>' +
+          (summary ? '<div style="font-size:10px;color:var(--sub);margin-top:4px;max-height:32px;overflow:hidden">' + _esc(summary) + '</div>' : '') +
+        '</td>' +
+        '<td><code style="font-size:10.5px">' + _esc(r.solicitationNumber || r.noticeId || '—') + '</code></td>' +
+        '<td>' + _esc(r.naicsCode || r.naics || '—') + '</td>' +
+        '<td>' + _esc(r.typeOfSetAsideDescription || r.setAside || '—') + '</td>' +
+        '<td>' + _esc(_fmtDate(r.postedDate || r.publishDate)) + '</td>' +
+        '<td>' + _esc(_fmtDate(r.responseDeadLine || r.dueDate)) + '</td>' +
+        '<td>' + _esc(pop || '—') + '</td>' +
+        '<td>' +
+          '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em">SAM.gov</div>' +
+          '<div data-gc-sam-fresh-status-pill="' + id + '" style="margin-top:3px;font-size:9px;padding:2px 7px;border-radius:980px;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--sub);text-transform:uppercase;letter-spacing:0.06em;display:inline-block">' + _esc(status) + '</div>' +
+        '</td>' +
+        '<td>' +
+          '<div style="display:flex;flex-direction:column;gap:3px;min-width:170px">' +
+            '<button class="btn btn-ghost" data-gc-sam-fresh-action="view-details" data-gc-sam-fresh-row-id="' + id + '" onclick="gcTabSamViewDetails(\'' + id + '\')" style="padding:3px 7px;font-size:10px">👁 View Details</button>' +
+            '<button class="btn btn-ghost" data-gc-sam-fresh-action="save-to-sourcedeck" data-gc-sam-fresh-row-id="' + id + '" onclick="gcTabSamSave(\'' + id + '\')" style="padding:3px 7px;font-size:10px;color:var(--green,#30d158)">+ Save to SourceDeck</button>' +
+            '<button class="btn btn-ghost" data-gc-sam-fresh-action="mark-pursue" data-gc-sam-fresh-row-id="' + id + '" onclick="gcTabSamMarkPursue(\'' + id + '\')" style="padding:3px 7px;font-size:10px;color:var(--gold2)">★ Mark Pursue</button>' +
+            '<button class="btn btn-ghost" data-gc-sam-fresh-action="archive" data-gc-sam-fresh-row-id="' + id + '" onclick="gcTabSamArchive(\'' + id + '\')" style="padding:3px 7px;font-size:10px;color:var(--muted)">⊘ Archive</button>' +
+            '<button class="btn btn-ghost" data-gc-sam-fresh-action="open-sam-source" data-gc-sam-fresh-row-id="' + id + '" onclick="gcTabSamOpenSource(\'' + id + '\')" style="padding:3px 7px;font-size:10px">↗ Open SAM.gov Source</button>' +
+          '</div>' +
+        '</td>' +
+      '</tr>';
+  }
+  function renderSamFreshResults(rows){
+    var listEl = $('gc-tab-find-results');
+    var emptyEl = $('gc-tab-find-empty');
+    if (!listEl) return;
+    rows = rows || [];
+    if (!rows.length){
+      listEl.style.display = 'none';
+      listEl.innerHTML = '';
+      if (emptyEl) emptyEl.style.display = '';
+      return;
+    }
+    if (emptyEl) emptyEl.style.display = 'none';
+    listEl.style.display = '';
+    var html = '<div class="tbl-wrap" style="max-height:480px"><table class="tbl"><thead><tr>' +
+      '<th style="min-width:200px">Title · Agency</th>' +
+      '<th>Solicitation #</th>' +
+      '<th>NAICS</th>' +
+      '<th>Set-aside</th>' +
+      '<th>Posted</th>' +
+      '<th>Due</th>' +
+      '<th>Place of Performance</th>' +
+      '<th>Source · Status</th>' +
+      '<th style="width:190px">Actions</th>' +
+      '</tr></thead><tbody data-gc-sam-fresh-tbody="true">';
+    for (var i = 0; i < rows.length; i++) html += _samRowHtml(rows[i], i);
+    html += '</tbody></table></div>';
+    listEl.innerHTML = html;
+  }
+  window.gcTabRenderSamFreshResults = renderSamFreshResults;
+
+  // ── Public per-row actions for fresh SAM results ──────────────────
+  window.gcTabSamViewDetails = function(id){
+    var r = _samFindRow(id); if (!r) return;
+    if (window.toast) try {
+      window.toast((r.title || '(untitled)') + ' · #' + (r.solicitationNumber || r.noticeId || '—'), 'info');
+    } catch (e) {}
+  };
+  window.gcTabSamSave = async function(id){
+    var opp = await _samUpsert(id, 'saved');
+    if (opp && window.toast) try { window.toast('Saved · "' + (opp.title || '').slice(0, 40) + '"', 'ok'); } catch (e) {}
+    refreshSavedPursuitsPreview();
+    try { if (typeof window.renderDashboardLaunchpad === 'function') window.renderDashboardLaunchpad({}); } catch (e) {}
+  };
+  window.gcTabSamMarkPursue = async function(id){
+    var opp = await _samUpsert(id, 'pursuing');
+    if (opp && window.toast) try { window.toast('Marked pursuing · appears in Saved Pursuits + Dashboard active pursuits', 'ok'); } catch (e) {}
+    refreshSavedPursuitsPreview();
+    try { if (typeof window.renderDashboardLaunchpad === 'function') window.renderDashboardLaunchpad({}); } catch (e) {}
+  };
+  window.gcTabSamArchive = async function(id){
+    var opp = await _samUpsert(id, 'archived');
+    if (opp && window.toast) try { window.toast('Archived locally', 'info'); } catch (e) {}
+  };
+  window.gcTabSamOpenSource = function(id){
+    var r = _samFindRow(id); if (!r) return;
+    var url = r.uiLink || r.url || '';
+    if (!url){
+      if (window.toast) try { window.toast('No SAM.gov source URL on this record.', 'warn'); } catch (e) {}
+      return;
+    }
+    try { window.open(url, '_blank', 'noopener,noreferrer'); } catch (e) {}
+  };
+
   // ── Search SAM.gov from the Find Opportunities tab ───────────────
+  // Phase 25Q — the search now renders fresh results into
+  // #gc-tab-find-results so the user can review opportunities
+  // immediately. Saved/pursued rows still go through
+  // refreshSavedPursuitsPreview to update the saved-only summary.
+  // The result count selector (25/50/75/100) passes a limit to the
+  // IPC call so the SAM.gov fetch is bounded and never auto-paginates.
   window.gcTabSearchSam = async function(){
-    // Phase 25N defers the actual search wire-up to the existing
-    // sd.govcon.samSearch IPC if available; otherwise surface a
-    // useful toast. We do NOT auto-search and we never display the
-    // raw key.
     var present = false;
     try {
       if (window.sd && window.sd.credentials && window.sd.credentials.status){
@@ -17329,24 +17523,38 @@ document.addEventListener('DOMContentLoaded',()=>{
       }
     } catch (e) {}
     if (!present){
+      _samStatus('SAM.gov key missing — add it in Setup or Settings to enable in-app search.');
       if (window.toast) try { window.toast('SAM.gov key missing — add it in Setup or Settings to enable in-app search.', 'warn'); } catch (e) {}
       return;
     }
     if (!(window.sd && window.sd.govcon && typeof window.sd.govcon.samSearch === 'function')){
+      _samStatus('SAM.gov search bridge unavailable in this build. Rebuild the trial package.');
       if (window.toast) try { window.toast('SAM search bridge unavailable in this build. Rebuild the trial package.', 'err'); } catch (e) {}
       return;
     }
+    var limit = _samLimit();
+    _samStatus('Searching SAM.gov… (showing up to ' + limit + ' results)');
     if (window.toast) try { window.toast('Searching SAM.gov…', 'info'); } catch (e) {}
     var res = [];
     try {
-      var raw = await window.sd.govcon.samSearch({});
+      var raw = await window.sd.govcon.samSearch({ limit: limit });
       res = (raw && (raw.opportunities || raw.results || raw.records)) || raw || [];
       if (!Array.isArray(res)) res = [];
     } catch (e){
-      if (window.toast) try { window.toast('SAM search failed. Verify your key and try again.', 'err'); } catch (e2) {}
+      _samStatus('SAM.gov search failed. Check your key, filters, or network connection.');
+      if (window.toast) try { window.toast('SAM.gov search failed. Check your key, filters, or network connection.', 'err'); } catch (e2) {}
       return;
     }
-    if (window.toast) try { window.toast('Returned ' + res.length + ' opportunit' + (res.length === 1 ? 'y' : 'ies') + '. Open Saved Pursuits or refresh after saving.', 'ok'); } catch (e) {}
+    if (res.length > limit) res = res.slice(0, limit);
+    _samFreshResults = res;
+    renderSamFreshResults(res);
+    if (!res.length){
+      _samStatus('No SAM.gov opportunities matched this search. Adjust filters or increase result count.');
+      if (window.toast) try { window.toast('No SAM.gov opportunities matched this search.', 'info'); } catch (e) {}
+      return;
+    }
+    _samStatus('Showing up to ' + limit + ' results · returned ' + res.length + ' · last run ' + new Date().toLocaleString());
+    if (window.toast) try { window.toast('Returned ' + res.length + ' opportunit' + (res.length === 1 ? 'y' : 'ies') + '. Review results below, then save or mark pursue.', 'ok'); } catch (e) {}
     refreshSavedPursuitsPreview();
   };
 
