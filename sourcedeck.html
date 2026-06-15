@@ -17305,24 +17305,18 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Surface saved-pursuits preview from inside Find Opportunities so
   // the buyer can see what they already have without leaving the
   // landing tab.
+  // Phase 25Q-2 — this used to render a "preview" of saved /
+  // pursuing opportunities into #gc-tab-find-results. That target is
+  // owned by Phase 25Q's fresh SAM search results renderer, and the
+  // race condition caused refreshSavedPursuitsPreview to wipe the
+  // fresh results' innerHTML on every search/save/tab-switch because
+  // _listSaved resolves AFTER the search render. Phase 25Q-2 retires
+  // the preview from the Find Opportunities tab — saved opportunities
+  // live on the Saved Pursuits tab (#gc-tab-saved-list, rendered by
+  // renderSavedPursuits). The function is kept as a no-op so any
+  // legacy caller continues to resolve cleanly.
   async function refreshSavedPursuitsPreview(){
-    var emptyEl = $('gc-tab-find-empty');
-    var listEl = $('gc-tab-find-results');
-    if (!listEl) return;
-    var rows = await _listSaved();
-    if (!rows.length){
-      if (emptyEl) emptyEl.style.display = '';
-      listEl.style.display = 'none';
-      listEl.innerHTML = '';
-      return;
-    }
-    if (emptyEl) emptyEl.style.display = 'none';
-    listEl.style.display = '';
-    var html = '<div style="font:600 9.5px/1.3 \'Azeret Mono\',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px">Saved · pursuing (' + rows.length + ')</div>';
-    html += '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Title · Agency</th><th>Solicitation #</th><th>NAICS</th><th>Due</th><th>Status</th><th>Action</th></tr></thead><tbody>';
-    for (var i = 0; i < rows.length; i++) html += _renderRow(rows[i]);
-    html += '</tbody></table></div>';
-    listEl.innerHTML = html;
+    return;
   }
   window.gcTabRenderSavedPursuits = renderSavedPursuits;
   window.gcTabRefreshSavedPursuitsPreview = refreshSavedPursuitsPreview;
