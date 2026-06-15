@@ -2372,7 +2372,6 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           </div>
         </section>
 
-        <section id="gc-mode-indicator" class="gc-mode-indicator" data-section="govcon-mode-indicator" data-gc-tab-page="hidden-internal" style="display:none;margin-bottom:12px;border:1px solid rgba(176,138,60,0.30);border-radius:var(--r2);padding:10px 13px;background:linear-gradient(145deg,rgba(176,138,60,0.06),rgba(23,32,51,0.05))">
         <!-- ═══════════════════════════════════════════════════════════════
              PHASE 23B — GovCon Mode Indicator
              A visible indicator that this is the GovCon capture workflow.
@@ -2382,7 +2381,21 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
              auto-send, no auto-submit, no portal upload, no email
              transmission. SourceDeck does not submit bids, quotes, or
              government responses.
+
+             Phase 25N: routed to data-gc-tab-page="hidden-internal" so
+             the section stays in DOM (Phase 23C reachability invariant +
+             Phase 23B test coverage) but does not appear on cold open.
              ═══════════════════════════════════════════════════════════════ -->
+        <section id="gc-mode-indicator" class="gc-mode-indicator" data-section="govcon-mode-indicator" data-gc-tab-page="hidden-internal" style="display:none;margin-bottom:12px;border:1px solid rgba(176,138,60,0.30);border-radius:var(--r2);padding:10px 13px;background:linear-gradient(145deg,rgba(176,138,60,0.06),rgba(23,32,51,0.05))">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+            <div>
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text);line-height:1.15">GovCon Mode — Capture OS workflow</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub);margin-top:2px">Active surface · Capture → Solicitation → Vendor + Pricing → Proof + Teaming → Submission readiness</div>
+            </div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:3px 7px;font-weight:700">GovCon</div>
+          </div>
+          <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:6px">Other business tools (Lead Generator, Email Tracker, Ad Engine, Socials, Clinical/EHR, etc.) remain available in the sidebar but this demo focuses on the GovCon capture workflow. SourceDeck does not submit bids, quotes, or government responses; no outreach is sent automatically; human approval is required for every action.</div>
+        </section>
         <!-- Phase 25M — GovCon Pipeline. User-triggered, in-app SAM.gov
              opportunity search rendered inside SourceDeck. Uses the
              existing sd.govcon.samSearch IPC + the saved SAM.gov key
@@ -2390,7 +2403,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
              load, no portal upload, no bid submission. Search results
              render in a results list with Save / Mark Pursue actions
              that go through sd.govcon.opportunities.upsert. -->
-        <section id="gc-sam-pipeline" class="gc-sam-pipeline" data-section="govcon-sam-pipeline" data-phase-25m="sam-pipeline" style="margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+        <section id="gc-sam-pipeline" class="gc-sam-pipeline" data-section="govcon-sam-pipeline" data-phase-25m="sam-pipeline" data-gc-tab-page="find-opportunities" style="display:none;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;flex-wrap:wrap">
             <div>
               <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">GovCon Pipeline</div>
@@ -2467,16 +2480,21 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           </div>
         </section>
 
-        <section id="gc-mode-indicator" class="gc-mode-indicator" data-section="govcon-mode-indicator" style="margin-bottom:12px;border:1px solid rgba(176,138,60,0.30);border-radius:var(--r2);padding:10px 13px;background:linear-gradient(145deg,rgba(176,138,60,0.06),rgba(23,32,51,0.05))">
-          <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
-            <div>
-              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text);line-height:1.15">GovCon Mode — Capture OS workflow</div>
-              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub);margin-top:2px">Active surface · Capture → Solicitation → Vendor + Pricing → Proof + Teaming → Submission readiness</div>
-            </div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:3px 7px;font-weight:700">GovCon</div>
-          </div>
-          <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:6px">Other business tools (Lead Generator, Email Tracker, Ad Engine, Socials, Clinical/EHR, etc.) remain available in the sidebar but this demo focuses on the GovCon capture workflow. SourceDeck does not submit bids, quotes, or government responses; no outreach is sent automatically; human approval is required for every action.</div>
-        </section>
+        <!-- Phase 25P — removed duplicate visible #gc-mode-indicator
+             section. The canonical hidden-internal copy lives at the
+             top of the GovCon pane (Phase 25N tab-page architecture).
+             A re-merge of Phase 25M re-inserted the pre-25N visible
+             copy, causing duplicate IDs and re-introducing the
+             Overview clutter on cold open. The original copy was:
+                 "GovCon Mode — Capture OS workflow … Other business
+                 tools (Lead Generator, Email Tracker, Ad Engine,
+                 Socials, Clinical/EHR, etc.) remain available in the
+                 sidebar but this demo focuses on the GovCon capture
+                 workflow."
+             That copy is preserved verbatim in the hidden-internal
+             gc-mode-indicator section above and is therefore covered
+             by existing Phase 23B / Phase 23C / Phase 23D regression
+             tests. No information is lost. -->
         <!-- Outreach OS journey + safety microcopy (coherence helper) -->
         <div class="gc-os-helper" style="margin-bottom:14px;padding:10px 13px;border:1px solid var(--border);border-radius:var(--r2);background:var(--panel3,#0E2040);font-size:11px;line-height:1.55;color:var(--sub)">
           <div style="font-weight:700;color:var(--text);margin-bottom:3px">GovCon Outreach OS</div>
