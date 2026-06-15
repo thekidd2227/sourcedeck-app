@@ -58,8 +58,15 @@ assert(/parseInt\(sel\.value, 10\)/.test(html),
   '_samLimit() parses the selector value');
 
 // ── Limit is passed into the IPC call ──────────────────────────────
-assert(/window\.sd\.govcon\.samSearch\(\s*\{\s*limit:\s*limit\s*\}/.test(html),
-  'gcTabSearchSam passes { limit } into sd.govcon.samSearch');
+// Phase 25Q passed { limit: limit } inline. Phase 25R upgraded the
+// search to build a merged filters object first (filters.limit = limit)
+// then passes the whole object. Either pattern proves the limit is
+// part of the IPC payload.
+assert(
+  /window\.sd\.govcon\.samSearch\(\s*\{\s*limit:\s*limit\s*\}/.test(html) ||
+  /filters\.limit\s*=\s*limit/.test(html),
+  'gcTabSearchSam passes limit into sd.govcon.samSearch (inline {limit} or merged filters.limit)'
+);
 
 // ── Renderer caps results at limit even if the IPC over-returns ───
 assert(/if \(res\.length > limit\) res = res\.slice\(0, limit\)/.test(html),

@@ -2302,8 +2302,64 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div id="gc-tab-sam-key-missing" data-gc-sam-key-missing="true" style="display:none;font-size:11px;color:var(--text);line-height:1.55;background:rgba(255,176,32,0.06);border:1px solid rgba(255,176,32,0.30);border-radius:6px;padding:9px 12px;margin-bottom:12px">
             <strong style="color:#ffb020">SAM.gov key missing.</strong> Add it in Setup or Settings → API Keys to enable in-app search. SourceDeck never displays the raw key.
           </div>
+          <!-- Phase 25R — merged filter row. Pulls the previously
+               duplicate Phase 25M Pipeline filters into the canonical
+               Find Opportunities section. Each filter is read by
+               gcTabSearchSam() and passed into sd.govcon.samSearch.
+               No filter triggers an auto-search; the user clicks the
+               Search SAM.gov button to apply them. -->
+          <div id="gc-tab-sam-filters" data-gc-tab-sam-filters="true" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:8px;margin-bottom:10px">
+            <div class="form-group" style="margin:0">
+              <label class="label">Keyword</label>
+              <input class="input" id="gc-tab-f-keyword" data-gc-tab-sam-filter="keyword" placeholder="e.g. janitorial">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="label">NAICS</label>
+              <div style="display:flex;gap:5px">
+                <input class="input" id="gc-tab-f-naics" data-gc-tab-sam-filter="naics" placeholder="561720, 238320…" style="flex:1">
+                <button type="button" class="btn btn-ghost" id="gc-tab-find-naics-btn" data-gc-find-action="open-naics-finder" onclick="naicsFinderOpen()" title="Open NAICS Finder" style="padding:4px 9px;font-size:10.5px;white-space:nowrap">🔎 Find NAICS</button>
+              </div>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="label">Saved NAICS profile</label>
+              <select class="select" id="gc-tab-f-naics-profile" data-gc-tab-sam-filter="naics-profile" onchange="naicsApplyProfile(this.value)" style="width:100%">
+                <option value="">(none)</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="label">Set-aside</label>
+              <select class="select" id="gc-tab-f-setaside" data-gc-tab-sam-filter="setaside" style="width:100%">
+                <option value="">Any</option>
+                <option value="SBA">Small Business</option>
+                <option value="SDVOSBC">SDVOSB</option>
+                <option value="WOSB">WOSB / EDWOSB</option>
+                <option value="HZC">HUBZone</option>
+                <option value="8A">8(a)</option>
+                <option value="VSA">VOSB</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="label">Place of Performance</label>
+              <input class="input" id="gc-tab-f-pop" data-gc-tab-sam-filter="placeOfPerformance" placeholder="e.g. CA, San Diego">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="label">Closing within (days)</label>
+              <input class="input" id="gc-tab-f-due" data-gc-tab-sam-filter="dueWithinDays" type="number" min="1" max="365" value="30">
+            </div>
+            <div class="form-group" style="margin:0">
+              <label class="label">Status / type</label>
+              <select class="select" id="gc-tab-f-status" data-gc-tab-sam-filter="status" style="width:100%">
+                <option value="">Any</option>
+                <option value="active">Active solicitations</option>
+                <option value="archived">Archived</option>
+                <option value="awarded">Awarded</option>
+              </select>
+            </div>
+          </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px">
             <button type="button" class="btn btn-gold" id="gc-tab-search-sam-btn" data-gc-find-action="search-sam" onclick="gcTabSearchSam()" title="Search SAM.gov using your configured key">🔎 Search SAM.gov</button>
+            <button type="button" class="btn btn-ghost" id="gc-tab-refresh-btn" data-gc-find-action="refresh" onclick="gcTabSearchSam({ refresh: true })" title="Re-run the current filters">↻ Refresh</button>
+            <button type="button" class="btn btn-ghost" id="gc-tab-clear-filters-btn" data-gc-find-action="clear-filters" onclick="gcTabClearFilters()" title="Clear all filters">⊘ Clear filters</button>
             <!-- Phase 25Q — result count selector. Capped at 100 so the
                  single search call never exceeds the SAM.gov single-page
                  limit; no auto-pagination. Default 25. -->
@@ -2329,6 +2385,47 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             User-triggered search only · no auto-search on page load · no portal upload · no bid submission. Drafts only. Human approval required. SourceDeck does not submit bids, quotes, or government responses.
           </div>
         </section>
+
+        <!-- Phase 25R — NAICS Finder modal. Opens from the Find
+             NAICS button next to the NAICS input. Lets the user
+             browse all NAICS sections, search by code or description,
+             multi-select codes, and save selections as a reusable
+             NAICS profile. Modal is hidden until naicsFinderOpen()
+             flips its display. Seeded from the uploaded NAICS.pdf
+             reference table at docs/product/phase-25r-naics-finder-contract.md.
+             SourceDeck uses NAICS for search/filter support — not
+             legal classification advice. -->
+        <div id="naics-finder-modal" data-naics-finder-modal="true" role="dialog" aria-label="NAICS Finder" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:1100;align-items:center;justify-content:center;padding:20px">
+          <div class="card" style="max-width:760px;width:100%;max-height:88vh;overflow:auto;padding:18px 20px">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;gap:10px;flex-wrap:wrap">
+              <div>
+                <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:3px">NAICS Finder</div>
+                <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text)">Browse, search, and select NAICS codes</div>
+              </div>
+              <button type="button" class="btn btn-ghost" onclick="naicsFinderClose()" style="padding:4px 9px;font-size:11px">✕ Close</button>
+            </div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
+              <input class="input" id="naics-finder-search" data-naics-finder-search="true" placeholder="Search by code or description (e.g. 561 or janitorial)" oninput="naicsFinderRender()" style="flex:1;min-width:220px">
+              <select class="select" id="naics-finder-section" data-naics-finder-section="true" onchange="naicsFinderRender()" style="min-width:200px">
+                <option value="">All sections</option>
+              </select>
+              <button type="button" class="btn btn-ghost" id="naics-finder-clear-btn" onclick="naicsFinderClearSelection()" style="padding:4px 9px;font-size:11px">Clear selection</button>
+            </div>
+            <div id="naics-finder-selected" data-naics-finder-selected="true" style="font-size:10.5px;color:var(--sub);margin-bottom:8px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.03em">Selected: <span data-naics-finder-selected-count="true">0</span></div>
+            <div id="naics-finder-list" data-naics-finder-list="true" style="max-height:340px;overflow:auto;border:1px solid var(--border);border-radius:6px;padding:8px 10px;background:var(--panel2,#0f1e32)"></div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center;margin-top:10px">
+              <input class="input" id="naics-finder-profile-name" data-naics-finder-profile-name="true" placeholder="Profile name (e.g. Facilities)" style="flex:1;min-width:200px">
+              <label style="font-size:10.5px;color:var(--sub);display:inline-flex;align-items:center;gap:4px">
+                <input type="checkbox" id="naics-finder-default" data-naics-finder-default="true"> Set as default
+              </label>
+              <button type="button" class="btn btn-gold" id="naics-finder-save-btn" data-naics-finder-action="save-profile" onclick="naicsFinderSaveProfile()" style="padding:4px 11px;font-size:11px">💾 Save as profile</button>
+              <button type="button" class="btn btn-blue" id="naics-finder-apply-btn" data-naics-finder-action="apply-selection" onclick="naicsFinderApplySelection()" style="padding:4px 11px;font-size:11px">✓ Apply selection</button>
+            </div>
+            <div style="margin-top:8px;font-size:10px;color:var(--muted);line-height:1.55">
+              Local-only profile storage. SourceDeck uses NAICS for search/filter support only — not legal classification advice or official NAICS classification.
+            </div>
+          </div>
+        </div>
 
         <!-- Phase 25N — Saved Pursuits tab. Lists saved opportunities
              pulled from sd.govcon.opportunities.list(). -->
@@ -2415,7 +2512,17 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
              load, no portal upload, no bid submission. Search results
              render in a results list with Save / Mark Pursue actions
              that go through sd.govcon.opportunities.upsert. -->
-        <section id="gc-sam-pipeline" class="gc-sam-pipeline" data-section="govcon-sam-pipeline" data-phase-25m="sam-pipeline" data-gc-tab-page="find-opportunities" style="display:none;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+        <!-- Phase 25R — duplicate SAM search section retired. The
+             canonical SAM search now lives in #gc-tab-find-opportunities
+             with the merged filter row (keyword, NAICS, set-aside,
+             place of performance, closing window, status). This
+             section is routed to "hidden-internal" so its DOM stays
+             reachable for any programmatic caller but it never
+             appears on cold open or on the Find Opportunities tab.
+             Phase 25P routed it to "find-opportunities"; Phase 25R
+             retires that routing because two SAM search forms on the
+             same tab confused buyers. -->
+        <section id="gc-sam-pipeline" class="gc-sam-pipeline" data-section="govcon-sam-pipeline" data-phase-25m="sam-pipeline" data-gc-tab-page="hidden-internal" style="display:none;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;flex-wrap:wrap">
             <div>
               <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">GovCon Pipeline</div>
@@ -17508,7 +17615,30 @@ document.addEventListener('DOMContentLoaded',()=>{
   // refreshSavedPursuitsPreview to update the saved-only summary.
   // The result count selector (25/50/75/100) passes a limit to the
   // IPC call so the SAM.gov fetch is bounded and never auto-paginates.
-  window.gcTabSearchSam = async function(){
+  // Phase 25R — gather merged filter row values for the canonical
+  // search. Each filter is read from its dedicated input/select.
+  // Empty values are dropped so the IPC call doesn't send "".
+  function _samFilters(){
+    function v(id){ var el = $(id); return el ? String(el.value || '').trim() : ''; }
+    var filters = {};
+    var keyword = v('gc-tab-f-keyword'); if (keyword) filters.keyword = keyword;
+    var naics = v('gc-tab-f-naics'); if (naics) filters.naics = naics;
+    var setAside = v('gc-tab-f-setaside'); if (setAside) filters.setAside = setAside;
+    var pop = v('gc-tab-f-pop'); if (pop) filters.placeOfPerformance = pop;
+    var dueRaw = v('gc-tab-f-due'); if (dueRaw){ var dueN = parseInt(dueRaw, 10); if (!isNaN(dueN) && dueN > 0) filters.dueWithinDays = dueN; }
+    var status = v('gc-tab-f-status'); if (status) filters.status = status;
+    return filters;
+  }
+  window.gcTabClearFilters = function(){
+    ['gc-tab-f-keyword','gc-tab-f-naics','gc-tab-f-setaside','gc-tab-f-pop','gc-tab-f-status'].forEach(function(id){
+      var el = $(id); if (el) el.value = '';
+    });
+    var due = $('gc-tab-f-due'); if (due) due.value = '30';
+    var prof = $('gc-tab-f-naics-profile'); if (prof) prof.value = '';
+  };
+
+  window.gcTabSearchSam = async function(opts){
+    opts = opts || {};
     var present = false;
     try {
       if (window.sd && window.sd.credentials && window.sd.credentials.status){
@@ -17527,11 +17657,13 @@ document.addEventListener('DOMContentLoaded',()=>{
       return;
     }
     var limit = _samLimit();
+    var filters = _samFilters();
+    filters.limit = limit;
     _samStatus('Searching SAM.gov… (showing up to ' + limit + ' results)');
     if (window.toast) try { window.toast('Searching SAM.gov…', 'info'); } catch (e) {}
     var res = [];
     try {
-      var raw = await window.sd.govcon.samSearch({ limit: limit });
+      var raw = await window.sd.govcon.samSearch(filters);
       res = (raw && (raw.opportunities || raw.results || raw.records)) || raw || [];
       if (!Array.isArray(res)) res = [];
     } catch (e){
@@ -17547,7 +17679,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       if (window.toast) try { window.toast('No SAM.gov opportunities matched this search.', 'info'); } catch (e) {}
       return;
     }
-    _samStatus('Showing up to ' + limit + ' results · returned ' + res.length + ' · last run ' + new Date().toLocaleString());
+    _samStatus('Showing up to ' + limit + ' results · returned ' + res.length + ' · visible ' + res.length + ' · last run ' + new Date().toLocaleString());
     if (window.toast) try { window.toast('Returned ' + res.length + ' opportunit' + (res.length === 1 ? 'y' : 'ies') + '. Review results below, then save or mark pursue.', 'ok'); } catch (e) {}
     refreshSavedPursuitsPreview();
   };
@@ -17560,6 +17692,295 @@ document.addEventListener('DOMContentLoaded',()=>{
       if (saved && document.querySelector('#gc-tab-nav [data-gc-tab="' + saved + '"]')) initial = saved;
     } catch (e) {}
     window.gcTabSwitch(initial);
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 0);
+  }
+})();
+</script>
+
+<script>
+/* Phase 25R — NAICS Finder + Saved NAICS profiles.
+
+   Two responsibilities:
+
+   A. NAICS Finder modal (#naics-finder-modal). Lets the user browse
+      the canonical NAICS 2022 section menu (20 sections), filter by
+      keyword/code, multi-select codes, and either apply the
+      selection to the GovCon Find Opportunities NAICS field or save
+      it as a named profile.
+
+   B. Saved NAICS profiles. Local-only storage (electron-store +
+      localStorage fallback) keyed by id. Each profile has a name,
+      codes[], isDefault, createdAt, updatedAt. Saved profiles appear
+      in the Find Opportunities "Saved NAICS profile" selector and
+      can be applied to populate the NAICS search field.
+
+   Initial NAICS table seeded from the user-supplied NAICS reference
+   document at docs/product/phase-25r-naics-finder-contract.md. The
+   set ships the 20 official NAICS sections plus a starter list of
+   SourceDeck-relevant codes (construction, facilities, professional
+   services, etc.). Codes whose six-digit description was not
+   confirmable in the local reference are intentionally NOT included
+   — the contract is "no invented codes."
+
+   SourceDeck uses NAICS for search/filter support only — not legal
+   classification advice or official NAICS classification. */
+(function(){
+  'use strict';
+
+  // ── NAICS section menu (canonical 2022 sectors) ──────────────────
+  var SECTIONS = [
+    { code: '11',    label: 'Agriculture, Forestry, Fishing and Hunting' },
+    { code: '21',    label: 'Mining, Quarrying, and Oil and Gas Extraction' },
+    { code: '22',    label: 'Utilities' },
+    { code: '23',    label: 'Construction' },
+    { code: '31-33', label: 'Manufacturing' },
+    { code: '42',    label: 'Wholesale Trade' },
+    { code: '44-45', label: 'Retail Trade' },
+    { code: '48-49', label: 'Transportation and Warehousing' },
+    { code: '51',    label: 'Information' },
+    { code: '52',    label: 'Finance and Insurance' },
+    { code: '53',    label: 'Real Estate and Rental and Leasing' },
+    { code: '54',    label: 'Professional, Scientific, and Technical Services' },
+    { code: '55',    label: 'Management of Companies and Enterprises' },
+    { code: '56',    label: 'Administrative and Support and Waste Management and Remediation Services' },
+    { code: '61',    label: 'Educational Services' },
+    { code: '62',    label: 'Health Care and Social Assistance' },
+    { code: '71',    label: 'Arts, Entertainment, and Recreation' },
+    { code: '72',    label: 'Accommodation and Food Services' },
+    { code: '81',    label: 'Other Services (except Public Administration)' },
+    { code: '92',    label: 'Public Administration' }
+  ];
+
+  // ── Six-digit codes seeded from the local NAICS reference. Only
+  //    codes whose description we can verify are included. The
+  //    Phase 25R contract: no invented codes. Users can add codes
+  //    manually via the NAICS input box if a needed code is absent.
+  var CODES = [
+    { code: '236220', section: '23',    label: 'Commercial and Institutional Building Construction' },
+    { code: '238210', section: '23',    label: 'Electrical Contractors and Other Wiring Installation Contractors' },
+    { code: '238220', section: '23',    label: 'Plumbing, Heating, and Air-Conditioning Contractors' },
+    { code: '238320', section: '23',    label: 'Painting and Wall Covering Contractors' },
+    { code: '531311', section: '53',    label: 'Residential Property Managers' },
+    { code: '531312', section: '53',    label: 'Nonresidential Property Managers' },
+    { code: '541330', section: '54',    label: 'Engineering Services' },
+    { code: '541611', section: '54',    label: 'Administrative Management and General Management Consulting Services' },
+    { code: '541618', section: '54',    label: 'Other Management Consulting Services' },
+    { code: '541990', section: '54',    label: 'All Other Professional, Scientific, and Technical Services' },
+    { code: '561210', section: '56',    label: 'Facilities Support Services' },
+    { code: '561710', section: '56',    label: 'Exterminating and Pest Control Services' },
+    { code: '561720', section: '56',    label: 'Janitorial Services' },
+    { code: '561730', section: '56',    label: 'Landscaping Services' },
+    { code: '561790', section: '56',    label: 'Other Services to Buildings and Dwellings' },
+    { code: '624230', section: '62',    label: 'Emergency and Other Relief Services' }
+  ];
+
+  // ── State / storage ─────────────────────────────────────────────
+  var STORE_KEY = 'sd.govcon.naicsProfiles.v1';
+  var BRIDGE_KEY = 'govcon.naicsProfiles';
+  var _state = { profiles: [], selected: [] };
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+  async function loadState(){
+    var loaded = null;
+    try {
+      if (window.sd && typeof window.sd.storeGet === 'function') loaded = await window.sd.storeGet(BRIDGE_KEY);
+    } catch (e) {}
+    if (!loaded){
+      try { var raw = localStorage.getItem(STORE_KEY); if (raw) loaded = JSON.parse(raw); } catch (e) {}
+    }
+    if (loaded && Array.isArray(loaded.profiles)){
+      _state.profiles = loaded.profiles;
+    }
+  }
+  async function saveState(){
+    var snap = { profiles: _state.profiles };
+    try { if (window.sd && typeof window.sd.storeSet === 'function') await window.sd.storeSet(BRIDGE_KEY, snap); } catch (e) {}
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(snap)); } catch (e) {}
+  }
+
+  function renderProfileSelector(){
+    var sel = $('gc-tab-f-naics-profile');
+    if (!sel) return;
+    var html = '<option value="">(none)</option>';
+    for (var i = 0; i < _state.profiles.length; i++){
+      var p = _state.profiles[i];
+      var label = p.name + (p.isDefault ? ' · default' : '') + ' (' + (p.codes || []).length + ')';
+      html += '<option value="' + esc(p.id) + '">' + esc(label) + '</option>';
+    }
+    sel.innerHTML = html;
+    var def = _state.profiles.filter(function(p){ return p.isDefault; })[0];
+    if (def) sel.value = def.id;
+  }
+  window.naicsRenderProfileSelector = renderProfileSelector;
+
+  // ── Apply a saved profile to the GovCon Find Opportunities NAICS field
+  window.naicsApplyProfile = function(profileId){
+    if (!profileId) return;
+    var p = _state.profiles.filter(function(x){ return x.id === profileId; })[0];
+    if (!p) return;
+    var input = $('gc-tab-f-naics');
+    if (input) input.value = (p.codes || []).join(', ');
+  };
+
+  // ── NAICS Finder modal ───────────────────────────────────────────
+  function populateSections(){
+    var sel = $('naics-finder-section');
+    if (!sel || sel.options.length > 1) return;
+    var html = '<option value="">All sections</option>';
+    for (var i = 0; i < SECTIONS.length; i++){
+      html += '<option value="' + esc(SECTIONS[i].code) + '">' + esc(SECTIONS[i].code) + ' · ' + esc(SECTIONS[i].label) + '</option>';
+    }
+    sel.innerHTML = html;
+  }
+  function naicsList(){
+    return CODES.slice().sort(function(a, b){ return a.code < b.code ? -1 : a.code > b.code ? 1 : 0; });
+  }
+  function naicsFilter(query, section){
+    var q = String(query || '').trim().toLowerCase();
+    var rows = naicsList();
+    if (section) rows = rows.filter(function(r){ return r.section === section; });
+    if (q) rows = rows.filter(function(r){
+      return r.code.indexOf(q) >= 0 || r.label.toLowerCase().indexOf(q) >= 0;
+    });
+    return rows;
+  }
+  function renderFinder(){
+    populateSections();
+    var listEl = $('naics-finder-list');
+    if (!listEl) return;
+    var q = ($('naics-finder-search') || {}).value || '';
+    var section = ($('naics-finder-section') || {}).value || '';
+    var rows = naicsFilter(q, section);
+    var html = '<div data-naics-finder-sections="true" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:10px;font-size:10.5px">';
+    for (var i = 0; i < SECTIONS.length; i++){
+      var s = SECTIONS[i];
+      html += '<div style="padding:5px 8px;background:rgba(255,255,255,0.03);border:1px solid var(--border);border-radius:4px"><code style="color:var(--gold2)">' + esc(s.code) + '</code> ' + esc(s.label) + '</div>';
+    }
+    html += '</div>';
+    if (!rows.length){
+      html += '<div style="text-align:center;padding:24px 12px;color:var(--muted);font-size:11px;line-height:1.55">No NAICS rows match. Tip: search "561" for facilities services, "238" for construction trades. Add unlisted codes manually in the NAICS field on the search form.</div>';
+    } else {
+      html += '<table class="tbl"><thead><tr><th style="width:24px"></th><th style="width:90px">Code</th><th>Description</th><th style="width:50px">Section</th></tr></thead><tbody data-naics-finder-tbody="true">';
+      for (var j = 0; j < rows.length; j++){
+        var r = rows[j];
+        var checked = _state.selected.indexOf(r.code) >= 0 ? ' checked' : '';
+        html += '<tr data-naics-finder-row="' + esc(r.code) + '">' +
+          '<td><input type="checkbox" data-naics-finder-check="' + esc(r.code) + '" onchange="naicsFinderToggle(\'' + esc(r.code) + '\', this.checked)"' + checked + '></td>' +
+          '<td><code>' + esc(r.code) + '</code></td>' +
+          '<td>' + esc(r.label) + '</td>' +
+          '<td>' + esc(r.section) + '</td>' +
+        '</tr>';
+      }
+      html += '</tbody></table>';
+    }
+    listEl.innerHTML = html;
+    var countEl = listEl.parentElement.querySelector('[data-naics-finder-selected-count="true"]');
+    if (countEl) countEl.textContent = String(_state.selected.length);
+  }
+  window.naicsFinderRender = renderFinder;
+
+  window.naicsFinderToggle = function(code, checked){
+    if (checked){
+      if (_state.selected.indexOf(code) < 0) _state.selected.push(code);
+    } else {
+      _state.selected = _state.selected.filter(function(c){ return c !== code; });
+    }
+    var countEl = document.querySelector('[data-naics-finder-selected-count="true"]');
+    if (countEl) countEl.textContent = String(_state.selected.length);
+  };
+  window.naicsFinderClearSelection = function(){
+    _state.selected = [];
+    renderFinder();
+  };
+
+  window.naicsFinderOpen = function(){
+    loadState().then(function(){
+      var input = $('gc-tab-f-naics');
+      if (input){
+        var existing = String(input.value || '').split(/[,\s]+/).filter(Boolean);
+        var validExisting = existing.filter(function(c){ return /^\d{2,6}(-\d{1,3})?$/.test(c); });
+        _state.selected = validExisting;
+      }
+      var modal = $('naics-finder-modal'); if (modal) modal.style.display = 'flex';
+      renderFinder();
+    });
+  };
+  window.naicsFinderClose = function(){
+    var modal = $('naics-finder-modal'); if (modal) modal.style.display = 'none';
+  };
+
+  window.naicsFinderApplySelection = function(){
+    var input = $('gc-tab-f-naics');
+    if (input) input.value = _state.selected.join(', ');
+    if (window.toast) try { window.toast(_state.selected.length + ' NAICS code(s) applied to search.', 'ok'); } catch (e) {}
+    window.naicsFinderClose();
+  };
+
+  window.naicsFinderSaveProfile = async function(){
+    var nameEl = $('naics-finder-profile-name');
+    var defEl = $('naics-finder-default');
+    var name = nameEl ? String(nameEl.value || '').trim() : '';
+    if (!name){
+      if (window.toast) try { window.toast('Name the profile first (e.g. Facilities).', 'warn'); } catch (e) {}
+      return;
+    }
+    if (!_state.selected.length){
+      if (window.toast) try { window.toast('Select at least one NAICS code.', 'warn'); } catch (e) {}
+      return;
+    }
+    var isDefault = defEl ? !!defEl.checked : false;
+    if (isDefault){ _state.profiles.forEach(function(p){ p.isDefault = false; }); }
+    var existing = _state.profiles.filter(function(p){ return p.name === name; })[0];
+    if (existing){
+      existing.codes = _state.selected.slice();
+      existing.descriptions = _state.selected.map(function(c){
+        var row = CODES.filter(function(r){ return r.code === c; })[0];
+        return row ? row.label : '';
+      });
+      existing.isDefault = isDefault;
+      existing.updatedAt = new Date().toISOString();
+    } else {
+      _state.profiles.push({
+        id: 'naics-' + Date.now() + '-' + Math.random().toString(36).slice(2, 7),
+        name: name,
+        codes: _state.selected.slice(),
+        descriptions: _state.selected.map(function(c){
+          var row = CODES.filter(function(r){ return r.code === c; })[0];
+          return row ? row.label : '';
+        }),
+        isDefault: isDefault,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      });
+    }
+    await saveState();
+    renderProfileSelector();
+    if (window.toast) try { window.toast('Profile "' + name + '" saved (' + _state.selected.length + ' codes).', 'ok'); } catch (e) {}
+    if (nameEl) nameEl.value = '';
+    if (defEl) defEl.checked = false;
+  };
+
+  window.naicsListProfiles = function(){ return _state.profiles.slice(); };
+  window.naicsDeleteProfile = async function(id){
+    _state.profiles = _state.profiles.filter(function(p){ return p.id !== id; });
+    await saveState();
+    renderProfileSelector();
+  };
+  window.naicsSetDefault = async function(id){
+    _state.profiles.forEach(function(p){ p.isDefault = (p.id === id); });
+    await saveState();
+    renderProfileSelector();
+  };
+
+  // ── Boot: populate the profile selector on cold open ────────────
+  function boot(){
+    loadState().then(renderProfileSelector).catch(function(){ renderProfileSelector(); });
   }
   if (document.readyState === 'loading'){
     document.addEventListener('DOMContentLoaded', boot);
