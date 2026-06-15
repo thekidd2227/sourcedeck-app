@@ -22,12 +22,19 @@ function assert(c, m){ if(!c){ console.error('  ✗ ' + m); process.exitCode = 1
 
 console.log('Phase 25P · GovCon section routing reconciliation');
 
-// ── Phase 25M #gc-sam-pipeline is routed to find-opportunities ──────
+// ── Phase 25M #gc-sam-pipeline routing ──────────────────────────────
+// Phase 25P initially routed this section to "find-opportunities" to
+// give it a home after Phase 25N. Phase 25R then retired the duplicate
+// SAM search section entirely (merged its filters into the canonical
+// #gc-tab-find-opportunities) and routed gc-sam-pipeline to the
+// hidden-internal buffer. The original Phase 25P invariant that
+// matters survives: the section IS routed (data-gc-tab-page is
+// present) AND it starts with inline display:none.
 const samPipelineMatch = html.match(/<section[^>]*id="gc-sam-pipeline"[^>]*>/);
 assert(samPipelineMatch, 'Phase 25M #gc-sam-pipeline section still exists in DOM');
 if (samPipelineMatch){
-  assert(/data-gc-tab-page="find-opportunities"/.test(samPipelineMatch[0]),
-    '#gc-sam-pipeline carries data-gc-tab-page="find-opportunities"');
+  assert(/data-gc-tab-page="(?:find-opportunities|hidden-internal)"/.test(samPipelineMatch[0]),
+    '#gc-sam-pipeline carries data-gc-tab-page routing (find-opportunities or hidden-internal after Phase 25R)');
   assert(/style="display:none/.test(samPipelineMatch[0]),
     '#gc-sam-pipeline starts with inline display:none so gcTabSwitch can control it');
 }
