@@ -92,8 +92,23 @@ assert(!/addEventListener\([^)]*DOMContentLoaded[^)]*gcTabSearchSam/.test(html),
   'No DOMContentLoaded listener that auto-calls gcTabSearchSam()');
 
 // ── No raw key copy anywhere ────────────────────────────────────────
-assert(!/api_key=/.test(html),
-  'No raw "api_key=" literal in renderer');
+// Phase 25S — the only legitimate "api_key=" literals are:
+//   1. Documentation/comment placeholder text: api_key=…
+//   2. The _samStripApiKey defensive regex literal: api_key=[^&#]*&?
+// Anything resembling a real key value (api_key=<alphanum>) is a
+// credential leak.
+(function(){
+  var matches = (html.match(/api_key=[^\s'")]*/g) || []);
+  var bad = matches.filter(function(m){
+    // Allow comment placeholder ellipsis.
+    if (m === 'api_key=…' || m === 'api_key=') return false;
+    // Allow the defensive regex literal.
+    if (m === 'api_key=[^&#]*&?/gi,' || m === 'api_key=[^&#]*&?') return false;
+    return true;
+  });
+  assert(bad.length === 0,
+    'No raw "api_key=<value>" literal in renderer (offending: ' + JSON.stringify(bad) + ')');
+})();
 assert(!/sam-gov-key:\s*[a-zA-Z0-9]/.test(html),
   'No raw SAM.gov key literal in renderer');
 
