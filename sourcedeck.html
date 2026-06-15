@@ -2376,11 +2376,26 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <button type="button" class="btn btn-ghost" id="gc-tab-open-setup-btn" data-gc-find-action="open-setup" onclick="openGovconSetupWizard()" title="Open GovCon Setup Wizard" style="margin-left:auto">⚙ Open GovCon Setup</button>
           </div>
           <div id="gc-tab-sam-search-status" data-gc-sam-search-status="true" style="display:none;font-size:11px;color:var(--sub);margin-bottom:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.03em"></div>
+          <!-- Phase 25S — active filter chips. Renders a one-line text
+               summary of which filters constrained the current result
+               set so the user understands WHY a search returned 0 rows
+               (e.g. NAICS 541611 + SDVOSB + closing within 30 days). -->
+          <div id="gc-tab-sam-active-filters" data-gc-sam-active-filters="true" style="display:none;font-size:10.5px;color:var(--muted);margin-bottom:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.03em;line-height:1.55"></div>
           <div id="gc-tab-find-empty" data-gc-find-empty="true" style="text-align:center;padding:48px 24px;border:1px dashed var(--border);border-radius:8px;color:var(--muted);background:rgba(255,255,255,0.02)">
             <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:6px">No saved or pursuing opportunities yet.</div>
             <div style="font-size:11.5px;line-height:1.55;max-width:480px;margin:0 auto">Search SAM.gov, upload a solicitation, or paste solicitation text to begin. Saved opportunities will appear under <strong>Saved Pursuits</strong>.</div>
           </div>
           <div id="gc-tab-find-results" data-gc-find-results="true" style="display:none;margin-top:8px"></div>
+          <!-- Phase 25S — in-app View Details modal. Opens from a fresh
+               result row's 👁 View Details button. Renders title,
+               agency, sol#, NAICS, set-aside, dates, place of
+               performance, and a sanitized SAM.gov source URL.
+               No api_key ever reaches the DOM. -->
+          <div id="gc-tab-sam-details-modal" data-gc-sam-details-modal="true" role="dialog" aria-label="SAM.gov opportunity details" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.65);z-index:9000;align-items:flex-start;justify-content:center;padding:5vh 16px;overflow-y:auto">
+            <div style="background:var(--panel);border:1px solid var(--border);border-radius:10px;max-width:760px;width:100%;padding:18px 22px;color:var(--text);box-shadow:0 12px 40px rgba(0,0,0,0.4);max-height:90vh;overflow-y:auto">
+              <div id="gc-tab-sam-details-body" data-gc-sam-details-body="true" style="font-size:12px;line-height:1.55"></div>
+            </div>
+          </div>
           <div style="margin-top:14px;font-size:10px;color:var(--muted);line-height:1.55">
             User-triggered search only · no auto-search on page load · no portal upload · no bid submission. Drafts only. Human approval required. SourceDeck does not submit bids, quotes, or government responses.
           </div>
@@ -17473,28 +17488,194 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     return null;
   }
+  // ── Phase 25S — defensive normalizers ──────────────────────────────
+  // SAM.gov result objects vary in shape between endpoints and over
+  // time. These helpers convert nested fields to readable strings so
+  // result rows never display "[object Object]" and downstream logic
+  // (filter enforcement, View Details modal, upsert payload, Open
+  // Source URL) has consistent inputs.
+  function _samPopString(pop){
+    if (!pop) return '';
+    if (typeof pop === 'string') return pop;
+    if (Array.isArray(pop)){
+      return pop.map(_samPopString).filter(Boolean).join(' / ');
+    }
+    if (typeof pop === 'object'){
+      // Common SAM.gov nested shapes: placeOfPerformance.city.name,
+      // placeOfPerformance.state.code/name, .country.code/name, .zip,
+      // .streetAddress / .streetAddress2.
+      function part(v){ if (!v) return ''; if (typeof v === 'string') return v; if (typeof v === 'object') return v.name || v.code || ''; return String(v); }
+      var bits = [];
+      var street = part(pop.streetAddress || pop.street || pop.address || '');
+      var street2 = part(pop.streetAddress2 || '');
+      var city = part(pop.city || pop.cityName);
+      var state = part(pop.state || pop.stateCode || pop.stateOrProvince);
+      var zip = part(pop.zip || pop.zipCode || pop.postalCode);
+      var country = part(pop.country || pop.countryCode);
+      [street, street2].forEach(function(s){ if (s) bits.push(s); });
+      var loc = [city, state, zip].filter(Boolean).join(', ');
+      if (loc) bits.push(loc);
+      if (country && country.toUpperCase() !== 'USA' && country.toUpperCase() !== 'US') bits.push(country);
+      return bits.join(' · ');
+    }
+    return String(pop);
+  }
+  function _samAgencyString(r){
+    var a = r && (r.agency || r.fullParentPathName || r.organizationName || r.department);
+    if (!a) return '';
+    if (typeof a === 'string') return a;
+    if (typeof a === 'object') return a.name || a.code || '';
+    return String(a);
+  }
+  function _samStripApiKey(url){
+    if (!url) return '';
+    var s = String(url);
+    // Strip ?api_key=… or &api_key=… anywhere in the URL.
+    s = s.replace(/([?&])api_key=[^&#]*&?/gi, function(_, sep){ return sep === '?' ? '?' : '&'; });
+    // Trim trailing ?/& left over from the strip.
+    s = s.replace(/[?&]$/, '');
+    return s;
+  }
+  function _samSafeUrl(r){
+    if (!r) return '';
+    // Prefer uiLink (sam.gov front-end URL — never contains api_key).
+    if (r.uiLink) return _samStripApiKey(r.uiLink);
+    if (r.url && !/api\.sam\.gov/i.test(r.url)) return _samStripApiKey(r.url);
+    if (Array.isArray(r.resourceLinks) && r.resourceLinks.length){
+      var first = r.resourceLinks[0];
+      if (first && !/api\.sam\.gov/i.test(first)) return _samStripApiKey(first);
+    }
+    // Build a safe public sam.gov notice URL from noticeId.
+    if (r.noticeId) return 'https://sam.gov/opp/' + encodeURIComponent(String(r.noticeId)) + '/view';
+    // Last-resort: any api.sam.gov URL with api_key stripped.
+    if (r.url && /api\.sam\.gov/i.test(r.url)){
+      var stripped = _samStripApiKey(r.url);
+      // Only return if there's no api_key residue.
+      if (!/api_key/i.test(stripped)) return stripped;
+    }
+    return '';
+  }
+  function _samNaicsList(raw){
+    if (raw == null) return [];
+    return String(raw).split(/[,\s;]+/).map(function(s){ return s.trim(); }).filter(Boolean);
+  }
+  function _samRowNaics(r){
+    if (!r) return '';
+    var code = r.naicsCode || r.naics || (r.naicsCodes && Array.isArray(r.naicsCodes) ? r.naicsCodes[0] : '');
+    if (code && typeof code === 'object') code = code.code || code.value || '';
+    return String(code || '').trim();
+  }
+  function _samRowSetAside(r){
+    if (!r) return '';
+    var sa = r.typeOfSetAsideDescription || r.typeOfSetAside || r.setAside || '';
+    if (sa && typeof sa === 'object') sa = sa.description || sa.name || sa.code || '';
+    return String(sa || '').trim();
+  }
+  function _samMatchesNaics(r, naicsField){
+    var wanted = _samNaicsList(naicsField);
+    if (!wanted.length) return true;
+    var have = _samRowNaics(r);
+    if (!have) return false;
+    return wanted.indexOf(have) >= 0;
+  }
+  function _samMatchesSetAside(r, setAsideField){
+    if (!setAsideField || setAsideField === 'Any') return true;
+    var wanted = String(setAsideField).toLowerCase();
+    // Map the dropdown value codes to substrings the SAM.gov fields use.
+    var aliases = {
+      'sba': ['small business', 'sba'],
+      'sdvosbc': ['sdvosb', 'service-disabled veteran'],
+      'wosb': ['wosb', 'edwosb', 'women-owned'],
+      'hzc': ['hubzone', 'hub zone'],
+      '8a': ['8(a)', '8a'],
+      'vsa': ['vosb', 'veteran-owned']
+    };
+    var bag = (aliases[wanted] || [wanted]).map(function(s){ return s.toLowerCase(); });
+    var have = _samRowSetAside(r).toLowerCase();
+    if (!have) return false;
+    for (var i = 0; i < bag.length; i++){
+      if (have.indexOf(bag[i]) >= 0) return true;
+    }
+    return false;
+  }
+  function _samApplyLocalFilters(rows, filters){
+    if (!Array.isArray(rows)) return [];
+    return rows.filter(function(r){
+      if (!_samMatchesNaics(r, filters.naics)) return false;
+      if (!_samMatchesSetAside(r, filters.setAside)) return false;
+      return true;
+    });
+  }
+  function _samActiveFilterSummary(filters){
+    var parts = [];
+    if (filters.keyword) parts.push('Keyword: ' + filters.keyword);
+    if (filters.naics) parts.push('NAICS: ' + filters.naics);
+    if (filters.setAside) parts.push('Set-aside: ' + filters.setAside);
+    if (filters.placeOfPerformance) parts.push('Place: ' + filters.placeOfPerformance);
+    if (filters.dueWithinDays) parts.push('Closing within: ' + filters.dueWithinDays + ' days');
+    if (filters.status) parts.push('Status: ' + filters.status);
+    return parts.join(' · ');
+  }
+  function _samRenderFilterChips(filters){
+    var host = $('gc-tab-sam-active-filters');
+    if (!host) return;
+    var summary = _samActiveFilterSummary(filters);
+    if (!summary){ host.style.display = 'none'; host.innerHTML = ''; return; }
+    host.style.display = '';
+    host.innerHTML = '<span style="font:600 9px/1.3 \'Azeret Mono\',monospace;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted);margin-right:6px">Active filters:</span>' + _esc(summary);
+  }
+
+  function _samRenderViewDetails(r){
+    var modal = $('gc-tab-sam-details-modal');
+    var body = $('gc-tab-sam-details-body');
+    if (!modal || !body) return;
+    if (!r){ modal.style.display = 'none'; return; }
+    var safeUrl = _samSafeUrl(r);
+    var pop = _samPopString(r.placeOfPerformance);
+    var id = _attr(_samRowId(r, _samFreshResults.indexOf(r)));
+    function row(label, val){
+      var v = (val == null || val === '') ? '—' : _esc(typeof val === 'object' ? JSON.stringify(val) : val);
+      return '<div style="display:grid;grid-template-columns:160px 1fr;gap:8px;margin-bottom:6px"><span style="font:600 9px/1.3 \'Azeret Mono\',monospace;letter-spacing:0.08em;text-transform:uppercase;color:var(--muted)">' + _esc(label) + '</span><span style="font-size:11.5px;color:var(--text);line-height:1.55;word-break:break-word">' + v + '</span></div>';
+    }
+    body.innerHTML =
+      row('Title', r.title) +
+      row('Agency', _samAgencyString(r)) +
+      row('Solicitation #', r.solicitationNumber || r.noticeId) +
+      row('Notice ID', r.noticeId) +
+      row('NAICS', _samRowNaics(r)) +
+      row('Set-aside', _samRowSetAside(r)) +
+      row('Posted', _fmtDate(r.postedDate || r.publishDate)) +
+      row('Due', _fmtDate(r.responseDeadLine || r.dueDate)) +
+      row('Place of Performance', pop) +
+      row('Description', (r.description || '').toString().slice(0, 600)) +
+      (safeUrl ? row('Source URL', safeUrl) : '') +
+      '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:14px;padding-top:10px;border-top:1px solid var(--border)">' +
+        '<button class="btn btn-ghost" data-gc-sam-details-action="save" onclick="gcTabSamSave(\'' + id + '\')" style="padding:4px 10px;font-size:11px;color:var(--green,#30d158)">+ Save to SourceDeck</button>' +
+        '<button class="btn btn-ghost" data-gc-sam-details-action="pursue" onclick="gcTabSamMarkPursue(\'' + id + '\')" style="padding:4px 10px;font-size:11px;color:var(--gold2)">★ Mark Pursue</button>' +
+        (safeUrl ? '<button class="btn btn-ghost" data-gc-sam-details-action="open-source" onclick="gcTabSamOpenSource(\'' + id + '\')" style="padding:4px 10px;font-size:11px">↗ Open SAM.gov Source</button>' : '') +
+        '<button class="btn btn-ghost" data-gc-sam-details-action="close" onclick="gcTabSamCloseDetails()" style="padding:4px 10px;font-size:11px;margin-left:auto">✕ Close</button>' +
+      '</div>';
+    modal.style.display = 'flex';
+  }
+  window.gcTabSamCloseDetails = function(){ var m = $('gc-tab-sam-details-modal'); if (m) m.style.display = 'none'; };
+
   async function _samUpsert(id, userStatus){
     var r = _samFindRow(id);
     if (!r) return null;
     var stableId = 'sam:' + _samRowId(r, 0);
-    var pop = '';
-    if (r.placeOfPerformance){
-      if (typeof r.placeOfPerformance === 'string') pop = r.placeOfPerformance;
-      else pop = [r.placeOfPerformance.city, r.placeOfPerformance.state, r.placeOfPerformance.country].filter(Boolean).join(', ');
-    }
     var opp = {
       id: stableId,
       source: 'SAM.gov',
       title: r.title || '(untitled)',
-      agency: r.agency || r.fullParentPathName || '',
+      agency: _samAgencyString(r),
       solicitationNumber: r.solicitationNumber || r.noticeId || '',
       noticeId: r.noticeId || '',
-      naics: r.naicsCode || r.naics || '',
-      setAside: r.typeOfSetAsideDescription || r.setAside || '',
+      naics: _samRowNaics(r),
+      setAside: _samRowSetAside(r),
       postedDate: r.postedDate || r.publishDate || '',
       dueDate: r.responseDeadLine || r.dueDate || '',
-      placeOfPerformance: pop,
-      sourceUrl: r.uiLink || r.url || '',
+      placeOfPerformance: _samPopString(r.placeOfPerformance),
+      sourceUrl: _samSafeUrl(r),
       summary: (r.description || '').toString().slice(0, 400),
       importedAt: new Date().toISOString(),
       userStatus: userStatus
@@ -17510,23 +17691,20 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   function _samRowHtml(r, i){
     var id = _attr(_samRowId(r, i));
-    var pop = '';
-    if (r.placeOfPerformance){
-      if (typeof r.placeOfPerformance === 'string') pop = r.placeOfPerformance;
-      else pop = [r.placeOfPerformance.city, r.placeOfPerformance.state, r.placeOfPerformance.country].filter(Boolean).join(', ');
-    }
+    var pop = _samPopString(r.placeOfPerformance);
     var status = r._userStatus || 'new';
     var summary = (r.description || '').toString().slice(0, 240);
+    var agency = _samAgencyString(r);
     return '' +
       '<tr data-gc-sam-fresh-row="' + id + '" data-gc-sam-fresh-status="' + _attr(status) + '">' +
         '<td>' +
           '<div style="font-weight:600;font-size:12px;color:var(--text);line-height:1.35">' + _esc(r.title || '(untitled)') + '</div>' +
-          '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + _esc(r.agency || r.fullParentPathName || '') + '</div>' +
+          '<div style="font-size:10px;color:var(--muted);margin-top:2px">' + _esc(agency) + '</div>' +
           (summary ? '<div style="font-size:10px;color:var(--sub);margin-top:4px;max-height:32px;overflow:hidden">' + _esc(summary) + '</div>' : '') +
         '</td>' +
         '<td><code style="font-size:10.5px">' + _esc(r.solicitationNumber || r.noticeId || '—') + '</code></td>' +
-        '<td>' + _esc(r.naicsCode || r.naics || '—') + '</td>' +
-        '<td>' + _esc(r.typeOfSetAsideDescription || r.setAside || '—') + '</td>' +
+        '<td>' + _esc(_samRowNaics(r) || '—') + '</td>' +
+        '<td>' + _esc(_samRowSetAside(r) || '—') + '</td>' +
         '<td>' + _esc(_fmtDate(r.postedDate || r.publishDate)) + '</td>' +
         '<td>' + _esc(_fmtDate(r.responseDeadLine || r.dueDate)) + '</td>' +
         '<td>' + _esc(pop || '—') + '</td>' +
@@ -17578,9 +17756,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   // ── Public per-row actions for fresh SAM results ──────────────────
   window.gcTabSamViewDetails = function(id){
     var r = _samFindRow(id); if (!r) return;
-    if (window.toast) try {
-      window.toast((r.title || '(untitled)') + ' · #' + (r.solicitationNumber || r.noticeId || '—'), 'info');
-    } catch (e) {}
+    _samRenderViewDetails(r);
   };
   window.gcTabSamSave = async function(id){
     var opp = await _samUpsert(id, 'saved');
@@ -17600,9 +17776,18 @@ document.addEventListener('DOMContentLoaded',()=>{
   };
   window.gcTabSamOpenSource = function(id){
     var r = _samFindRow(id); if (!r) return;
-    var url = r.uiLink || r.url || '';
+    // Phase 25S — prefer uiLink, fall back through resourceLinks[0]
+    // or a built sam.gov/opp/{noticeId}/view URL. Strip api_key from
+    // any URL that still routes through api.sam.gov. We never open
+    // a URL containing api_key — that would leak the operator's
+    // credential into the system browser history.
+    var url = _samSafeUrl(r);
     if (!url){
       if (window.toast) try { window.toast('No SAM.gov source URL on this record.', 'warn'); } catch (e) {}
+      return;
+    }
+    if (/api_key/i.test(url)){
+      if (window.toast) try { window.toast('Refused to open source URL — API key would leak.', 'warn'); } catch (e) {}
       return;
     }
     try { window.open(url, '_blank', 'noopener,noreferrer'); } catch (e) {}
@@ -17659,28 +17844,47 @@ document.addEventListener('DOMContentLoaded',()=>{
     var limit = _samLimit();
     var filters = _samFilters();
     filters.limit = limit;
+    // Phase 25S — surface the active filter chips immediately so the
+    // user can see WHICH constraints are about to be applied (and
+    // understand why an upcoming "0 results" message happens).
+    _samRenderFilterChips(filters);
     _samStatus('Searching SAM.gov… (showing up to ' + limit + ' results)');
     if (window.toast) try { window.toast('Searching SAM.gov…', 'info'); } catch (e) {}
-    var res = [];
+    var raw = [];
     try {
-      var raw = await window.sd.govcon.samSearch(filters);
-      res = (raw && (raw.opportunities || raw.results || raw.records)) || raw || [];
-      if (!Array.isArray(res)) res = [];
+      var resp = await window.sd.govcon.samSearch(filters);
+      raw = (resp && (resp.opportunities || resp.results || resp.records)) || resp || [];
+      if (!Array.isArray(raw)) raw = [];
     } catch (e){
       _samStatus('SAM.gov search failed. Check your key, filters, or network connection.');
       if (window.toast) try { window.toast('SAM.gov search failed. Check your key, filters, or network connection.', 'err'); } catch (e2) {}
       return;
     }
+    // Phase 25S — local backstop. The SAM.gov API does not always
+    // honor every filter we pass (NAICS in particular has been
+    // returning non-matching rows for some agencies). Re-filter the
+    // returned rows against the user's NAICS + set-aside before we
+    // render so the visible list always reflects the user's intent.
+    var returned = raw.length;
+    var res = _samApplyLocalFilters(raw, filters);
     if (res.length > limit) res = res.slice(0, limit);
     _samFreshResults = res;
     renderSamFreshResults(res);
     if (!res.length){
-      _samStatus('No SAM.gov opportunities matched this search. Adjust filters or increase result count.');
-      if (window.toast) try { window.toast('No SAM.gov opportunities matched this search.', 'info'); } catch (e) {}
+      if (returned > 0 && (filters.naics || (filters.setAside && filters.setAside !== 'Any'))){
+        var why = [];
+        if (filters.naics) why.push('NAICS ' + filters.naics);
+        if (filters.setAside && filters.setAside !== 'Any') why.push('set-aside ' + filters.setAside);
+        _samStatus('SAM.gov returned ' + returned + ' rows but none matched ' + why.join(' + ') + '. Clear those filters or pick different values.');
+        if (window.toast) try { window.toast('No SAM.gov opportunities matched ' + why.join(' + ') + '. Clear those filters or pick different values.', 'info'); } catch (e) {}
+      } else {
+        _samStatus('No SAM.gov opportunities matched this search. Adjust filters or increase result count.');
+        if (window.toast) try { window.toast('No SAM.gov opportunities matched this search.', 'info'); } catch (e) {}
+      }
       return;
     }
-    _samStatus('Showing up to ' + limit + ' results · returned ' + res.length + ' · visible ' + res.length + ' · last run ' + new Date().toLocaleString());
-    if (window.toast) try { window.toast('Returned ' + res.length + ' opportunit' + (res.length === 1 ? 'y' : 'ies') + '. Review results below, then save or mark pursue.', 'ok'); } catch (e) {}
+    _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible ' + res.length + ' · last run ' + new Date().toLocaleString());
+    if (window.toast) try { window.toast('Returned ' + returned + ' opportunit' + (returned === 1 ? 'y' : 'ies') + ' · ' + res.length + ' matched filters. Review results below, then save or mark pursue.', 'ok'); } catch (e) {}
     refreshSavedPursuitsPreview();
   };
 

@@ -79,7 +79,7 @@ assert(findResultsCount === 1,
 // ── Filters are read by gcTabSearchSam via _samFilters ──────────────
 assert(/function _samFilters\(\)/.test(html),
   '_samFilters() reader is defined');
-assert(/var raw = await window\.sd\.govcon\.samSearch\(filters\)/.test(html),
+assert(/await window\.sd\.govcon\.samSearch\(filters\)/.test(html),
   'gcTabSearchSam passes the merged filters object to sd.govcon.samSearch');
 assert(/window\.gcTabClearFilters/.test(html),
   'window.gcTabClearFilters helper is defined');
