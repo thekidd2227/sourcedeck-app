@@ -430,34 +430,115 @@ function sanitizeOutreachDraftInput(input) {
 
 function sanitizeSamFilters(f) {
   f = f || {};
-  return {
-    keyword: typeof f.keyword === 'string' ? f.keyword.trim().slice(0, 120) : '',
-    naics:   Array.isArray(f.naics) ? f.naics.filter(s => /^\d{2,6}$/.test(String(s))).slice(0, 40) : [],
-    psc:     Array.isArray(f.psc)   ? f.psc.filter(s => /^[A-Z0-9]{1,4}$/i.test(String(s))).map(s => String(s).toUpperCase()).slice(0, 40) : [],
-    noticeTypes: f.noticeTypes && typeof f.noticeTypes === 'object' ? {
+  // Phase 25U — the Find Opportunities renderer sends NAICS and
+  // set-aside as plain strings (the form fields are <input> /
+  // <select>). The SAM search service expects naics as an array of
+  // codes and setAsides as an array of lowercased substrings. Before
+  // 25U this sanitizer ran `Array.isArray(f.naics)` on a string, got
+  // false, and dropped the NAICS filter silently — so SAM.gov got a
+  // generic search and the renderer then locally filtered the first
+  // 25 unrelated rows to zero. Accept both shapes here so the IPC
+  // boundary can never again eat the user's NAICS / set-aside.
+  function coerceCodes(raw){
+    if (Array.isArray(raw)){
+      return raw.map(s => String(s)).filter(s => /^\d{2,6}$/.test(s)).slice(0, 40);
+    }
+    if (typeof raw === 'string'){
+      return raw.split(/[,\s;]+/).map(s => s.trim()).filter(s => /^\d{2,6}$/.test(s)).slice(0, 40);
+    }
+    return [];
+  }
+  function coerceSetAsides(f){
+    if (Array.isArray(f.setAsides)){
+      return f.setAsides.map(s => String(s).toLowerCase()).slice(0, 10);
+    }
+    var sa = f.setAside;
+    if (typeof sa !== 'string' || !sa) return [];
+    // Map the renderer's dropdown codes to lower-case substrings the
+    // service's applyTargeting helper matches on. SAM.gov's own
+    // typeOfSetAside param accepts a code so we also expose the
+    // single-code form via setAsideCode below.
+    var aliases = {
+      'sba':     ['small business', 'sba'],
+      'sdvosbc': ['sdvosb', 'service-disabled veteran'],
+      'wosb':    ['wosb', 'edwosb', 'women-owned'],
+      'hzc':     ['hubzone', 'hub zone'],
+      '8a':      ['8(a)', '8a'],
+      'vsa':     ['vosb', 'veteran-owned']
+    };
+    var key = String(sa).toLowerCase();
+    return (aliases[key] || [key]).slice(0, 10);
+  }
+  // dueWithinDays from the renderer means "closing within N days" —
+  // i.e. responseDeadLine in [today, today+N]. SAM.gov accepts
+  // rdlfrom/rdlto in MM/dd/yyyy. We surface the dates here as ISO
+  // strings; the service converts them.
+  var responseFrom = typeof f.responseFrom === 'string' ? f.responseFrom.slice(0, 10) : '';
+  var responseTo   = typeof f.responseTo   === 'string' ? f.responseTo.slice(0, 10)   : '';
+  if (!responseFrom && !responseTo && typeof f.dueWithinDays === 'number' && f.dueWithinDays > 0){
+    var days = Math.max(1, Math.min(365, f.dueWithinDays | 0));
+    var todayIso = new Date().toISOString().slice(0, 10);
+    var future = new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+    responseFrom = todayIso;
+    responseTo = future;
+  }
+  // placeOfPerformance is a free-text string in the renderer
+  // ("e.g. CA, San Diego"). If it parses to a 2-letter US state code
+  // we forward it as state; otherwise we leave it for the local
+  // backstop. Never invent a state code.
+  var stateRaw = typeof f.state === 'string' ? f.state.trim().toUpperCase().slice(0, 2) : '';
+  if (!stateRaw && typeof f.placeOfPerformance === 'string'){
+    var m = f.placeOfPerformance.trim().match(/^([A-Z]{2})(\b|$)/i);
+    if (m) stateRaw = m[1].toUpperCase();
+  }
+  // status from the renderer: 'active' | 'archived' | 'awarded'.
+  // Translate to noticeTypes so the SAM service queries the right
+  // ptype bucket.
+  var noticeTypes;
+  if (f.noticeTypes && typeof f.noticeTypes === 'object'){
+    noticeTypes = {
       active_solicitation: f.noticeTypes.active_solicitation !== false,
       pre_rfp_intel:       f.noticeTypes.pre_rfp_intel       !== false,
       awards:              !!f.noticeTypes.awards,
       modifications:       !!f.noticeTypes.modifications
-    } : { active_solicitation: true, pre_rfp_intel: true, awards: false, modifications: false },
+    };
+  } else if (typeof f.status === 'string' && f.status){
+    var s = f.status.toLowerCase();
+    noticeTypes = {
+      active_solicitation: s === 'active' || s === '',
+      pre_rfp_intel:       s === 'active' || s === '',
+      awards:              s === 'awarded',
+      modifications:       false
+    };
+  } else {
+    noticeTypes = { active_solicitation: true, pre_rfp_intel: true, awards: false, modifications: false };
+  }
+  return {
+    keyword: typeof f.keyword === 'string' ? f.keyword.trim().slice(0, 120) : '',
+    naics:   coerceCodes(f.naics),
+    psc:     Array.isArray(f.psc)   ? f.psc.filter(s => /^[A-Z0-9]{1,4}$/i.test(String(s))).map(s => String(s).toUpperCase()).slice(0, 40) : [],
+    noticeTypes: noticeTypes,
     posted: { withinDays: typeof f.posted?.withinDays === 'number' ? Math.max(1, Math.min(365, f.posted.withinDays | 0)) : 90 },
     limit: typeof f.limit === 'number' ? Math.max(1, Math.min(1000, f.limit | 0)) : 25,
-    maxPages: typeof f.maxPages === 'number' ? Math.max(1, Math.min(10, f.maxPages | 0)) : 1,
+    // Phase 25U — when NAICS is set the service may need to page past
+    // the first response to collect enough exact matches. Cap at 5
+    // pages by default so we never hammer SAM.gov.
+    maxPages: typeof f.maxPages === 'number' ? Math.max(1, Math.min(10, f.maxPages | 0)) : (coerceCodes(f.naics).length ? 5 : 1),
     offset: typeof f.offset === 'number' ? Math.max(0, f.offset | 0) : 0,
     solicitationNumber: typeof f.solicitationNumber === 'string' ? f.solicitationNumber.trim().slice(0, 80) : '',
     noticeId: typeof f.noticeId === 'string' ? f.noticeId.trim().slice(0, 80) : '',
     title: typeof f.title === 'string' ? f.title.trim().slice(0, 160) : '',
-    state: typeof f.state === 'string' ? f.state.trim().toUpperCase().slice(0, 2) : '',
+    state: stateRaw,
     zip: typeof f.zip === 'string' ? f.zip.replace(/[^\d-]/g, '').slice(0, 10) : '',
     organizationName: typeof f.organizationName === 'string' ? f.organizationName.trim().slice(0, 120) : '',
     organizationCode: typeof f.organizationCode === 'string' ? f.organizationCode.trim().slice(0, 40) : '',
-    setAsideCode: typeof f.setAsideCode === 'string' ? f.setAsideCode.trim().slice(0, 40) : '',
-    responseFrom: typeof f.responseFrom === 'string' ? f.responseFrom.slice(0, 10) : '',
-    responseTo: typeof f.responseTo === 'string' ? f.responseTo.slice(0, 10) : '',
+    setAsideCode: typeof f.setAsideCode === 'string' ? f.setAsideCode.trim().slice(0, 40) : (typeof f.setAside === 'string' && /^[A-Z0-9]{1,8}$/i.test(f.setAside) ? f.setAside.trim().toUpperCase().slice(0, 40) : ''),
+    responseFrom: responseFrom,
+    responseTo: responseTo,
     agencies: f.agencies && typeof f.agencies === 'object' ? {
       include: Array.isArray(f.agencies.include) ? f.agencies.include.map(String).slice(0, 20) : [],
       exclude: Array.isArray(f.agencies.exclude) ? f.agencies.exclude.map(String).slice(0, 20) : []
     } : { include: [], exclude: [] },
-    setAsides: Array.isArray(f.setAsides) ? f.setAsides.map(s => String(s).toLowerCase()).slice(0, 10) : []
+    setAsides: coerceSetAsides(f)
   };
 }
