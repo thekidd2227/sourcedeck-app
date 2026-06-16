@@ -3037,6 +3037,18 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             </div>
           </div>
 
+          <!-- Phase 25W — Source Materials panel for the linked saved pursuit.
+               Populated when a saved pursuit is selected: SAM.gov description
+               fetch, resource links/attachments, point of contact, metadata.
+               Extract Requirements runs against fetched/imported source text
+               plus any pasted text. Local intake only — no upload, no send. -->
+          <div class="gc-sol-panel" id="gc-sol-source-materials" data-gc-sol-source-materials="true" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Source Materials</div>
+            <div id="gc-sol-source-materials-body" data-gc-sol-source-materials-body="true">
+              <div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No source material has been fetched yet. Use Fetch Description, download resource links, upload a solicitation file, or paste text. Select a saved pursuit above to load its SAM.gov source materials.</div>
+            </div>
+          </div>
+
           <!-- Output panels -->
           <div class="gc-sol-panels" style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
             <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
@@ -14269,9 +14281,15 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   window.gcSolExtract = function(){
     var ta = $('gc-sol-text');
-    var text = ta ? String(ta.value || '') : '';
+    var pasted = ta ? String(ta.value || '') : '';
+    // Phase 25W — combine pasted text with any fetched description /
+    // imported resource text for the linked saved pursuit. Extraction never
+    // pretends: with no source text at all it asks for source material.
+    var linked = '';
+    try { if (typeof window.gcW25CollectSourceText === 'function') linked = String(window.gcW25CollectSourceText() || ''); } catch (e) {}
+    var text = [pasted, linked].filter(function(s){ return s && s.trim(); }).join('\n\n');
     if (!text.trim()) {
-      if (window.toast) try { window.toast('Paste solicitation text first — extraction is local and requires source text.', 'info'); } catch (e) {}
+      if (window.toast) try { window.toast('Paste solicitation text or fetch/import source materials before extraction.', 'info'); } catch (e) {}
       return;
     }
     var ex = extractFromText(text);
@@ -17254,21 +17272,39 @@ document.addEventListener('DOMContentLoaded',()=>{
     return [];
   }
   function _renderRow(o){
+    var rid = esc(o.id || '');
+    var attic = (o.resourceLinks && o.resourceLinks.length) ? (o.resourceLinks.length + ' attachment(s)') : 'no attachments listed';
     return '' +
-      '<tr data-gc-saved-row="' + esc(o.id || '') + '">' +
-        '<td><div style="font-weight:600">' + esc(o.title || '(untitled)') + '</div><div style="font-size:10px;color:var(--muted)">' + esc(o.agency || '') + '</div></td>' +
+      '<tr data-gc-saved-row="' + rid + '">' +
+        '<td><div style="font-weight:600">' + esc(o.title || '(untitled)') + '</div><div style="font-size:10px;color:var(--muted)">' + esc(o.agency || o.department || '') + '</div></td>' +
         '<td><code style="font-size:10.5px">' + esc(o.solicitationNumber || o.noticeId || '—') + '</code></td>' +
         '<td>' + esc(o.naics || '') + '</td>' +
-        '<td>' + esc(o.dueDate || '') + '</td>' +
+        '<td>' + esc(o.dueDate || o.responseDeadline || '') + '</td>' +
         '<td><span style="font-size:9px;padding:2px 7px;border-radius:980px;text-transform:uppercase;letter-spacing:0.06em;background:rgba(176,138,60,0.10);border:1px solid rgba(176,138,60,0.30);color:var(--gold2)">' + esc(o.userStatus || 'saved') + '</span></td>' +
-        '<td><button class="btn btn-ghost" onclick="if(o.sourceUrl)window.open(o.sourceUrl,\'_blank\',\'noopener,noreferrer\')" style="padding:3px 7px;font-size:10px">↗ View Source</button></td>' +
-      '</tr>';
+        '<td>' +
+          '<div style="display:flex;flex-direction:column;gap:3px;min-width:200px">' +
+            '<button class="btn btn-ghost" data-gc-saved-action="view-details" onclick="gcW25ViewDetails(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">👁 View Details</button>' +
+            '<button class="btn btn-ghost" data-gc-saved-action="open-notice" onclick="gcW25OpenNotice(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">↗ Open SAM.gov Notice</button>' +
+            '<button class="btn btn-ghost" data-gc-saved-action="source-materials" onclick="gcW25ToggleSource(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--gold2)">📎 Source Materials (' + esc(attic) + ')</button>' +
+            '<button class="btn btn-ghost" data-gc-saved-action="refresh-source" onclick="gcW25RefreshSource(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">↻ Refresh Source Details</button>' +
+            '<button class="btn btn-ghost" data-gc-saved-action="send-to-workspace" onclick="gcW25SendToWorkspace(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--green,#30d158)">→ Send to Solicitation Workspace</button>' +
+          '</div>' +
+        '</td>' +
+      '</tr>' +
+      '<tr data-gc-saved-source-row="' + rid + '" style="display:none"><td colspan="6" style="background:var(--panel3,#0E2040);padding:0"><div data-gc-saved-source-panel="' + rid + '" style="padding:12px 14px"></div></td></tr>';
   }
   async function renderSavedPursuits(){
     var emptyEl = $('gc-tab-saved-empty');
     var listEl = $('gc-tab-saved-list');
     if (!listEl) return;
     var rows = await _listSaved();
+    // Phase 25W — cache saved pursuits so the Source Materials handlers can
+    // resolve the full opportunity record by id.
+    try {
+      window.gcW25Saved = rows;
+      window.gcW25SavedMap = {};
+      for (var k = 0; k < rows.length; k++){ window.gcW25SavedMap[rows[k].id] = rows[k]; }
+    } catch (e) {}
     if (!rows.length){
       if (emptyEl) emptyEl.style.display = '';
       listEl.style.display = 'none';
@@ -17277,7 +17313,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     if (emptyEl) emptyEl.style.display = 'none';
     listEl.style.display = '';
-    var html = '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Title · Agency</th><th>Solicitation #</th><th>NAICS</th><th>Due</th><th>Status</th><th>Action</th></tr></thead><tbody>';
+    var html = '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Title · Agency</th><th>Solicitation #</th><th>NAICS</th><th>Due</th><th>Status</th><th>Source &amp; Actions</th></tr></thead><tbody>';
     for (var i = 0; i < rows.length; i++) html += _renderRow(rows[i]);
     html += '</tbody></table></div>';
     listEl.innerHTML = html;
@@ -17541,25 +17577,99 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   window.gcTabSamCloseDetails = function(){ var m = $('gc-tab-sam-details-modal'); if (m) m.style.display = 'none'; };
 
+  // Phase 25W — collect the SAM.gov source metadata needed to work the
+  // solicitation later. Every URL is api_key-stripped before it is stored;
+  // the raw API key is never persisted. `description` from the SAM API is a
+  // LINK to the description endpoint (fetched later through the credential
+  // boundary), not the text itself — so only store it when it looks like a URL.
+  function _samResourceLinks(r){
+    var raw = (r && (r.resourceLinks || r.resources)) || [];
+    if (!Array.isArray(raw)) raw = [raw];
+    var out = [];
+    for (var i = 0; i < raw.length; i++){
+      var v = raw[i];
+      var u = (v && typeof v === 'object') ? (v.href || v.url || v.link || '') : v;
+      u = _samStripApiKey(String(u || '').trim());
+      if (u && /^https?:\/\//i.test(u) && !/api_key/i.test(u)) out.push(u);
+    }
+    return out;
+  }
+  function _samDescriptionLink(r){
+    var d = r && r.description;
+    if (typeof d !== 'string') return '';
+    if (!/^https?:\/\//i.test(d)) return ''; // a plain-text description, not a link
+    var safe = _samStripApiKey(d);
+    return /api_key/i.test(safe) ? '' : safe;
+  }
+  function _samApiSelfLink(r){
+    var links = (r && r.links) || [];
+    if (!Array.isArray(links)) return '';
+    for (var i = 0; i < links.length; i++){
+      var l = links[i];
+      var rel = l && (l.rel || l.relation);
+      var href = l && (l.href || l.url);
+      if (href && (rel === 'self' || !rel)){
+        var safe = _samStripApiKey(String(href));
+        if (!/api_key/i.test(safe)) return safe;
+      }
+    }
+    return '';
+  }
+  function _samPocSafe(r){
+    var poc = r && r.pointOfContact;
+    if (!poc) return [];
+    if (!Array.isArray(poc)) poc = [poc];
+    return poc.map(function(p){
+      if (!p || typeof p !== 'object') return { fullName: String(p || '') };
+      return { fullName: p.fullName || p.name || '', email: p.email || '', phone: p.phone || '', type: p.type || '' };
+    }).filter(function(p){ return p.fullName || p.email || p.phone; });
+  }
+  // Build an api_key-free shallow snapshot of the SAM record for reference.
+  function _samSafeRecord(r){
+    var safe = {};
+    try {
+      var clone = JSON.parse(JSON.stringify(r || {}));
+      var seen = JSON.stringify(clone);
+      // Drop the whole snapshot if any api_key residue survives, to be safe.
+      if (/api_key/i.test(seen)){
+        seen = seen.replace(/((?:api_key|apikey)=)[^&#"']+/gi, '$1REDACTED');
+        clone = JSON.parse(seen);
+      }
+      safe = clone;
+    } catch (e) { safe = {}; }
+    return safe;
+  }
   async function _samUpsert(id, userStatus){
     var r = _samFindRow(id);
     if (!r) return null;
     var stableId = 'sam:' + _samRowId(r, 0);
+    var nowIso = new Date().toISOString();
     var opp = {
       id: stableId,
       source: 'SAM.gov',
       title: r.title || '(untitled)',
       agency: _samAgencyString(r),
+      department: (r.department || r.fullParentPathName || '') + '',
+      fullParentPathName: (r.fullParentPathName || '') + '',
       solicitationNumber: r.solicitationNumber || r.noticeId || '',
       noticeId: r.noticeId || '',
       naics: _samRowNaics(r),
       setAside: _samRowSetAside(r),
       postedDate: r.postedDate || r.publishDate || '',
       dueDate: r.responseDeadLine || r.dueDate || '',
+      responseDeadline: r.responseDeadLine || r.dueDate || '',
       placeOfPerformance: _samPopString(r.placeOfPerformance),
+      pointOfContact: _samPocSafe(r),
+      // Source links — all api_key-stripped.
       sourceUrl: _samSafeUrl(r),
-      summary: (r.description || '').toString().slice(0, 400),
-      importedAt: new Date().toISOString(),
+      uiLink: _samStripApiKey(r.uiLink || ''),
+      descriptionLink: _samDescriptionLink(r),
+      resourceLinks: _samResourceLinks(r),
+      apiSelfLink: _samApiSelfLink(r),
+      originalSAMRecordSafe: _samSafeRecord(r),
+      summary: (typeof r.description === 'string' && !/^https?:\/\//i.test(r.description) ? r.description : '').toString().slice(0, 400),
+      importedAt: nowIso,
+      savedAt: nowIso,
       userStatus: userStatus
     };
     try {
@@ -18027,6 +18137,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
     var opp = pursuitMap[id];
     if (opp) gcV25RenderSolMeta(opp);
+    // Phase 25W — refresh the Solicitation Workspace Source Materials panel
+    // for the newly selected solicitation.
+    try { if (typeof window.gcW25RenderWorkspaceSource === 'function') window.gcW25RenderWorkspaceSource(id); } catch (e) {}
   };
 
   // Read saved/pursuing opportunities from the GovCon opportunity store.
@@ -18103,9 +18216,12 @@ document.addEventListener('DOMContentLoaded',()=>{
             window.gcV25SelectSolicitation(ss.value);
             var opp = pursuitMap[ss.value];
             if (opp) gcV25RenderSolMeta(opp);
+            try { if (typeof window.gcW25RenderWorkspaceSource === 'function') window.gcW25RenderWorkspaceSource(ss.value); } catch (e) {}
           });
         }
         var cur = activeSol(); if (cur){ try { ss.value = cur; } catch (e3) {} if (pursuitMap[cur]) gcV25RenderSolMeta(pursuitMap[cur]); }
+        // Phase 25W — render the Source Materials panel for the active sol.
+        try { if (typeof window.gcW25RenderWorkspaceSource === 'function') window.gcW25RenderWorkspaceSource(cur); } catch (e4) {}
       }
     });
   };
@@ -18125,6 +18241,294 @@ document.addEventListener('DOMContentLoaded',()=>{
     wrapped.__v25wrapped = true;
     window[name] = wrapped;
   });
+})();
+</script>
+
+<script>
+/* Phase 25W — SAM.gov source materials for saved pursuits + Solicitation
+   Workspace source intake.
+
+   - Saved pursuits keep SAM.gov source metadata (descriptionLink,
+     resourceLinks, uiLink, sourceUrl, pointOfContact) — see _samUpsert.
+   - Source Materials panel: Fetch Description (through the credential
+     boundary; api key appended only in the main process, redacted from UI),
+     resource links (Open / Import to SourceDeck — local intake only), point
+     of contact, place of performance, metadata.
+   - Imported/fetched source text is stored locally per pursuit and feeds
+     Extract Requirements in the Solicitation Workspace.
+
+   Boundaries: GET-only fetch through the credential boundary; no upload, no
+   email, no send. The raw api key never reaches the renderer. */
+(function(){
+  'use strict';
+  var SM_KEY = 'sd.govcon.sourceMaterials.v1';
+  var ACTIVE_KEY = 'sd.govcon.activeSolicitation.v1';
+
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function loadJSON(k, d){ try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
+  function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function activeSol(){ try { return localStorage.getItem(ACTIVE_KEY) || ''; } catch (e) { return ''; } }
+  function toast(m, t){ if (window.toast) try { window.toast(m, t || 'info'); } catch (e) {} }
+
+  function allSM(){ return loadJSON(SM_KEY, {}) || {}; }
+  function getSM(id){ var m = allSM(); return m[id] || { description: null, resources: [] }; }
+  function setSM(id, sm){ var m = allSM(); m[id] = sm; saveJSON(SM_KEY, m); }
+  window.gcW25GetSourceMaterials = getSM;
+
+  // Resolve a saved pursuit record by id (cache first, then the store).
+  async function resolve(id){
+    try { if (window.gcW25SavedMap && window.gcW25SavedMap[id]) return window.gcW25SavedMap[id]; } catch (e) {}
+    try {
+      if (window.sd && window.sd.govcon && window.sd.govcon.opportunities && window.sd.govcon.opportunities.list){
+        var list = await window.sd.govcon.opportunities.list();
+        for (var i = 0; i < (list || []).length; i++){ if (list[i] && list[i].id === id) return list[i]; }
+      }
+    } catch (e) {}
+    return null;
+  }
+  function urlLabel(u){
+    try { var x = new URL(u); var p = x.pathname.split('/').filter(Boolean); return (p[p.length - 1] || x.host); } catch (e) { return String(u).slice(0, 48); }
+  }
+
+  // ── Shared Source Materials renderer ────────────────────────────────
+  // Renders into hostEl for a given opportunity record. `context` is
+  // 'saved' (Saved Pursuits) or 'workspace' (Solicitation Workspace).
+  function renderSourcePanel(hostEl, o, context){
+    if (!hostEl) return;
+    if (!o){ hostEl.innerHTML = '<div style="font-size:10.5px;color:var(--muted)">Opportunity not found.</div>'; return; }
+    var sm = getSM(o.id);
+    var hasAnyLink = !!(o.sourceUrl || o.uiLink || o.descriptionLink || (o.resourceLinks && o.resourceLinks.length));
+    var parts = [];
+
+    // Metadata header
+    parts.push('<div style="display:flex;flex-direction:column;gap:2px;margin-bottom:8px">');
+    parts.push('<div style="font:700 9px/1 \'Azeret Mono\',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2)">SAM.gov Source Materials</div>');
+    parts.push('<div style="font-size:10px;color:var(--muted)">Notice ' + esc(o.noticeId || '—') + ' · Sol ' + esc(o.solicitationNumber || '—') + ' · NAICS ' + esc(o.naics || '—') + '</div>');
+    if (o.placeOfPerformance) parts.push('<div style="font-size:10px;color:var(--muted)">Place of performance: ' + esc(o.placeOfPerformance) + '</div>');
+    parts.push('</div>');
+
+    if (!hasAnyLink){
+      parts.push('<div style="font-size:10.5px;color:var(--muted);line-height:1.55">SAM.gov source link was not included for this record. Try <strong>Refresh Source Details</strong>.</div>');
+    }
+
+    // Description
+    parts.push('<div style="margin-top:8px"><div style="font-weight:600;font-size:11px;color:var(--text);margin-bottom:3px">Description</div>');
+    if (sm.description && sm.description.text){
+      parts.push('<div data-gc-w25-desc-status="ready" style="font-size:10px;color:var(--green,#30d158);margin-bottom:4px">Fetched ' + esc((sm.description.fetchedAt || '').slice(0, 19)) + ' · ' + (sm.description.text.length) + ' chars</div>');
+      parts.push('<div style="font-size:10.5px;color:var(--sub);max-height:120px;overflow:auto;border:1px solid var(--border);border-radius:6px;padding:8px;line-height:1.5">' + esc(sm.description.text.slice(0, 1200)) + (sm.description.text.length > 1200 ? '…' : '') + '</div>');
+      parts.push('<button class="btn btn-ghost" onclick="gcW25UseInWorkspace(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px;margin-top:5px;color:var(--green,#30d158)">Use description in Solicitation Workspace</button>');
+    } else if (o.descriptionLink){
+      parts.push('<button class="btn btn-gold" data-gc-w25-action="fetch-description" onclick="gcW25FetchDescription(\'' + esc(o.id) + '\')" style="padding:4px 10px;font-size:10.5px">⬇ Fetch Description</button>');
+      parts.push('<div style="font-size:10px;color:var(--muted);margin-top:3px">Fetched locally through the credential boundary. The SAM.gov key never appears in the URL, UI, or logs.</div>');
+    } else {
+      parts.push('<div style="font-size:10px;color:var(--muted)">No description link included for this record.</div>');
+    }
+    parts.push('</div>');
+
+    // Resource links / attachments
+    parts.push('<div style="margin-top:10px"><div style="font-weight:600;font-size:11px;color:var(--text);margin-bottom:3px">Resource links / attachments (' + ((o.resourceLinks && o.resourceLinks.length) || 0) + ')</div>');
+    if (o.resourceLinks && o.resourceLinks.length){
+      for (var i = 0; i < o.resourceLinks.length; i++){
+        var u = o.resourceLinks[i];
+        var imported = (sm.resources || []).some(function(r){ return r.sourceUrlSafe === u; });
+        parts.push('<div data-gc-w25-resource style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:5px 0;border-bottom:1px solid var(--border)">');
+        parts.push('<code style="font-size:10px;color:var(--sub);flex:1;min-width:160px;word-break:break-all">' + esc(urlLabel(u)) + '</code>');
+        parts.push('<button class="btn btn-ghost" onclick="gcW25OpenResource(\'' + esc(o.id) + '\',' + i + ')" style="padding:2px 7px;font-size:10px">↗ Open Source</button>');
+        parts.push('<button class="btn btn-ghost" onclick="gcW25ImportResource(\'' + esc(o.id) + '\',' + i + ')" style="padding:2px 7px;font-size:10px;color:var(--gold2)">' + (imported ? '✓ Imported' : '⬇ Import to SourceDeck') + '</button>');
+        parts.push('</div>');
+      }
+    } else {
+      parts.push('<div style="font-size:10px;color:var(--muted)">No resource links / attachments included for this record.</div>');
+    }
+    parts.push('</div>');
+
+    // Imported resources (with text)
+    var withText = (sm.resources || []).filter(function(r){ return r.text; });
+    if (withText.length){
+      parts.push('<div style="margin-top:8px;font-size:10px;color:var(--green,#30d158)">' + withText.length + ' imported source file(s) available for extraction.</div>');
+    }
+
+    // Point of contact
+    if (o.pointOfContact && o.pointOfContact.length){
+      parts.push('<div style="margin-top:10px"><div style="font-weight:600;font-size:11px;color:var(--text);margin-bottom:3px">Point of contact</div>');
+      for (var p = 0; p < o.pointOfContact.length; p++){
+        var c = o.pointOfContact[p];
+        parts.push('<div style="font-size:10px;color:var(--sub)">' + esc(c.fullName || '') + (c.email ? ' · ' + esc(c.email) : '') + (c.phone ? ' · ' + esc(c.phone) : '') + '</div>');
+      }
+      parts.push('</div>');
+    }
+
+    // Open notice + safety
+    parts.push('<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">');
+    parts.push('<button class="btn btn-ghost" onclick="gcW25OpenNotice(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px">↗ Open SAM.gov Notice</button>');
+    parts.push('<button class="btn btn-ghost" onclick="gcW25RefreshSource(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px">↻ Refresh Source Details</button>');
+    if (context !== 'workspace') parts.push('<button class="btn btn-ghost" onclick="gcW25SendToWorkspace(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px;color:var(--green,#30d158)">→ Send to Solicitation Workspace</button>');
+    parts.push('</div>');
+    parts.push('<div style="margin-top:8px;font-size:9.5px;color:var(--muted);line-height:1.5">Local source-material intake only. SourceDeck does not upload, submit, or send. The SAM.gov key never appears in the URL, UI, or logs.</div>');
+
+    hostEl.innerHTML = parts.join('');
+  }
+  window.gcW25RenderSourcePanel = renderSourcePanel;
+
+  // ── Saved Pursuits actions ──────────────────────────────────────────
+  window.gcW25ToggleSource = async function(id){
+    var row = document.querySelector('[data-gc-saved-source-row="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+    if (!row){
+      // attribute selector fallback for ids with special chars (e.g. "sam:123")
+      var rows = document.querySelectorAll('[data-gc-saved-source-row]');
+      for (var i = 0; i < rows.length; i++){ if (rows[i].getAttribute('data-gc-saved-source-row') === id){ row = rows[i]; break; } }
+    }
+    if (!row) return;
+    var open = row.style.display !== 'none';
+    if (open){ row.style.display = 'none'; return; }
+    row.style.display = '';
+    var panel = row.querySelector('[data-gc-saved-source-panel]');
+    var o = await resolve(id);
+    renderSourcePanel(panel, o, 'saved');
+  };
+  window.gcW25ViewDetails = async function(id){
+    // Reuse the source panel as the details surface (expand it).
+    await window.gcW25ToggleSource(id);
+  };
+  window.gcW25OpenNotice = async function(id){
+    var o = await resolve(id); if (!o) return;
+    var url = o.uiLink || o.sourceUrl || '';
+    if (url && /api_key/i.test(url)){ toast('Refused to open — API key would leak.', 'warn'); return; }
+    if (!url){ toast('SAM.gov source link was not included for this record. Try Refresh Source Details.', 'warn'); return; }
+    if (o.uiLink) toast('Opening SAM.gov notice — a SAM.gov login/role may be required to view it.', 'info');
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+  window.gcW25FetchDescription = async function(id){
+    var o = await resolve(id); if (!o) return;
+    if (!o.descriptionLink){ toast('No description link on this record.', 'warn'); return; }
+    if (!(window.sd && window.sd.govcon && window.sd.govcon.samFetchSource)){ toast('Description fetch requires the SourceDeck desktop app.', 'warn'); return; }
+    toast('Fetching description through the credential boundary…', 'info');
+    var res = null;
+    try { res = await window.sd.govcon.samFetchSource({ url: o.descriptionLink, kind: 'description' }); } catch (e) { res = null; }
+    if (!res || !res.ok){
+      toast('Description unavailable or SAM.gov returned an error.', 'warn');
+      return;
+    }
+    var sm = getSM(id);
+    sm.description = { text: String(res.text || ''), fetchedAt: new Date().toISOString(), status: 'fetched', sourceUrlSafe: res.sourceUrlSafe || o.descriptionLink };
+    setSM(id, sm);
+    toast('Description fetched and stored locally. Review before any use.', 'ok');
+    // Re-render whichever panel is showing this id.
+    _rerender(id, o);
+  };
+  window.gcW25OpenResource = async function(id, idx){
+    var o = await resolve(id); if (!o || !o.resourceLinks || !o.resourceLinks[idx]) return;
+    var url = o.resourceLinks[idx];
+    if (/api_key/i.test(url)){ toast('Refused to open — API key would leak.', 'warn'); return; }
+    window.open(url, '_blank', 'noopener,noreferrer');
+  };
+  window.gcW25ImportResource = async function(id, idx){
+    var o = await resolve(id); if (!o || !o.resourceLinks || !o.resourceLinks[idx]) return;
+    var url = o.resourceLinks[idx];
+    var sm = getSM(id);
+    sm.resources = sm.resources || [];
+    var rec = { savedPursuitId: id, fileName: urlLabel(url), sourceUrlSafe: url, mimeType: '', downloadedAt: new Date().toISOString(), text: '', analysisStatus: 'pending' };
+    if (window.sd && window.sd.govcon && window.sd.govcon.samFetchSource){
+      try {
+        var res = await window.sd.govcon.samFetchSource({ url: url, kind: 'resource' });
+        if (res && res.ok){
+          rec.mimeType = res.contentType || '';
+          // Only retain text-like content for local analysis.
+          if (/text|json|xml|html|plain/i.test(res.contentType || '') || (res.text && res.text.length)) rec.text = String(res.text || '');
+          rec.analysisStatus = rec.text ? 'imported' : 'binary';
+        } else {
+          rec.analysisStatus = 'fetch_failed';
+        }
+      } catch (e) { rec.analysisStatus = 'fetch_failed'; }
+    }
+    sm.resources.push(rec);
+    setSM(id, sm);
+    if (rec.text) toast('Imported to SourceDeck (local). Available for Extract Requirements.', 'ok');
+    else toast('This file may require opening SAM.gov directly.', 'info');
+    _rerender(id, o);
+  };
+  window.gcW25RefreshSource = async function(id){
+    var o = await resolve(id); if (!o) return;
+    if (!(window.sd && window.sd.govcon && window.sd.govcon.samSearch)){ toast('Refresh requires the SourceDeck desktop app.', 'warn'); return; }
+    toast('Refreshing source details from SAM.gov…', 'info');
+    var filters = {};
+    if (o.noticeId) filters.noticeId = o.noticeId;
+    if (o.solicitationNumber) filters.solnum = o.solicitationNumber;
+    if (!o.noticeId && !o.solicitationNumber && o.title) filters.keyword = o.title;
+    var res = null;
+    try { res = await window.sd.govcon.samSearch(filters); } catch (e) { res = null; }
+    var results = (res && res.results) || [];
+    var match = null;
+    for (var i = 0; i < results.length; i++){
+      var rr = results[i];
+      if ((o.noticeId && rr.noticeId === o.noticeId) || (o.solicitationNumber && rr.solicitationNumber === o.solicitationNumber)){ match = rr; break; }
+    }
+    if (!match && results.length === 1) match = results[0];
+    if (!match){ toast('Could not refresh source details — open the SAM.gov notice directly.', 'warn'); return; }
+    // Merge refreshed safe metadata into the stored opportunity.
+    var patch = {
+      id: o.id,
+      uiLink: (match.uiLink || o.uiLink || '').replace(/([?&])(api_key|apikey)=[^&#]*/gi, ''),
+      descriptionLink: (typeof match.description === 'string' && /^https?:/i.test(match.description)) ? match.description.replace(/([?&])(api_key|apikey)=[^&#]*/gi, '') : o.descriptionLink,
+      resourceLinks: Array.isArray(match.resourceLinks) ? match.resourceLinks.filter(function(u){ return u && !/api_key/i.test(u); }) : o.resourceLinks,
+      userStatus: o.userStatus
+    };
+    try { if (window.sd.govcon.opportunities && window.sd.govcon.opportunities.upsert) await window.sd.govcon.opportunities.upsert(Object.assign({}, o, patch)); } catch (e) {}
+    toast('Source details refreshed.', 'ok');
+    try { if (typeof window.gcTabRenderSavedPursuits === 'function') await window.gcTabRenderSavedPursuits(); } catch (e) {}
+  };
+  window.gcW25SendToWorkspace = async function(id){
+    var o = await resolve(id); if (!o) return;
+    try { if (typeof window.gcV25SelectSolicitation === 'function') window.gcV25SelectSolicitation(id); } catch (e) {}
+    try { if (typeof window.openTab === 'function') window.openTab('govcon'); } catch (e) {}
+    try { if (typeof window.gcTabSwitch === 'function') window.gcTabSwitch('solicitation'); } catch (e) {}
+    var sel = document.getElementById('gc-sol-opp-select');
+    if (sel){ try { sel.value = id; } catch (e) {} }
+    try { if (typeof window.gcV25RenderSolMeta === 'function') window.gcV25RenderSolMeta(o); } catch (e) {}
+    window.gcW25RenderWorkspaceSource(id);
+    toast('Loaded into Solicitation Workspace. Fetch/import source materials, then Extract Requirements.', 'ok');
+  };
+  window.gcW25UseInWorkspace = async function(id){
+    await window.gcW25SendToWorkspace(id);
+  };
+
+  // ── Solicitation Workspace source panel ─────────────────────────────
+  window.gcW25RenderWorkspaceSource = async function(id){
+    var host = document.getElementById('gc-sol-source-materials-body');
+    if (!host) return;
+    id = id || activeSol();
+    if (!id){
+      host.innerHTML = '<div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No source material has been fetched yet. Use Fetch Description, download resource links, upload a solicitation file, or paste text. Select a saved pursuit above to load its SAM.gov source materials.</div>';
+      return;
+    }
+    var o = await resolve(id);
+    renderSourcePanel(host, o, 'workspace');
+  };
+
+  // ── Source text collection for Extract Requirements ─────────────────
+  // Concatenates the fetched description + imported resource text for the
+  // active solicitation. Returns '' when only metadata exists.
+  window.gcW25CollectSourceText = function(solId){
+    var id = solId || activeSol();
+    if (!id) return '';
+    var sm = getSM(id);
+    var bits = [];
+    if (sm.description && sm.description.text) bits.push(sm.description.text);
+    (sm.resources || []).forEach(function(r){ if (r && r.text) bits.push(r.text); });
+    return bits.join('\n\n');
+  };
+
+  function _rerender(id, o){
+    // Saved Pursuits expanded panel
+    var rows = document.querySelectorAll('[data-gc-saved-source-row]');
+    for (var i = 0; i < rows.length; i++){
+      if (rows[i].getAttribute('data-gc-saved-source-row') === id && rows[i].style.display !== 'none'){
+        renderSourcePanel(rows[i].querySelector('[data-gc-saved-source-panel]'), o, 'saved');
+      }
+    }
+    // Workspace panel if this is the active solicitation
+    if (activeSol() === id) window.gcW25RenderWorkspaceSource(id);
+  }
 })();
 </script>
 

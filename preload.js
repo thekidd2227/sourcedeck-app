@@ -44,6 +44,9 @@ contextBridge.exposeInMainWorld('sd', {
       generate: (request) => ipcRenderer.invoke('govcon:content-generate', request)
     },
     samSearch:           (filters)  => ipcRenderer.invoke('govcon:sam-search', filters),
+    // Phase 25W — fetch a SAM.gov description/resource link through the
+    // credential boundary. The renderer never holds or sees the api key.
+    samFetchSource:      (payload)  => ipcRenderer.invoke('govcon:sam-fetch-source', payload),
     complianceMatrix:    (payload)  => ipcRenderer.invoke('govcon:compliance-matrix', payload),
     evaluatePreRfp:      (payload)  => ipcRenderer.invoke('govcon:pre-rfp-evaluate', payload),
     pastPerformance: {

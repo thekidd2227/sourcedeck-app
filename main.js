@@ -304,6 +304,13 @@ ipcMain.handle('govcon:sam-search', async (_event, filters) => {
   return appApi.govcon.sam.search(sanitizeSamFilters(filters));
 });
 
+// Phase 25W — fetch a SAM.gov description link / resource URL through the
+// credential boundary. The api key is appended only inside the service; the
+// renderer receives text + a key-free sourceUrlSafe, never the api key.
+ipcMain.handle('govcon:sam-fetch-source', async (_event, payload) => {
+  return appApi.govcon.sam.fetchSource(payload || {});
+});
+
 ipcMain.handle('govcon:compliance-matrix', (_event, payload) => {
   return appApi.govcon.compliance.matrix(payload || {});
 });
