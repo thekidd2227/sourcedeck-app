@@ -197,12 +197,14 @@ test('Phase 24D Past Performance / Capability Statement surfaces preserved', () 
   }
 });
 
-test('Phase 24E Stakeholder Graph surface preserved', () => {
-  assert.ok(/id="gc-stakeholder-graph"/.test(HTML), '#gc-stakeholder-graph missing');
-  assert.ok(/id="gc-stakeholder-by-opportunity"/.test(HTML),
-    '#gc-stakeholder-by-opportunity missing');
-  assert.ok(/id="gc-stakeholder-internal-owner"/.test(HTML),
-    '#gc-stakeholder-internal-owner missing');
+test('Phase 25V — Stakeholder Graph surface removed from runtime', () => {
+  // Phase 24E added a Stakeholder Graph; Phase 25V retired it as unhelpful
+  // clutter. The runtime UI must no longer surface it.
+  assert.ok(!/id="gc-stakeholder-graph"/.test(HTML), '#gc-stakeholder-graph must be removed');
+  assert.ok(!/id="gc-stakeholder-by-opportunity"/.test(HTML),
+    '#gc-stakeholder-by-opportunity must be removed');
+  assert.ok(!/id="gc-stakeholder-internal-owner"/.test(HTML),
+    '#gc-stakeholder-internal-owner must be removed');
 });
 
 // 12. Renderer boot guard.

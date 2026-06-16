@@ -227,8 +227,9 @@ test('Step 10 — Quick Setup Tour with feature walkthrough', () => {
     'Step 10 (Quick Setup Tour) anchor missing or out of position');
 });
 
-// 21. Quick Setup Tour covers all 15 required features.
-test('Quick Setup Tour covers all 15 required features (data-tour-feature markers)', () => {
+// 21. Quick Setup Tour covers all required features.
+// Phase 25V — Stakeholder Graph retired, so it is no longer a tour feature.
+test('Quick Setup Tour covers all 14 required features (data-tour-feature markers)', () => {
   const required = [
     'capture-command-center',
     'operating-rhythm',
@@ -239,7 +240,6 @@ test('Quick Setup Tour covers all 15 required features (data-tour-feature marker
     'past-performance-library',
     'capability-statement-studio',
     'prime-partner-finder',
-    'stakeholder-graph',
     'submission-readiness-gate',
     'internal-review-markdown-export',
     'audit-log',

@@ -48,8 +48,11 @@ test('Phase 25N — required GovCon tab buttons map to the canonical sections', 
   // scroll-link pills).
   const REQUIRED_TAB_BUTTONS = [
     { label: 'Solicitation',         tab: 'solicitation' },
-    { label: 'Vendors + Pricing',    tab: 'vendors-pricing' },
+    // Phase 25V — Vendors + Pricing split into two focused tabs.
+    { label: 'Vendors',              tab: 'vendors' },
+    { label: 'Pricing',              tab: 'pricing' },
     { label: 'Past Performance',     tab: 'past-performance' },
+    { label: 'Prime Partners',       tab: 'prime-partners' },
     { label: 'Submission Readiness', tab: 'submission-readiness' },
     { label: 'Audit Log',            tab: 'audit-log' },
   ];
