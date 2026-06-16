@@ -46,6 +46,7 @@ const capabilityExtractor = require('../services/govcon/capability-statement-ext
 const premiumContent = require('../services/govcon/premium-content-agent');
 const watsonxReadiness = require('../services/ai/watsonx-readiness');
 const sam             = require('../services/sam');
+const samSourceFetchSvc = require('../services/govcon/sam-source-fetch');
 const compliance      = require('../services/compliance');
 const stakeholders    = require('../services/stakeholders');
 const capture         = require('../services/capture');
@@ -89,6 +90,11 @@ function createAppApi(opts) {
     fetch: fetchFn,
     getApiKey: async () => credentials.get('sam-gov'),
     now
+  });
+  // Phase 25W — SAM.gov source-material fetch (description/resource links).
+  const samSourceFetch  = samSourceFetchSvc.createSamSourceFetchService({
+    fetch: fetchFn,
+    getApiKey: async () => credentials.get('sam-gov')
   });
   const airtableSvc     = airtable.createAirtableService({ credentials, fetchFn, audit });
   const apolloSvc       = apollo.createApolloService({ credentials, fetchFn, audit });
@@ -156,7 +162,11 @@ function createAppApi(opts) {
         }
       },
       sam: {
-        search: (filters)  => samSearch.search(filters || {})
+        search: (filters)  => samSearch.search(filters || {}),
+        // Phase 25W — fetch a SAM.gov description link / resource URL through
+        // the credential boundary. The api key is appended only inside the
+        // service (main process) and never returned to the renderer.
+        fetchSource: (payload) => samSourceFetch.fetchSource(payload || {})
       },
       opportunities: {
         list:      ()      => Promise.resolve(opportunities.list()),
