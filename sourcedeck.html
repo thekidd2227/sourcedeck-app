@@ -17906,10 +17906,19 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Phase 25T — zero-match panel. Renders into #gc-tab-sam-zero-match
   // when SAM.gov returned rows but the local NAICS backstop dropped
   // them all. Gives the user a forward path instead of a dead end.
+  // Phase 25U — the zero-match panel now honestly describes what was
+  // actually searched. After 25U the SAM service queries by NAICS
+  // server-side (ncode), so the "returned" count reflects rows that
+  // SAM.gov already filtered to the requested NAICS family. If the
+  // server returned 0 rows, the panel says so directly; if it
+  // returned some rows that the local backstop dropped (rare — only
+  // happens for set-aside / broader-mode prefix mismatches), the
+  // panel surfaces the search shape instead of implying "broad
+  // unrelated rows."
   function _samRenderZeroMatch(filters, returned){
     var host = $('gc-tab-sam-zero-match');
     if (!host) return;
-    if (!filters || !filters.naics || returned === 0){
+    if (!filters || !filters.naics){
       host.style.display = 'none';
       host.innerHTML = '';
       return;
@@ -17928,10 +17937,16 @@ document.addEventListener('DOMContentLoaded',()=>{
         }).join('') +
         '</div>';
     }
+    var headline;
+    if (returned === 0){
+      headline = 'SourceDeck searched SAM.gov using NAICS ' + _esc(filters.naics) + ' and SAM.gov returned 0 matching records.';
+    } else {
+      headline = 'SourceDeck reviewed ' + returned + ' SAM.gov record' + (returned === 1 ? '' : 's') + ' for NAICS ' + _esc(filters.naics) + ' and found 0 that passed the active filters.';
+    }
     host.style.display = '';
     host.innerHTML =
       '<div style="font:700 12px/1.35 \'Syne\',sans-serif;color:var(--text);margin-bottom:5px">No exact NAICS matches found</div>' +
-      '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">SAM.gov returned ' + returned + ' row' + (returned === 1 ? '' : 's') + ', but none matched NAICS ' + _esc(filters.naics) + ' after exact filtering.</div>' +
+      '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">' + headline + '</div>' +
       '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' +
         '<button class="btn btn-gold" onclick="gcTabSamBroaderSearch()" style="padding:5px 11px;font-size:11px">↔ Search broader related NAICS</button>' +
         '<button class="btn btn-ghost" onclick="gcTabSamKeywordOnly()" style="padding:5px 11px;font-size:11px">⌕ Clear NAICS and search keyword only</button>' +
@@ -18023,6 +18038,25 @@ document.addEventListener('DOMContentLoaded',()=>{
     var ipcFilters = {};
     Object.keys(filters).forEach(function(k){ ipcFilters[k] = filters[k]; });
     if (filters.naicsMode === 'keyword-only'){ delete ipcFilters.naics; }
+    // Phase 25U — broader mode expands the user's NAICS code into the
+    // 4-digit prefix family using the local NAICS library so the
+    // SAM.gov query reaches all sibling codes server-side, not just
+    // the exact code. Without this expansion broader mode would only
+    // match what the local backstop's prefix matcher could find on
+    // page 1 of the exact-code response.
+    if (filters.naicsMode === 'broader' && filters.naics && typeof window.naicsRelatedCodes === 'function'){
+      var rootCodes = _samNaicsList(filters.naics);
+      var expanded = rootCodes.slice();
+      rootCodes.forEach(function(code){
+        try {
+          var rel = window.naicsRelatedCodes(code, 12) || [];
+          rel.forEach(function(r){
+            if (r && r.code && expanded.indexOf(r.code) < 0) expanded.push(r.code);
+          });
+        } catch (e) {}
+      });
+      ipcFilters.naics = expanded.join(',');
+    }
     _samStatus('Searching SAM.gov… (showing up to ' + limit + ' results)');
     if (window.toast) try { window.toast('Searching SAM.gov…', 'info'); } catch (e) {}
     var raw = [];
@@ -18052,9 +18086,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     else if (filters.naics) modeDescriptor = 'exact NAICS ' + filters.naics;
     else modeDescriptor = 'no NAICS filter';
     if (!res.length){
-      if (returned > 0 && filters.naics && filters.naicsMode !== 'keyword-only'){
-        // Phase 25T — render the actionable zero-match panel instead
-        // of dead-ending the user.
+      // Phase 25U — after the sanitizer fix, SAM.gov filters by NAICS
+      // server-side. Render the actionable zero-match panel whenever
+      // a NAICS filter is set so the buyer always sees a forward
+      // path — whether SAM.gov returned 0 rows for that NAICS or
+      // returned rows that the broader/set-aside backstop dropped.
+      if (filters.naics && filters.naicsMode !== 'keyword-only'){
         _samRenderZeroMatch(filters, returned);
         _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible 0 · ' + modeDescriptor);
         if (window.toast) try { window.toast('No exact NAICS matches — try broader related NAICS or keyword-only search.', 'info'); } catch (e) {}
