@@ -2304,6 +2304,17 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div id="gc-tab-sam-key-missing" data-gc-sam-key-missing="true" style="display:none;font-size:11px;color:var(--text);line-height:1.55;background:rgba(255,176,32,0.06);border:1px solid rgba(255,176,32,0.30);border-radius:6px;padding:9px 12px;margin-bottom:12px">
             <strong style="color:#ffb020">SAM.gov key missing.</strong> Add it in Setup or Settings → API Keys to enable in-app search. SourceDeck never displays the raw key.
           </div>
+          <!-- Phase 25X — Find Opportunities internal mode toggle. The
+               canonical SAM.gov API search stays the default; Web
+               Opportunity Intel is a supplemental, provider-aware panel.
+               No new sidebar tab; no second SAM.gov search section. -->
+          <div id="gc-find-mode-toggle" data-gc-find-mode-toggle="true" role="tablist" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+            <button type="button" class="gc-find-mode-btn active" data-gc-find-mode="sam" aria-selected="true" onclick="gcFindMode('sam')" style="padding:6px 12px;border-radius:6px;background:rgba(176,138,60,0.14);border:1px solid rgba(176,138,60,0.45);color:var(--text);cursor:pointer;font-size:11.5px">SAM.gov API Search</button>
+            <button type="button" class="gc-find-mode-btn" data-gc-find-mode="web" aria-selected="false" onclick="gcFindMode('web')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer;font-size:11.5px">Web Opportunity Intel</button>
+          </div>
+
+          <!-- ── SAM.gov API Search (canonical, default) ── -->
+          <div id="gc-find-mode-sam" data-gc-find-mode-panel="sam">
           <!-- Phase 25R — merged filter row. Pulls the previously
                duplicate Phase 25M Pipeline filters into the canonical
                Find Opportunities section. Each filter is read by
@@ -2427,6 +2438,66 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div style="margin-top:14px;font-size:10px;color:var(--muted);line-height:1.55">
             User-triggered search only · no auto-search on page load · no portal upload · no bid submission. Drafts only. Human approval required. SourceDeck does not submit bids, quotes, or government responses.
           </div>
+          </div><!-- /gc-find-mode-sam -->
+
+          <!-- ══ Web Opportunity Intel (supplemental, provider-aware) ══
+               Supplemental open-web opportunity search. Does NOT replace
+               the SAM.gov API search. No auto-run. No scraping of
+               login-protected pages. Live results require a web-capable
+               AI/search provider through the credential boundary; without
+               one, SourceDeck prepares a search plan / prompt only and
+               never fabricates opportunities. -->
+          <div id="gc-find-mode-web" data-gc-find-mode-panel="web" style="display:none">
+            <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-bottom:10px">Supplemental open-web search for active/future solicitations beyond the SAM.gov API. Results are <strong>model-suggested — verify on source</strong>; they are not SAM.gov-verified unless matched. No auto-run · no portal scraping · no login bypass.</div>
+            <div id="gc-wi-provider-status" data-gc-wi-provider-status="true" style="display:none;font-size:11px;line-height:1.55;background:rgba(255,176,32,0.06);border:1px solid rgba(255,176,32,0.30);border-radius:6px;padding:9px 12px;margin-bottom:10px"></div>
+
+            <div id="gc-wi-form" data-gc-wi-form="true" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-bottom:10px">
+              <div class="form-group" style="margin:0"><label class="label">NAICS codes</label><input class="input" id="gc-wi-naics" data-gc-wi-field="naics" placeholder="541512, 541519"></div>
+              <div class="form-group" style="margin:0"><label class="label">Set-asides</label><input class="input" id="gc-wi-setaside" data-gc-wi-field="setAside" placeholder="SDVOSB, 8(a), WOSB"></div>
+              <div class="form-group" style="margin:0"><label class="label">Place of performance</label><input class="input" id="gc-wi-pop" data-gc-wi-field="placeOfPerformance" placeholder="e.g. CA, San Diego"></div>
+              <div class="form-group" style="margin:0"><label class="label">Agency focus</label><input class="input" id="gc-wi-agency" data-gc-wi-field="agency" placeholder="e.g. VA, Army, GSA"></div>
+              <div class="form-group" style="margin:0"><label class="label">Contract type</label><input class="input" id="gc-wi-type" data-gc-wi-field="contractType" placeholder="e.g. IDIQ, BPA, FFP"></div>
+              <div class="form-group" style="margin:0"><label class="label">Dollar range</label><input class="input" id="gc-wi-dollars" data-gc-wi-field="dollarRange" placeholder="e.g. $250k–$5M"></div>
+              <div class="form-group" style="margin:0"><label class="label">Deadline window</label><input class="input" id="gc-wi-deadline" data-gc-wi-field="deadlineWindow" placeholder="e.g. next 90 days"></div>
+              <div class="form-group" style="margin:0"><label class="label">Keywords</label><input class="input" id="gc-wi-keywords" data-gc-wi-field="keywords" placeholder="e.g. zero trust, SOC"></div>
+              <div class="form-group" style="margin:0"><label class="label">Source group</label>
+                <select class="select" id="gc-wi-source-group" data-gc-wi-field="sourceGroup" style="width:100%">
+                  <option value="all">All</option>
+                  <option value="federal">Federal</option>
+                  <option value="defense">Defense</option>
+                  <option value="civilian">Civilian agencies</option>
+                  <option value="state-local">State/local pass-through</option>
+                  <option value="aggregators">Aggregators/indexers</option>
+                </select>
+              </div>
+              <div class="form-group" style="margin:0"><label class="label">Max results</label>
+                <select class="select" id="gc-wi-max" data-gc-wi-field="maxResults" style="width:100%">
+                  <option value="10">10</option><option value="25">25</option><option value="50">50</option>
+                </select>
+              </div>
+            </div>
+
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+              <button type="button" class="btn btn-gold" id="gc-wi-run-btn" onclick="gcWiRunSearch()">Run Web Intel Search</button>
+              <button type="button" class="btn btn-ghost" onclick="gcWiGenerateSearchPlan()">Generate Search Plan</button>
+              <button type="button" class="btn btn-ghost" onclick="gcWiCopyPrompt()">Copy Search Prompt</button>
+            </div>
+
+            <details class="gc-wi-paste" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;margin-bottom:10px">
+              <summary style="cursor:pointer;font-weight:600;font-size:12px;color:var(--text)">Paste Web Search Results for Structuring</summary>
+              <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+                <textarea class="input" id="gc-wi-paste-text" rows="6" placeholder="Paste JSON or a list of opportunities returned by your web-capable provider. SourceDeck structures them into the table below, drops expired/awarded/cancelled records, and flags any missing title or source URL."></textarea>
+                <div><button type="button" class="btn btn-ghost" onclick="gcWiStructurePasted()">Structure Pasted Results</button></div>
+              </div>
+            </details>
+
+            <div id="gc-wi-plan" data-gc-wi-plan="true" style="display:none;background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:10px"></div>
+            <div id="gc-wi-coverage" data-gc-wi-coverage="true" style="display:none;background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:10px"></div>
+            <div id="gc-wi-results" data-gc-wi-results="true" style="display:none"></div>
+            <div id="gc-wi-empty" data-gc-wi-empty="true" style="text-align:center;padding:36px 20px;border:1px dashed var(--border);border-radius:8px;color:var(--muted);background:rgba(255,255,255,0.02);font-size:11.5px;line-height:1.55">No web intel run yet. Set parameters and click <strong>Run Web Intel Search</strong> (live results require a web-capable provider) or <strong>Generate Search Plan</strong>.</div>
+
+            <div style="margin-top:12px;font-size:10px;color:var(--muted);line-height:1.55">Supplemental intel only · model-suggested results are unverified until matched in SAM.gov · no auto-run · no portal scraping · no login bypass · no send/submit/upload.</div>
+          </div><!-- /gc-find-mode-web -->
         </section>
 
         <!-- Phase 25R — NAICS Finder modal. Opens from the Find
@@ -3032,6 +3103,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 <button type="button" class="btn btn-ghost" onclick="gcSolBuildMatrix()">Build Compliance Matrix</button>
                 <button type="button" class="btn btn-ghost" onclick="gcSolMarkReviewed()">Mark Requirement Reviewed</button>
                 <button type="button" class="btn btn-ghost" onclick="gcSolExportPlaceholder()">Export Matrix Placeholder</button>
+                <!-- Phase 25X — shortcut into Make the Right First Impression. -->
+                <button type="button" class="btn btn-ghost" onclick="gcFiOpenFor((document.getElementById('gc-sol-opp-select')||{}).value||'')" style="color:var(--gold2)">✦ Make First Impression</button>
               </div>
               <div style="font-size:10px;color:var(--muted);line-height:1.55">Manual extraction only. SourceDeck does not submit bids. All outputs require human review and verification against the source document.</div>
             </div>
@@ -4407,6 +4480,96 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
               </div>
             </div>
           </section>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 25X — Make the Right First Impression
+             A focused page under Proposal Workspace (not a sidebar item).
+             Drafts smart clarification questions + a professional COR email
+             from a selected saved pursuit / fetched source / pasted text.
+             Draft-only — SourceDeck never sends email or contacts a COR.
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="card mb-14" id="pw-first-impression" data-pw-first-impression="true" style="border-left:3px solid var(--gold)">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:10px">
+            <div>
+              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Make the Right First Impression</div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text)">Clarification questions + COR email draft</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px">Draft three sharp clarification questions and a concise COR email from a saved pursuit, fetched source material, or pasted solicitation text. Draft only — review communication rules before contacting the COR.</div>
+            </div>
+          </div>
+
+          <!-- Source selection -->
+          <div style="display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:10px">
+            <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px">
+              <span>Solicitation source (saved pursuit)</span>
+              <select class="select" id="gc-fi-sol-select" data-gc-fi-sol-select="true" onchange="gcFiSelectSolicitation(this.value)">
+                <option value="">— Select a saved pursuit (or paste text below) —</option>
+              </select>
+              <span id="gc-fi-sol-empty" style="font-size:10px;color:var(--muted);line-height:1.5">No saved solicitations yet. Save or mark pursue from Find Opportunities, or paste solicitation text below.</span>
+            </label>
+            <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px">
+              <span>Paste solicitation text (optional — combined with fetched source material)</span>
+              <textarea class="input" id="gc-fi-text" rows="4" placeholder="Paste solicitation text, or use Fetch Description / Import on the saved pursuit's Source Materials. SourceDeck runs locally — no text is uploaded or sent."></textarea>
+            </label>
+            <div id="gc-fi-source-status" data-gc-fi-source-status="true" style="font-size:10px;color:var(--muted);line-height:1.5">Fetch/import solicitation source material or paste solicitation text before generating questions.</div>
+          </div>
+
+          <!-- Deadlines / timer -->
+          <div style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;margin-bottom:10px">
+            <div style="font:700 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--sub);margin-bottom:6px">Deadlines (advisory — verify on the solicitation)</div>
+            <div id="gc-fi-timers" data-gc-fi-timers="true" style="font-size:11px;color:var(--text);line-height:1.6;margin-bottom:8px">Deadline not found — add manually below.</div>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:8px">
+              <label style="font-size:10px;color:var(--sub);display:flex;flex-direction:column;gap:2px"><span>Proposal / response deadline</span><input class="input" id="gc-fi-response-deadline" type="text" placeholder="YYYY-MM-DD or as stated" oninput="gcFiSaveDeadlines()"></label>
+              <label style="font-size:10px;color:var(--sub);display:flex;flex-direction:column;gap:2px"><span>Questions due deadline</span><input class="input" id="gc-fi-question-deadline" type="text" placeholder="YYYY-MM-DD or as stated" oninput="gcFiSaveDeadlines()"></label>
+              <label style="font-size:10px;color:var(--sub);display:flex;flex-direction:column;gap:2px"><span>Site visit deadline</span><input class="input" id="gc-fi-sitevisit-deadline" type="text" placeholder="YYYY-MM-DD or none" oninput="gcFiSaveDeadlines()"></label>
+              <label style="font-size:10px;color:var(--sub);display:flex;flex-direction:column;gap:2px"><span>Timezone (if stated)</span><input class="input" id="gc-fi-timezone" type="text" placeholder="timezone not stated" oninput="gcFiSaveDeadlines()"></label>
+            </div>
+          </div>
+
+          <!-- Company profile (editable; prefilled from Settings → Company Profile) -->
+          <details class="gc-fi-company" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;margin-bottom:10px">
+            <summary style="cursor:pointer;font-weight:600;font-size:12px;color:var(--text)">Company profile for the COR email (prefilled from your profile when set)</summary>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:8px;margin-top:8px">
+              <label style="font-size:10px;color:var(--sub);display:flex;flex-direction:column;gap:2px"><span>Company name</span><input class="input" id="gc-fi-company" type="text" placeholder="Your company (e.g. ARCG — demo placeholder)"></label>
+              <label style="font-size:10px;color:var(--sub);display:flex;flex-direction:column;gap:2px"><span>Certifications / set-asides</span><input class="input" id="gc-fi-certs" type="text" placeholder="e.g. SDVOSB, 8(a)"></label>
+              <label style="font-size:10px;color:var(--sub);display:flex;flex-direction:column;gap:2px"><span>Core capability</span><input class="input" id="gc-fi-capability" type="text" placeholder="e.g. IT modernization"></label>
+              <label style="font-size:10px;color:var(--sub);display:flex;flex-direction:column;gap:2px"><span>Contact name</span><input class="input" id="gc-fi-contact" type="text" placeholder="Your name"></label>
+              <label style="font-size:10px;color:var(--sub);display:flex;flex-direction:column;gap:2px"><span>Contact email</span><input class="input" id="gc-fi-email" type="text" placeholder="you@example.com — SourceDeck does not send mail"></label>
+              <label style="font-size:10px;color:var(--sub);display:flex;flex-direction:column;gap:2px"><span>Phone</span><input class="input" id="gc-fi-phone" type="text" placeholder="+1 555 555 0123"></label>
+            </div>
+            <div style="font-size:9.5px;color:var(--muted);margin-top:6px">Prefilled from Settings → Company Profile when available. ARCG appears only as demo placeholder text until you set your own profile.</div>
+          </details>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <button type="button" class="btn btn-gold" onclick="gcFiGenerateQuestions()">Generate 3 Clarification Questions</button>
+            <button type="button" class="btn btn-ghost" onclick="gcFiDraftEmail()">Draft COR Email</button>
+            <button type="button" class="btn btn-ghost" onclick="gcFiCopyPrompt()">Copy AI Prompt</button>
+          </div>
+
+          <!-- Output: questions -->
+          <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text)">Clarification Questions</div>
+              <button type="button" class="btn btn-ghost" onclick="gcFiCopyQuestions()" style="padding:3px 8px;font-size:10px">Copy Questions</button>
+            </div>
+            <div id="gc-fi-questions" data-gc-fi-questions="true"><div style="font-size:10.5px;color:var(--muted);line-height:1.55">No questions generated yet. Select a source and click "Generate 3 Clarification Questions".</div></div>
+          </div>
+
+          <!-- Output: COR email -->
+          <div style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:10px">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text)">COR Email Draft</div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap">
+                <button type="button" class="btn btn-ghost" onclick="gcFiCopyEmail()" style="padding:3px 8px;font-size:10px">Copy Email</button>
+                <button type="button" class="btn btn-ghost" onclick="gcFiSave()" style="padding:3px 8px;font-size:10px">Save Draft Locally</button>
+                <button type="button" class="btn btn-ghost" onclick="gcFiMarkReviewed()" style="padding:3px 8px;font-size:10px">Mark Reviewed</button>
+                <button type="button" class="btn btn-ghost" onclick="gcFiReset()" style="padding:3px 8px;font-size:10px;color:var(--red)">Reset Draft</button>
+              </div>
+            </div>
+            <div id="gc-fi-email" data-gc-fi-email="true"><div style="font-size:10.5px;color:var(--muted);line-height:1.55">No COR email drafted yet. Generate questions, then click "Draft COR Email".</div></div>
+          </div>
+
+          <div class="gc-fi-footer gc-safety-footer" style="font-size:10px;color:var(--muted);line-height:1.5">Draft only. SourceDeck does not send email. Verify solicitation communication rules before contacting the COR.</div>
         </div>
 
         <div class="grid-2" style="grid-template-columns:240px 1fr;gap:14px;align-items:start">
@@ -17271,12 +17434,29 @@ document.addEventListener('DOMContentLoaded',()=>{
     } catch (e) {}
     return [];
   }
+  // Phase 25X — advisory deadline timer text for a saved pursuit row.
+  function _savedTimerText(o){
+    function rem(s){
+      if (!s) return null;
+      var d = new Date(s); if (isNaN(d.getTime())) return null;
+      var ms = d.getTime() - Date.now();
+      if (ms <= 0) return 'deadline passed';
+      var hrs = Math.floor(ms / 3600000), days = Math.floor(hrs / 24);
+      return days >= 2 ? ('in ' + days + ' days') : ('in ' + hrs + ' hours');
+    }
+    var parts = [];
+    var q = rem(o.questionDeadline || o.userAddedQuestionDeadline);
+    var p = rem(o.responseDeadline || o.dueDate);
+    if (q) parts.push('Questions due ' + q);
+    if (p) parts.push('Proposal due ' + p);
+    return parts.length ? parts.join(' · ') : 'Deadline not found — add manually';
+  }
   function _renderRow(o){
     var rid = esc(o.id || '');
     var attic = (o.resourceLinks && o.resourceLinks.length) ? (o.resourceLinks.length + ' attachment(s)') : 'no attachments listed';
     return '' +
       '<tr data-gc-saved-row="' + rid + '">' +
-        '<td><div style="font-weight:600">' + esc(o.title || '(untitled)') + '</div><div style="font-size:10px;color:var(--muted)">' + esc(o.agency || o.department || '') + '</div></td>' +
+        '<td><div style="font-weight:600">' + esc(o.title || '(untitled)') + '</div><div style="font-size:10px;color:var(--muted)">' + esc(o.agency || o.department || '') + '</div><div style="font-size:9.5px;color:var(--gold2);margin-top:2px">' + esc(_savedTimerText(o)) + '</div></td>' +
         '<td><code style="font-size:10.5px">' + esc(o.solicitationNumber || o.noticeId || '—') + '</code></td>' +
         '<td>' + esc(o.naics || '') + '</td>' +
         '<td>' + esc(o.dueDate || o.responseDeadline || '') + '</td>' +
@@ -17658,6 +17838,11 @@ document.addEventListener('DOMContentLoaded',()=>{
       postedDate: r.postedDate || r.publishDate || '',
       dueDate: r.responseDeadLine || r.dueDate || '',
       responseDeadline: r.responseDeadLine || r.dueDate || '',
+      // Phase 25X — timing fields (advisory until the user verifies them).
+      questionDeadline: '',
+      siteVisitDeadline: '',
+      userAddedQuestionDeadline: '',
+      lastRefreshedAt: nowIso,
       placeOfPerformance: _samPopString(r.placeOfPerformance),
       pointOfContact: _samPocSafe(r),
       // Source links — all api_key-stripped.
@@ -18363,6 +18548,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     parts.push('<button class="btn btn-ghost" onclick="gcW25OpenNotice(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px">↗ Open SAM.gov Notice</button>');
     parts.push('<button class="btn btn-ghost" onclick="gcW25RefreshSource(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px">↻ Refresh Source Details</button>');
     if (context !== 'workspace') parts.push('<button class="btn btn-ghost" onclick="gcW25SendToWorkspace(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px;color:var(--green,#30d158)">→ Send to Solicitation Workspace</button>');
+    // Phase 25X — shortcut into Make the Right First Impression.
+    parts.push('<button class="btn btn-ghost" onclick="gcFiOpenFor(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px;color:var(--gold2)">✦ Make First Impression</button>');
     parts.push('</div>');
     parts.push('<div style="margin-top:8px;font-size:9.5px;color:var(--muted);line-height:1.5">Local source-material intake only. SourceDeck does not upload, submit, or send. The SAM.gov key never appears in the URL, UI, or logs.</div>');
 
@@ -18529,6 +18716,607 @@ document.addEventListener('DOMContentLoaded',()=>{
     // Workspace panel if this is the active solicitation
     if (activeSol() === id) window.gcW25RenderWorkspaceSource(id);
   }
+})();
+</script>
+
+<script>
+/* Phase 25X (Part A) — Make the Right First Impression.
+   Drafts 3 clarification questions + a COR email from a selected saved
+   pursuit / fetched 25W source material / pasted text. Deterministic and
+   local: works without an AI key; a Copy AI Prompt action is offered for
+   users who want to run it through a configured provider. Draft only —
+   SourceDeck never sends email or contacts a COR. */
+(function(){
+  'use strict';
+  var FI_KEY = 'sd.govcon.firstImpression.v1';
+  var ACTIVE_KEY = 'sd.govcon.activeSolicitation.v1';
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function loadJSON(k, d){ try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
+  function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function toast(m, t){ if (window.toast) try { window.toast(m, t || 'info'); } catch (e) {} }
+  function selId(){ var s = $('gc-fi-sol-select'); return (s && s.value) || ''; }
+  function allFi(){ return loadJSON(FI_KEY, {}) || {}; }
+  function getFi(id){ var m = allFi(); return m[id || '_unlinked'] || {}; }
+  function setFi(id, v){ var m = allFi(); m[id || '_unlinked'] = v; saveJSON(FI_KEY, m); }
+
+  async function savedPursuits(){
+    try {
+      if (window.sd && window.sd.govcon && window.sd.govcon.opportunities && window.sd.govcon.opportunities.list){
+        var list = await window.sd.govcon.opportunities.list();
+        return (list || []).filter(function(o){ return o && (o.userStatus === 'saved' || o.userStatus === 'pursuing'); });
+      }
+    } catch (e) {}
+    return [];
+  }
+  var fiMap = {};
+
+  window.gcFiPopulate = async function(){
+    var sel = $('gc-fi-sol-select'); if (!sel) return;
+    var list = await savedPursuits();
+    fiMap = {}; for (var i = 0; i < list.length; i++) fiMap[list[i].id] = list[i];
+    var cur = sel.value || (function(){ try { return localStorage.getItem(ACTIVE_KEY) || ''; } catch (e) { return ''; } })();
+    var opts = ['<option value="">— Select a saved pursuit (or paste text below) —</option>'];
+    for (var j = 0; j < list.length; j++){
+      var o = list[j]; var label = (o.title || o.solicitationNumber || o.noticeId || o.id);
+      if (o.agency) label += ' — ' + o.agency;
+      opts.push('<option value="' + esc(o.id) + '">' + esc(label) + '</option>');
+    }
+    sel.innerHTML = opts.join('');
+    try { sel.value = cur; } catch (e) {}
+    var empty = $('gc-fi-sol-empty'); if (empty) empty.style.display = list.length ? 'none' : '';
+    await gcFiLoadProfile();
+    if (sel.value) window.gcFiSelectSolicitation(sel.value);
+  };
+
+  // Prefill the company profile fields from Settings → Company Profile
+  // (operating profile). Only fills empty fields; ARCG stays a placeholder.
+  window.gcFiLoadProfile = async function(){
+    var p = null;
+    try { if (window.sd && sd.govcon && sd.govcon.profile && sd.govcon.profile.get) p = await sd.govcon.profile.get(); } catch (e) {}
+    if (!p) return;
+    var b = p.business || {};
+    var certsObj = (p.identifiers && p.identifiers.certifications) || {};
+    var certs = Object.keys(certsObj).filter(function(k){ return k !== 'other' && certsObj[k] === true; });
+    if (certsObj.other) certs.push(certsObj.other);
+    function fill(id, val){ var el = $(id); if (el && !el.value && val) el.value = val; }
+    fill('gc-fi-company', b.legalBusinessName || b.dbaName || '');
+    fill('gc-fi-certs', certs.join(', '));
+    fill('gc-fi-capability', (b.coreServices || []).join(', ') || b.shortBusinessDescription || '');
+    fill('gc-fi-contact', b.primaryContactName || '');
+    fill('gc-fi-email', b.businessEmail || '');
+    fill('gc-fi-phone', b.businessPhone || '');
+  };
+
+  window.gcFiSelectSolicitation = function(id){
+    var o = fiMap[id];
+    var fi = getFi(id);
+    // Seed deadline inputs from the saved pursuit, then any stored overrides.
+    function set(elId, val){ var el = $(elId); if (el) el.value = val == null ? '' : val; }
+    set('gc-fi-response-deadline', fi.responseDeadline || (o && (o.responseDeadline || o.dueDate)) || '');
+    set('gc-fi-question-deadline', fi.questionDeadline || fi.userAddedQuestionDeadline || (o && o.questionDeadline) || '');
+    set('gc-fi-sitevisit-deadline', fi.siteVisitDeadline || (o && o.siteVisitDeadline) || '');
+    set('gc-fi-timezone', fi.timezone || '');
+    renderTimers();
+    renderSourceStatus(id, o);
+    // Restore any saved draft for this solicitation.
+    if (fi.questions && fi.questions.length) renderQuestions(fi.questions);
+    if (fi.email) renderEmail(fi.email);
+  };
+
+  function collectSource(id){
+    var bits = [];
+    var ta = $('gc-fi-text'); if (ta && ta.value.trim()) bits.push(ta.value);
+    try { if (typeof window.gcW25CollectSourceText === 'function'){ var t = window.gcW25CollectSourceText(id); if (t) bits.push(t); } } catch (e) {}
+    var o = fiMap[id]; if (o && o.summary) bits.push(o.summary);
+    return bits.join('\n\n');
+  }
+  function renderSourceStatus(id, o){
+    var el = $('gc-fi-source-status'); if (!el) return;
+    var src = collectSource(id);
+    if (src && src.trim().length > 40){
+      el.style.color = 'var(--green,#30d158)';
+      el.textContent = 'Source material ready (' + src.trim().length + ' chars). You can generate questions.';
+    } else {
+      el.style.color = 'var(--muted)';
+      el.textContent = 'Fetch/import solicitation source material or paste solicitation text before generating questions.';
+    }
+  }
+
+  // ── Deadline timer ──────────────────────────────────────────────────
+  function parseDate(s){ if (!s) return null; var d = new Date(s); return isNaN(d.getTime()) ? null : d; }
+  function remain(d){
+    if (!d) return null;
+    var ms = d.getTime() - Date.now();
+    if (ms <= 0) return { text: 'passed', overdue: true };
+    var hrs = Math.floor(ms / 3600000); var days = Math.floor(hrs / 24);
+    return days >= 2 ? { text: 'in ' + days + ' days' } : { text: 'in ' + hrs + ' hours' };
+  }
+  function renderTimers(){
+    var host = $('gc-fi-timers'); if (!host) return;
+    var resp = parseDate(($('gc-fi-response-deadline') || {}).value);
+    var q = parseDate(($('gc-fi-question-deadline') || {}).value);
+    var tz = (($('gc-fi-timezone') || {}).value || '').trim();
+    var lines = [];
+    if (q){ var rq = remain(q); lines.push('Questions due ' + (rq.overdue ? '— deadline passed' : rq.text)); }
+    if (resp){ var rr = remain(resp); lines.push('Proposal due ' + (rr.overdue ? '— deadline passed' : rr.text)); }
+    if (!lines.length){ host.textContent = 'Deadline not found — add manually below.'; return; }
+    lines.push(tz ? ('Timezone: ' + tz) : 'timezone not stated');
+    lines.push('Advisory until verified against the solicitation.');
+    host.innerHTML = lines.map(function(l){ return '<div>' + esc(l) + '</div>'; }).join('');
+  }
+  window.gcFiSaveDeadlines = function(){
+    var id = selId();
+    var fi = getFi(id);
+    fi.responseDeadline = ($('gc-fi-response-deadline') || {}).value || '';
+    fi.questionDeadline = ($('gc-fi-question-deadline') || {}).value || '';
+    fi.userAddedQuestionDeadline = fi.questionDeadline;
+    fi.siteVisitDeadline = ($('gc-fi-sitevisit-deadline') || {}).value || '';
+    fi.timezone = ($('gc-fi-timezone') || {}).value || '';
+    fi.lastRefreshedAt = new Date().toISOString();
+    setFi(id, fi);
+    renderTimers();
+  };
+
+  // ── Clarification questions (local, grounded analysis) ──────────────
+  function analyze(src){
+    var lines = String(src || '').split(/\r?\n/).map(function(l){ return l.trim(); }).filter(Boolean);
+    var joined = lines.join(' ');
+    function find(re){ for (var i = 0; i < lines.length; i++){ if (re.test(lines[i])) return lines[i].slice(0, 160); } return ''; }
+    var candidates = [];
+    // Evaluation factors (Section M)
+    var m = find(/(Section\s+M|evaluation\s+factor|basis\s+of\s+award|technically\s+acceptable|best\s+value|trade[- ]?off)/i);
+    candidates.push({ q: 'How will proposals be evaluated — what is the relative weighting of technical, past performance, and price factors?', why: 'Evaluation weighting drives win strategy and how we allocate proposal effort.', source: m || 'source section not identified', risk: m ? 'Medium' : 'High' });
+    // Submission requirements (Section L / page limits)
+    var l = find(/(Section\s+L|page\s+limit|font|margins|volume\s+I|format|submission\s+(instructions|method)|portal)/i);
+    candidates.push({ q: 'What are the exact submission format, page limits, and delivery method (portal vs. email) for each volume?', why: 'A non-conforming submission can be rejected before evaluation.', source: l || 'source section not identified', risk: l ? 'Medium' : 'High' });
+    // SOW / PWS scope gap
+    var sow = find(/(PWS|SOW|statement\s+of\s+work|performance\s+work|scope|tasks?)/i);
+    candidates.push({ q: 'Can the Government clarify the scope boundaries and expected deliverables where the PWS/SOW appears ambiguous?', why: 'Scope ambiguity creates pricing risk and post-award disputes.', source: sow || 'source section not identified', risk: sow ? 'Medium' : 'High' });
+    // Set-aside / eligibility
+    var sa = find(/(set[- ]?aside|8\(a\)|SDVOSB|HUBZone|WOSB|small\s+business|NAICS)/i);
+    if (sa) candidates.push({ q: 'Please confirm the set-aside type and the size standard / NAICS that governs eligibility for this requirement.', why: 'Eligibility determines whether we bid as prime or must team.', source: sa, risk: 'Medium' });
+    // Deadline / Q&A window
+    var dd = find(/(due|deadline|questions?\s+due|Q\s*&\s*A|site\s+visit|industry\s+day)/i);
+    if (dd) candidates.push({ q: 'Please confirm the question cut-off date/time and timezone, and whether a site visit or industry day is planned.', why: 'Missing the question window forfeits the chance to shape requirements.', source: dd, risk: 'Low' });
+    // Required forms
+    var forms = find(/(SF[-\s]?\d|reps?\s+and\s+certs|OCI|subcontracting\s+plan|attachment\s+\d|exhibit\s+[A-Z])/i);
+    if (forms) candidates.push({ q: 'Which forms, representations/certifications, and attachments are mandatory at submission versus at award?', why: 'A missing mandatory form is a common disqualifier.', source: forms, risk: 'Medium' });
+    // Always have at least 3; take the 3 highest-priority.
+    return candidates.slice(0, 3);
+  }
+  function renderQuestions(qs){
+    var host = $('gc-fi-questions'); if (!host) return;
+    if (!qs || !qs.length){ host.innerHTML = '<div style="font-size:10.5px;color:var(--muted)">No questions generated yet.</div>'; return; }
+    var html = qs.map(function(q, i){
+      var color = q.risk === 'High' ? 'var(--red,#ff453a)' : (q.risk === 'Medium' ? 'var(--warn,#C4820A)' : 'var(--green,#30d158)');
+      return '<div style="border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:8px">' +
+        '<div style="font-weight:600;font-size:11.5px;color:var(--text)">Q' + (i + 1) + '. ' + esc(q.q) + '</div>' +
+        '<div style="font-size:10.5px;color:var(--sub);margin-top:4px"><strong>Why it matters:</strong> ' + esc(q.why) + '</div>' +
+        '<div style="font-size:10px;color:var(--muted);margin-top:3px">Source: ' + esc(q.source) + ' · Risk: <span style="color:' + color + ';font-weight:700">' + esc(q.risk) + '</span></div>' +
+        '</div>';
+    }).join('');
+    host.innerHTML = html;
+  }
+  window.gcFiGenerateQuestions = function(){
+    var id = selId();
+    var src = collectSource(id);
+    if (!src || src.trim().length < 40){
+      var st = $('gc-fi-source-status'); if (st){ st.style.color = 'var(--warn,#C4820A)'; st.textContent = 'Fetch/import solicitation source material or paste solicitation text before generating questions.'; }
+      toast('Fetch/import source material or paste solicitation text first.', 'info');
+      return;
+    }
+    var qs = analyze(src);
+    renderQuestions(qs);
+    var fi = getFi(id); fi.questions = qs; fi.savedAt = new Date().toISOString(); setFi(id, fi);
+    toast('3 clarification questions drafted. Review before contacting the COR.', 'ok');
+  };
+
+  // ── COR email draft ─────────────────────────────────────────────────
+  function profileFields(){
+    return {
+      company: ($('gc-fi-company') || {}).value || 'Our company',
+      certs:   ($('gc-fi-certs') || {}).value || '',
+      cap:     ($('gc-fi-capability') || {}).value || '',
+      contact: ($('gc-fi-contact') || {}).value || '',
+      email:   ($('gc-fi-email') || {}).value || '',
+      phone:   ($('gc-fi-phone') || {}).value || ''
+    };
+  }
+  function buildEmail(id){
+    var o = fiMap[id] || {};
+    var pf = profileFields();
+    var fi = getFi(id);
+    var qs = (fi.questions && fi.questions.length) ? fi.questions : analyze(collectSource(id));
+    var title = o.title || 'the referenced solicitation';
+    var sol = o.solicitationNumber || o.noticeId || '';
+    var pop = o.placeOfPerformance || '';
+    var resp = ($('gc-fi-response-deadline') || {}).value || '';
+    var qd = ($('gc-fi-question-deadline') || {}).value || '';
+    var lines = [];
+    lines.push('Subject: Clarification questions — ' + title + (sol ? ' (' + sol + ')' : ''));
+    lines.push('');
+    lines.push('Dear Contracting Officer / COR,');
+    lines.push('');
+    var intro = pf.company + ' is reviewing ' + title + (sol ? ' (' + sol + ')' : '') + ' and is interested in submitting a proposal.';
+    if (pf.certs) intro += ' We are ' + pf.certs + '.';
+    if (pf.cap) intro += ' Our core capability is ' + pf.cap + '.';
+    if (pop) intro += ' We can support performance at ' + pop + '.';
+    lines.push(intro);
+    lines.push('');
+    lines.push('To prepare a responsive, compliant proposal, we respectfully request clarification on the following:');
+    lines.push('');
+    qs.forEach(function(q, i){ lines.push((i + 1) + '. ' + q.q); });
+    lines.push('');
+    if (qd) lines.push('We understand the question cut-off is ' + qd + ' and the proposal is due ' + (resp || 'as stated in the solicitation') + '. Please advise if that is incorrect.');
+    else if (resp) lines.push('We understand the proposal is due ' + resp + '. Please advise if that is incorrect.');
+    lines.push('');
+    lines.push('Thank you for your time and for any guidance you can provide. We look forward to participating.');
+    lines.push('');
+    lines.push('Respectfully,');
+    lines.push((pf.contact || '[Your name]') + (pf.company ? ', ' + pf.company : ''));
+    if (pf.email) lines.push(pf.email);
+    if (pf.phone) lines.push(pf.phone);
+    return lines.join('\n');
+  }
+  function renderEmail(text){
+    var host = $('gc-fi-email'); if (!host) return;
+    host.innerHTML = '<textarea class="input" id="gc-fi-email-text" rows="16" style="width:100%;font-family:\'IBM Plex Mono\',monospace;font-size:11px">' + esc(text) + '</textarea>';
+  }
+  window.gcFiDraftEmail = function(){
+    var id = selId();
+    var src = collectSource(id);
+    if (!src || src.trim().length < 40){ toast('Fetch/import source material or paste solicitation text first.', 'info'); return; }
+    var fi = getFi(id);
+    if (!fi.questions || !fi.questions.length){ fi.questions = analyze(src); }
+    renderQuestions(fi.questions);
+    var text = buildEmail(id);
+    renderEmail(text);
+    fi.email = text; fi.savedAt = new Date().toISOString(); setFi(id, fi);
+    toast('COR email drafted (draft only — SourceDeck does not send email).', 'ok');
+  };
+
+  // ── AI prompt (optional, for a configured provider) ─────────────────
+  function aiPrompt(id){
+    var src = collectSource(id);
+    return 'You are a federal capture analyst. From the SOLICITATION SOURCE below, write exactly 3 critical clarification questions. ' +
+      'Each must tie to ambiguity, missing info, risk, SOW gap, compliance issue, deadline, deliverable, evaluation factor, or submission requirement. ' +
+      'For each: question, why it matters, cited source section (or "source section not identified" — never fabricate a citation), and risk level (Low/Medium/High). ' +
+      'Then draft a concise, professional COR email that introduces the company as a prospective bidder, includes the 3 questions, references the solicitation number/title, and does NOT overclaim qualifications or claim award entitlement.\n\nSOLICITATION SOURCE:\n' + src;
+  }
+  window.gcFiCopyPrompt = function(){ copy(aiPrompt(selId()), 'AI prompt copied. Run it in your configured provider, then paste results back.'); };
+
+  // ── Output controls ─────────────────────────────────────────────────
+  function copy(text, msg){
+    try { navigator.clipboard.writeText(text); toast(msg || 'Copied.', 'ok'); }
+    catch (e) { toast('Copy unavailable in this context.', 'warn'); }
+  }
+  window.gcFiCopyQuestions = function(){
+    var fi = getFi(selId());
+    var qs = fi.questions || [];
+    if (!qs.length){ toast('Generate questions first.', 'info'); return; }
+    copy(qs.map(function(q, i){ return (i + 1) + '. ' + q.q + '\n   Why: ' + q.why + '\n   Source: ' + q.source + ' · Risk: ' + q.risk; }).join('\n\n'), 'Questions copied.');
+  };
+  window.gcFiCopyEmail = function(){
+    var t = ($('gc-fi-email-text') || {}).value || getFi(selId()).email || '';
+    if (!t){ toast('Draft the COR email first.', 'info'); return; }
+    copy(t, 'COR email copied. SourceDeck does not send email.');
+  };
+  window.gcFiSave = function(){
+    var id = selId(); var fi = getFi(id);
+    var t = ($('gc-fi-email-text') || {}).value; if (t != null) fi.email = t;
+    fi.savedAt = new Date().toISOString(); setFi(id, fi);
+    toast('Draft saved locally.', 'ok');
+  };
+  window.gcFiMarkReviewed = function(){
+    var id = selId(); var fi = getFi(id); fi.reviewed = true; fi.reviewedAt = new Date().toISOString(); setFi(id, fi);
+    toast('Marked reviewed. Verify communication rules before contacting the COR.', 'ok');
+  };
+  window.gcFiReset = function(){
+    var id = selId(); var fi = getFi(id); fi.questions = []; fi.email = ''; fi.reviewed = false; setFi(id, fi);
+    renderQuestions([]);
+    var host = $('gc-fi-email'); if (host) host.innerHTML = '<div style="font-size:10.5px;color:var(--muted);line-height:1.55">No COR email drafted yet. Generate questions, then click "Draft COR Email".</div>';
+    toast('Draft reset.', 'info');
+  };
+
+  // Shortcut: open First Impression for a specific saved pursuit.
+  window.gcFiOpenFor = async function(id){
+    try { if (typeof window.openTab === 'function') window.openTab('execution'); } catch (e) {}
+    await window.gcFiPopulate();
+    var sel = $('gc-fi-sol-select'); if (sel){ try { sel.value = id; } catch (e) {} }
+    window.gcFiSelectSolicitation(id);
+    var card = $('pw-first-impression'); if (card && card.scrollIntoView) try { card.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
+    toast('Loaded into Make the Right First Impression.', 'ok');
+  };
+
+  // Populate when the Proposal Workspace opens.
+  document.addEventListener('DOMContentLoaded', function(){
+    var navBtn = document.querySelector('.nav-btn[data-tab="execution"]');
+    if (navBtn) navBtn.addEventListener('click', function(){ setTimeout(function(){ window.gcFiPopulate(); }, 60); });
+  });
+})();
+</script>
+
+<script>
+/* Phase 25X (Part B) — Web Opportunity Intel.
+   Supplemental open-web opportunity search inside GovCon → Find
+   Opportunities. Provider-aware: live results require a web-capable
+   AI/search provider through the credential boundary; without one,
+   SourceDeck prepares a search plan / prompt and never fabricates
+   opportunities. No auto-run. No portal scraping. No login bypass. */
+(function(){
+  'use strict';
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function toast(m, t){ if (window.toast) try { window.toast(m, t || 'info'); } catch (e) {} }
+  var _wiRows = [];
+
+  // ── Mode toggle (SAM default / Web Intel supplemental) ──────────────
+  window.gcFindMode = function(mode){
+    mode = (mode === 'web') ? 'web' : 'sam';
+    var sam = $('gc-find-mode-sam'), web = $('gc-find-mode-web');
+    if (sam) sam.style.display = (mode === 'sam') ? '' : 'none';
+    if (web) web.style.display = (mode === 'web') ? '' : 'none';
+    var btns = document.querySelectorAll('.gc-find-mode-btn');
+    for (var i = 0; i < btns.length; i++){
+      var on = btns[i].getAttribute('data-gc-find-mode') === mode;
+      btns[i].setAttribute('aria-selected', on ? 'true' : 'false');
+      btns[i].classList.toggle('active', on);
+      btns[i].style.background = on ? 'rgba(176,138,60,0.14)' : 'rgba(255,255,255,0.03)';
+      btns[i].style.borderColor = on ? 'rgba(176,138,60,0.45)' : 'var(--border)';
+      btns[i].style.color = on ? 'var(--text)' : 'var(--sub)';
+    }
+  };
+
+  function params(){
+    function v(id){ var el = $(id); return el ? String(el.value || '').trim() : ''; }
+    return {
+      naics: v('gc-wi-naics'), setAside: v('gc-wi-setaside'), placeOfPerformance: v('gc-wi-pop'),
+      agency: v('gc-wi-agency'), contractType: v('gc-wi-type'), dollarRange: v('gc-wi-dollars'),
+      deadlineWindow: v('gc-wi-deadline'), keywords: v('gc-wi-keywords'),
+      sourceGroup: v('gc-wi-source-group') || 'all', maxResults: v('gc-wi-max') || '25'
+    };
+  }
+  var SOURCE_GROUPS = {
+    all: ['Federal (SAM.gov, agency forecasts)', 'Defense (DoD/component portals)', 'Civilian agency portals', 'State/local pass-through', 'Aggregators/indexers'],
+    federal: ['Federal (SAM.gov, agency forecasts)'],
+    defense: ['Defense (DoD/component portals)'],
+    civilian: ['Civilian agency portals'],
+    'state-local': ['State/local pass-through'],
+    aggregators: ['Aggregators/indexers']
+  };
+
+  // ── Compact prompt builder (managed template, not a UI blob) ────────
+  function buildPrompt(p){
+    var groups = SOURCE_GROUPS[p.sourceGroup] || SOURCE_GROUPS.all;
+    var lines = [];
+    lines.push('SYSTEM: You are a federal/SLED capture researcher. Find ACTIVE or FUTURE (forecast) procurement opportunities only. You may only report opportunities you can support with a real, working source URL.');
+    lines.push('');
+    lines.push('SEARCH PARAMETERS:');
+    lines.push('- NAICS: ' + (p.naics || 'any'));
+    lines.push('- Set-asides: ' + (p.setAside || 'any'));
+    lines.push('- Place of performance: ' + (p.placeOfPerformance || 'any'));
+    lines.push('- Agency focus: ' + (p.agency || 'any'));
+    lines.push('- Contract type: ' + (p.contractType || 'any'));
+    lines.push('- Dollar range: ' + (p.dollarRange || 'any'));
+    lines.push('- Deadline window: ' + (p.deadlineWindow || 'open/active'));
+    lines.push('- Keywords: ' + (p.keywords || 'none'));
+    lines.push('- Max results: ' + p.maxResults);
+    lines.push('');
+    lines.push('SOURCE GROUPS TO COVER: ' + groups.join('; '));
+    lines.push('');
+    lines.push('ACTIVE-ONLY RULES:');
+    lines.push('- Include only open/active/future opportunities. Exclude expired, awarded, or cancelled records.');
+    lines.push('- Every result MUST include a title and a working source URL.');
+    lines.push('- Deadlines must be VERIFIED on the source or marked "VERIFY ON SOURCE". Never invent a deadline.');
+    lines.push('- Never fabricate solicitation numbers, agencies, or deadlines. Unknown = "unknown".');
+    lines.push('- Flag duplicates. Do not scrape login-protected pages; report them as inaccessible.');
+    lines.push('');
+    lines.push('OUTPUT (JSON array; each item):');
+    lines.push('{ "title", "solicitationNumber", "agency", "naics", "setAside", "type", "deadline", "place", "source", "link", "confidence" (Low|Medium|High), "status" (active|forecast) }');
+    lines.push('Then a "coverage" object: { sourcesSearched[], sourcesNoResult[], sourcesInaccessible[], totalFound, closingWithin30, closing31to90, forecast, filtersRelaxed }.');
+    return lines.join('\n');
+  }
+  window.gcWiBuildPrompt = function(){ return buildPrompt(params()); };
+
+  window.gcWiGenerateSearchPlan = function(){
+    var p = params();
+    var groups = SOURCE_GROUPS[p.sourceGroup] || SOURCE_GROUPS.all;
+    var host = $('gc-wi-plan'); if (!host) return;
+    host.style.display = '';
+    host.innerHTML =
+      '<div style="font:700 9px/1 \'Azeret Mono\',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:6px">Search Plan</div>' +
+      '<div style="font-size:10.5px;color:var(--sub);line-height:1.6">Sources to cover: ' + esc(groups.join('; ')) + '</div>' +
+      '<div style="font-size:10.5px;color:var(--sub);line-height:1.6;margin-top:4px">Filters: NAICS ' + esc(p.naics || 'any') + ' · set-aside ' + esc(p.setAside || 'any') + ' · place ' + esc(p.placeOfPerformance || 'any') + ' · agency ' + esc(p.agency || 'any') + ' · max ' + esc(p.maxResults) + '</div>' +
+      '<div style="margin-top:8px;font-size:10px;color:var(--muted)">Active/open/future only · no expired/awarded/cancelled · title + source URL required · deadlines VERIFY ON SOURCE.</div>' +
+      '<pre style="margin-top:8px;white-space:pre-wrap;font-family:\'IBM Plex Mono\',monospace;font-size:10px;color:var(--sub);max-height:240px;overflow:auto;border:1px solid var(--border);border-radius:6px;padding:8px">' + esc(buildPrompt(p)) + '</pre>';
+    var empty = $('gc-wi-empty'); if (empty) empty.style.display = 'none';
+  };
+  window.gcWiCopyPrompt = function(){
+    try { navigator.clipboard.writeText(buildPrompt(params())); toast('Search prompt copied. Run it in your web-capable provider, then paste results back.', 'ok'); }
+    catch (e) { toast('Copy unavailable in this context.', 'warn'); }
+  };
+
+  async function providerWebCapable(){
+    try {
+      if (window.sd && window.sd.aiProviderStatus){
+        var st = await window.sd.aiProviderStatus();
+        // 'local' is the deterministic offline generator — not web-capable.
+        return !!(st && st.configured && st.provider && st.provider !== 'local');
+      }
+    } catch (e) {}
+    return false;
+  }
+
+  window.gcWiRunSearch = async function(){
+    var status = $('gc-wi-provider-status');
+    var webCapable = await providerWebCapable();
+    if (!webCapable){
+      if (status){
+        status.style.display = '';
+        status.innerHTML = '<strong style="color:#ffb020">No web-search provider configured.</strong> SourceDeck can prepare a search plan, but cannot verify live web opportunities until a web-capable provider is connected. Use <strong>Generate Search Plan</strong> / <strong>Copy Search Prompt</strong>, run it in your provider, then <strong>Paste Web Search Results for Structuring</strong>.';
+      }
+      window.gcWiGenerateSearchPlan();
+      toast('No web-capable provider — generated a search plan instead.', 'info');
+      return;
+    }
+    if (status) status.style.display = 'none';
+    toast('Querying configured web-capable provider…', 'info');
+    var out = null;
+    try { if (window.sd && window.sd.ai && window.sd.ai.generate) out = await window.sd.ai.generate({ task: 'web-opportunity-intel', prompt: buildPrompt(params()) }); } catch (e) { out = null; }
+    var text = (out && (out.text || out.output || out.content)) || '';
+    if (!text){ toast('Provider returned no parseable results. Paste results manually to structure them.', 'warn'); return; }
+    var parsed = parseResults(text);
+    renderResults(parsed.rows);
+    renderCoverage(parsed.coverage, parsed.rows);
+  };
+
+  window.gcWiStructurePasted = function(){
+    var ta = $('gc-wi-paste-text');
+    var text = ta ? String(ta.value || '') : '';
+    if (!text.trim()){ toast('Paste provider results first.', 'info'); return; }
+    var parsed = parseResults(text);
+    if (!parsed.rows.length){ toast('No valid opportunities found (each needs a title and source URL; expired/awarded/cancelled are dropped).', 'warn'); }
+    renderResults(parsed.rows);
+    renderCoverage(parsed.coverage, parsed.rows);
+  };
+
+  // Parse JSON (array, or { results, coverage }) into normalized rows.
+  // Active-only: drop records whose known status is expired/awarded/cancelled.
+  // Require a title and a source URL. Flag duplicates.
+  function parseResults(text){
+    var data = null;
+    try { data = JSON.parse(text); } catch (e) { data = null; }
+    var arr = [];
+    var coverage = null;
+    if (Array.isArray(data)) arr = data;
+    else if (data && Array.isArray(data.results)){ arr = data.results; coverage = data.coverage || null; }
+    else if (data && Array.isArray(data.opportunities)){ arr = data.opportunities; coverage = data.coverage || null; }
+    var rows = [], seen = {};
+    for (var i = 0; i < arr.length; i++){
+      var r = arr[i] || {};
+      var title = String(r.title || r.name || '').trim();
+      var link = String(r.link || r.url || r.sourceUrl || '').trim();
+      var st = String(r.status || '').toLowerCase();
+      if (/expired|awarded|cancell|closed/.test(st)) continue; // active-only
+      if (!title || !/^https?:\/\//i.test(link)) continue;     // title + source URL required
+      var key = (title + '|' + link).toLowerCase();
+      var dup = !!seen[key]; seen[key] = true;
+      rows.push({
+        title: title, solicitationNumber: String(r.solicitationNumber || r.solnum || '').trim(),
+        agency: String(r.agency || '').trim(), naics: String(r.naics || '').trim(),
+        setAside: String(r.setAside || r.setaside || '').trim(), type: String(r.type || r.contractType || '').trim(),
+        deadline: String(r.deadline || r.responseDeadline || 'VERIFY ON SOURCE').trim(),
+        place: String(r.place || r.placeOfPerformance || '').trim(), source: String(r.source || '').trim(),
+        link: link, confidence: String(r.confidence || 'Low').trim(), status: st || 'active',
+        duplicate: dup, samMatched: false
+      });
+    }
+    return { rows: rows, coverage: coverage };
+  }
+
+  function renderResults(rows){
+    _wiRows = rows || [];
+    var host = $('gc-wi-results'); var empty = $('gc-wi-empty');
+    if (!host) return;
+    if (!_wiRows.length){ host.style.display = 'none'; host.innerHTML = ''; if (empty) empty.style.display = ''; return; }
+    if (empty) empty.style.display = 'none';
+    host.style.display = '';
+    var head = '<div class="tbl-wrap" style="max-height:460px"><table class="tbl"><thead><tr>' +
+      '<th>Title</th><th>Sol #</th><th>Agency</th><th>NAICS</th><th>Set-aside</th><th>Type</th><th>Deadline</th><th>Place</th><th>Source</th><th>Confidence</th><th style="width:150px">Actions</th>' +
+      '</tr></thead><tbody>';
+    var body = _wiRows.map(function(r, i){
+      return '<tr data-gc-wi-row="' + i + '">' +
+        '<td><div style="font-weight:600;font-size:11.5px">' + esc(r.title) + (r.duplicate ? ' <span style="color:var(--warn,#C4820A);font-size:9px">(dup)</span>' : '') + '</div><div style="font-size:9px;color:' + (r.samMatched ? 'var(--green,#30d158)' : 'var(--muted)') + '">' + (r.samMatched ? 'SAM.gov matched' : 'Web Intel — verify on source') + '</div></td>' +
+        '<td><code style="font-size:10px">' + esc(r.solicitationNumber || '—') + '</code></td>' +
+        '<td>' + esc(r.agency || '—') + '</td><td>' + esc(r.naics || '—') + '</td><td>' + esc(r.setAside || '—') + '</td>' +
+        '<td>' + esc(r.type || '—') + '</td><td>' + esc(r.deadline || 'VERIFY ON SOURCE') + '</td><td>' + esc(r.place || '—') + '</td>' +
+        '<td>' + esc(r.source || '—') + '</td><td>' + esc(r.confidence) + '</td>' +
+        '<td><div style="display:flex;flex-direction:column;gap:2px">' +
+          '<button class="btn btn-ghost" onclick="gcWiOpenSource(' + i + ')" style="padding:2px 6px;font-size:9.5px">↗ Open Source</button>' +
+          '<button class="btn btn-ghost" onclick="gcWiSave(' + i + ',\'saved\')" style="padding:2px 6px;font-size:9.5px;color:var(--green,#30d158)">+ Save to SourceDeck</button>' +
+          '<button class="btn btn-ghost" onclick="gcWiSave(' + i + ',\'pursuing\')" style="padding:2px 6px;font-size:9.5px;color:var(--gold2)">★ Mark Pursue</button>' +
+          '<button class="btn btn-ghost" onclick="gcWiSendToWorkspace(' + i + ')" style="padding:2px 6px;font-size:9.5px">→ Solicitation Workspace</button>' +
+          '<button class="btn btn-ghost" onclick="gcWiCheckSam(' + i + ')" style="padding:2px 6px;font-size:9.5px">✔ Check in SAM.gov</button>' +
+          '<button class="btn btn-ghost" onclick="gcWiAddNote(' + i + ')" style="padding:2px 6px;font-size:9.5px">✎ Add Note</button>' +
+        '</div></td></tr>';
+    }).join('');
+    host.innerHTML = head + body + '</tbody></table></div>';
+  }
+
+  function renderCoverage(cov, rows){
+    var host = $('gc-wi-coverage'); if (!host) return;
+    rows = rows || [];
+    var p = params();
+    var groups = SOURCE_GROUPS[p.sourceGroup] || SOURCE_GROUPS.all;
+    function within(r, lo, hi){
+      var d = new Date(r.deadline); if (isNaN(d.getTime())) return false;
+      var days = (d.getTime() - Date.now()) / 86400000;
+      return days >= lo && days <= hi;
+    }
+    var c = cov || {};
+    var w30 = (c.closingWithin30 != null) ? c.closingWithin30 : rows.filter(function(r){ return within(r, 0, 30); }).length;
+    var w90 = (c.closing31to90 != null) ? c.closing31to90 : rows.filter(function(r){ return within(r, 31, 90); }).length;
+    var fc = (c.forecast != null) ? c.forecast : rows.filter(function(r){ return r.status === 'forecast'; }).length;
+    host.style.display = '';
+    host.innerHTML =
+      '<div style="font:700 9px/1 \'Azeret Mono\',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:6px">Source Coverage Report</div>' +
+      '<div style="font-size:10.5px;color:var(--sub);line-height:1.7">' +
+        'Sources searched: ' + esc((c.sourcesSearched || groups).join('; ')) + '<br>' +
+        'Sources with no result: ' + esc((c.sourcesNoResult || []).join('; ') || '—') + '<br>' +
+        'Sources inaccessible/blocked: ' + esc((c.sourcesInaccessible || []).join('; ') || '—') + '<br>' +
+        'Total found: ' + (c.totalFound != null ? c.totalFound : rows.length) + '<br>' +
+        'Closing within 30 days: ' + w30 + ' · Closing 31–90 days: ' + w90 + ' · Forecast/pipeline: ' + fc + '<br>' +
+        'Filters relaxed: ' + esc(c.filtersRelaxed || 'none') +
+      '</div>';
+  }
+
+  // ── Row actions ─────────────────────────────────────────────────────
+  window.gcWiOpenSource = function(i){ var r = _wiRows[i]; if (r && r.link) window.open(r.link, '_blank', 'noopener,noreferrer'); };
+  window.gcWiAddNote = function(i){ var r = _wiRows[i]; if (!r) return; var n = window.prompt ? window.prompt('Note for "' + r.title.slice(0, 50) + '":', r.note || '') : null; if (n != null){ r.note = n; toast('Note saved locally.', 'ok'); } };
+  window.gcWiSave = async function(i, statusVal){
+    var r = _wiRows[i]; if (!r) return;
+    var opp = {
+      id: 'webintel:' + (r.solicitationNumber || r.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60),
+      source: 'Web Intel', sourceLabel: 'Web Intel — verify on source',
+      title: r.title, agency: r.agency, solicitationNumber: r.solicitationNumber, noticeId: '',
+      naics: r.naics, setAside: r.setAside, dueDate: r.deadline, responseDeadline: r.deadline,
+      placeOfPerformance: r.place, sourceUrl: /api_key/i.test(r.link) ? '' : r.link,
+      summary: 'Web Intel result — verify on source before any proposal use.',
+      samMatched: !!r.samMatched, userStatus: statusVal, importedAt: new Date().toISOString()
+    };
+    try { if (window.sd && window.sd.govcon && window.sd.govcon.opportunities && window.sd.govcon.opportunities.upsert) await window.sd.govcon.opportunities.upsert(opp); } catch (e) {}
+    toast('Saved as "Web Intel — verify on source". Not SAM.gov-verified until matched.', 'ok');
+    try { if (typeof window.gcTabRenderSavedPursuits === 'function') window.gcTabRenderSavedPursuits(); } catch (e) {}
+  };
+  window.gcWiSendToWorkspace = async function(i){
+    var r = _wiRows[i]; if (!r) return;
+    await window.gcWiSave(i, 'pursuing');
+    var id = 'webintel:' + (r.solicitationNumber || r.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60);
+    try { if (typeof window.gcV25SelectSolicitation === 'function') window.gcV25SelectSolicitation(id); } catch (e) {}
+    try { if (typeof window.gcTabSwitch === 'function') window.gcTabSwitch('solicitation'); } catch (e) {}
+    toast('Sent to Solicitation Workspace (Web Intel — verify on source).', 'ok');
+  };
+  // Cross-check a Web Intel row against the SAM.gov API (user-triggered).
+  window.gcWiCheckSam = async function(i){
+    var r = _wiRows[i]; if (!r) return;
+    if (!(window.sd && window.sd.govcon && window.sd.govcon.samSearch)){ toast('SAM.gov check requires the SourceDeck desktop app + saved key.', 'warn'); return; }
+    toast('Checking SAM.gov…', 'info');
+    var filters = {};
+    if (r.solicitationNumber) filters.solnum = r.solicitationNumber;
+    if (!r.solicitationNumber && r.title) filters.keyword = r.title;
+    var res = null;
+    try { res = await window.sd.govcon.samSearch(filters); } catch (e) { res = null; }
+    var results = (res && res.results) || [];
+    var match = null;
+    for (var k = 0; k < results.length; k++){
+      var rr = results[k];
+      if ((r.solicitationNumber && rr.solicitationNumber === r.solicitationNumber) || (rr.title && r.title && rr.title.toLowerCase() === r.title.toLowerCase())){ match = rr; break; }
+    }
+    if (match){ r.samMatched = true; r.noticeId = match.noticeId || ''; toast('SAM.gov matched — record upgraded.', 'ok'); }
+    else { r.samMatched = false; toast('Not matched in SAM.gov — verify source manually.', 'warn'); }
+    renderResults(_wiRows);
+  };
 })();
 </script>
 
