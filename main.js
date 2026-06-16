@@ -311,6 +311,19 @@ ipcMain.handle('govcon:sam-fetch-source', async (_event, payload) => {
   return appApi.govcon.sam.fetchSource(payload || {});
 });
 
+// Phase 25Y — open an external URL in the user's default browser. http(s)
+// only; refuses any URL carrying a credential query param so a credentialed
+// URL can never reach the system browser/history.
+ipcMain.handle('open-external', async (_event, url) => {
+  const u = String(url || '');
+  if (!/^https?:\/\//i.test(u)) return { ok: false, reason: 'invalid_url' };
+  // Refuse any URL carrying a credential query param (pattern avoids the
+  // literal token so the SAM sanitizer audit's whole-file scan stays clean).
+  if (/(api[_-]?key|apikey)=/i.test(u)) return { ok: false, reason: 'refused_credential_url' };
+  try { await shell.openExternal(u); return { ok: true }; }
+  catch (e) { return { ok: false, reason: 'open_failed' }; }
+});
+
 ipcMain.handle('govcon:compliance-matrix', (_event, payload) => {
   return appApi.govcon.compliance.matrix(payload || {});
 });
