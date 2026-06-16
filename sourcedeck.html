@@ -987,6 +987,12 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 <button type="button" class="btn btn-ghost" data-dash-start-action="paste-solicitation" onclick="openTab('execution'); setTimeout(function(){ if (typeof pwSolTogglePasteArea === 'function') pwSolTogglePasteArea(); }, 100);" style="padding:4px 9px;font-size:10.5px;width:100%" title="Paste solicitation text">📋 Paste Solicitation Text</button>
               </div>
             </div>
+            <!-- Phase 25Y — Contract Awards shortcut. -->
+            <div class="card" data-dash-card="contract-awards" style="padding:11px 13px;background:var(--panel2,#0f1e32);border:1px solid rgba(176,138,60,0.20)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold2);margin-bottom:5px">Contract Awards</div>
+              <div style="font:600 12px/1.4 'Syne',sans-serif;color:var(--text);margin-bottom:7px">Research existing contracts &amp; previous awards.</div>
+              <button type="button" class="btn btn-ghost" data-dash-action="contract-awards" onclick="openTab('govcon'); setTimeout(function(){ if (typeof gcTabSwitch === 'function') gcTabSwitch('contract-awards'); }, 80);" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Contract Awards">Open Contract Awards →</button>
+            </div>
             <div class="card" data-dash-card="active-pursuits" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
               <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Active pursuits</div>
               <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--gold2);margin-bottom:4px" id="dash-card-pursuits">0</div>
@@ -2283,6 +2289,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="prime-partners" onclick="gcTabSwitch('prime-partners')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Prime Partners</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="far-reference" onclick="gcTabSwitch('far-reference')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">FAR Reference</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="submission-readiness" onclick="gcTabSwitch('submission-readiness')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Submission Readiness</button>
+            <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="contract-awards" onclick="gcTabSwitch('contract-awards')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Contract Awards</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="audit-log" onclick="gcTabSwitch('audit-log')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Audit Log</button>
           </div>
         </nav>
@@ -2579,6 +2586,68 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
              hidden in the active runtime). Surface a stub so the tab
              functions; richer audit-log content can be wired in a
              follow-up. -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 25Y — Contract Awards Intelligence
+             Research existing contracts / previous awards by NAICS, agency,
+             contractor, solicitation number, place, or keyword. Provider-
+             aware: SourceDeck never fabricates awards. Without a configured
+             award-data provider it links to SAM.gov Contracting and lets the
+             user paste award data for structuring. No auto-search on load.
+             ═══════════════════════════════════════════════════════════════ -->
+        <section data-gc-tab-page="contract-awards" id="gc-tab-contract-awards" style="display:none">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;flex-wrap:wrap">
+            <div>
+              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">GovCon · Contract Awards</div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text)">Research existing contracts &amp; previous awards</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px">Award data depends on available public sources. Verify before relying on it. SourceDeck does not fabricate awards and does not claim a complete incumbent search.</div>
+            </div>
+          </div>
+          <div id="gc-ca-provider-status" data-gc-ca-provider-status="true" style="font-size:11px;line-height:1.55;background:rgba(255,176,32,0.06);border:1px solid rgba(255,176,32,0.30);border-radius:6px;padding:9px 12px;margin-bottom:10px">
+            No contract-award data provider configured. You can <strong>Open SAM.gov Contracting</strong> or paste award data for structuring. SourceDeck never fabricates award results.
+          </div>
+
+          <div id="gc-ca-form" data-gc-ca-form="true" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:8px;margin-bottom:10px">
+            <div class="form-group" style="margin:0"><label class="label">Keyword</label><input class="input" id="gc-ca-keyword" data-gc-ca-field="keyword" placeholder="e.g. janitorial"></div>
+            <div class="form-group" style="margin:0"><label class="label">NAICS</label><input class="input" id="gc-ca-naics" data-gc-ca-field="naics" placeholder="561720"></div>
+            <div class="form-group" style="margin:0"><label class="label">Agency</label><input class="input" id="gc-ca-agency" data-gc-ca-field="agency" placeholder="e.g. VA, Army"></div>
+            <div class="form-group" style="margin:0"><label class="label">Contractor / awardee</label><input class="input" id="gc-ca-awardee" data-gc-ca-field="awardee" placeholder="e.g. Acme Services LLC"></div>
+            <div class="form-group" style="margin:0"><label class="label">Solicitation / contract #</label><input class="input" id="gc-ca-solnum" data-gc-ca-field="solnum" placeholder="e.g. notice/contract ID"></div>
+            <div class="form-group" style="margin:0"><label class="label">Place</label><input class="input" id="gc-ca-place" data-gc-ca-field="place" placeholder="e.g. CA, San Diego"></div>
+            <div class="form-group" style="margin:0"><label class="label">Date range</label><input class="input" id="gc-ca-dates" data-gc-ca-field="dateRange" placeholder="e.g. 2023–2025"></div>
+            <div class="form-group" style="margin:0"><label class="label">Result count</label>
+              <select class="select" id="gc-ca-max" data-gc-ca-field="maxResults" style="width:100%"><option value="25">25</option><option value="50">50</option><option value="75">75</option><option value="100">100</option></select>
+            </div>
+            <div class="form-group" style="margin:0"><label class="label">Source type</label>
+              <select class="select" id="gc-ca-source" data-gc-ca-field="sourceType" style="width:100%">
+                <option value="sam-contracting">SAM.gov Contracting / public award sources</option>
+                <option value="usaspending">USAspending / FPDS (if connected)</option>
+                <option value="web">Manual / public web (if provider configured)</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+            <button type="button" class="btn btn-gold" id="gc-ca-run-btn" onclick="gcCaRunSearch()">Search Contract Awards</button>
+            <button type="button" class="btn btn-ghost" onclick="gcCaOpenContracting()">Open SAM.gov Contracting</button>
+          </div>
+
+          <details class="gc-ca-paste" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;margin-bottom:10px">
+            <summary style="cursor:pointer;font-weight:600;font-size:12px;color:var(--text)">Paste Award Data</summary>
+            <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+              <textarea class="input" id="gc-ca-paste-text" rows="6" placeholder="Paste award records (JSON or list) from SAM.gov Contracting / USAspending / FPDS. SourceDeck structures them into the table below — it never fabricates awards."></textarea>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" class="btn btn-ghost" onclick="gcCaStructurePasted()">Structure Award Data</button>
+                <button type="button" class="btn btn-ghost" onclick="gcCaSaveIntel()">Save Award Intelligence</button>
+              </div>
+            </div>
+          </details>
+
+          <div id="gc-ca-results" data-gc-ca-results="true" style="display:none"></div>
+          <div id="gc-ca-empty" data-gc-ca-empty="true" style="text-align:center;padding:36px 20px;border:1px dashed var(--border);border-radius:8px;color:var(--muted);background:rgba(255,255,255,0.02);font-size:11.5px;line-height:1.55">No award data yet. Open SAM.gov Contracting and paste award records, or connect a provider. SourceDeck never fabricates awards.</div>
+
+          <div style="margin-top:12px;font-size:10px;color:var(--muted);line-height:1.55">Award data depends on available public sources · verify before relying on it · no complete-incumbent-search claim · no auto-search on load · no send/submit/upload.</div>
+        </section>
+
         <section data-gc-tab-page="audit-log" id="gc-tab-audit-log" style="display:none">
           <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">GovCon · Audit Log</div>
           <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Local audit trail</div>
@@ -14462,9 +14531,25 @@ document.addEventListener('DOMContentLoaded',()=>{
       sectionL: ex.sectionL, sectionM: ex.sectionM, pws: ex.pws,
       forms: ex.forms, deadlines: ex.deadlines, risks: ex.risks
     };
+    // Phase 25Y — stamp the extraction with the active solicitation so a real
+    // pursuit never shows another solicitation's (or demo) sections.
+    try { state.solId = localStorage.getItem('sd.govcon.activeSolicitation.v1') || ''; } catch (e) {}
+    state.real = true; // produced from real source text, not demo seed
     saveState(state);
     renderPanels(state);
     if (window.toast) try { window.toast('Draft extraction complete. Verify every row against the source document. Human review required.', 'ok'); } catch (e) {}
+  };
+  // Phase 25Y — when a saved pursuit is selected, clear any stale/demo
+  // extraction that belongs to a different solicitation so sample/demo
+  // sections never masquerade as this pursuit's real extraction.
+  window.gcSolResetForSelection = function(id){
+    id = id || '';
+    var state = loadState();
+    if (state && state.solId === id && state.real) { renderPanels(state); renderMatrix(state.matrix); return; }
+    var fresh = { summary: null, sections: {}, matrix: [], solId: id, real: false };
+    saveState(fresh);
+    renderPanels(fresh);
+    renderMatrix([]);
   };
   window.gcSolBuildMatrix = function(){
     var state = loadState();
@@ -17601,34 +17686,53 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (typeof a === 'object') return a.name || a.code || '';
     return String(a);
   }
+  // Phase 25Y — coerce a possibly-object value into a URL string. SAM.gov
+  // records sometimes deliver uiLink / links / resourceLinks as objects
+  // ({ href }, { url }, { rel, href }). Stringifying those naively produced
+  // "[object Object]" in the UI — this extracts the real URL or returns ''.
+  function _samUrlString(v){
+    if (!v) return '';
+    if (typeof v === 'string') return v.trim();
+    if (Array.isArray(v)){ for (var i = 0; i < v.length; i++){ var s = _samUrlString(v[i]); if (s) return s; } return ''; }
+    if (typeof v === 'object') return _samUrlString(v.href || v.url || v.link || v.uri || '');
+    return '';
+  }
   function _samStripApiKey(url){
-    if (!url) return '';
-    var s = String(url);
-    // Strip ?api_key=… or &api_key=… anywhere in the URL.
-    s = s.replace(/([?&])api_key=[^&#]*&?/gi, function(_, sep){ return sep === '?' ? '?' : '&'; });
-    // Trim trailing ?/& left over from the strip.
+    var s = _samUrlString(url);
+    if (!s) return '';
+    // Strip ?api_key=… / &api_key=… / apikey= anywhere in the URL.
+    s = s.replace(/([?&])(api_key|apikey)=[^&#]*&?/gi, function(_m, sep){ return sep === '?' ? '?' : '&'; });
     s = s.replace(/[?&]$/, '');
+    // Never leak an object-stringification artifact.
+    if (/\[object\s+\w+\]/i.test(s)) return '';
     return s;
   }
   function _samSafeUrl(r){
     if (!r) return '';
+    function ok(u){ return u && /^https?:\/\//i.test(u) && !/\[object/i.test(u) && !/api_key/i.test(u); }
     // Prefer uiLink (sam.gov front-end URL — never contains api_key).
-    if (r.uiLink) return _samStripApiKey(r.uiLink);
-    if (r.url && !/api\.sam\.gov/i.test(r.url)) return _samStripApiKey(r.url);
+    var ui = _samStripApiKey(r.uiLink);
+    if (ok(ui)) return ui;
+    var u = _samStripApiKey(r.url);
+    if (ok(u) && !/api\.sam\.gov/i.test(u)) return u;
+    // links.self (key-stripped, non-api host).
+    if (Array.isArray(r.links)){
+      for (var i = 0; i < r.links.length; i++){
+        var href = _samStripApiKey(r.links[i]);
+        if (ok(href) && !/api\.sam\.gov/i.test(href)) return href;
+      }
+    }
     if (Array.isArray(r.resourceLinks) && r.resourceLinks.length){
-      var first = r.resourceLinks[0];
-      if (first && !/api\.sam\.gov/i.test(first)) return _samStripApiKey(first);
+      var first = _samStripApiKey(r.resourceLinks[0]);
+      if (ok(first) && !/api\.sam\.gov/i.test(first)) return first;
     }
     // Build a safe public sam.gov notice URL from noticeId.
     if (r.noticeId) return 'https://sam.gov/opp/' + encodeURIComponent(String(r.noticeId)) + '/view';
-    // Last-resort: any api.sam.gov URL with api_key stripped.
-    if (r.url && /api\.sam\.gov/i.test(r.url)){
-      var stripped = _samStripApiKey(r.url);
-      // Only return if there's no api_key residue.
-      if (!/api_key/i.test(stripped)) return stripped;
-    }
+    // Last-resort: an api.sam.gov URL with api_key stripped (only if clean).
+    if (ok(u)) return u;
     return '';
   }
+  window.gcSamSafeUrl = _samSafeUrl; // exposed for tests
   function _samNaicsList(raw){
     if (raw == null) return [];
     return String(raw).split(/[,\s;]+/).map(function(s){ return s.trim(); }).filter(Boolean);
@@ -17683,6 +17787,32 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     return false;
   }
+  // Phase 25Y — keyword relevance backstop. SAM.gov's full-text `q`
+  // parameter returns loosely-related records (e.g. "janitorial" returning
+  // unrelated DoD part/item notices). We re-filter returned rows so the
+  // visible list actually contains the keyword across the meaningful fields.
+  var _SAM_KW_GENERIC = { support:1, services:1, service:1, repair:1, supplies:1, supply:1, system:1, the:1, of:1, and:1, 'for':1, a:1, to:1, in:1, on:1, with:1 };
+  function _samKwTokens(kw){ return String(kw == null ? '' : kw).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); }
+  function _samRowHaystack(r){
+    if (!r) return '';
+    var desc = (typeof r.description === 'string' && !/^https?:\/\//i.test(r.description)) ? r.description : '';
+    var cls = '';
+    if (r.classificationCode) cls = String(r.classificationCode);
+    return [r.title, r.solicitationNumber, r.noticeId, _samAgencyString(r), _samRowNaics(r), _samRowSetAside(r), cls, desc]
+      .map(function(x){ return String(x == null ? '' : x).toLowerCase(); }).join('  ');
+  }
+  function _samMatchesKeyword(r, keyword){
+    if (!keyword || !String(keyword).trim()) return true;
+    var hay = _samRowHaystack(r);
+    var phrase = String(keyword).trim().toLowerCase();
+    if (hay.indexOf(phrase) >= 0) return true;              // exact phrase wins
+    var toks = _samKwTokens(keyword);
+    var sig = toks.filter(function(t){ return !_SAM_KW_GENERIC[t] && t.length >= 3; });
+    if (!sig.length) sig = toks;                            // all-generic: require literal tokens
+    for (var i = 0; i < sig.length; i++){ if (hay.indexOf(sig[i]) < 0) return false; } // AND across significant terms
+    return true;
+  }
+  window.gcSamMatchesKeyword = _samMatchesKeyword; // exposed for tests
   function _samApplyLocalFilters(rows, filters){
     if (!Array.isArray(rows)) return [];
     // Phase 25T — keyword-only mode bypasses the NAICS backstop for
@@ -17693,6 +17823,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     return rows.filter(function(r){
       if (!_samMatchesNaics(r, naicsForFilter, mode)) return false;
       if (!_samMatchesSetAside(r, filters.setAside)) return false;
+      // Phase 25Y — keyword relevance backstop (applies in every mode when set).
+      if (!_samMatchesKeyword(r, filters.keyword)) return false;
       return true;
     });
   }
@@ -17963,10 +18095,10 @@ document.addEventListener('DOMContentLoaded',()=>{
       if (window.toast) try { window.toast('No SAM.gov source URL on this record.', 'warn'); } catch (e) {}
       return;
     }
-    if (/api_key/i.test(url)){
-      if (window.toast) try { window.toast('Refused to open source URL — API key would leak.', 'warn'); } catch (e) {}
-      return;
-    }
+    // Phase 25Y — route through the robust opener (IPC bridge → window.open →
+    // Copy Link). Never opens an api_key-bearing URL; never fails silently.
+    if (typeof window.gcOpenExternal === 'function') { window.gcOpenExternal(url, 'SAM.gov source'); return; }
+    if (/api_key/i.test(url)){ if (window.toast) try { window.toast('Refused to open source URL — API key would leak.', 'warn'); } catch (e) {} return; }
     try { window.open(url, '_blank', 'noopener,noreferrer'); } catch (e) {}
   };
 
@@ -18212,7 +18344,21 @@ document.addEventListener('DOMContentLoaded',()=>{
     else if (filters.naicsMode === 'broader' && filters.naics) modeDescriptor = 'broader NAICS ' + filters.naics;
     else if (filters.naics) modeDescriptor = 'exact NAICS ' + filters.naics;
     else modeDescriptor = 'no NAICS filter';
+    // Phase 25Y — surface the active keyword in the status line.
+    var kwDescriptor = filters.keyword ? (' · keyword: ' + filters.keyword) : '';
     if (!res.length){
+      // Phase 25Y — keyword relevance produced zero visible rows even though
+      // SAM.gov returned records. Be explicit rather than show unrelated rows.
+      if (returned > 0 && filters.keyword){
+        _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible 0' + kwDescriptor + ' · ' + modeDescriptor);
+        if (zeroHost){
+          zeroHost.style.display = '';
+          zeroHost.innerHTML = '<div style="font-weight:600;margin-bottom:4px">No keyword matches after relevance filtering.</div>' +
+            '<div style="font-size:11px;color:var(--sub);line-height:1.55">SAM.gov returned ' + returned + ' records, but none matched keyword &ldquo;' + _esc(filters.keyword) + '&rdquo; after relevance filtering. Clear the keyword or broaden the search.</div>';
+        }
+        if (window.toast) try { window.toast('No results matched keyword “' + filters.keyword + '” after relevance filtering.', 'info'); } catch (e) {}
+        return;
+      }
       // Phase 25U — after the sanitizer fix, SAM.gov filters by NAICS
       // server-side. Render the actionable zero-match panel whenever
       // a NAICS filter is set so the buyer always sees a forward
@@ -18231,7 +18377,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       }
       return;
     }
-    _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible ' + res.length + ' · ' + modeDescriptor);
+    _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible ' + res.length + kwDescriptor + ' · ' + modeDescriptor);
     if (window.toast) try { window.toast('Returned ' + returned + ' opportunit' + (returned === 1 ? 'y' : 'ies') + ' · ' + res.length + ' matched filters. Review results below, then save or mark pursue.', 'ok'); } catch (e) {}
     refreshSavedPursuitsPreview();
   };
@@ -18325,6 +18471,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     // Phase 25W — refresh the Solicitation Workspace Source Materials panel
     // for the newly selected solicitation.
     try { if (typeof window.gcW25RenderWorkspaceSource === 'function') window.gcW25RenderWorkspaceSource(id); } catch (e) {}
+    // Phase 25Y — clear any demo/foreign extraction so a real pursuit never
+    // shows sample sections; real sections appear only after Extract runs.
+    try { if (typeof window.gcSolResetForSelection === 'function') window.gcSolResetForSelection(id); } catch (e) {}
   };
 
   // Read saved/pursuing opportunities from the GovCon opportunity store.
@@ -18543,6 +18692,9 @@ document.addEventListener('DOMContentLoaded',()=>{
       parts.push('</div>');
     }
 
+    // Phase 25Y — Award / Incumbent Clues (from saved Contract Awards intel).
+    try { if (typeof window.gcCaCluesHtml === 'function') parts.push(window.gcCaCluesHtml(o)); } catch (e) {}
+
     // Open notice + safety
     parts.push('<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">');
     parts.push('<button class="btn btn-ghost" onclick="gcW25OpenNotice(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px">↗ Open SAM.gov Notice</button>');
@@ -18577,13 +18729,32 @@ document.addEventListener('DOMContentLoaded',()=>{
     // Reuse the source panel as the details surface (expand it).
     await window.gcW25ToggleSource(id);
   };
+  // Phase 25Y — robust external open: prefer the openExternal IPC bridge,
+  // fall back to window.open, then offer Copy Link. Never opens an
+  // api_key-bearing URL. Never fails silently.
+  window.gcOpenExternal = async function(url, label){
+    var u = String(url || '').trim();
+    if (!u || !/^https?:\/\//i.test(u) || /\[object/i.test(u)){ toast((label || 'Source') + ' link unavailable. Refresh Source Details.', 'warn'); return false; }
+    if (/(api_key|apikey)=/i.test(u)){ toast('Refused to open — API key would leak.', 'warn'); return false; }
+    toast('Opening ' + (label || 'SAM.gov notice') + '…', 'info');
+    try {
+      if (window.sd && typeof window.sd.openExternal === 'function'){
+        var r = await window.sd.openExternal(u);
+        if (r && r.ok) return true;
+      }
+    } catch (e) {}
+    try { var w = window.open(u, '_blank', 'noopener,noreferrer'); if (w) return true; } catch (e) {}
+    // Last resort — copy the safe link so the user can open it manually.
+    try { await navigator.clipboard.writeText(u); toast('Could not open a browser here. Safe link copied — paste it into your browser: ' + u, 'warn'); }
+    catch (e) { toast('Open unavailable. Safe link: ' + u, 'warn'); }
+    return false;
+  };
   window.gcW25OpenNotice = async function(id){
     var o = await resolve(id); if (!o) return;
-    var url = o.uiLink || o.sourceUrl || '';
-    if (url && /api_key/i.test(url)){ toast('Refused to open — API key would leak.', 'warn'); return; }
+    var url = o.uiLink || o.sourceUrl || (o.noticeId ? 'https://sam.gov/opp/' + encodeURIComponent(o.noticeId) + '/view' : '');
     if (!url){ toast('SAM.gov source link was not included for this record. Try Refresh Source Details.', 'warn'); return; }
-    if (o.uiLink) toast('Opening SAM.gov notice — a SAM.gov login/role may be required to view it.', 'info');
-    window.open(url, '_blank', 'noopener,noreferrer');
+    if (o.uiLink) toast('A SAM.gov login/role may be required to view this notice.', 'info');
+    await window.gcOpenExternal(url, 'SAM.gov notice');
   };
   window.gcW25FetchDescription = async function(id){
     var o = await resolve(id); if (!o) return;
@@ -18606,6 +18777,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.gcW25OpenResource = async function(id, idx){
     var o = await resolve(id); if (!o || !o.resourceLinks || !o.resourceLinks[idx]) return;
     var url = o.resourceLinks[idx];
+    if (typeof window.gcOpenExternal === 'function'){ await window.gcOpenExternal(url, 'resource'); return; }
     if (/api_key/i.test(url)){ toast('Refused to open — API key would leak.', 'warn'); return; }
     window.open(url, '_blank', 'noopener,noreferrer');
   };
@@ -19316,6 +19488,148 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (match){ r.samMatched = true; r.noticeId = match.noticeId || ''; toast('SAM.gov matched — record upgraded.', 'ok'); }
     else { r.samMatched = false; toast('Not matched in SAM.gov — verify source manually.', 'warn'); }
     renderResults(_wiRows);
+  };
+})();
+</script>
+
+<script>
+/* Phase 25Y (Part D) — Contract Awards Intelligence.
+   Research existing contracts / previous awards. SourceDeck never fabricates
+   awards: with no award-data provider configured it links to SAM.gov
+   Contracting and structures pasted award data only. No auto-search on load. */
+(function(){
+  'use strict';
+  var AWARD_KEY = 'sd.govcon.awardIntel.v1';
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function toast(m, t){ if (window.toast) try { window.toast(m, t || 'info'); } catch (e) {} }
+  function loadJSON(k, d){ try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
+  function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  var _caRows = [];
+
+  function params(){
+    function v(id){ var el = $(id); return el ? String(el.value || '').trim() : ''; }
+    return { keyword: v('gc-ca-keyword'), naics: v('gc-ca-naics'), agency: v('gc-ca-agency'),
+      awardee: v('gc-ca-awardee'), solnum: v('gc-ca-solnum'), place: v('gc-ca-place'),
+      dateRange: v('gc-ca-dates'), maxResults: v('gc-ca-max') || '25', sourceType: v('gc-ca-source') || 'sam-contracting' };
+  }
+
+  // No award-data API/provider is wired into this build. Be honest: link to
+  // SAM.gov Contracting and structure pasted data — never fabricate awards.
+  function awardProviderConfigured(){
+    return !!(window.sd && window.sd.govcon && typeof window.sd.govcon.awardsSearch === 'function');
+  }
+
+  window.gcCaOpenContracting = function(){
+    if (typeof window.gcOpenExternal === 'function'){ window.gcOpenExternal('https://sam.gov/contracting', 'SAM.gov Contracting'); return; }
+    try { window.open('https://sam.gov/contracting', '_blank', 'noopener,noreferrer'); } catch (e) {}
+  };
+
+  window.gcCaRunSearch = async function(){
+    var st = $('gc-ca-provider-status');
+    if (!awardProviderConfigured()){
+      if (st) st.style.display = '';
+      toast('No contract-award data provider configured. Open SAM.gov Contracting or paste award data to structure.', 'info');
+      return;
+    }
+    // Provider path (only if a real awards bridge is connected later).
+    toast('Searching contract awards…', 'info');
+    var out = null;
+    try { out = await window.sd.govcon.awardsSearch(params()); } catch (e) { out = null; }
+    var rows = (out && (out.results || out.awards)) || [];
+    renderResults(parseAwards(rows));
+  };
+
+  // Parse pasted award data (JSON array or { results }). Never fabricates;
+  // requires an awardee or a contract/solicitation number.
+  function parseAwards(input){
+    var arr = Array.isArray(input) ? input : [];
+    if (!Array.isArray(input) && typeof input === 'string'){
+      try { var d = JSON.parse(input); arr = Array.isArray(d) ? d : (d && (d.results || d.awards) || []); } catch (e) { arr = []; }
+    } else if (input && !Array.isArray(input)) {
+      arr = input.results || input.awards || [];
+    }
+    var rows = [];
+    for (var i = 0; i < arr.length; i++){
+      var r = arr[i] || {};
+      var awardee = String(r.awardee || r.recipient || r.contractor || r.vendor || '').trim();
+      var contract = String(r.contractNumber || r.contractId || r.solicitationNumber || r.piid || r.award_id || '').trim();
+      if (!awardee && !contract) continue; // never invent an award
+      var link = String(r.link || r.url || r.sourceUrl || '').trim();
+      rows.push({
+        awardee: awardee, amount: String(r.amount || r.awardAmount || r.obligatedAmount || '').trim(),
+        date: String(r.date || r.awardDate || r.actionDate || '').trim(), agency: String(r.agency || '').trim(),
+        contract: contract, naics: String(r.naics || r.naicsCode || '').trim(), psc: String(r.psc || r.pscCode || '').trim(),
+        pop: String(r.pop || r.periodOfPerformance || r.place || '').trim(),
+        link: /^https?:\/\//i.test(link) && !/api_key/i.test(link) ? link : ''
+      });
+    }
+    return rows;
+  }
+
+  window.gcCaStructurePasted = function(){
+    var ta = $('gc-ca-paste-text'); var text = ta ? String(ta.value || '') : '';
+    if (!text.trim()){ toast('Paste award data first.', 'info'); return; }
+    var rows = parseAwards(text);
+    if (!rows.length){ toast('No structured awards found (each needs an awardee or contract number).', 'warn'); }
+    renderResults(rows);
+  };
+
+  function renderResults(rows){
+    _caRows = rows || [];
+    var host = $('gc-ca-results'); var empty = $('gc-ca-empty');
+    if (!host) return;
+    if (!_caRows.length){ host.style.display = 'none'; host.innerHTML = ''; if (empty) empty.style.display = ''; return; }
+    if (empty) empty.style.display = 'none';
+    host.style.display = '';
+    var head = '<div class="tbl-wrap" style="max-height:440px"><table class="tbl"><thead><tr>' +
+      '<th>Awardee</th><th>Amount</th><th>Date</th><th>Agency</th><th>Contract #</th><th>NAICS/PSC</th><th>PoP</th><th>Source</th>' +
+      '</tr></thead><tbody>';
+    var body = _caRows.map(function(r){
+      return '<tr>' +
+        '<td style="font-weight:600">' + esc(r.awardee || '—') + '</td><td>' + esc(r.amount || '—') + '</td><td>' + esc(r.date || '—') + '</td>' +
+        '<td>' + esc(r.agency || '—') + '</td><td><code style="font-size:10px">' + esc(r.contract || '—') + '</code></td>' +
+        '<td>' + esc([r.naics, r.psc].filter(Boolean).join(' / ') || '—') + '</td><td>' + esc(r.pop || '—') + '</td>' +
+        '<td>' + (r.link ? '<button class="btn btn-ghost" onclick="gcOpenExternal(\'' + esc(r.link) + '\',\'award source\')" style="padding:2px 7px;font-size:10px">↗ Source</button>' : '—') + '</td>' +
+        '</tr>';
+    }).join('');
+    host.innerHTML = head + body + '</tbody></table></div>';
+  }
+
+  window.gcCaSaveIntel = function(){
+    if (!_caRows.length){ toast('Structure award data first.', 'info'); return; }
+    var p = params();
+    var all = loadJSON(AWARD_KEY, []) || [];
+    var rec = { savedAt: new Date().toISOString(), query: p, awards: _caRows,
+      linkedPursuitId: (function(){ try { return localStorage.getItem('sd.govcon.activeSolicitation.v1') || ''; } catch (e) { return ''; } })() };
+    all.push(rec); saveJSON(AWARD_KEY, all);
+    toast('Award intelligence saved locally' + (rec.linkedPursuitId ? ' and linked to the active solicitation.' : '.'), 'ok');
+    // Refresh any open Award/Incumbent Clues surfaces.
+    try { if (typeof window.gcW25RenderWorkspaceSource === 'function') window.gcW25RenderWorkspaceSource(rec.linkedPursuitId); } catch (e) {}
+  };
+
+  // Award / Incumbent Clues for a saved pursuit (Step 17).
+  window.gcCaCluesHtml = function(opp){
+    if (!opp) return '';
+    var all = loadJSON(AWARD_KEY, []) || [];
+    var naics = String(opp.naics || '').toLowerCase();
+    var agency = String(opp.agency || '').toLowerCase();
+    var sol = String(opp.solicitationNumber || '').toLowerCase();
+    var matched = [];
+    all.forEach(function(rec){
+      if (rec.linkedPursuitId && rec.linkedPursuitId === opp.id){ matched = matched.concat(rec.awards || []); return; }
+      (rec.awards || []).forEach(function(a){
+        var hay = [a.naics, a.agency, a.contract].map(function(x){ return String(x || '').toLowerCase(); }).join(' ');
+        if ((naics && hay.indexOf(naics) >= 0) || (sol && hay.indexOf(sol) >= 0) || (agency && a.agency && String(a.agency).toLowerCase() === agency)) matched.push(a);
+      });
+    });
+    var head = '<div style="font-weight:600;font-size:11px;color:var(--text);margin:10px 0 3px">Award / Incumbent Clues</div>';
+    if (!matched.length){
+      return head + '<div style="font-size:10px;color:var(--muted)">No award/incumbent data linked yet. Search Contract Awards.</div>';
+    }
+    return head + matched.slice(0, 6).map(function(a){
+      return '<div style="font-size:10px;color:var(--sub);line-height:1.5">' + esc(a.awardee || 'unknown awardee') + (a.amount ? ' · ' + esc(a.amount) : '') + (a.date ? ' · ' + esc(a.date) : '') + (a.agency ? ' · ' + esc(a.agency) : '') + ' <span style="color:var(--muted)">(verify on source)</span></div>';
+    }).join('');
   };
 })();
 </script>

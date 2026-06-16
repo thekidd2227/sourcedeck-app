@@ -12,6 +12,9 @@ contextBridge.exposeInMainWorld('sd', {
   aiProviderStatus:      ()                 => ipcRenderer.invoke('ai-provider-status'),
   storageProviderStatus: ()                 => ipcRenderer.invoke('storage-provider-status'),
   aiGenerate:            (input)            => ipcRenderer.invoke('ai-generate', input),
+  // Phase 25Y — open an external URL in the default browser (http(s) only;
+  // main process refuses any api_key-bearing URL).
+  openExternal:          (url)              => ipcRenderer.invoke('open-external', url),
   storageTestPut:        (text)             => ipcRenderer.invoke('storage-test-put', text),
   validateUpload:        (descriptor)       => ipcRenderer.invoke('validate-upload', descriptor),
   contextGet:            ()                 => ipcRenderer.invoke('context-get'),
