@@ -129,39 +129,23 @@ test('no raw SAM.gov API key value is hardcoded or rendered in the HTML', () => 
     'renderer sets Authorization: "Bearer ..." inline');
 });
 
-// 7. #gc-stakeholder-graph remains present.
-test('Phase 24E #gc-stakeholder-graph section remains present', () => {
-  assert.ok(/id="gc-stakeholder-graph"/.test(HTML), '#gc-stakeholder-graph missing');
-  assert.ok(/id="gc-stakeholder-by-opportunity"/.test(HTML),
-    '#gc-stakeholder-by-opportunity missing');
+// 7. Phase 25V — Stakeholder Graph section removed from runtime.
+test('Phase 25V #gc-stakeholder-graph section removed from runtime', () => {
+  assert.ok(!/id="gc-stakeholder-graph"/.test(HTML), '#gc-stakeholder-graph must be removed');
+  assert.ok(!/id="gc-stakeholder-by-opportunity"/.test(HTML),
+    '#gc-stakeholder-by-opportunity must be removed');
 });
 
-// 8. renderBidNoBidOut() calls window.gcLoadStakeholderGraph.
-test('renderBidNoBidOut() wires Stakeholder Graph live refresh on opp selection', () => {
-  // The function lives inside an IIFE, so use a slice between the
-  // function declaration and the next sibling function to bound it.
-  const start = HTML.indexOf('function renderBidNoBidOut(');
-  assert.ok(start > 0, 'renderBidNoBidOut() function not found');
-  // Bound by the next sibling function definition inside the same IIFE,
-  // or a generous 4 KB window if no sibling is found.
-  const nextSiblingRe = /\n\s{2,4}function\s+\w+\s*\(/g;
-  nextSiblingRe.lastIndex = start + 30;
-  const nextSibling = nextSiblingRe.exec(HTML);
-  const end = nextSibling ? nextSibling.index : (start + 4000);
-  const fn = HTML.slice(start, end);
-  assert.ok(/window\.gcLoadStakeholderGraph/.test(fn),
-    'renderBidNoBidOut must call window.gcLoadStakeholderGraph when an opp is selected');
-  assert.ok(/noticeId|solicitationNumber|responseDeadline/.test(fn),
-    'renderBidNoBidOut must map the opp to the backend graph shape (noticeId/solicitationNumber/responseDeadline)');
+// 8. Phase 25V — renderBidNoBidOut() no longer wires a stakeholder graph.
+test('renderBidNoBidOut() no longer references the removed Stakeholder Graph', () => {
+  assert.ok(!/window\.gcLoadStakeholderGraph/.test(HTML),
+    'gcLoadStakeholderGraph must no longer be called anywhere in the runtime');
 });
 
-// 9. Sample fallback rows remain present.
-test('Stakeholder Graph sample fallback rows remain present', () => {
-  const sgStart = HTML.indexOf('id="gc-stakeholder-graph"');
-  const sgEnd = HTML.indexOf('PHASE 22F — Submission Readiness Gate', sgStart);
-  const sg = HTML.slice(sgStart, sgEnd > 0 ? sgEnd : sgStart + 30000);
-  const samples = (sg.match(/data-or-source="sample"/g) || []).length;
-  assert.ok(samples >= 6, 'expected ≥6 SAMPLE rows in Stakeholder Graph; found ' + samples);
+// 9. Phase 25V — no Stakeholder Graph sample rows remain.
+test('Stakeholder Graph sample fallback rows removed', () => {
+  assert.ok(!/data-stakeholder-category=/.test(HTML),
+    'Stakeholder Graph sample rows must be removed from the runtime');
 });
 
 // 10. Legacy hardcoded NAICS fallback removed.

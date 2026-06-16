@@ -32,13 +32,14 @@ assert(sidebarRemovedBufferStart > sidebarStart, 'Phase 25L-1 reachability buffe
 
 const sidebarVisibleSlice = html.slice(sidebarStart, sidebarRemovedBufferStart);
 
+// Phase 25V — Proposal Workspace moved directly under GovCon.
 const expectedOrder = [
   { label: 'Dashboard',          dataTab: 'dashboard' },
   { label: 'GovCon',             dataTab: 'govcon' },
+  { label: 'Proposal Workspace', dataTab: 'execution' },
   { label: 'Leads',              dataTab: 'leads' },
   { label: 'Calendar',           dataTab: 'calendar' },
   { label: 'Response Desk',      dataTab: 'reply' },
-  { label: 'Proposal Workspace', dataTab: 'execution' },
   { label: 'Settings',           dataTab: 'settings' },
   { label: 'Help / FAQ',         dataTab: 'help' }
 ];

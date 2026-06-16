@@ -81,7 +81,9 @@ test('capability statement fields exist', () => {
     assert.ok(new RegExp('id="' + f + '"').test(HTML), 'cs field missing: ' + f);
   }
   assert.ok(/id="gc-cs-outline"/.test(HTML), 'cs outline container missing');
-  assert.ok(/Build Capability Statement Outline \(draft\)/.test(HTML), 'cs build button missing');
+  // Phase 25V — "Build Capability Statement Outline (draft)" renamed to
+  // "Build Capability Statement"; output renamed to Capability Statement Preview.
+  assert.ok(/Build Capability Statement</.test(HTML), 'cs build button missing');
 });
 
 // 6. Capability statement draft/human review copy exists.

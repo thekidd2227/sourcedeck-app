@@ -29,9 +29,13 @@ const required = [
   { tab: 'find-opportunities',   label: 'Find Opportunities'    },
   { tab: 'saved-pursuits',       label: 'Saved Pursuits'        },
   { tab: 'solicitation',         label: 'Solicitation'          },
-  { tab: 'scope',                label: 'Scope'                 },
-  { tab: 'vendors-pricing',      label: 'Vendors + Pricing'     },
+  // Phase 25V — Scope tab removed (lives in Proposal Workspace intake);
+  // Vendors + Pricing split into two focused tabs; Prime Partners promoted
+  // to its own GovCon tab.
+  { tab: 'vendors',              label: 'Vendors'               },
+  { tab: 'pricing',              label: 'Pricing'               },
   { tab: 'past-performance',     label: 'Past Performance'      },
+  { tab: 'prime-partners',       label: 'Prime Partners'        },
   { tab: 'far-reference',        label: 'FAR Reference'         },
   { tab: 'submission-readiness', label: 'Submission Readiness'  },
   { tab: 'audit-log',            label: 'Audit Log'             }

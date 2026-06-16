@@ -802,6 +802,11 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div class="nav-label">GovCon</div>
       <button class="nav-btn active" data-tab="govcon"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><path d="M3 10h18"/><path d="M3 18h18"/><path d="M5 6h14l1 4H4l1-4z"/><rect x="3" y="18" width="18" height="3" rx="1"/></svg></span>GovCon</button>
     </div>
+    <!-- Phase 25V — Proposal Workspace moved directly under GovCon. -->
+    <div class="nav-section" id="nav-section-execution" data-section="proposal-workspace-nav">
+      <div class="nav-label">Proposal Workspace</div>
+      <button class="nav-btn" data-tab="execution"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Proposal Workspace</button>
+    </div>
     <div class="nav-section" id="nav-section-leads" data-section="leads-nav">
       <div class="nav-label">Leads</div>
       <button class="nav-btn" data-tab="leads"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>Leads</button>
@@ -813,10 +818,6 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div class="nav-section" id="nav-section-reply" data-section="response-desk-nav">
       <div class="nav-label">Response Desk</div>
       <button class="nav-btn" data-tab="reply"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>Response Desk</button>
-    </div>
-    <div class="nav-section" id="nav-section-execution" data-section="proposal-workspace-nav">
-      <div class="nav-label">Proposal Workspace</div>
-      <button class="nav-btn" data-tab="execution"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Proposal Workspace</button>
     </div>
     <div class="nav-section" id="nav-section-settings" data-section="settings-nav">
       <div class="nav-label">Settings</div>
@@ -2276,9 +2277,10 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <button type="button" class="gc-tab-btn active" role="tab" aria-selected="true" data-gc-tab="find-opportunities" onclick="gcTabSwitch('find-opportunities')" style="padding:6px 12px;border-radius:6px;background:rgba(176,138,60,0.14);border:1px solid rgba(176,138,60,0.45);color:var(--text);cursor:pointer">Find Opportunities</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="saved-pursuits" onclick="gcTabSwitch('saved-pursuits')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Saved Pursuits</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="solicitation" onclick="gcTabSwitch('solicitation')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Solicitation</button>
-            <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="scope" onclick="gcTabSwitch('scope')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Scope</button>
-            <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="vendors-pricing" onclick="gcTabSwitch('vendors-pricing')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Vendors + Pricing</button>
+            <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="vendors" onclick="gcTabSwitch('vendors')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Vendors</button>
+            <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="pricing" onclick="gcTabSwitch('pricing')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Pricing</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="past-performance" onclick="gcTabSwitch('past-performance')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Past Performance</button>
+            <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="prime-partners" onclick="gcTabSwitch('prime-partners')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Prime Partners</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="far-reference" onclick="gcTabSwitch('far-reference')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">FAR Reference</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="submission-readiness" onclick="gcTabSwitch('submission-readiness')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Submission Readiness</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="audit-log" onclick="gcTabSwitch('audit-log')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Audit Log</button>
@@ -2482,17 +2484,10 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           </div>
         </section>
 
-        <!-- Phase 25N — Scope tab placeholder. Scope of Work extraction
-             lives in Proposal Workspace; surface a link instead of a
-             duplicate workspace. -->
-        <section data-gc-tab-page="scope" id="gc-tab-scope" style="display:none">
-          <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">GovCon · Scope</div>
-          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Scope of Work extraction</div>
-          <div style="padding:18px 22px;background:var(--panel2,#0f1e32);border:1px solid var(--border);border-radius:8px;font-size:12px;line-height:1.6;color:var(--sub)">
-            <p style="margin-top:0">Scope of Work extraction lives in <strong>Proposal Workspace → Solicitation intake</strong>. Choose the solicitation you saved, upload a new one, or paste text, then run <em>Extract Key Details</em>. Each FAR-aligned section opens its own draft workspace.</p>
-            <button type="button" class="btn btn-gold" onclick="openTab('execution')" style="margin-top:6px">Open Proposal Workspace →</button>
-          </div>
-        </section>
+        <!-- Phase 25V — Scope tab removed. Scope of Work extraction lives
+             inside Proposal Workspace → Solicitation Intake → Extract Key
+             Details. A redundant GovCon "Scope" tab that only pointed at
+             Proposal Workspace added clutter, so it was removed entirely. -->
 
         <!-- Phase 25N — FAR Reference tab placeholder. The full FAR
              reference lives in the Phase 25I work that has not yet
@@ -2655,12 +2650,11 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
              gc-mode-indicator section above and is therefore covered
              by existing Phase 23B / Phase 23C / Phase 23D regression
              tests. No information is lost. -->
-        <!-- Outreach OS journey + safety microcopy (coherence helper) -->
-        <div class="gc-os-helper" style="margin-bottom:14px;padding:10px 13px;border:1px solid var(--border);border-radius:var(--r2);background:var(--panel3,#0E2040);font-size:11px;line-height:1.55;color:var(--sub)">
-          <div style="font-weight:700;color:var(--text);margin-bottom:3px">GovCon Outreach OS</div>
-          Find opportunities → score fit → prepare draft outreach → identify prime partners → review and approve.
-          <span style="display:block;margin-top:5px;color:var(--muted)">Drafts only. Human approval required. Follow solicitation instructions and communication windows.</span>
-        </div>
+        <!-- Phase 25V — "GovCon Outreach OS" journey/helper card removed.
+             It rendered with no data-gc-tab-page tag, so it appeared at the
+             bottom of every GovCon tab and added clutter. The no-send /
+             draft-only posture it described is preserved by the concise
+             per-tab footers and the inline microcopy on each workspace. -->
         <!-- ═══════════════════════════════════════════════════════════════
              PHASE 23A — GovCon Demo Mode + Sample Data Loader
              Buyer-demo polish. Sample data is clearly labeled as
@@ -3102,11 +3096,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             </table>
           </div>
 
-          <!-- Human Review Required notice -->
-          <div class="gc-sol-human-review" style="background:rgba(110,31,44,0.10);border:1px solid rgba(110,31,44,0.45);border-radius:var(--r2);padding:10px 12px;font-size:10.5px;line-height:1.55;color:var(--sub)">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text);margin-bottom:4px">Human Review Required</div>
-            SourceDeck does not submit bids. All extraction outputs are draft and require human review against the source document. No outreach is drafted, sent, or queued by this surface. No bid is submitted to SAM.gov, PIEE, eBuy, GSA, agency portals, or email. Every advisory recommendation requires human approval before any further action.
-          </div>
+          <!-- Phase 25V — concise safety footer (replaced heavy bottom panel). -->
+          <div class="gc-sol-human-review gc-safety-footer" style="margin-top:10px;font-size:10px;color:var(--muted);line-height:1.5">Draft-only workspace. SourceDeck does not submit, upload, or send external messages.</div>
         </section>
         <!-- ═══════════════════════════════════════════════════════════════
              PHASE 22D — Vendor Quote Room + Pricing Worksheet
@@ -3119,7 +3110,23 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
              Pricing is advisory and must be reviewed before bid
              submission. SourceDeck does not submit bids or quotes.
              ═══════════════════════════════════════════════════════════════ -->
-        <section id="gc-vqr-pricing" class="gc-vqr-pricing" data-section="govcon-vendor-pricing" data-gc-tab-page="vendors-pricing" style="display:none;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+        <!-- Phase 25V — Vendors tab. Split out from the former combined
+             "Vendors + Pricing" tab. Holds the Vendor Quote Room only.
+             Section id kept (gc-vqr-pricing) for downstream references; the
+             Pricing Worksheet now lives in its own #gc-pricing-page section
+             routed to data-gc-tab-page="pricing". A per-solicitation
+             selector at the top scopes saved vendor rows to the chosen
+             pursuit (see gcVendorsSolSelect / sd.govcon.vendorQuotes.v1). -->
+        <section id="gc-vqr-pricing" class="gc-vqr-pricing" data-section="govcon-vendor-pricing" data-gc-tab-page="vendors" style="display:none;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+
+          <!-- Phase 25V — per-solicitation selector (Vendors). -->
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:10.5px;color:var(--sub);margin-bottom:14px">
+            <span>Selected solicitation</span>
+            <select class="select" id="gc-vendors-sol-select" data-gc-sol-scope="vendors" onchange="gcVendorsSolSelect(this.value)">
+              <option value="">— No solicitation selected (general vendor list) —</option>
+            </select>
+            <span id="gc-vendors-sol-empty" style="font-size:10px;color:var(--muted);line-height:1.5">No saved solicitations yet. Save or mark pursue from Find Opportunities, upload a solicitation, or paste solicitation text. Vendor rows save locally per solicitation.</span>
+          </label>
 
           <!-- ─── Vendor Quote Room ─── -->
           <section id="gc-vqr" class="gc-vqr" data-section="govcon-vendor-quote-room" style="margin-bottom:18px">
@@ -3208,14 +3215,34 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                     <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Status</th>
                     <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Credentials</th>
                     <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Risk</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="gc-vqr-tbody">
-                  <tr><td colspan="7" class="gc-vqr-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No vendor quote needs added yet. Add a required trade, service, or supplier manually. SourceDeck does not send vendor outreach.</td></tr>
+                  <tr><td colspan="8" class="gc-vqr-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No vendor quote needs added yet. Add a required trade, service, or supplier manually. SourceDeck does not send vendor outreach.</td></tr>
                 </tbody>
               </table>
             </div>
           </section>
+
+          <!-- Phase 25V — concise safety footer (Vendors). -->
+          <div class="gc-vqr-human-review gc-safety-footer" id="gc-vqr-human-review" style="margin-top:10px;font-size:10px;color:var(--muted);line-height:1.5">Draft-only workspace. SourceDeck does not submit, upload, or send external messages. Vendor outreach requires human approval; SourceDeck does not submit bids or quotes.</div>
+        </section>
+
+        <!-- Phase 25V — Pricing tab. Split out from the former combined
+             "Vendors + Pricing" tab. Pricing Worksheet + Quote Comparison
+             pull vendor quote data from the Vendors tab and persist locally
+             per selected solicitation. -->
+        <section id="gc-pricing-page" class="gc-pricing-page" data-section="govcon-pricing" data-gc-tab-page="pricing" style="display:none;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+
+          <!-- Phase 25V — per-solicitation selector (Pricing). -->
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:10.5px;color:var(--sub);margin-bottom:14px">
+            <span>Selected solicitation</span>
+            <select class="select" id="gc-pricing-sol-select" data-gc-sol-scope="pricing" onchange="gcPricingSolSelect(this.value)">
+              <option value="">— No solicitation selected (general pricing) —</option>
+            </select>
+            <span id="gc-pricing-sol-empty" style="font-size:10px;color:var(--muted);line-height:1.5">No saved solicitations yet. Save or mark pursue from Find Opportunities, upload a solicitation, or paste solicitation text. Pricing saves locally per solicitation.</span>
+          </label>
 
           <!-- ─── Pricing Worksheet ─── -->
           <section id="gc-pricing" class="gc-pricing" data-section="govcon-pricing-worksheet" style="margin-bottom:18px">
@@ -3285,11 +3312,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             </div>
           </section>
 
-          <!-- ─── Shared Human Review Required notice ─── -->
-          <div class="gc-vqr-human-review" id="gc-vqr-human-review" style="background:rgba(110,31,44,0.10);border:1px solid rgba(110,31,44,0.45);border-radius:var(--r2);padding:10px 12px;font-size:10.5px;line-height:1.55;color:var(--sub)">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text);margin-bottom:4px">Human Review Required</div>
-            SourceDeck does not submit bids or quotes. SourceDeck does not send vendor outreach. No quote request is sent automatically. All vendor entries, credential rows, risk notes, and pricing fields are manual. Pricing output is advisory and must be reviewed before bid submission. No bid is submitted to SAM.gov, PIEE, eBuy, GSA, agency portals, or email. Human approval required for every action.
-          </div>
+          <!-- Phase 25V — concise safety footer (Pricing). -->
+          <div class="gc-pricing-human-review gc-safety-footer" id="gc-pricing-human-review" style="margin-top:10px;font-size:10px;color:var(--muted);line-height:1.5">Draft-only workspace. Pricing is advisory — review before any bid. SourceDeck does not submit, upload, or send external messages, and does not submit bids or quotes.</div>
         </section>
         <!-- ═══════════════════════════════════════════════════════════════
              PHASE 22E — Past Performance Library + Capability Statement
@@ -3380,60 +3404,58 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             </div>
           </section>
 
-          <!-- ─── Capability Statement Studio ─── -->
-          <section id="gc-cs" class="gc-cs" data-section="govcon-capability-statement-studio" style="margin-bottom:18px">
-            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
-              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Capability Statement Studio</div>
-              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Target agency · Solicitation · NAICS · Core capabilities · Differentiators · Past performance · Outline</div>
-              <div style="font-size:10.5px;color:var(--text);line-height:1.55;margin-top:2px">Draft and review capability statement content for internal use before outreach or proposal packaging.</div>
-              <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">Capability statement output is a draft. Review before sending. SourceDeck does not send capability statements or outreach.</div>
-              <div class="gc-cs-internal-disclaimer" data-section="govcon-capability-internal-review" style="margin-top:6px;background:rgba(110,31,44,0.10);border:1px solid rgba(110,31,44,0.45);border-radius:var(--r2);padding:8px 10px;font-size:10px;line-height:1.55;color:var(--sub)">Internal review draft. SourceDeck does not send, submit, upload, or certify this content.</div>
-            </div>
 
-            <div class="gc-cs-form" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:12px">
-              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">
-                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Target agency</span><input class="input" id="gc-cs-f-agency" type="text" placeholder="e.g. example federal agency" oninput="gcCsSave()"></label>
-                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Target opportunity / solicitation number</span><input class="input" id="gc-cs-f-sol" type="text" placeholder="e.g. operator-provided sol number" oninput="gcCsSave()"></label>
-                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Target NAICS</span><input class="input" id="gc-cs-f-naics" type="text" placeholder="e.g. 541512" oninput="gcCsSave()"></label>
-                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Certifications / set-asides</span><input class="input" id="gc-cs-f-certs" type="text" placeholder="e.g. 8(a), SDVOSB, WOSB, HUBZone — operator confirms" oninput="gcCsSave()"></label>
-                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Company / contact summary</span><textarea class="input" id="gc-cs-f-company" rows="2" placeholder="e.g. company name, UEI/CAGE, location, point of contact, brief overview (operator-supplied)" oninput="gcCsSave()"></textarea></label>
-                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Core competencies / capabilities (comma-separated)</span><input class="input" id="gc-cs-f-core" type="text" placeholder="e.g. cloud migration, identity, zero trust, data engineering" oninput="gcCsSave()"></label>
-                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Differentiators (comma-separated)</span><input class="input" id="gc-cs-f-diff" type="text" placeholder="e.g. agency-specific experience, certified labor categories, regional presence" oninput="gcCsSave()"></label>
-                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Past performance highlights (select from library)</span>
-                  <select class="select" id="gc-cs-f-pp-select" multiple size="4" onchange="gcCsSave()">
-                    <option value="" disabled>— Add a past performance record above to populate —</option>
-                  </select>
-                </label>
-                <details class="gc-cs-import" style="grid-column:1/-1;background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;margin-top:4px">
-                  <summary style="cursor:pointer;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:12px;color:var(--text)">Import from pasted capability text (local, offline — no upload)</summary>
-                  <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
-                    <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Paste existing capability statement / company text</span><textarea class="input" id="gc-cs-import-text" rows="4" placeholder="Paste plain text from an existing capability statement. Parsing runs locally on this device — nothing is uploaded or sent to any provider."></textarea></label>
-                    <div style="display:flex;gap:8px;flex-wrap:wrap">
-                      <button type="button" class="btn btn-ghost" onclick="gcCsImportFromText()">Analyze pasted text (local)</button>
-                    </div>
-                    <div id="gc-cs-import-status" style="font-size:10px;color:var(--muted);line-height:1.55">Candidate fields only — review and edit every field before use. No data is uploaded, sent, submitted, or certified.</div>
-                  </div>
-                </details>
-                <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
-                  <button type="button" class="btn btn-gold" onclick="gcCsBuildOutline()">Build Capability Statement Outline (draft)</button>
-                  <button type="button" class="btn btn-ghost" onclick="gcCsClearOutline()">Clear Outline</button>
-                </div>
-                <div style="grid-column:1/-1;font-size:10px;color:var(--muted);line-height:1.55;margin-top:4px">Outline is a draft. Review before sending. SourceDeck does not send capability statements or outreach. No external call.</div>
-              </div>
-            </div>
 
-            <div class="gc-cs-outline-wrap" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
-              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px">
-                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Tailored Capability Statement Outline (draft)</div>
-                <div style="font-size:10px;color:var(--muted)">Draft — review before sending. SourceDeck does not send capability statements or outreach.</div>
-              </div>
-              <div id="gc-cs-outline">
-                <div class="gc-cs-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No tailored capability statement outline generated yet. Fill in the target agency / NAICS / core capabilities and click "Build Capability Statement Outline (draft)". The output is a draft and must be reviewed before sending.</div>
-              </div>
+          <!-- ─── Incumbent / Recompete + Pre-RFP placeholders ─── -->
+          <div class="gc-pe-placeholders" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-bottom:14px">
+            <div class="gc-pp-placeholder" id="gc-incumbent-placeholder" data-section="govcon-incumbent-recompete-placeholder" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:4px">Incumbent / Recompete Intelligence</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px">Placeholder — wired in a later phase</div>
+              <div style="font-size:10.5px;color:var(--sub);line-height:1.55">No incumbent intelligence wired in this phase. Buyer review only. SourceDeck does not call agency portals from this surface. Human approval required.</div>
             </div>
-          </section>
+            <div class="gc-pp-placeholder" id="gc-pre-rfp-placeholder" data-section="govcon-pre-rfp-capture-placeholder" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:4px">Pre-RFP Capture Tracker</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px">Placeholder — wired in a later phase</div>
+              <div style="font-size:10.5px;color:var(--sub);line-height:1.55">No pre-RFP capture flow wired in this phase. Buyer review only. SourceDeck does not send capture outreach. No agency-portal post.</div>
+            </div>
+            <div class="gc-pp-placeholder" id="gc-teaming-draft-placeholder" data-section="govcon-teaming-outreach-draft-placeholder" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:4px">Teaming Outreach Draft</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px">Placeholder — human-approved only</div>
+              <div style="font-size:10.5px;color:var(--sub);line-height:1.55">No teaming outreach is drafted, sent, or queued from this surface. Any future drafting will be advisory and human-approved only — SourceDeck does not auto-send teaming outreach.</div>
+            </div>
+          </div>
 
-          <!-- ─── Prime Partner Finder ─── -->
+
+          <!-- Phase 25V — concise safety footer (Past Performance). -->
+          <div class="gc-pe-human-review gc-safety-footer" id="gc-pe-human-review" style="margin-top:10px;font-size:10px;color:var(--muted);line-height:1.5">Draft-only workspace. SourceDeck does not submit, upload, or send external messages. Past performance suggestions require human review before proposal use.</div>
+        </section>
+        <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 22F — Submission Readiness Gate + Human-Approved
+             Package Export. Closes the GovCon capture workflow with a
+             pre-submission readiness control surface and an internal-
+             review package preview. SourceDeck does not submit bids,
+             quotes, or government responses. SourceDeck does not submit,
+             upload, email, or transmit this package. Package export
+             prepares internal review materials only. The user must
+             complete official submission outside SourceDeck. No bid is
+             submitted to SAM.gov, PIEE, eBuy, GSA, agency portals, or
+             email. Human approval required for every action.
+             ═══════════════════════════════════════════════════════════════ -->
+        <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 25V — Prime Partners (own GovCon tab)
+             Moved out of the congested Past Performance section into its
+             own focused tab page. Manual entry only; rows persist locally
+             per selected solicitation. No outreach is sent by SourceDeck.
+             ═══════════════════════════════════════════════════════════════ -->
+        <section id="gc-ppf-page" class="gc-ppf-page" data-section="govcon-prime-partners" data-gc-tab-page="prime-partners" style="display:none;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+          <!-- Phase 25V — per-solicitation selector (Prime Partners). -->
+          <label style="display:flex;flex-direction:column;gap:3px;font-size:10.5px;color:var(--sub);margin-bottom:14px">
+            <span>Selected solicitation</span>
+            <select class="select" id="gc-ppf-sol-select" data-gc-sol-scope="prime-partners" onchange="gcPpfSolSelect(this.value)">
+              <option value="">— No solicitation selected (general prime list) —</option>
+            </select>
+            <span id="gc-ppf-sol-empty" style="font-size:10px;color:var(--muted);line-height:1.5">No saved solicitations yet. Save or mark pursue from Find Opportunities, upload a solicitation, or paste solicitation text. Prime partner rows save locally per solicitation.</span>
+          </label>
           <section id="gc-ppf" class="gc-ppf" data-section="govcon-prime-partner-finder" style="margin-bottom:18px">
             <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
               <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Prime Partner Finder</div>
@@ -3484,247 +3506,18 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                     <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Status</th>
                     <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Fit notes</th>
                     <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Teaming angle</th>
+                    <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Actions</th>
                   </tr>
                 </thead>
                 <tbody id="gc-ppf-tbody">
-                  <tr><td colspan="7" class="gc-pp-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No prime partner rows added yet. Add a candidate prime manually. Partner outreach is not sent from SourceDeck.</td></tr>
+                  <tr><td colspan="8" class="gc-pp-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No prime partner rows added yet. Add a candidate prime manually. Partner outreach is not sent from SourceDeck.</td></tr>
                 </tbody>
               </table>
             </div>
           </section>
-
-          <!-- ─── Incumbent / Recompete + Pre-RFP placeholders ─── -->
-          <div class="gc-pe-placeholders" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:10px;margin-bottom:14px">
-            <div class="gc-pp-placeholder" id="gc-incumbent-placeholder" data-section="govcon-incumbent-recompete-placeholder" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
-              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:4px">Incumbent / Recompete Intelligence</div>
-              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px">Placeholder — wired in a later phase</div>
-              <div style="font-size:10.5px;color:var(--sub);line-height:1.55">No incumbent intelligence wired in this phase. Buyer review only. SourceDeck does not call agency portals from this surface. Human approval required.</div>
-            </div>
-            <div class="gc-pp-placeholder" id="gc-pre-rfp-placeholder" data-section="govcon-pre-rfp-capture-placeholder" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
-              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:4px">Pre-RFP Capture Tracker</div>
-              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px">Placeholder — wired in a later phase</div>
-              <div style="font-size:10.5px;color:var(--sub);line-height:1.55">No pre-RFP capture flow wired in this phase. Buyer review only. SourceDeck does not send capture outreach. No agency-portal post.</div>
-            </div>
-            <div class="gc-pp-placeholder" id="gc-teaming-draft-placeholder" data-section="govcon-teaming-outreach-draft-placeholder" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
-              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:4px">Teaming Outreach Draft</div>
-              <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:6px">Placeholder — human-approved only</div>
-              <div style="font-size:10.5px;color:var(--sub);line-height:1.55">No teaming outreach is drafted, sent, or queued from this surface. Any future drafting will be advisory and human-approved only — SourceDeck does not auto-send teaming outreach.</div>
-            </div>
-          </div>
-
-          <!-- ─── Shared Human Review Required notice ─── -->
-          <div class="gc-pe-human-review" id="gc-pe-human-review" style="background:rgba(110,31,44,0.10);border:1px solid rgba(110,31,44,0.45);border-radius:var(--r2);padding:10px 12px;font-size:10.5px;line-height:1.55;color:var(--sub)">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text);margin-bottom:4px">Human Review Required</div>
-            SourceDeck does not submit bids or quotes. SourceDeck does not send capability statements or outreach. SourceDeck does not send partner outreach. No outreach is drafted, sent, or queued by these surfaces. No bid is submitted to SAM.gov, PIEE, eBuy, GSA, agency portals, or email. Past performance suggestions and capability statement outlines are advisory and require human review before proposal use. Human approval required for every action.
-          </div>
+          <!-- Phase 25V — concise safety footer (Prime Partners). -->
+          <div class="gc-ppf-human-review gc-safety-footer" id="gc-ppf-human-review" style="margin-top:10px;font-size:10px;color:var(--muted);line-height:1.5">Draft-only workspace. Partner outreach is not sent from SourceDeck. SourceDeck does not submit, upload, or send external messages.</div>
         </section>
-        <!-- ═══════════════════════════════════════════════════════════════
-             PHASE 24E — Stakeholder Graph UI
-             Buyer-visible FAR-aware capture-planning surface. Reference
-             intelligence only. SourceDeck does not contact government
-             officials, submit materials, upload to portals, or guarantee
-             procurement outcomes. Five backend categories
-             (contracting_office, program_office, incumbent,
-             partner_prime_or_sub, industry_day) + one synthetic UI-only
-             category (internal_owner with synthetic: true marker). Reads
-             window.sd.govcon.stakeholders({ opp, extras }) IPC for live
-             data; ships labeled SAMPLE rows in the default state.
-             Implementation contract: docs/product/phase-24e-stakeholder-
-             graph-implementation-contract.md.
-             ═══════════════════════════════════════════════════════════════ -->
-        <section id="gc-stakeholder-graph" class="gc-stakeholder-graph" data-section="govcon-stakeholder-graph" data-gc-tab-page="past-performance" style="display:none;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
-          <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
-            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Stakeholder Graph</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">FAR-aware capture planning · Reference intelligence only · Human approval required</div>
-            <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">Internal capture planning only. SourceDeck does not contact government officials, submit materials, upload to portals, or guarantee procurement outcomes.</div>
-          </div>
-
-          <!-- Risk / ethics warning rail — shows when graph.inRestrictedWindow === true -->
-          <div id="gc-sg-risk-rail" class="gc-sg-risk-rail" style="margin-bottom:12px;background:rgba(139,26,46,0.10);border:1px solid rgba(139,26,46,0.30);border-radius:var(--r2);padding:9px 12px">
-            <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
-              <span style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--red,#ff453a);background:rgba(139,26,46,0.18);border:1px solid rgba(139,26,46,0.45);border-radius:4px;padding:2px 6px;font-weight:700">RESTRICTED WINDOW</span>
-              <span style="font-size:10.5px;color:var(--sub);line-height:1.55">Sample state: contracting officer is in a restricted communication window — use the agency's official Q&amp;A mechanism only. No direct outreach.</span>
-            </div>
-          </div>
-
-          <!-- Empty state placeholder (revealed when no opp is selected and no sample loaded) -->
-          <div id="gc-sg-empty" class="gc-sg-empty" hidden style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:14px 16px;font-size:11px;color:var(--muted);line-height:1.55">Map agency, prime, vendor, and internal stakeholders to plan compliant capture actions. SourceDeck does not contact or submit to stakeholders.</div>
-
-          <div class="gc-sg-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:12px">
-
-            <!-- View 1 — Opportunity stakeholder map -->
-            <div id="gc-stakeholder-by-opportunity" class="gc-sg-panel" data-sg-view="opportunity" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:8px">
-              <div>
-                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Opportunity stakeholder map</div>
-                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Per-opportunity roles · FAR-aware posture · Human approval required</div>
-              </div>
-              <div id="gc-sg-by-opp-list" class="gc-sg-list" style="display:flex;flex-direction:column;gap:6px">
-                <!-- Sample 1: Contracting officer (CO) — contracting_office / restricted -->
-                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="contracting_office" data-posture="restricted" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
-                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
-                    <div>
-                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Contracting officer (CO)</div>
-                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Sample Agency · Contracting Office</div>
-                    </div>
-                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
-                  </div>
-                  <div class="gc-sg-posture" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--red,#ff453a);background:rgba(139,26,46,0.10);border:1px solid rgba(139,26,46,0.30);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">Restricted</div>
-                  <div data-stakeholder-warning="restricted" style="font-size:10px;color:var(--red,#ff453a);line-height:1.55;margin-top:4px;font-weight:600">Restricted communication window — official Q&amp;A only. No direct outreach.</div>
-                  <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.55">Posture: Restricted. Communications are limited to the official mechanism named in the solicitation.</div>
-                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">Linked to Sample RFP A · SAMPLE — operator must verify against the live SAM.gov posting.</div>
-                </div>
-
-                <!-- Sample 2: Program / mission office — program_office / research_target -->
-                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="program_office" data-posture="research_target" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
-                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
-                    <div>
-                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Program / mission office</div>
-                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Sample Agency · Program Office</div>
-                    </div>
-                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
-                  </div>
-                  <div class="gc-sg-posture" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--signal2,#2260A0);background:rgba(27,77,110,0.10);border:1px solid rgba(27,77,110,0.30);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">Research target</div>
-                  <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">Posture: Research target. Approachable through public-record channels and industry days only.</div>
-                  <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.55">Do not pitch during the restricted communication window. Engagement only via published forums.</div>
-                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">SAMPLE — operator must verify the agency's published forum guidance.</div>
-                </div>
-
-                <!-- Sample 3: Small Business Specialist (SBS) — program_office / outreach_candidate -->
-                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="program_office" data-posture="outreach_candidate" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
-                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
-                    <div>
-                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Small Business Specialist (SBS)</div>
-                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Sample Agency · SBS Office</div>
-                    </div>
-                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
-                  </div>
-                  <div class="gc-sg-posture" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold,#C9941A);background:rgba(201,148,26,0.10);border:1px solid rgba(201,148,26,0.30);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">Outreach candidate</div>
-                  <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">Posture: Outreach candidate. Standard pre-RFP teaming/capability outreach.</div>
-                  <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.55">Confirm any agency-specific guidance before reaching out. Never solicit non-public source-selection information.</div>
-                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">SAMPLE — operator must verify the agency's SBS office contact via the agency's small-business page.</div>
-                </div>
-
-                <!-- Sample 4: Likely incumbent — incumbent / research_target -->
-                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="incumbent" data-posture="research_target" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
-                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
-                    <div>
-                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Likely incumbent</div>
-                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Public-record FPDS award (if any)</div>
-                    </div>
-                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
-                  </div>
-                  <div class="gc-sg-posture" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--signal2,#2260A0);background:rgba(27,77,110,0.10);border:1px solid rgba(27,77,110,0.30);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">Research target</div>
-                  <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">Win/loss analysis only. Use FPDS-NG award history to identify the current performer and incumbent contract value.</div>
-                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">SAMPLE — replace with verified FPDS-NG lookup.</div>
-                </div>
-              </div>
-              <div class="gc-sg-foot" style="font-size:10px;color:var(--muted);line-height:1.55">Sample rows for buyer demo. Replace with operator-verified stakeholders before proposal use. No outreach is drafted, sent, or queued from this panel.</div>
-            </div>
-
-            <!-- View 2 — Account / agency stakeholder map -->
-            <div id="gc-stakeholder-by-agency" class="gc-sg-panel" data-sg-view="agency" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:8px">
-              <div>
-                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Account / agency stakeholder map</div>
-                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Multi-opportunity rollup · Renderer-side aggregation</div>
-              </div>
-              <div id="gc-sg-by-agency-list" class="gc-sg-list" style="display:flex;flex-direction:column;gap:6px">
-                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="program_office" data-posture="research_target" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
-                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
-                    <div>
-                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Sample Agency — 3 opportunities tracked</div>
-                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Rolled up across Sample RFP A, Sample RFP B, Sample Sources Sought C</div>
-                    </div>
-                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
-                  </div>
-                  <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">3 program-office stakeholders · 1 contracting office (restricted on RFP A) · 1 SBS · public-record incumbent search recommended on each.</div>
-                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">SAMPLE — rollup recomputed when operator opens an opportunity from Capture Command Center.</div>
-                </div>
-              </div>
-              <div class="gc-sg-foot" style="font-size:10px;color:var(--muted);line-height:1.55">Account rollup is renderer-side aggregation from the per-opportunity graph. No backend rewrite.</div>
-            </div>
-
-            <!-- View 3 — Teaming / prime relationship map -->
-            <div id="gc-stakeholder-teaming" class="gc-sg-panel" data-sg-view="teaming" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:8px">
-              <div>
-                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Teaming / prime relationship map</div>
-                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Prime + sub + middleman-fit candidates · Mutual NDA standard</div>
-              </div>
-              <div id="gc-sg-teaming-list" class="gc-sg-list" style="display:flex;flex-direction:column;gap:6px">
-                <!-- Sample 5: Potential teaming partner (prime) — partner_prime_or_sub / outreach_candidate -->
-                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="partner_prime_or_sub" data-posture="outreach_candidate" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
-                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
-                    <div>
-                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Potential teaming partner (prime)</div>
-                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Sample Prime Co. (sample only)</div>
-                    </div>
-                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
-                  </div>
-                  <div class="gc-sg-posture" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold,#C9941A);background:rgba(201,148,26,0.10);border:1px solid rgba(201,148,26,0.30);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">Outreach candidate</div>
-                  <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">Candidate prime partner for SDVOSB or 8(a) team-up on Sample RFP A.</div>
-                  <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.55">Mutual NDA standard before sharing capability details. No source-selection or pricing information exchanged.</div>
-                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">SAMPLE — replace with a vetted candidate from your past-performance library or subcontractor bench.</div>
-                </div>
-
-                <!-- Sample 6: Potential subcontractor / vendor — partner_prime_or_sub / outreach_candidate -->
-                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="partner_prime_or_sub" data-posture="outreach_candidate" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
-                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
-                    <div>
-                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Potential subcontractor / vendor</div>
-                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Sample Vendor Co. (sample only)</div>
-                    </div>
-                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
-                  </div>
-                  <div class="gc-sg-posture" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--gold,#C9941A);background:rgba(201,148,26,0.10);border:1px solid rgba(201,148,26,0.30);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">Outreach candidate</div>
-                  <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">Candidate vendor for cabling / IT installation scope on Sample RFP A.</div>
-                  <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.55">Mutual NDA standard before sharing capability details. Verify FAR 52.219-14 limitation-of-subcontracting compliance before signing.</div>
-                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">SAMPLE — replace with a vendor from your subcontractor bench.</div>
-                </div>
-              </div>
-              <div class="gc-sg-foot" style="font-size:10px;color:var(--muted);line-height:1.55">Subset filtered from the opportunity graph where category = partner_prime_or_sub. No source-selection or pricing information is exchanged on this surface.</div>
-            </div>
-
-            <!-- View 4 — Internal owner map -->
-            <div id="gc-stakeholder-internal-owner" class="gc-sg-panel" data-sg-view="internal-owner" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:8px">
-              <div>
-                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Internal owner map</div>
-                <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-top:1px">Synthetic UI category · Local capture-team note · Never transmitted</div>
-              </div>
-              <div id="gc-sg-internal-owner-list" class="gc-sg-list" style="display:flex;flex-direction:column;gap:6px">
-                <!-- Synthetic internal_owner node — Phase 24E-PREP §B.2; carries synthetic: true marker via data-synthetic="true" -->
-                <div class="gc-sg-row" data-or-source="sample" data-stakeholder-category="internal_owner" data-posture="internal" data-synthetic="true" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">
-                  <div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">
-                    <div>
-                      <div style="font-size:11.5px;color:var(--text);font-weight:600">Internal capture owner</div>
-                      <div style="font-size:10px;color:var(--muted);margin-top:1px">Your team (you)</div>
-                    </div>
-                    <span class="gc-sg-tag" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--warn,#C4820A);background:rgba(196,130,10,0.10);border:1px solid rgba(196,130,10,0.30);border-radius:4px;padding:2px 6px;font-weight:700">SAMPLE</span>
-                  </div>
-                  <div class="gc-sg-posture" style="font-family:'IBM Plex Mono',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">Internal — synthetic</div>
-                  <div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">Posture: Internal capture planning only.</div>
-                  <div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.55">Local capture-team owner for this pursuit. Local note only; never transmitted by SourceDeck.</div>
-                  <div style="font-size:9.5px;color:var(--muted);margin-top:3px;line-height:1.55">SAMPLE — replace with the operator-team owner from your pursuit profile.</div>
-                </div>
-              </div>
-              <div class="gc-sg-foot" style="font-size:10px;color:var(--muted);line-height:1.55">Synthetic UI-only category. Carries the data-synthetic="true" marker so it can never be sent back through a backend-expecting code path.</div>
-            </div>
-
-          </div>
-
-          <!-- Verbatim backend safety note (FAR 3.104 + Section L) -->
-          <div class="gc-sg-safety-note" style="margin-top:12px;font-size:10px;color:var(--muted);line-height:1.6;padding:8px 11px;border:1px solid var(--border);border-radius:var(--r2);background:var(--panel3,#0E2040)">SourceDeck does not draft or send outreach to contracting officers, contracting specialists, or CORs. Communications during a restricted communication window must be routed through the official mechanism named in the solicitation. Pre-RFP capability conversations with Small Business Specialists or program offices are appropriate when the agency permits them; respect industry-day formats and source-sought response windows. See FAR 3.104 (procurement integrity) and the solicitation's Section L communication instructions before initiating any contact.</div>
-        </section>
-        <!-- ═══════════════════════════════════════════════════════════════
-             PHASE 22F — Submission Readiness Gate + Human-Approved
-             Package Export. Closes the GovCon capture workflow with a
-             pre-submission readiness control surface and an internal-
-             review package preview. SourceDeck does not submit bids,
-             quotes, or government responses. SourceDeck does not submit,
-             upload, email, or transmit this package. Package export
-             prepares internal review materials only. The user must
-             complete official submission outside SourceDeck. No bid is
-             submitted to SAM.gov, PIEE, eBuy, GSA, agency portals, or
-             email. Human approval required for every action.
-             ═══════════════════════════════════════════════════════════════ -->
         <section id="gc-sub-gate" class="gc-sub-gate" data-section="govcon-submission-readiness-gate" data-gc-tab-page="submission-readiness" style="display:none;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
 
           <!-- ─── Submission Readiness Gate ─── -->
@@ -3862,11 +3655,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             </div>
           </section>
 
-          <!-- ─── Shared Human Review Required notice ─── -->
-          <div class="gc-sub-human-review" id="gc-sub-human-review" style="background:rgba(110,31,44,0.10);border:1px solid rgba(110,31,44,0.45);border-radius:var(--r2);padding:10px 12px;font-size:10.5px;line-height:1.55;color:var(--sub)">
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--text);margin-bottom:4px">Human Review Required</div>
-            SourceDeck does not submit bids, quotes, or government responses. SourceDeck does not submit, upload, email, or transmit this package. No portal upload. No email attachment. No SAM / PIEE / eBuy / GSA interaction from this surface. Submission readiness scoring is advisory and reflects local checklist completion only. The user must complete official submission outside SourceDeck. Human approval required for every action.
-          </div>
+          <!-- Phase 25V — concise safety footer (Submission Readiness). -->
+          <div class="gc-sub-human-review gc-safety-footer" id="gc-sub-human-review" style="margin-top:10px;font-size:10px;color:var(--muted);line-height:1.5"><span style="font-weight:600;color:var(--sub)">Human Review Required.</span> Draft-only workspace. SourceDeck does not submit bids, quotes, or government responses, and does not upload or send. Complete official submission outside SourceDeck.</div>
         </section>
         <!--
           ─────────────────────────────────────────────────────────────
@@ -4544,6 +4334,67 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
           <div id="pw-sol-extraction" data-pw-sol-extraction="true" style="display:none">
             <div id="pw-sol-extraction-sections" data-pw-sol-extraction-sections="true" style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:6px"></div>
           </div>
+        </div>
+
+        <!-- ═══════════════════════════════════════════════════════════════
+             PHASE 25V — Capability Statement Studio (moved under Proposal
+             Workspace). Its fields build a live Capability Statement
+             Preview. Internal review draft only — SourceDeck does not
+             send, submit, upload, or certify this content.
+             ═══════════════════════════════════════════════════════════════ -->
+        <div class="card mb-14" id="pw-capability-studio" data-pw-capability-studio="true" style="border-left:3px solid var(--gold)">
+          <section id="gc-cs" class="gc-cs" data-section="govcon-capability-statement-studio" style="margin-bottom:18px">
+            <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Capability Statement Studio</div>
+              <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Target agency · Solicitation · NAICS · Core capabilities · Differentiators · Past performance · Preview</div>
+              <div style="font-size:10.5px;color:var(--text);line-height:1.55;margin-top:2px">Draft and review capability statement content for internal use before outreach or proposal packaging.</div>
+              <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">Capability statement output is a draft. Review before sending. SourceDeck does not send capability statements or outreach.</div>
+              <div class="gc-cs-internal-disclaimer" data-section="govcon-capability-internal-review" style="margin-top:6px;background:rgba(110,31,44,0.10);border:1px solid rgba(110,31,44,0.45);border-radius:var(--r2);padding:8px 10px;font-size:10px;line-height:1.55;color:var(--sub)">Internal review draft. SourceDeck does not send, submit, upload, or certify this content.</div>
+            </div>
+
+            <div class="gc-cs-form" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:12px">
+              <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:8px">
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Target agency</span><input class="input" id="gc-cs-f-agency" type="text" placeholder="e.g. example federal agency" oninput="gcCsSave()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Target opportunity / solicitation number</span><input class="input" id="gc-cs-f-sol" type="text" placeholder="e.g. operator-provided sol number" oninput="gcCsSave()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Target NAICS</span><input class="input" id="gc-cs-f-naics" type="text" placeholder="e.g. 541512" oninput="gcCsSave()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Certifications / set-asides</span><input class="input" id="gc-cs-f-certs" type="text" placeholder="e.g. 8(a), SDVOSB, WOSB, HUBZone — operator confirms" oninput="gcCsSave()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Company / contact summary</span><textarea class="input" id="gc-cs-f-company" rows="2" placeholder="e.g. company name, UEI/CAGE, location, point of contact, brief overview (operator-supplied)" oninput="gcCsSave()"></textarea></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Core competencies / capabilities (comma-separated)</span><input class="input" id="gc-cs-f-core" type="text" placeholder="e.g. cloud migration, identity, zero trust, data engineering" oninput="gcCsSave()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Differentiators (comma-separated)</span><input class="input" id="gc-cs-f-diff" type="text" placeholder="e.g. agency-specific experience, certified labor categories, regional presence" oninput="gcCsSave()"></label>
+                <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px;grid-column:1/-1"><span>Past performance highlights (select from library)</span>
+                  <select class="select" id="gc-cs-f-pp-select" multiple size="4" onchange="gcCsSave()">
+                    <option value="" disabled>— Add a past performance record above to populate —</option>
+                  </select>
+                </label>
+                <details class="gc-cs-import" style="grid-column:1/-1;background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px;margin-top:4px">
+                  <summary style="cursor:pointer;font-family:'Instrument Sans',sans-serif;font-weight:600;font-size:12px;color:var(--text)">Import from pasted capability text (local, offline — no upload)</summary>
+                  <div style="margin-top:8px;display:flex;flex-direction:column;gap:6px">
+                    <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px"><span>Paste existing capability statement / company text</span><textarea class="input" id="gc-cs-import-text" rows="4" placeholder="Paste plain text from an existing capability statement. Parsing runs locally on this device — nothing is uploaded or sent to any provider."></textarea></label>
+                    <div style="display:flex;gap:8px;flex-wrap:wrap">
+                      <button type="button" class="btn btn-ghost" onclick="gcCsImportFromText()">Analyze pasted text (local)</button>
+                    </div>
+                    <div id="gc-cs-import-status" style="font-size:10px;color:var(--muted);line-height:1.55">Candidate fields only — review and edit every field before use. No data is uploaded, sent, submitted, or certified.</div>
+                  </div>
+                </details>
+                <div style="grid-column:1/-1;display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+                  <button type="button" class="btn btn-gold" onclick="gcCsBuildOutline()">Build Capability Statement</button>
+                  <button type="button" class="btn btn-ghost" onclick="gcCsClearOutline()">Clear Preview</button>
+                  <button type="button" class="btn btn-ghost" onclick="gcCsExportPreview()">Export Capability Statement (draft, local)</button>
+                </div>
+                <div style="grid-column:1/-1;font-size:10px;color:var(--muted);line-height:1.55;margin-top:4px">Preview is a draft. Review before sending. SourceDeck does not send capability statements or outreach. No external call.</div>
+              </div>
+            </div>
+
+            <div class="gc-cs-outline-wrap" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Capability Statement Preview</div>
+                <div style="font-size:10px;color:var(--muted)">Draft — review before sending. SourceDeck does not send capability statements or outreach.</div>
+              </div>
+              <div id="gc-cs-outline">
+                <div class="gc-cs-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No capability statement built yet. Fill in the target agency / NAICS / core capabilities and click "Build Capability Statement". The preview is a draft and must be reviewed before sending.</div>
+              </div>
+            </div>
+          </section>
         </div>
 
         <div class="grid-2" style="grid-template-columns:240px 1fr;gap:14px;align-items:start">
@@ -5364,7 +5215,6 @@ END:VCALENDAR" style="min-height:180px;font-family:'IBM Plex Mono',monospace;fon
           <div data-tour-feature="past-performance-library"><strong>Past Performance Library</strong> — Reusable past-performance citations. Local storage; SourceDeck does not transmit your PP library.</div>
           <div data-tour-feature="capability-statement-studio"><strong>Capability Statement Studio</strong> — Per-opportunity capability statement tailoring. Internal review draft only; SourceDeck does not send or attest.</div>
           <div data-tour-feature="prime-partner-finder"><strong>Prime Partner Finder</strong> — Prime/sub team-up candidate finder driven by your configured NAICS. Mutual NDA standard before sharing capability details.</div>
-          <div data-tour-feature="stakeholder-graph"><strong>Stakeholder Graph</strong> — FAR-aware posture labels for CO, program office, incumbent, prime/sub partners, industry-day respondents, and internal owner. Reference intelligence only.</div>
           <div data-tour-feature="submission-readiness-gate"><strong>Submission Readiness Gate</strong> — Red / yellow / green readiness advisory: "are we responsive yet?" SourceDeck never auto-submits.</div>
           <div data-tour-feature="internal-review-markdown-export"><strong>Internal Review Markdown Export</strong> — Local Markdown export of the internal-review package. Operator delivers via their own channel; no portal upload.</div>
           <div data-tour-feature="audit-log"><strong>Audit Log</strong> — Local-only evidence trail of AI, storage, context, and sensitive-action events. Never includes API keys, raw prompts, or document contents.</div>
@@ -10690,101 +10540,9 @@ function gcRenderNaicsFilter() {
 }
 window.gcRenderNaicsFilter = gcRenderNaicsFilter;
 
-// ── Phase 24E — Stakeholder Graph UI handlers ──
-// Reference-intelligence renderer. Reads the existing
-// window.sd.govcon.stakeholders({ opp, extras }) IPC (Phase 24E-PREP
-// audit verified READY). No backend rewrite; no send/submit/upload.
-// Default state renders the SAMPLE rows already in the HTML; the
-// live path is invoked when an operator-selected opportunity becomes
-// available (gcOpps / Capture Command Center linkage). Synthetic
-// internal_owner nodes carry data-synthetic="true" so they can never
-// be sent back through a backend-expecting code path.
-async function gcLoadStakeholderGraph(input) {
-  try {
-    if (!(window.sd && window.sd.govcon && typeof window.sd.govcon.stakeholders === 'function')) return null;
-    const payload = (input && typeof input === 'object') ? input : {};
-    const graph = await window.sd.govcon.stakeholders(payload);
-    if (graph && Array.isArray(graph.nodes)) gcRenderStakeholderGraph(graph);
-    return graph;
-  } catch (_e) { return null; }
-}
-function gcSyntheticInternalOwner(profile) {
-  const owner = (profile && (profile.assignedOwner || profile.captureOwner || profile.bdOwner)) || 'Operator (you)';
-  return Object.freeze({
-    role: 'Internal capture owner',
-    category: 'internal_owner',
-    label: String(owner),
-    posture: 'internal',
-    postureLabel: 'Internal capture planning only.',
-    instructions: 'Local capture-team note; never transmitted.',
-    synthetic: true
-  });
-}
-function gcRenderStakeholderEmptyState() {
-  const empty = document.getElementById('gc-sg-empty');
-  if (empty) empty.hidden = false;
-  for (const id of ['gc-sg-by-opp-list', 'gc-sg-by-agency-list', 'gc-sg-teaming-list', 'gc-sg-internal-owner-list']) {
-    const host = document.getElementById(id);
-    if (host) host.innerHTML = '';
-  }
-}
-function gcRenderStakeholderGraph(graph) {
-  if (!graph || !Array.isArray(graph.nodes)) return;
-  const oppHost     = document.getElementById('gc-sg-by-opp-list');
-  const teamingHost = document.getElementById('gc-sg-teaming-list');
-  const rail        = document.getElementById('gc-sg-risk-rail');
-  const empty       = document.getElementById('gc-sg-empty');
-  if (empty) empty.hidden = true;
-  const esc = function (s) {
-    return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
-  };
-  // Backend-supplied posture labels are the authoritative copy; UI
-  // never invents postures or rewrites posture wording.
-  const labels = graph.postureLabels || {};
-  const rowHtml = function (node) {
-    if (!node) return '';
-    const cat = String(node.category || '').replace(/[^a-z0-9_]/gi, '');
-    const post = String(node.posture || '').replace(/[^a-z0-9_]/gi, '');
-    const postureLabel = node.postureLabel || labels[node.posture] || '';
-    const isRestricted = post === 'restricted';
-    const warning = isRestricted
-      ? '<div data-stakeholder-warning="restricted" style="font-size:10px;color:var(--red,#ff453a);line-height:1.55;margin-top:4px;font-weight:600">Restricted communication window — official Q&amp;A only. No direct outreach.</div>'
-      : '';
-    return ''
-      + '<div class="gc-sg-row" data-stakeholder-category="' + esc(cat) + '" data-posture="' + esc(post) + '"'
-      + (node.synthetic ? ' data-synthetic="true"' : '')
-      + ' style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px">'
-      +   '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap">'
-      +     '<div>'
-      +       '<div style="font-size:11.5px;color:var(--text);font-weight:600">' + esc(node.role) + '</div>'
-      +       '<div style="font-size:10px;color:var(--muted);margin-top:1px">' + esc(node.label) + '</div>'
-      +     '</div>'
-      +   '</div>'
-      +   '<div class="gc-sg-posture" style="font-family:\'IBM Plex Mono\',monospace;font-size:8.5px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid var(--border);border-radius:4px;padding:2px 6px;font-weight:700;display:inline-block;margin-top:5px">' + esc(post.replace(/_/g, ' ')) + '</div>'
-      +   warning
-      +   '<div style="font-size:10px;color:var(--muted);margin-top:4px;line-height:1.55">' + esc(postureLabel) + '</div>'
-      +   '<div style="font-size:10px;color:var(--muted);margin-top:3px;line-height:1.55">' + esc(node.instructions) + '</div>'
-      + '</div>';
-  };
-  if (oppHost) {
-    oppHost.innerHTML = graph.nodes.map(rowHtml).join('');
-  }
-  if (teamingHost) {
-    const teamingNodes = graph.nodes.filter(function (n) { return n && n.category === 'partner_prime_or_sub'; });
-    teamingHost.innerHTML = teamingNodes.length
-      ? teamingNodes.map(rowHtml).join('')
-      : '<div class="gc-sg-row" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:8px;padding:8px 10px;font-size:10.5px;color:var(--muted)">No teaming candidates in the current opportunity graph.</div>';
-  }
-  if (rail) {
-    rail.style.display = graph.inRestrictedWindow ? '' : 'none';
-  }
-}
-window.gcLoadStakeholderGraph     = gcLoadStakeholderGraph;
-window.gcSyntheticInternalOwner   = gcSyntheticInternalOwner;
-window.gcRenderStakeholderGraph   = gcRenderStakeholderGraph;
-window.gcRenderStakeholderEmptyState = gcRenderStakeholderEmptyState;
+// Phase 25V — Stakeholder Graph removed (feature retired). The IPC
+// bridge window.sd.govcon.stakeholders may remain in preload but is no
+// longer surfaced in the renderer UI.
 
 if (typeof document !== 'undefined' && document.addEventListener) {
   document.addEventListener('DOMContentLoaded', function () {
@@ -14204,26 +13962,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     var opps = loadOpps();
     var opp = null;
     for (var i = 0; i < opps.length; i++) { if (opps[i].id === id) { opp = opps[i]; break; } }
-    // Phase 24I — Capture Command Center opp-selection hook for the
-    // Phase 24E Stakeholder Graph. When the operator picks an opportunity
-    // here, refresh the stakeholder graph with that opp's context. The
-    // graph helper is a no-op when the bridge is unavailable, so this is
-    // safe in every renderer state.
-    if (opp && typeof window.gcLoadStakeholderGraph === 'function') {
-      try {
-        window.gcLoadStakeholderGraph({
-          opp: {
-            noticeId:           opp.id || null,
-            solicitationNumber: opp.solicitationNumber || null,
-            noticeType:         opp.noticeType || 'Solicitation',
-            responseDeadline:   opp.dueDate || null,
-            agency:             opp.agency || null,
-            subAgency:          opp.subAgency || null,
-            contractingOffice:  opp.contractingOffice || null
-          }
-        });
-      } catch (_e) { /* no-op — sample fallback remains */ }
-    }
+    // Phase 25V — Stakeholder Graph removed; opp-selection no longer
+    // refreshes a stakeholder graph.
     if (!opp) {
       out.innerHTML = '<div class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">Opportunity not found.</div>';
       return;
@@ -14654,7 +14394,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     var body = $('gc-vqr-tbody');
     if (body) {
       if (!arr.length) {
-        body.innerHTML = '<tr><td colspan="7" class="gc-vqr-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No vendor quote needs added yet. Add a required trade, service, or supplier manually. SourceDeck does not send vendor outreach.</td></tr>';
+        body.innerHTML = '<tr><td colspan="8" class="gc-vqr-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No vendor quote needs added yet. Add a required trade, service, or supplier manually. SourceDeck does not send vendor outreach.</td></tr>';
       } else {
         var rows = [];
         for (var j = 0; j < arr.length; j++) {
@@ -14668,6 +14408,7 @@ document.addEventListener('DOMContentLoaded',()=>{
             + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(o.status) + '</td>'
             + '<td style="padding:7px 6px;color:var(--sub);font-size:10px">' + (flags.on.length ? safeText(flags.on.join(', ')) : '—') + (flags.off.length ? ' · <span style="color:var(--muted)">missing: ' + safeText(flags.off.join(', ')) + '</span>' : '') + '</td>'
             + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(o.riskNotes) + '</td>'
+            + '<td style="padding:7px 6px;white-space:nowrap"><button type="button" class="btn btn-ghost" style="padding:2px 7px;font-size:10px" onclick="gcVqrEdit(' + j + ')">Edit</button> <button type="button" class="btn btn-ghost" style="padding:2px 7px;font-size:10px;color:var(--red)" onclick="gcVqrDelete(' + j + ')">Delete</button></td>'
             + '</tr>');
         }
         body.innerHTML = rows.join('');
@@ -14675,6 +14416,34 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     renderQuoteCompare(arr);
   }
+  // Phase 25V — delete / edit a vendor quote row (manual only; per solicitation).
+  window.gcVqrDelete = function(idx){
+    var arr = loadQuotes();
+    if (idx < 0 || idx >= arr.length) return;
+    arr.splice(idx, 1);
+    saveQuotes(arr);
+    renderVqr();
+    if (typeof window.gcV25PersistWorking === 'function') try { window.gcV25PersistWorking(); } catch (e) {}
+  };
+  window.gcVqrEdit = function(idx){
+    var arr = loadQuotes();
+    if (idx < 0 || idx >= arr.length) return;
+    var o = arr[idx];
+    function set(id, val){ var el = $(id); if (el) el.value = val == null ? '' : val; }
+    set('gc-vqr-f-category', o.category); set('gc-vqr-f-vendor', o.vendor);
+    set('gc-vqr-f-contact', o.contact); set('gc-vqr-f-email', o.email);
+    set('gc-vqr-f-phone', o.phone); set('gc-vqr-f-amount', o.amount);
+    set('gc-vqr-f-status', o.status); set('gc-vqr-f-cert-notes', o.certNotes);
+    set('gc-vqr-f-risk-notes', o.riskNotes);
+    // Remove the old row so re-submitting the intake form saves the edit.
+    arr.splice(idx, 1);
+    saveQuotes(arr);
+    renderVqr();
+    if (typeof window.gcV25PersistWorking === 'function') try { window.gcV25PersistWorking(); } catch (e) {}
+    var form = $('gc-vqr-intake-form');
+    if (form && form.closest) { var d = form.closest('details'); if (d) d.open = true; }
+    if (window.toast) try { window.toast('Editing vendor row — update fields and click Add Vendor Quote Row to save.', 'info'); } catch (e) {}
+  };
   function renderQuoteCompare(arr){
     var body = $('gc-pr-quote-compare-tbody');
     if (!body) return;
@@ -14988,7 +14757,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     var out = $('gc-cs-outline');
     if (!out) return;
     if (!agency && !naics && !core) {
-      out.innerHTML = '<div class="gc-cs-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">Add a target agency / NAICS / core capabilities first, then click "Build Capability Statement Outline (draft)".</div>';
+      out.innerHTML = '<div class="gc-cs-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">Add a target agency / NAICS / core capabilities first, then click "Build Capability Statement".</div>';
       return;
     }
     function listItems(csv){
@@ -15010,14 +14779,47 @@ document.addEventListener('DOMContentLoaded',()=>{
       .concat(coreList.length ? '<div style="margin-top:8px"><strong>Core competencies / capabilities</strong><ul style="margin:4px 0 0 16px;padding:0">' + coreList.map(function(s){ return '<li>' + safeText(s) + '</li>'; }).join('') + '</ul></div>' : '')
       .concat(diffList.length ? '<div style="margin-top:8px"><strong>Differentiators</strong><ul style="margin:4px 0 0 16px;padding:0">' + diffList.map(function(s){ return '<li>' + safeText(s) + '</li>'; }).join('') + '</ul></div>' : '')
       .concat(ppLines.length ? '<div style="margin-top:8px"><strong>Relevant past performance</strong><ul style="margin:4px 0 0 16px;padding:0">' + ppLines.join('') + '</ul></div>' : '')
+      .concat((function(){
+        // Phase 25V — concise closing / fit statement synthesized from the
+        // operator-supplied fields. Draft only; verify before proposal use.
+        var leadCap = coreList.length ? coreList[0] : '';
+        var fit = 'We are positioned to support ' + (agency || 'the target agency')
+          + (naics ? ' under NAICS ' + naics : '')
+          + (leadCap ? ' with proven capability in ' + leadCap : '')
+          + (certs ? ', leveraging our ' + certs + ' status' : '')
+          + (sol ? ' for ' + sol : '')
+          + '. We welcome the opportunity to discuss fit, teaming, and next steps.';
+        return '<div style="margin-top:10px"><strong>Closing / fit statement</strong><div style="color:var(--sub);margin-top:2px">' + safeText(fit) + '</div></div>';
+      })())
       .concat('<div style="margin-top:10px;color:var(--muted);font-size:10px;font-style:italic">Internal review draft. SourceDeck does not send, submit, upload, or certify this content. Capability statement output is a draft. Review before sending. SourceDeck does not send capability statements or outreach. Every claim above is operator-supplied — verify before proposal use.</div>')
       .concat('</div>');
     out.innerHTML = html.join('');
   };
+  // Phase 25V — Export the built Capability Statement Preview as a local
+  // text draft. Download only — no send, no upload, no submission.
+  window.gcCsExportPreview = function(){
+    var out = $('gc-cs-outline');
+    if (!out || /gc-cs-empty/.test(out.innerHTML)) {
+      if (window.toast) try { window.toast('Build the Capability Statement first, then export the draft.', 'info'); } catch (e) {}
+      return;
+    }
+    var text = String(out.textContent || '').replace(/\n{3,}/g, '\n\n').trim();
+    try {
+      var blob = new Blob([text], { type: 'text/plain' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url; a.download = 'capability-statement-draft.txt';
+      document.body.appendChild(a); a.click();
+      document.body.removeChild(a); URL.revokeObjectURL(url);
+      if (window.toast) try { window.toast('Capability statement draft exported locally. Review before any use — SourceDeck does not send or submit.', 'ok'); } catch (e) {}
+    } catch (e) {
+      if (window.toast) try { window.toast('Export unavailable in this context.', 'warn'); } catch (_e) {}
+    }
+  };
   window.gcCsClearOutline = function(){
     var out = $('gc-cs-outline');
     if (!out) return;
-    out.innerHTML = '<div class="gc-cs-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No tailored capability statement outline generated yet. Fill in the target agency / NAICS / core capabilities and click "Build Capability Statement Outline (draft)". The output is a draft and must be reviewed before sending.</div>';
+    out.innerHTML = '<div class="gc-cs-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No capability statement built yet. Fill in the target agency / NAICS / core capabilities and click "Build Capability Statement". The preview is a draft and must be reviewed before sending.</div>';
   };
   function gcCsRestore(){
     var st = loadObj(CS_KEY);
@@ -15106,7 +14908,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     var body = $('gc-ppf-tbody');
     if (!body) return;
     if (!arr.length) {
-      body.innerHTML = '<tr><td colspan="7" class="gc-pp-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No prime partner rows added yet. Add a candidate prime manually. Partner outreach is not sent from SourceDeck.</td></tr>';
+      body.innerHTML = '<tr><td colspan="8" class="gc-pp-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No prime partner rows added yet. Add a candidate prime manually. Partner outreach is not sent from SourceDeck.</td></tr>';
       return;
     }
     var rows = [];
@@ -15120,9 +14922,36 @@ document.addEventListener('DOMContentLoaded',()=>{
         + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.status) + '</td>'
         + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(r.fitNotes) + '</td>'
         + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(r.teamingAngle) + '</td>'
+        + '<td style="padding:7px 6px;white-space:nowrap"><button type="button" class="btn btn-ghost" style="padding:2px 7px;font-size:10px" onclick="gcPpfEdit(' + i + ')">Edit</button> <button type="button" class="btn btn-ghost" style="padding:2px 7px;font-size:10px;color:var(--red)" onclick="gcPpfDelete(' + i + ')">Delete</button></td>'
         + '</tr>');
     }
     body.innerHTML = rows.join('');
+  };
+  // Phase 25V — delete / edit a prime partner row (manual only; per solicitation).
+  window.gcPpfDelete = function(idx){
+    var arr = loadArr(PPF_KEY);
+    if (idx < 0 || idx >= arr.length) return;
+    arr.splice(idx, 1);
+    saveArr(PPF_KEY, arr);
+    gcPpfRender();
+    if (typeof window.gcV25PersistWorking === 'function') try { window.gcV25PersistWorking(); } catch (e) {}
+  };
+  window.gcPpfEdit = function(idx){
+    var arr = loadArr(PPF_KEY);
+    if (idx < 0 || idx >= arr.length) return;
+    var r = arr[idx];
+    function set(id, val){ var el = $(id); if (el) el.value = val == null ? '' : val; }
+    set('gc-ppf-f-naics', r.naics); set('gc-ppf-f-agency', r.agency);
+    set('gc-ppf-f-location', r.location); set('gc-ppf-f-prime', r.prime);
+    set('gc-ppf-f-status', r.status); set('gc-ppf-f-fit', r.fitNotes);
+    set('gc-ppf-f-contact', r.contactNotes); set('gc-ppf-f-angle', r.teamingAngle);
+    arr.splice(idx, 1);
+    saveArr(PPF_KEY, arr);
+    gcPpfRender();
+    if (typeof window.gcV25PersistWorking === 'function') try { window.gcV25PersistWorking(); } catch (e) {}
+    var form = $('gc-ppf-intake-form');
+    if (form && form.closest) { var d = form.closest('details'); if (d) d.open = true; }
+    if (window.toast) try { window.toast('Editing prime partner row — update fields and click Add Prime Partner Row to save.', 'info'); } catch (e) {}
   };
   function renderAll(){
     gcPpRender();
@@ -17386,6 +17215,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     } else if (id === 'saved-pursuits'){
       renderSavedPursuits();
     }
+    // Phase 25V — saved-pursuit selectors + per-solicitation persistence
+    // for Solicitation / Vendors / Pricing / Prime Partners tabs.
+    if (typeof window.gcV25SolHook === 'function'){ try { window.gcV25SolHook(id); } catch (e) {} }
     // Persist last tab so reload returns to it.
     try { localStorage.setItem('sd.govcon.lastTab', id); } catch (e) {}
   };
@@ -18123,6 +17955,176 @@ document.addEventListener('DOMContentLoaded',()=>{
   } else {
     setTimeout(boot, 0);
   }
+})();
+</script>
+
+<script>
+/* Phase 25V — Saved-pursuit → workspace linkage + per-solicitation
+   persistence for Solicitation / Vendors / Pricing / Prime Partners.
+
+   - Saved Pursuits (sd.govcon.opportunities.list, userStatus saved/pursuing)
+     feed the selectors on the Solicitation, Vendors, Pricing, and Prime
+     Partners tabs. Selecting one loads its metadata and scopes that tab's
+     local data to the chosen pursuit id.
+   - Vendor rows, pricing worksheet, and prime partner rows persist locally
+     PER solicitation: each feature keeps an archive map keyed by
+     solicitation id, plus a "working set" (the legacy single key the
+     existing renderers read). Switching tabs never erases state; switching
+     solicitations swaps the working set to the selected pursuit's archive.
+   - No external send/submit/upload. Manual entry only. */
+(function(){
+  'use strict';
+  var ACTIVE_KEY = 'sd.govcon.activeSolicitation.v1';
+  // working keys = the legacy single keys the existing renderers read.
+  var FEATURES = [
+    { working: 'sd.govcon.vendorQuotes.v1',     bySol: 'sd.govcon.vendorQuotes.bySol.v1',     def: [] },
+    { working: 'sd.govcon.pricingWorksheet.v1', bySol: 'sd.govcon.pricingWorksheet.bySol.v1', def: {} },
+    { working: 'sd.govcon.primePartners.v1',    bySol: 'sd.govcon.primePartners.bySol.v1',    def: [] }
+  ];
+  var pursuitMap = {};
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function loadJSON(k, d){ try { var r = localStorage.getItem(k); return r ? JSON.parse(r) : d; } catch (e) { return d; } }
+  function saveJSON(k, v){ try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} }
+  function clone(v){ try { return JSON.parse(JSON.stringify(v)); } catch (e) { return v; } }
+
+  function activeSol(){ try { return localStorage.getItem(ACTIVE_KEY) || ''; } catch (e) { return ''; } }
+  function setActiveSolRaw(id){ try { localStorage.setItem(ACTIVE_KEY, id || ''); } catch (e) {} }
+
+  // Copy each feature's current working set into the archive under a given id.
+  function persistWorkingTo(id){
+    for (var i = 0; i < FEATURES.length; i++){
+      var f = FEATURES[i];
+      var map = loadJSON(f.bySol, {}) || {};
+      map[id || ''] = loadJSON(f.working, clone(f.def));
+      saveJSON(f.bySol, map);
+    }
+  }
+  // Load a given id's archived sets into the working keys (creating empties).
+  function loadWorkingFrom(id){
+    for (var i = 0; i < FEATURES.length; i++){
+      var f = FEATURES[i];
+      var map = loadJSON(f.bySol, {}) || {};
+      var data = (map[id || ''] != null) ? map[id || ''] : clone(f.def);
+      saveJSON(f.working, data);
+    }
+  }
+  // Persist the current working sets under the active solicitation. Called
+  // after any add/edit so each solicitation keeps its own durable copy.
+  window.gcV25PersistWorking = function(){ persistWorkingTo(activeSol()); };
+
+  // Switch the active solicitation: archive current sets, swap to target.
+  window.gcV25SelectSolicitation = function(id){
+    id = id || '';
+    var prev = activeSol();
+    if (id === prev){ return; }
+    persistWorkingTo(prev);
+    setActiveSolRaw(id);
+    loadWorkingFrom(id);
+    ['gc-vendors-sol-select','gc-pricing-sol-select','gc-ppf-sol-select','gc-sol-opp-select'].forEach(function(sid){
+      var el = $(sid); if (el){ try { el.value = id; } catch (e) {} }
+    });
+    var opp = pursuitMap[id];
+    if (opp) gcV25RenderSolMeta(opp);
+  };
+
+  // Read saved/pursuing opportunities from the GovCon opportunity store.
+  function savedPursuits(){
+    try {
+      if (window.sd && window.sd.govcon && window.sd.govcon.opportunities && window.sd.govcon.opportunities.list){
+        return Promise.resolve(window.sd.govcon.opportunities.list()).then(function(list){
+          return (list || []).filter(function(o){ return o && (o.userStatus === 'saved' || o.userStatus === 'pursuing'); });
+        }).catch(function(){ return []; });
+      }
+    } catch (e) {}
+    return Promise.resolve([]);
+  }
+
+  function fillSelect(selectId, pursuits, generalLabel){
+    var sel = $(selectId);
+    if (!sel) return;
+    var current = activeSol();
+    var opts = ['<option value="">' + esc(generalLabel) + '</option>'];
+    for (var i = 0; i < pursuits.length; i++){
+      var o = pursuits[i];
+      var label = (o.title || o.solicitationNumber || o.noticeId || o.id || '(untitled)');
+      if (o.agency) label += ' — ' + o.agency;
+      opts.push('<option value="' + esc(o.id) + '">' + esc(label) + '</option>');
+    }
+    sel.innerHTML = opts.join('');
+    try { sel.value = current; } catch (e) {}
+  }
+
+  // Render selected solicitation metadata into the Solicitation Summary panel.
+  window.gcV25RenderSolMeta = function(opp){
+    var el = $('gc-sol-summary');
+    if (!el || !opp) return;
+    function row(label, val){
+      if (val == null || val === '') return '';
+      return '<div style="display:flex;gap:8px;margin-bottom:3px"><span style="min-width:150px;font-family:\'IBM Plex Mono\',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted)">' + esc(label) + '</span><span style="font-size:11px;color:var(--text);line-height:1.5;word-break:break-word">' + val + '</span></div>';
+    }
+    var url = opp.sourceUrl ? '<a href="' + esc(opp.sourceUrl) + '" target="_blank" rel="noopener noreferrer">' + esc(opp.sourceUrl) + '</a>' : '';
+    el.innerHTML =
+      '<div style="font-size:9px;font-family:\'IBM Plex Mono\',monospace;text-transform:uppercase;letter-spacing:0.12em;color:var(--gold2);margin-bottom:6px">Loaded from saved pursuit · draft — verify against source</div>' +
+      row('Title', esc(opp.title)) +
+      row('Agency', esc(opp.agency)) +
+      row('Solicitation / Notice #', esc(opp.solicitationNumber || opp.noticeId)) +
+      row('NAICS', esc(opp.naics)) +
+      row('Due date', esc(opp.dueDate)) +
+      row('Place of performance', esc(opp.placeOfPerformance)) +
+      row('Source URL', url) +
+      row('Notes / extraction', esc(opp.summary || opp.notes));
+  };
+
+  // Tab hook invoked by gcTabSwitch for the relevant tabs.
+  window.gcV25SolHook = function(tabId){
+    var map = {
+      'solicitation':   { sel: 'gc-sol-opp-select',     empty: null,                  general: '— Not linked —',                          render: null },
+      'vendors':        { sel: 'gc-vendors-sol-select', empty: 'gc-vendors-sol-empty', general: '— No solicitation selected (general vendor list) —', render: window.gcVqrRender },
+      'pricing':        { sel: 'gc-pricing-sol-select', empty: 'gc-pricing-sol-empty', general: '— No solicitation selected (general pricing) —',     render: window.gcPricingRecalc },
+      'prime-partners': { sel: 'gc-ppf-sol-select',     empty: 'gc-ppf-sol-empty',     general: '— No solicitation selected (general prime list) —', render: window.gcPpfRender }
+    };
+    var cfg = map[tabId];
+    if (!cfg) return;
+    savedPursuits().then(function(list){
+      pursuitMap = {};
+      for (var i = 0; i < list.length; i++){ pursuitMap[list[i].id] = list[i]; }
+      fillSelect(cfg.sel, list, cfg.general);
+      if (cfg.empty){ var e = $(cfg.empty); if (e) e.style.display = list.length ? 'none' : ''; }
+      if (typeof cfg.render === 'function'){ try { cfg.render(); } catch (e2) {} }
+      // On the Solicitation tab, attach a change handler (once) that loads
+      // the selected pursuit's metadata into the summary panel.
+      if (tabId === 'solicitation'){
+        var ss = $('gc-sol-opp-select');
+        if (ss && !ss.getAttribute('data-v25-wired')){
+          ss.setAttribute('data-v25-wired', '1');
+          ss.addEventListener('change', function(){
+            window.gcV25SelectSolicitation(ss.value);
+            var opp = pursuitMap[ss.value];
+            if (opp) gcV25RenderSolMeta(opp);
+          });
+        }
+        var cur = activeSol(); if (cur){ try { ss.value = cur; } catch (e3) {} if (pursuitMap[cur]) gcV25RenderSolMeta(pursuitMap[cur]); }
+      }
+    });
+  };
+
+  // Selector onchange handlers referenced by the HTML.
+  window.gcVendorsSolSelect = function(id){ window.gcV25SelectSolicitation(id); if (typeof window.gcVqrRender === 'function'){ try { window.gcVqrRender(); } catch (e) {} } };
+  window.gcPricingSolSelect = function(id){ window.gcV25SelectSolicitation(id); if (typeof window.gcPricingRecalc === 'function'){ try { window.gcPricingRecalc(); } catch (e) {} } };
+  window.gcPpfSolSelect     = function(id){ window.gcV25SelectSolicitation(id); if (typeof window.gcPpfRender === 'function'){ try { window.gcPpfRender(); } catch (e) {} } };
+
+  // Wrap the existing add/edit handlers so changes persist under the active
+  // solicitation. Each wrapper defers to the original and preserves its
+  // return value (form handlers return false to block submit).
+  ['gcVqrAddQuote','gcPpfAddPartner','gcPricingRecalc','gcPricingSaveAssumptions'].forEach(function(name){
+    var orig = window[name];
+    if (typeof orig !== 'function' || orig.__v25wrapped) return;
+    var wrapped = function(){ var r = orig.apply(this, arguments); try { window.gcV25PersistWorking(); } catch (e) {} return r; };
+    wrapped.__v25wrapped = true;
+    window[name] = wrapped;
+  });
 })();
 </script>
 
