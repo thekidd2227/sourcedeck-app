@@ -20,7 +20,7 @@ test('selecting a pursuit resets demo/foreign extraction before showing it', () 
 });
 
 test('extraction never emits sections without real source text', () => {
-  const fn = HTML.slice(HTML.indexOf('window.gcSolExtract = function'), HTML.indexOf('window.gcSolExtract = function') + 1700);
+  const fn = HTML.slice(HTML.indexOf('window.gcSolExtract = async function'), HTML.indexOf('window.gcSolExtract = async function') + 2200);
   assert.ok(/if \(!text\.trim\(\)\)/.test(fn), 'guards on empty source text');
   assert.ok(/return;/.test(fn), 'returns without generating sections when empty');
 });

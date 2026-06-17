@@ -3394,9 +3394,9 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 </select>
               </label>
               <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <button type="button" class="btn btn-gold" onclick="gcSolExtract()">Extract Requirements</button>
-                <button type="button" class="btn btn-ghost" onclick="gcSolExplainPlainEnglish()">Explain Package in Plain English</button>
-                <button type="button" class="btn btn-ghost" onclick="gcSolBuildMatrix()">Build Compliance Matrix</button>
+                <button type="button" class="btn btn-gold" id="gc-sol-extract-btn" data-sd-action-id="sol-extract" onclick="gcSolExtract()">Extract Requirements</button>
+                <button type="button" class="btn btn-ghost" id="gc-sol-explain-btn" data-sd-action-id="sol-explain" onclick="gcSolExplainPlainEnglish()">Explain Package in Plain English</button>
+                <button type="button" class="btn btn-ghost" id="gc-sol-matrix-btn" data-sd-action-id="sol-matrix" onclick="gcSolBuildMatrix()">Build Compliance Matrix</button>
                 <button type="button" class="btn btn-ghost" onclick="gcSolCreateProposalOutline()">Create Proposal Outline</button>
                 <button type="button" class="btn btn-ghost" onclick="gcSolMarkReviewed()">Mark Requirement Reviewed</button>
                 <button type="button" class="btn btn-ghost" onclick="gcSolExportPlaceholder()">Export Matrix Placeholder</button>
@@ -3461,7 +3461,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               <thead>
                 <tr style="text-align:left;color:var(--sub);font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.08em">
                   <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Requirement ID</th>
-                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Source section/page</th>
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Source</th>
+                  <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Section/Page/File</th>
                   <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Requirement text</th>
                   <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Mandatory / optional</th>
                   <th style="padding:8px 6px;border-bottom:1px solid var(--border)">Proposal section</th>
@@ -3473,7 +3474,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 </tr>
               </thead>
               <tbody id="gc-sol-matrix-body">
-                <tr><td colspan="10" class="gc-sol-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No requirements extracted yet. Download a package or upload a solicitation, then run extraction. SourceDeck does not submit bids. All outputs require human review.</td></tr>
+                <tr><td colspan="11" class="gc-sol-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No requirements extracted yet. Download a package or upload a solicitation, then run extraction. SourceDeck does not submit bids. All outputs require human review.</td></tr>
               </tbody>
             </table>
           </div>
@@ -12225,6 +12226,7 @@ window.gcWizSaveSam = gcWizSaveSam; window.gcWizRemoveSam = gcWizRemoveSam;
     if (pill){
       pill.textContent = present ? 'SAM.gov key saved' : 'SAM.gov key missing — add in Setup or Settings';
       pill.style.color = present ? 'var(--green,#30d158)' : '#ffb020';
+      pill.style.display = present ? '' : 'none';
       pill.setAttribute('data-gc-sam-key-present', present ? 'true' : 'false');
     }
     if (banner) banner.style.display = present ? 'none' : '';
@@ -14488,6 +14490,37 @@ document.addEventListener('DOMContentLoaded',()=>{
     return diff >= -86400000 && diff <= daysFrom * 86400000;
   }
   function safeText(s){ return String(s == null ? '' : s).replace(/[<>]/g, ''); }
+  function looksRawMarkup(s){ return /<\?xml|<w:document|xmlns:|word\/document\.xml|<\/w:|<w:t\b|<pkg:package/i.test(String(s || '').slice(0, 4000)); }
+  function cleanDisplayText(s){
+    var out = String(s == null ? '' : s);
+    out = out.replace(/\0/g, ' ');
+    out = out.replace(/<w:(?:p|br|tab)\b[^>]*>/gi, '\n').replace(/<\/w:p>/gi, '\n');
+    out = out.replace(/<[^>]+>/g, ' ');
+    out = out.replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&apos;/g, "'");
+    out = out.replace(/\bxmlns(?::\w+)?="[^"]*"/gi, ' ');
+    out = out.replace(/\b(?:w|wpc|mc|o|r|m|v|wp14|wp|w10|w14|w15|wpg|wpi|wne|wps):[A-Za-z0-9_.-]+/g, ' ');
+    out = out.replace(/[ \t]{2,}/g, ' ').replace(/\n{3,}/g, '\n\n').trim();
+    if (looksRawMarkup(out)) return 'This file contains structured document markup. SourceDeck stored it, but readable extraction needs review.';
+    return out;
+  }
+  window.sdSetActionBusy = window.sdSetActionBusy || function(actionId, label){
+    var btn = actionId && actionId.nodeType === 1 ? actionId : (document.getElementById(actionId) || document.querySelector('[data-sd-action-id="' + String(actionId || '').replace(/"/g, '\\"') + '"]'));
+    if (!btn) return null;
+    if (!btn.getAttribute('data-sd-busy-original')) btn.setAttribute('data-sd-busy-original', btn.textContent || '');
+    btn.textContent = label || 'Running...';
+    btn.disabled = true;
+    btn.setAttribute('aria-busy', 'true');
+    if (window.toast) try { window.toast('Working in background. This may take a moment.', 'info'); } catch (e) {}
+    return btn;
+  };
+  window.sdClearActionBusy = window.sdClearActionBusy || function(actionId){
+    var btn = actionId && actionId.nodeType === 1 ? actionId : (document.getElementById(actionId) || document.querySelector('[data-sd-action-id="' + String(actionId || '').replace(/"/g, '\\"') + '"]'));
+    if (!btn) return;
+    btn.textContent = btn.getAttribute('data-sd-busy-original') || btn.textContent || 'Done';
+    btn.disabled = false;
+    btn.removeAttribute('aria-busy');
+    btn.removeAttribute('data-sd-busy-original');
+  };
   function setCount(id, n){
     var v = document.getElementById('gc-cc-' + id + '-count');
     var e = document.getElementById('gc-cc-' + id + '-empty');
@@ -14704,7 +14737,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   function listDiv(items, emptyMsg){
     if (!items || !items.length) return emptyDiv(emptyMsg);
     return '<ul style="margin:0;padding:0 0 0 16px;font-size:11px;color:var(--text);line-height:1.55">'
-      + items.map(function(t){ return '<li>' + safeText(t) + '</li>'; }).join('')
+      + items.map(function(t){ return '<li>' + safeText(cleanDisplayText(typeof t === 'object' ? (t.item || t.fileName || t.text || t.label || '') : t)) + '</li>'; }).join('')
       + '</ul>';
   }
   // ── Local extraction heuristics ────────────────────────────────────
@@ -14821,26 +14854,29 @@ document.addEventListener('DOMContentLoaded',()=>{
     var body = $('gc-sol-matrix-body');
     if (!body) return;
     if (!matrix || !matrix.length) {
-      body.innerHTML = '<tr><td colspan="10" class="gc-sol-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No requirements extracted yet. Download a package or upload a solicitation, then run extraction. SourceDeck does not submit bids. All outputs require human review.</td></tr>';
+      body.innerHTML = '<tr><td colspan="11" class="gc-sol-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No compliance requirements extracted yet. Run extraction on a readable package or manually map requirements.</td></tr>';
       return;
     }
     var rows = [];
     for (var i = 0; i < matrix.length; i++) {
       var r = matrix[i];
+      var requirementText = cleanDisplayText(r.requirementText || r.requirement || r.text || '');
+      if (!requirementText || /^Required Forms$/i.test(requirementText)) continue;
       rows.push('<tr style="border-top:1px solid var(--border2,rgba(255,255,255,0.05));font-family:\'Instrument Sans\',sans-serif">'
         + '<td style="padding:7px 6px;font-family:\'Azeret Mono\',monospace;color:var(--text)">' + safeText(r.id) + '</td>'
         + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.source) + '</td>'
-        + '<td style="padding:7px 6px;color:var(--text);max-width:300px">' + safeText(r.text) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.sectionPageFile || r.fileName || r.source) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--text);max-width:300px">' + safeText(requirementText) + '</td>'
         + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.mandatory) + '</td>'
         + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.proposalSection) + '</td>'
         + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(r.owner) + '</td>'
-        + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(r.evidence) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(r.evidenceNeeded || r.evidence) + '</td>'
         + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.status) + '</td>'
         + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(r.risk) + '</td>'
         + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(r.notes) + '</td>'
         + '</tr>');
     }
-    body.innerHTML = rows.join('');
+    body.innerHTML = rows.length ? rows.join('') : '<tr><td colspan="11" class="gc-sol-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No compliance requirements extracted yet. Run extraction on a readable package or manually map requirements.</td></tr>';
   }
   function renderOppDropdown(){
     var sel = $('gc-sol-opp-select');
@@ -14870,78 +14906,104 @@ document.addEventListener('DOMContentLoaded',()=>{
     function arr(letter){
       var s = sections[letter] || {};
       if (!s.text) return [];
-      return [s.text];
+      return [cleanDisplayText(s.text)];
+    }
+    function formList(){
+      var out = [];
+      if (sections.J && sections.J.found && sections.J.text) out = out.concat([cleanDisplayText(sections.J.text)]);
+      if (ex.metadata && ex.metadata.requiredForms) out = out.concat(ex.metadata.requiredForms);
+      if (ex.metadata && ex.metadata.attachmentsIndex) {
+        out = out.concat(ex.metadata.attachmentsIndex.map(function(a){ return a && (a.fileName || a.label || a.name); }).filter(Boolean));
+      }
+      var seen = {};
+      return out.map(cleanDisplayText).filter(function(x){
+        if (!x || /^This file contains structured document markup/.test(x)) return false;
+        var k = x.toLowerCase();
+        if (seen[k]) return false;
+        seen[k] = true;
+        return true;
+      }).slice(0, 40);
     }
     return {
-      summary: (ex.metadata && (ex.metadata.title || ex.metadata.summary)) || ex.solicitationNumber || ex.noticeId || 'Solicitation package extracted locally.',
+      summary: cleanDisplayText((ex.metadata && (ex.metadata.title || ex.metadata.summary)) || ex.solicitationNumber || ex.noticeId || 'Solicitation package extracted locally.'),
       sectionL: arr('L'),
       sectionM: arr('M'),
       pws: arr('C').concat(arr('F')),
-      forms: arr('J').concat((ex.metadata && ex.metadata.requiredForms) || []),
+      forms: formList(),
       deadlines: [ex.metadata && ex.metadata.responseDeadline, ex.metadata && ex.metadata.qaDeadline, ex.metadata && ex.metadata.siteVisit].filter(Boolean),
       risks: ((ex.metadata && ex.metadata.complianceRisks) || []).concat((ex.warnings || []))
     };
   }
   window.gcABExtractPackageToCenter = async function(id){
+    if (window.sdSetActionBusy) window.sdSetActionBusy('sol-extract', 'Extracting...');
     id = id || activeSolId();
-    var sm = null;
-    try { if (typeof window.gcW25GetSourceMaterials === 'function') sm = window.gcW25GetSourceMaterials(id); } catch (e) {}
-    if (!sm || !sm.package){
-      if (window.toast) try { window.toast('Download or select a solicitation package before extraction.', 'info'); } catch (e2) {}
-      return null;
+    try {
+      var sm = null;
+      try { if (typeof window.gcW25GetSourceMaterials === 'function') sm = window.gcW25GetSourceMaterials(id); } catch (e) {}
+      if (!sm || !sm.package){
+        if (window.toast) try { window.toast('Download or select a solicitation package before extraction.', 'info'); } catch (e2) {}
+        return null;
+      }
+      if (!(window.sd && window.sd.govcon && window.sd.govcon.extractSolicitationPackage)){
+        if (window.toast) try { window.toast('Package extraction requires the SourceDeck desktop app.', 'warn'); } catch (e3) {}
+        return null;
+      }
+      var ex = await window.sd.govcon.extractSolicitationPackage({ manifest: sm.package });
+      var mapped = mapPackageExtraction(ex);
+      var state = loadState();
+      state.summary = mapped.summary;
+      state.sections = mapped;
+      state.matrix = (ex && ex.complianceMatrixStarter) || [];
+      state.solId = id || '';
+      state.real = true;
+      state.packageExtraction = ex;
+      saveState(state);
+      renderPanels(state);
+      renderMatrix(state.matrix);
+      if (window.toast) try { window.toast('Package extraction complete. Verify every section against the downloaded files.', 'ok'); } catch (e4) {}
+      return ex;
+    } finally {
+      if (window.sdClearActionBusy) window.sdClearActionBusy('sol-extract');
     }
-    if (!(window.sd && window.sd.govcon && window.sd.govcon.extractSolicitationPackage)){
-      if (window.toast) try { window.toast('Package extraction requires the SourceDeck desktop app.', 'warn'); } catch (e3) {}
-      return null;
-    }
-    var ex = await window.sd.govcon.extractSolicitationPackage({ manifest: sm.package });
-    var mapped = mapPackageExtraction(ex);
-    var state = loadState();
-    state.summary = mapped.summary;
-    state.sections = mapped;
-    state.matrix = (ex && ex.complianceMatrixStarter) || [];
-    state.solId = id || '';
-    state.real = true;
-    state.packageExtraction = ex;
-    saveState(state);
-    renderPanels(state);
-    renderMatrix(state.matrix);
-    if (window.toast) try { window.toast('Package extraction complete. Verify every section against the downloaded files.', 'ok'); } catch (e4) {}
-    return ex;
   };
-  window.gcSolExtract = function(){
+  window.gcSolExtract = async function(){
+    if (window.sdSetActionBusy) window.sdSetActionBusy('sol-extract', 'Extracting...');
     var activeId = activeSolId();
-    var pkg = null;
-    try { if (typeof window.gcABGetPackageSummary === 'function') pkg = window.gcABGetPackageSummary(activeId); } catch (e) {}
-    if (pkg && window.gcABExtractPackageToCenter){
-      window.gcABExtractPackageToCenter(activeId);
-      return;
+    try {
+      var pkg = null;
+      try { if (typeof window.gcABGetPackageSummary === 'function') pkg = window.gcABGetPackageSummary(activeId); } catch (e) {}
+      if (pkg && window.gcABExtractPackageToCenter){
+        await window.gcABExtractPackageToCenter(activeId);
+        return;
+      }
+      var pasted = '';
+      // Phase 25AB — combine downloaded package text with any legacy fetched
+      // description / imported resource text for the linked saved pursuit.
+      // Extraction never pretends: with no source text it asks for a package.
+      var linked = '';
+      try { if (typeof window.gcW25CollectSourceText === 'function') linked = String(window.gcW25CollectSourceText() || ''); } catch (e) {}
+      var text = [pasted, linked].filter(function(s){ return s && s.trim(); }).join('\n\n');
+      if (!text.trim()) {
+        if (window.toast) try { window.toast('Download a solicitation package or upload a supported solicitation file before extraction.', 'info'); } catch (e) {}
+        return;
+      }
+      var ex = extractFromText(text);
+      var state = loadState();
+      state.summary = cleanDisplayText(ex.summary);
+      state.sections = {
+        sectionL: ex.sectionL.map(cleanDisplayText), sectionM: ex.sectionM.map(cleanDisplayText), pws: ex.pws.map(cleanDisplayText),
+        forms: ex.forms.map(cleanDisplayText), deadlines: ex.deadlines.map(cleanDisplayText), risks: ex.risks.map(cleanDisplayText)
+      };
+      // Phase 25Y — stamp the extraction with the active solicitation so a real
+      // pursuit never shows another solicitation's (or demo) sections.
+      try { state.solId = localStorage.getItem('sd.govcon.activeSolicitation.v1') || ''; } catch (e) {}
+      state.real = true; // produced from real source text, not demo seed
+      saveState(state);
+      renderPanels(state);
+      if (window.toast) try { window.toast('Draft extraction complete. Verify every row against the source document. Human review required.', 'ok'); } catch (e) {}
+    } finally {
+      if (window.sdClearActionBusy) window.sdClearActionBusy('sol-extract');
     }
-    var pasted = '';
-    // Phase 25AB — combine downloaded package text with any legacy fetched
-    // description / imported resource text for the linked saved pursuit.
-    // Extraction never pretends: with no source text it asks for a package.
-    var linked = '';
-    try { if (typeof window.gcW25CollectSourceText === 'function') linked = String(window.gcW25CollectSourceText() || ''); } catch (e) {}
-    var text = [pasted, linked].filter(function(s){ return s && s.trim(); }).join('\n\n');
-    if (!text.trim()) {
-      if (window.toast) try { window.toast('Download a solicitation package or upload a supported solicitation file before extraction.', 'info'); } catch (e) {}
-      return;
-    }
-    var ex = extractFromText(text);
-    var state = loadState();
-    state.summary = ex.summary;
-    state.sections = {
-      sectionL: ex.sectionL, sectionM: ex.sectionM, pws: ex.pws,
-      forms: ex.forms, deadlines: ex.deadlines, risks: ex.risks
-    };
-    // Phase 25Y — stamp the extraction with the active solicitation so a real
-    // pursuit never shows another solicitation's (or demo) sections.
-    try { state.solId = localStorage.getItem('sd.govcon.activeSolicitation.v1') || ''; } catch (e) {}
-    state.real = true; // produced from real source text, not demo seed
-    saveState(state);
-    renderPanels(state);
-    if (window.toast) try { window.toast('Draft extraction complete. Verify every row against the source document. Human review required.', 'ok'); } catch (e) {}
   };
   // Phase 25Y — when a saved pursuit is selected, clear any stale/demo
   // extraction that belongs to a different solicitation so sample/demo
@@ -14956,15 +15018,20 @@ document.addEventListener('DOMContentLoaded',()=>{
     renderMatrix([]);
   };
   window.gcSolBuildMatrix = function(){
+    if (window.sdSetActionBusy) window.sdSetActionBusy('sol-matrix', 'Building matrix...');
     var state = loadState();
-    if (!state.sections || (!state.sections.sectionL && !state.sections.sectionM && !state.sections.pws)) {
-      if (window.toast) try { window.toast('Extract requirements from a downloaded package or uploaded solicitation first.', 'info'); } catch (e) {}
-      return;
+    try {
+      if (!state.sections || (!state.sections.sectionL && !state.sections.sectionM && !state.sections.pws)) {
+        if (window.toast) try { window.toast('Extract requirements from a downloaded package or uploaded solicitation first.', 'info'); } catch (e) {}
+        return;
+      }
+      state.matrix = state.packageExtraction && state.packageExtraction.complianceMatrixStarter ? state.packageExtraction.complianceMatrixStarter : buildMatrixFromExtraction(state.sections);
+      saveState(state);
+      renderMatrix(state.matrix);
+      if (window.toast) try { window.toast('Compliance matrix built from draft extraction. Every row is draft and requires human review.', 'ok'); } catch (e) {}
+    } finally {
+      if (window.sdClearActionBusy) window.sdClearActionBusy('sol-matrix');
     }
-    state.matrix = buildMatrixFromExtraction(state.sections);
-    saveState(state);
-    renderMatrix(state.matrix);
-    if (window.toast) try { window.toast('Compliance matrix built from draft extraction. Every row is draft and requires human review.', 'ok'); } catch (e) {}
   };
   window.gcSolMarkReviewed = function(){
     var state = loadState();
@@ -14983,26 +15050,31 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (window.toast) try { window.toast('Row ' + state.matrix[idx].id + ' marked Reviewed. Human review responsibility belongs to the operator.', 'ok'); } catch (e) {}
   };
   window.gcSolExplainPlainEnglish = async function(){
+    if (window.sdSetActionBusy) window.sdSetActionBusy('sol-explain', 'Explaining...');
     var id = activeSolId();
-    var state = loadState();
-    var ex = state.packageExtraction || null;
-    if (!ex && window.gcABExtractPackageToCenter) ex = await window.gcABExtractPackageToCenter(id);
-    if (!ex){
-      if (window.toast) try { window.toast('Download and extract a solicitation package first.', 'info'); } catch (e) {}
-      return;
-    }
-    var plain = null;
     try {
-      if (window.sd && window.sd.govcon && window.sd.govcon.explainSolicitationPackage) plain = await window.sd.govcon.explainSolicitationPackage(ex);
-    } catch (e2) {}
-    if (!plain || !plain.sections){ if (window.toast) try { window.toast('Plain-English explanation unavailable.', 'warn'); } catch (e3) {} return; }
-    var lines = [];
-    Object.keys(plain.sections).forEach(function(k){
-      var s = plain.sections[k];
-      lines.push('Section ' + k + ': ' + s.means + ' What to do: ' + s.mustDo);
-    });
-    setHTML('gc-sol-summary', '<div style="font-size:11px;color:var(--text);line-height:1.55"><strong>Plain-English package explanation.</strong><br>' + safeText(lines.join('\n\n')).replace(/\n/g, '<br>') + '<br><br><em>Not legal advice. Verify against source documents.</em></div>');
-    if (window.toast) try { window.toast('Plain-English explanation created. Verify against the source package.', 'ok'); } catch (e4) {}
+      var state = loadState();
+      var ex = state.packageExtraction || null;
+      if (!ex && window.gcABExtractPackageToCenter) ex = await window.gcABExtractPackageToCenter(id);
+      if (!ex){
+        if (window.toast) try { window.toast('Download and extract a solicitation package first.', 'info'); } catch (e) {}
+        return;
+      }
+      var plain = null;
+      try {
+        if (window.sd && window.sd.govcon && window.sd.govcon.explainSolicitationPackage) plain = await window.sd.govcon.explainSolicitationPackage(ex);
+      } catch (e2) {}
+      if (!plain || !plain.sections){ if (window.toast) try { window.toast('Plain-English explanation unavailable.', 'warn'); } catch (e3) {} return; }
+      var lines = [];
+      Object.keys(plain.sections).forEach(function(k){
+        var s = plain.sections[k];
+        lines.push('Section ' + k + ': ' + s.means + ' What to do: ' + s.mustDo);
+      });
+      setHTML('gc-sol-summary', '<div style="font-size:11px;color:var(--text);line-height:1.55"><strong>Plain-English package explanation.</strong><br>' + safeText(cleanDisplayText(lines.join('\n\n'))).replace(/\n/g, '<br>') + '<br><br><em>Not legal advice. Verify against source documents.</em></div>');
+      if (window.toast) try { window.toast('Plain-English explanation created. Verify against the source package.', 'ok'); } catch (e4) {}
+    } finally {
+      if (window.sdClearActionBusy) window.sdClearActionBusy('sol-explain');
+    }
   };
   window.gcSolCreateProposalOutline = function(){
     var state = loadState();
@@ -18014,6 +18086,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (pill){
       pill.textContent = present ? 'SAM.gov key saved' : 'SAM.gov key missing — add in Setup or Settings';
       pill.style.color = present ? 'var(--green,#30d158)' : '#ffb020';
+      pill.style.display = present ? '' : 'none';
     }
     if (banner) banner.style.display = present ? 'none' : '';
     if (btn) btn.disabled = !present;
@@ -18943,6 +19016,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       });
       ipcFilters.naics = expanded.join(',');
     }
+    var searchBusy = window.sdSetActionBusy ? window.sdSetActionBusy('gc-tab-search-sam-btn', 'Searching...') : null;
     _samStatus('Searching SAM.gov… (showing up to ' + limit + ' results)');
     if (window.toast) try { window.toast('Searching SAM.gov…', 'info'); } catch (e) {}
     var raw = [];
@@ -18953,6 +19027,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     } catch (e){
       _samStatus('SAM.gov search failed. Check your key, filters, or network connection.');
       if (window.toast) try { window.toast('SAM.gov search failed. Check your key, filters, or network connection.', 'err'); } catch (e2) {}
+      if (window.sdClearActionBusy) window.sdClearActionBusy(searchBusy);
       return;
     }
     // Phase 25S — local backstop. The SAM.gov API does not always
@@ -18990,6 +19065,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         if (filters.naics && filters.naicsMode !== 'ignore' && filters.naicsMode !== 'keyword-only') _samRenderZeroMatch(filters, 0);
         _samStatus('Showing up to ' + limit + ' results · returned 0 · visible 0' + kwDescriptor + ' · ' + modeDescriptor);
         if (window.toast) try { window.toast('SAM.gov returned 0 records for this search. Broaden the keyword, NAICS, or date range.', 'info'); } catch (e) {}
+        if (window.sdClearActionBusy) window.sdClearActionBusy(searchBusy);
         return;
       }
       // Phase 25U — SAM.gov filters by NAICS server-side. Render the
@@ -19000,6 +19076,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         _samRenderZeroMatch(filters, returned);
         _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible 0' + kwDescriptor + ' · ' + modeDescriptor);
         if (window.toast) try { window.toast('No applied NAICS matches — broaden the NAICS family or explicitly ignore NAICS.', 'info'); } catch (e) {}
+        if (window.sdClearActionBusy) window.sdClearActionBusy(searchBusy);
       } else if (filters.setAside && filters.setAside !== 'Any'){
         // A keyword may be present; the set-aside filter is what emptied the set.
         if (zeroHost){
@@ -19009,14 +19086,17 @@ document.addEventListener('DOMContentLoaded',()=>{
         }
         _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible 0' + kwDescriptor + ' · ' + modeDescriptor);
         if (window.toast) try { window.toast('No SAM.gov opportunities matched set-aside ' + filters.setAside + '.', 'info'); } catch (e) {}
+        if (window.sdClearActionBusy) window.sdClearActionBusy(searchBusy);
       } else {
         _samStatus('No SAM.gov opportunities matched this search. Adjust filters or increase result count.');
         if (window.toast) try { window.toast('No SAM.gov opportunities matched this search.', 'info'); } catch (e) {}
+        if (window.sdClearActionBusy) window.sdClearActionBusy(searchBusy);
       }
       return;
     }
     _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible ' + res.length + kwDescriptor + relDescriptor + ' · ' + modeDescriptor);
     if (window.toast) try { window.toast('Returned ' + returned + ' opportunit' + (returned === 1 ? 'y' : 'ies') + ' · ' + res.length + ' matched filters. Review results below, then save or mark pursue.', 'ok'); } catch (e) {}
+    if (window.sdClearActionBusy) window.sdClearActionBusy(searchBusy);
     refreshSavedPursuitsPreview();
   };
 
@@ -19535,7 +19615,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     return false;
   };
   window.gcW25OpenNotice = async function(id){
-    var o = await resolve(id); if (!o) return;
+    var o = await resolve(id); if (!o) { if (window.sdClearActionBusy) window.sdClearActionBusy(busyEl); return; }
     var url = o.uiLink || o.sourceUrl || (o.noticeId ? 'https://sam.gov/opp/' + encodeURIComponent(o.noticeId) + '/view' : '');
     if (!url){ toast('SAM.gov source link was not included for this record. Try Refresh Source Details.', 'warn'); return; }
     if (o.uiLink) toast('A SAM.gov login/role may be required to view this notice.', 'info');
@@ -19592,30 +19672,35 @@ document.addEventListener('DOMContentLoaded',()=>{
     _rerender(id, o);
   };
   window.gcABDownloadPackage = async function(id){
+    var busyEl = window.sdSetActionBusy ? window.sdSetActionBusy(document.activeElement, 'Downloading package...') : null;
     var o = await resolve(id); if (!o) return;
-    if (!(window.sd && window.sd.govcon && window.sd.govcon.downloadSolicitationPackage)){
-      toast('Package download requires the SourceDeck desktop app.', 'warn');
-      return;
+    try {
+      if (!(window.sd && window.sd.govcon && window.sd.govcon.downloadSolicitationPackage)){
+        toast('Package download requires the SourceDeck desktop app.', 'warn');
+        return;
+      }
+      if (!(o.resourceLinks && o.resourceLinks.length) && !o.descriptionLink){
+        toast('No attachments listed by SAM.gov for this notice.', 'warn');
+        return;
+      }
+      toast('Downloading every listed SAM.gov attachment for this selected pursuit…', 'info');
+      var res = null;
+      try { res = await window.sd.govcon.downloadSolicitationPackage({ id: id, opportunity: o }); } catch (e) { res = null; }
+      if (!res || !res.ok){
+        toast('Solicitation package download failed: ' + ((res && (res.reason || res.errorSafe)) || 'unknown error'), 'warn');
+        return;
+      }
+      var sm = getSM(id);
+      sm.package = res;
+      sm.packageIncluded = {};
+      (res.files || []).forEach(function(f, i){ sm.packageIncluded[i] = f.status === 'downloaded'; });
+      setSM(id, sm);
+      try { if (typeof window.gcTabRenderSavedPursuits === 'function') await window.gcTabRenderSavedPursuits(); } catch (e2) {}
+      _rerender(id, o);
+      toast('Solicitation package ready: ' + (res.downloadedCount || 0) + ' downloaded, ' + (res.failedCount || 0) + ' failed.', res.failedCount ? 'warn' : 'ok');
+    } finally {
+      if (window.sdClearActionBusy) window.sdClearActionBusy(busyEl);
     }
-    if (!(o.resourceLinks && o.resourceLinks.length) && !o.descriptionLink){
-      toast('No attachments listed by SAM.gov for this notice.', 'warn');
-      return;
-    }
-    toast('Downloading every listed SAM.gov attachment for this selected pursuit…', 'info');
-    var res = null;
-    try { res = await window.sd.govcon.downloadSolicitationPackage({ id: id, opportunity: o }); } catch (e) { res = null; }
-    if (!res || !res.ok){
-      toast('Solicitation package download failed: ' + ((res && (res.reason || res.errorSafe)) || 'unknown error'), 'warn');
-      return;
-    }
-    var sm = getSM(id);
-    sm.package = res;
-    sm.packageIncluded = {};
-    (res.files || []).forEach(function(f, i){ sm.packageIncluded[i] = f.status === 'downloaded'; });
-    setSM(id, sm);
-    try { if (typeof window.gcTabRenderSavedPursuits === 'function') await window.gcTabRenderSavedPursuits(); } catch (e2) {}
-    _rerender(id, o);
-    toast('Solicitation package ready: ' + (res.downloadedCount || 0) + ' downloaded, ' + (res.failedCount || 0) + ' failed.', res.failedCount ? 'warn' : 'ok');
   };
   window.gcABOpenLocalPackageFolder = async function(id){
     var sm = getSM(id);
@@ -19652,11 +19737,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     return (Math.round(n / 1048.576) / 1000) + ' MB';
   }
   window.gcACPreviewFile = async function(id, idx){
+    var busyEl = window.sdSetActionBusy ? window.sdSetActionBusy(document.activeElement, 'Loading preview...') : null;
     var viewer = document.getElementById('sd-right-file-viewer');
     var titleEl = document.getElementById('sd-right-file-viewer-title');
     var metaEl  = document.getElementById('sd-right-file-viewer-meta');
     var bodyEl  = document.getElementById('sd-right-file-viewer-body');
-    if (!viewer || !titleEl || !metaEl || !bodyEl) return;
+    if (!viewer || !titleEl || !metaEl || !bodyEl) { if (window.sdClearActionBusy) window.sdClearActionBusy(busyEl); return; }
     var sm = getSM(id);
     var f = sm && sm.package && sm.package.files && sm.package.files[idx];
     if (!f){ titleEl.textContent = 'Attachment not found'; metaEl.textContent = ''; bodyEl.innerHTML = ''; window.sdRightFileViewerOpen(); return; }
@@ -19708,24 +19794,27 @@ document.addEventListener('DOMContentLoaded',()=>{
       }
     }
     bodyEl.innerHTML = lines.join('');
+    if (window.sdClearActionBusy) window.sdClearActionBusy(busyEl);
   };
   // Phase 25AC item 4 — let the user pick an external location to save a
   // COPY of the local solicitation package zip. The canonical SourceDeck
   // userData package stays untouched. Uses the renderer-safe IPC. If the
   // host has not wired the channel yet, the button explains why.
   window.gcACSaveLocalCopy = async function(id){
+    var busyEl = window.sdSetActionBusy ? window.sdSetActionBusy(document.activeElement, 'Saving copy...') : null;
     var sm = getSM(id);
-    var zip = sm && sm.package && sm.package.localZipPath;
-    if (!zip){ toast('No local package ZIP yet. Download the solicitation package first.', 'warn'); return; }
-    if (!(window.sd && window.sd.govcon && typeof window.sd.govcon.savePackageCopy === 'function')){
-      toast('Save-copy requires the SourceDeck desktop app (this feature ships via the credential boundary).', 'warn');
-      return;
-    }
     try {
+      var zip = sm && sm.package && sm.package.localZipPath;
+      if (!zip){ toast('No local package ZIP yet. Download the solicitation package first.', 'warn'); return; }
+      if (!(window.sd && window.sd.govcon && typeof window.sd.govcon.savePackageCopy === 'function')){
+        toast('Save-copy requires the SourceDeck desktop app (this feature ships via the credential boundary).', 'warn');
+        return;
+      }
       var res = await window.sd.govcon.savePackageCopy({ id: id, sourcePath: zip });
       if (!res || !res.ok){ toast('Save copy cancelled: ' + ((res && res.reason) || 'unknown'), 'warn'); return; }
       toast('Copy saved to ' + (res.destinationPath || 'chosen location') + '. Canonical SourceDeck package unchanged.', 'ok');
     } catch (e){ toast('Save copy failed.', 'warn'); }
+    finally { if (window.sdClearActionBusy) window.sdClearActionBusy(busyEl); }
   };
   window.gcABExtractAttachment = function(id, idx){
     var sm = getSM(id);
@@ -19746,49 +19835,59 @@ document.addEventListener('DOMContentLoaded',()=>{
     toast(sm.package.files[idx].excluded ? 'Attachment excluded from analysis.' : 'Attachment included in analysis.', 'ok');
   };
   window.gcW25RefreshSource = async function(id){
-    var o = await resolve(id); if (!o) return;
-    if (!(window.sd && window.sd.govcon && window.sd.govcon.samSearch)){ toast('Refresh requires the SourceDeck desktop app.', 'warn'); return; }
-    toast('Refreshing source details from SAM.gov…', 'info');
-    var filters = {};
-    if (o.noticeId) filters.noticeId = o.noticeId;
-    if (o.solicitationNumber) filters.solnum = o.solicitationNumber;
-    if (!o.noticeId && !o.solicitationNumber && o.title) filters.keyword = o.title;
-    var res = null;
-    try { res = await window.sd.govcon.samSearch(filters); } catch (e) { res = null; }
-    var results = (res && res.results) || [];
-    var match = null;
-    for (var i = 0; i < results.length; i++){
-      var rr = results[i];
-      if ((o.noticeId && rr.noticeId === o.noticeId) || (o.solicitationNumber && rr.solicitationNumber === o.solicitationNumber)){ match = rr; break; }
+    var busyEl = window.sdSetActionBusy ? window.sdSetActionBusy(document.activeElement, 'Refreshing...') : null;
+    var o = await resolve(id); if (!o) { if (window.sdClearActionBusy) window.sdClearActionBusy(busyEl); return; }
+    try {
+      if (!(window.sd && window.sd.govcon && window.sd.govcon.samSearch)){ toast('Refresh requires the SourceDeck desktop app.', 'warn'); return; }
+      toast('Refreshing source details from SAM.gov…', 'info');
+      var filters = {};
+      if (o.noticeId) filters.noticeId = o.noticeId;
+      if (o.solicitationNumber) filters.solnum = o.solicitationNumber;
+      if (!o.noticeId && !o.solicitationNumber && o.title) filters.keyword = o.title;
+      var res = null;
+      try { res = await window.sd.govcon.samSearch(filters); } catch (e) { res = null; }
+      var results = (res && res.results) || [];
+      var match = null;
+      for (var i = 0; i < results.length; i++){
+        var rr = results[i];
+        if ((o.noticeId && rr.noticeId === o.noticeId) || (o.solicitationNumber && rr.solicitationNumber === o.solicitationNumber)){ match = rr; break; }
+      }
+      if (!match && results.length === 1) match = results[0];
+      if (!match){ toast('Could not refresh source details — open the SAM.gov notice directly.', 'warn'); return; }
+      // Merge refreshed safe metadata into the stored opportunity.
+      var patch = {
+        id: o.id,
+        uiLink: (match.uiLink || o.uiLink || '').replace(/([?&])(api_key|apikey)=[^&#]*/gi, ''),
+        descriptionLink: (typeof match.description === 'string' && /^https?:/i.test(match.description)) ? match.description.replace(/([?&])(api_key|apikey)=[^&#]*/gi, '') : o.descriptionLink,
+        resourceLinks: Array.isArray(match.resourceLinks) ? match.resourceLinks.filter(function(u){ return u && !/api_key/i.test(u); }) : o.resourceLinks,
+        userStatus: o.userStatus
+      };
+      try { if (window.sd.govcon.opportunities && window.sd.govcon.opportunities.upsert) await window.sd.govcon.opportunities.upsert(Object.assign({}, o, patch)); } catch (e) {}
+      toast('Source details refreshed.', 'ok');
+      try { if (typeof window.gcTabRenderSavedPursuits === 'function') await window.gcTabRenderSavedPursuits(); } catch (e) {}
+    } finally {
+      if (window.sdClearActionBusy) window.sdClearActionBusy(busyEl);
     }
-    if (!match && results.length === 1) match = results[0];
-    if (!match){ toast('Could not refresh source details — open the SAM.gov notice directly.', 'warn'); return; }
-    // Merge refreshed safe metadata into the stored opportunity.
-    var patch = {
-      id: o.id,
-      uiLink: (match.uiLink || o.uiLink || '').replace(/([?&])(api_key|apikey)=[^&#]*/gi, ''),
-      descriptionLink: (typeof match.description === 'string' && /^https?:/i.test(match.description)) ? match.description.replace(/([?&])(api_key|apikey)=[^&#]*/gi, '') : o.descriptionLink,
-      resourceLinks: Array.isArray(match.resourceLinks) ? match.resourceLinks.filter(function(u){ return u && !/api_key/i.test(u); }) : o.resourceLinks,
-      userStatus: o.userStatus
-    };
-    try { if (window.sd.govcon.opportunities && window.sd.govcon.opportunities.upsert) await window.sd.govcon.opportunities.upsert(Object.assign({}, o, patch)); } catch (e) {}
-    toast('Source details refreshed.', 'ok');
-    try { if (typeof window.gcTabRenderSavedPursuits === 'function') await window.gcTabRenderSavedPursuits(); } catch (e) {}
   };
   window.gcW25SendToWorkspace = async function(id){
-    var o = await resolve(id); if (!o) return;
-    try { if (typeof window.gcV25SelectSolicitation === 'function') window.gcV25SelectSolicitation(id); } catch (e) {}
-    try { if (typeof window.openTab === 'function') window.openTab('govcon'); } catch (e) {}
-    try { if (typeof window.gcTabSwitch === 'function') window.gcTabSwitch('solicitation'); } catch (e) {}
-    var sel = document.getElementById('gc-sol-opp-select');
-    if (sel){ try { sel.value = id; } catch (e) {} }
-    try { if (typeof window.gcV25RenderSolMeta === 'function') window.gcV25RenderSolMeta(o); } catch (e) {}
-    window.gcW25RenderWorkspaceSource(id);
-    var sm = getSM(id);
-    if (sm && sm.package && typeof window.gcABExtractPackageToCenter === 'function') {
-      try { await window.gcABExtractPackageToCenter(id); } catch (e) {}
+    var busyEl = window.sdSetActionBusy ? window.sdSetActionBusy(document.activeElement, 'Sending...') : null;
+    var o = await resolve(id); if (!o) { if (window.sdClearActionBusy) window.sdClearActionBusy(busyEl); return; }
+    try {
+      try { if (typeof window.gcV25SelectSolicitation === 'function') window.gcV25SelectSolicitation(id); } catch (e) {}
+      try { if (typeof window.openTab === 'function') window.openTab('govcon'); } catch (e) {}
+      try { if (typeof window.gcTabSwitch === 'function') window.gcTabSwitch('solicitation'); } catch (e) {}
+      var sel = document.getElementById('gc-sol-opp-select');
+      if (sel){ try { sel.value = id; } catch (e) {} }
+      try { if (typeof window.gcV25RenderSolMeta === 'function') window.gcV25RenderSolMeta(o); } catch (e) {}
+      window.gcW25RenderWorkspaceSource(id);
+      var sm = getSM(id);
+      if (sm && sm.package && typeof window.gcABExtractPackageToCenter === 'function') {
+        try { await window.gcABExtractPackageToCenter(id); } catch (e) {}
+      }
+      toast('Loaded into Solicitation Center. Download the package if needed, then Extract Requirements.', 'ok');
+    } finally {
+      if (window.sdClearActionBusy) window.sdClearActionBusy(busyEl);
     }
-    toast('Loaded into Solicitation Center. Download the package if needed, then Extract Requirements.', 'ok');
   };
   window.gcW25UseInWorkspace = async function(id){
     await window.gcW25SendToWorkspace(id);

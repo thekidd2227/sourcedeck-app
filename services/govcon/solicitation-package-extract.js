@@ -28,6 +28,68 @@ function safeText(s) {
   return String(s == null ? '' : s).replace(/\0/g, '').slice(0, 500000);
 }
 
+function decodeXmlEntities(s) {
+  return String(s == null ? '' : s)
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&#(\d+);/g, (_m, n) => {
+      const cp = Number(n);
+      return Number.isFinite(cp) ? String.fromCodePoint(cp) : '';
+    })
+    .replace(/&#x([0-9a-f]+);/gi, (_m, n) => {
+      const cp = parseInt(n, 16);
+      return Number.isFinite(cp) ? String.fromCodePoint(cp) : '';
+    });
+}
+
+function looksLikeRawMarkup(text) {
+  const s = String(text || '').slice(0, 5000);
+  return /<\?xml|<w:document|xmlns:|word\/document\.xml|<\/w:|<w:t\b|<pkg:package/i.test(s);
+}
+
+function cleanExtractedText(text) {
+  let s = safeText(text);
+  if (!s) return '';
+  s = s.replace(/\0/g, ' ');
+  s = s.replace(/<w:(?:p|br|tab)\b[^>]*>/gi, '\n');
+  s = s.replace(/<\/w:p>/gi, '\n');
+  s = s.replace(/<[^>]+>/g, ' ');
+  s = decodeXmlEntities(s);
+  s = s.replace(/\bxmlns(?::\w+)?="[^"]*"/gi, ' ');
+  s = s.replace(/\b(?:w|wpc|mc|o|r|m|v|wp14|wp|w10|w14|w15|wpg|wpi|wne|wps):[A-Za-z0-9_.+\s-]+/g, ' ');
+  s = s.replace(/[{}]{2,}/g, ' ');
+  s = s.replace(/[ \t]{2,}/g, ' ');
+  s = s.replace(/\n{3,}/g, '\n\n');
+  return s.trim().slice(0, 500000);
+}
+
+function extractWordXmlText(xml) {
+  const src = String(xml || '');
+  const paragraphs = [];
+  const paraRe = /<w:p\b[\s\S]*?<\/w:p>/gi;
+  let m;
+  while ((m = paraRe.exec(src))) {
+    const parts = [];
+    const textRe = /<w:t\b[^>]*>([\s\S]*?)<\/w:t>/gi;
+    let t;
+    while ((t = textRe.exec(m[0]))) parts.push(decodeXmlEntities(t[1]));
+    const line = cleanExtractedText(parts.join(' '));
+    if (line) paragraphs.push(line);
+  }
+  if (!paragraphs.length) {
+    const parts = [];
+    const textRe = /<w:t\b[^>]*>([\s\S]*?)<\/w:t>/gi;
+    let t;
+    while ((t = textRe.exec(src))) parts.push(decodeXmlEntities(t[1]));
+    const fallback = cleanExtractedText(parts.join('\n'));
+    if (fallback) paragraphs.push(fallback);
+  }
+  return paragraphs.join('\n');
+}
+
 function missingText(letter, label) {
   return `No Section ${letter} ${label || ''} extracted yet. Verify source package.`.replace(/\s+/g, ' ').trim();
 }
@@ -38,7 +100,7 @@ function extOf(fileName) {
 
 async function readTextFile(filePath) {
   const buf = await fsp.readFile(filePath);
-  return safeText(buf.toString('utf8'));
+  return cleanExtractedText(buf.toString('utf8'));
 }
 
 async function normalizeManifest(input) {
@@ -71,14 +133,50 @@ async function collectPackageFiles(manifest) {
 async function extractFileText(file, tmpRoot) {
   const fileName = file.fileName || path.basename(file.localPath || '');
   const ext = extOf(fileName);
+  if (ext === '.docx' && file.localPath && tmpRoot) {
+    const outDir = path.join(tmpRoot, 'docx-' + sanitize(fileName));
+    await fsp.mkdir(outDir, { recursive: true });
+    const children = await _extractZip(file.localPath, outDir);
+    const textParts = [];
+    for (const child of children) {
+      const name = String(child.fileName || '').replace(/\\/g, '/');
+      if (/^word\/(?:document|header\d*|footer\d*)\.xml$/i.test(name) && child.localPath && await fileExists(child.localPath)) {
+        textParts.push(extractWordXmlText(await fsp.readFile(child.localPath, 'utf8')));
+      }
+    }
+    const text = cleanExtractedText(textParts.filter(Boolean).join('\n\n'));
+    return {
+      fileName,
+      localPath: file.localPath || '',
+      source: file.source || 'package',
+      status: 'extracted',
+      extractionStatus: text ? 'docx-basic' : 'metadata-only',
+      text,
+      extractedFiles: children,
+      limitation: text ? '' : 'Stored, text extraction not available yet for this file.'
+    };
+  }
+  if (ext === '.xml' && /(^|\/|\\)word[\/\\](document|header\d*|footer\d*)\.xml$/i.test(fileName) && file.localPath) {
+    const text = extractWordXmlText(await fsp.readFile(file.localPath, 'utf8'));
+    return {
+      fileName,
+      localPath: file.localPath || '',
+      source: file.source || 'package',
+      status: 'extracted',
+      extractionStatus: text ? 'docx-xml-basic' : 'metadata-only',
+      text,
+      limitation: text ? '' : 'Stored, text extraction not available yet for this file.'
+    };
+  }
   if (TEXT_EXT.has(ext)) {
+    const raw = await readTextFile(file.localPath);
     return {
       fileName,
       localPath: file.localPath || '',
       source: file.source || 'package',
       status: 'extracted',
       extractionStatus: 'text',
-      text: await readTextFile(file.localPath)
+      text: looksLikeRawMarkup(raw) ? cleanExtractedText(raw) : raw
     };
   }
   if (ext === '.zip' && file.localPath && tmpRoot) {
@@ -93,7 +191,7 @@ async function extractFileText(file, tmpRoot) {
       source: file.source || 'package',
       status: 'extracted',
       extractionStatus: 'zip',
-      text: childTexts.map(c => c.text).filter(Boolean).join('\n\n'),
+      text: cleanExtractedText(childTexts.map(c => c.text).filter(Boolean).join('\n\n')),
       children: childTexts
     };
   }
@@ -104,7 +202,7 @@ async function extractFileText(file, tmpRoot) {
     status: 'stored',
     extractionStatus: 'metadata-only',
     text: '',
-    limitation: 'Stored, text extraction not available yet'
+    limitation: 'Stored, text extraction not available yet for this file.'
   };
 }
 
@@ -117,7 +215,7 @@ function sectionRegex(letter) {
 }
 
 function classifySections(text) {
-  const src = safeText(text || '');
+  const src = cleanExtractedText(text || '');
   const hits = [];
   for (const def of SECTION_DEFS) {
     const m = src.match(sectionRegex(def[0]));
@@ -139,7 +237,7 @@ function classifySections(text) {
       partTitle,
       title,
       found: !!textValue,
-      text: textValue || missingText(letter, title),
+      text: textValue ? cleanExtractedText(textValue) : missingText(letter, title),
       source: textValue ? 'extracted package text' : 'missing-placeholder'
     };
   }
@@ -152,12 +250,39 @@ function findFirst(text, re) {
 }
 
 function findLines(text, re, limit) {
-  const lines = String(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
+  const lines = cleanExtractedText(text || '').split(/\r?\n/).map(l => l.trim()).filter(Boolean);
   return lines.filter(l => re.test(l)).slice(0, limit || 12);
 }
 
+function uniqueLines(lines, limit) {
+  const seen = new Set();
+  const out = [];
+  for (const line of lines || []) {
+    const clean = cleanExtractedText(line).replace(/\s+/g, ' ').trim();
+    if (!clean || looksLikeRawMarkup(clean) || clean.length < 6) continue;
+    const key = clean.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(clean.slice(0, 600));
+    if (limit && out.length >= limit) break;
+  }
+  return out;
+}
+
+function formItemsFromText(text, files) {
+  const lines = findLines(text, /\b(SF\s*33|SF\s*1449|SF\s*18|representation|certification|Attachment|Exhibit|QASP|wage determination|pricing sheet|amendment|technical exhibit)\b/i, 40);
+  const fileItems = (files || []).map(f => {
+    const name = cleanExtractedText(f.fileName || '');
+    if (!name) return '';
+    if (/\b(SF|QASP|wage|pricing|price|attachment|exhibit|amendment|PWS|SOW|determination|certification|representation)\b/i.test(name)) return name;
+    return '';
+  });
+  return uniqueLines(lines.concat(fileItems), 40);
+}
+
 function extractMetadata(text, manifest, files) {
-  const src = String(text || '');
+  const src = cleanExtractedText(text || '');
+  const requiredForms = formItemsFromText(src, files);
   return {
     title: manifest.title || findFirst(src, /^\s*(?:title|subject)\s*[:\-]\s*(.+)$/im),
     solicitationNumber: manifest.solicitationNumber || findFirst(src, /solicitation\s*(?:no\.?|number|#)?\s*[:\-]?\s*([A-Z0-9._\-\/]+)/i),
@@ -173,7 +298,7 @@ function extractMetadata(text, manifest, files) {
     placeOfPerformance: findFirst(src, /place\s+of\s+performance\s*[:\-]\s*([^\n]+)/i),
     deliverables: findLines(src, /\b(deliverable|deliverables|shall deliver|monthly report|reporting)\b/i, 12),
     pricingClinTable: findLines(src, /\b(CLIN|SLIN|unit price|extended price|price schedule|pricing sheet)\b/i, 20),
-    requiredForms: findLines(src, /\b(SF\s*33|SF\s*1449|SF[-\s]?\d+|representation|certification|Attachment|Exhibit|QASP|wage determination)\b/i, 20),
+    requiredForms,
     complianceRisks: findLines(src, /\b(shall|must|mandatory|required|bond|insurance|clearance|background check|site visit|past performance|limitation on subcontracting)\b/i, 20),
     ambiguityFlags: findLines(src, /\b(TBD|to be determined|unclear|not specified|reserved|see attachment|see addendum)\b/i, 12),
     subcontractorScope: findLines(src, /\b(subcontract|subcontractor|staffing|labor category|janitorial|custodial|cleaning|security|IT support)\b/i, 12),
@@ -189,31 +314,83 @@ function extractMetadata(text, manifest, files) {
 
 function complianceMatrixStarter(sections, metadata) {
   const rows = [];
-  function add(source, text, why) {
-    if (!text || /No Section/.test(text)) return;
+  const seen = new Set();
+  function proposalSection(source, text) {
+    if (/Section L/i.test(source)) return 'Proposal instructions / response outline';
+    if (/Section M/i.test(source)) return 'Evaluation crosswalk';
+    if (/Section C|PWS|SOW/i.test(source)) return 'Technical approach / PWS response';
+    if (/Section F/i.test(source)) return 'Performance schedule';
+    if (/Section H|Section I/i.test(source)) return 'Compliance narrative';
+    if (/Section J|Required Forms|Attachment/i.test(source)) return 'Attachments / forms volume';
+    if (/pricing|CLIN/i.test(text)) return 'Price volume';
+    return 'TBD - operator assigns';
+  }
+  function evidenceNeeded(text) {
+    if (/\b(SF\s*33|SF\s*1449|SF\s*18|form|certification|representation)\b/i.test(text)) return 'Completed/signed form or certification';
+    if (/\bpast performance|similar experience\b/i.test(text)) return 'Past performance project evidence';
+    if (/\bprice|pricing|CLIN|SLIN|unit price\b/i.test(text)) return 'Pricing sheet / CLIN support';
+    if (/\bstaff|personnel|resume|labor category\b/i.test(text)) return 'Staffing plan or resumes';
+    if (/\bdeliver|schedule|deadline|due\b/i.test(text)) return 'Delivery schedule / milestone plan';
+    if (/\btechnical|approach|PWS|SOW|shall provide|shall perform\b/i.test(text)) return 'Technical approach narrative';
+    if (/\binsurance|bond|clearance|security\b/i.test(text)) return 'Insurance/security/clearance evidence';
+    return 'Source-backed response evidence';
+  }
+  function riskFlag(text) {
+    if (/\bsite visit\b/i.test(text)) return 'Mandatory site visit risk';
+    if (/\bpage limit|font|margin|format\b/i.test(text)) return 'Page limit/formatting risk';
+    if (/\b(SF\s*33|SF\s*1449|SF\s*18|form|certification|representation)\b/i.test(text)) return 'Missing form can make response noncompliant';
+    if (/\bpast performance\b/i.test(text)) return 'Past performance evidence required';
+    if (/\bprice|pricing|CLIN|SLIN\b/i.test(text)) return 'Pricing/CLIN mismatch risk';
+    if (/\bdeadline|due|submission method|email|portal\b/i.test(text)) return 'Deadline/submission method risk';
+    if (/\binsurance|bond|clearance|security\b/i.test(text)) return 'Insurance/security/clearance risk';
+    return 'Review required';
+  }
+  function add(source, text, fileName) {
+    text = cleanExtractedText(text).replace(/\s+/g, ' ').trim();
+    if (!text || /No Section/.test(text) || looksLikeRawMarkup(text) || text.length < 10) return;
+    const key = `${source}|${text}`.toLowerCase();
+    if (seen.has(key)) return;
+    seen.add(key);
     rows.push({
       id: 'CM-' + String(rows.length + 1).padStart(3, '0'),
       source,
-      requirement: text.slice(0, 500),
-      owner: 'TBD',
-      evidence: 'Verify against source package',
-      risk: why || 'Review required',
-      status: 'Draft - verify'
+      sectionPageFile: fileName || source,
+      requirementText: text.slice(0, 700),
+      requirement: text.slice(0, 700),
+      mandatory: /\b(shall|must|required|mandatory|submit|provide|include)\b/i.test(text) ? 'Mandatory' : 'Optional / verify',
+      proposalSection: proposalSection(source, text),
+      owner: 'TBD - operator assigns',
+      evidenceNeeded: evidenceNeeded(text),
+      evidence: evidenceNeeded(text),
+      status: 'Draft - not reviewed',
+      risk: riskFlag(text),
+      notes: 'Verify against source package.'
     });
   }
   for (const letter of ['L', 'M', 'C', 'F', 'H', 'I', 'J', 'K']) {
     const s = sections[letter];
     if (!s || !s.found) continue;
-    const lines = s.text.split(/\r?\n/).map(l => l.trim()).filter(l => /\b(shall|must|required|submit|provide|include|demonstrate|evaluate|factor)\b/i.test(l)).slice(0, 8);
-    for (const line of lines) add(`Section ${letter}`, line, letter === 'M' ? 'Evaluation alignment' : 'Compliance response');
+    const lines = uniqueLines(s.text.split(/\r?\n/).filter(l => /\b(shall|must|required|mandatory|submit|provide|include|demonstrate|evaluate|factor|attachment|form|deliver|perform)\b/i.test(l)), 10);
+    for (const line of lines) add(`Section ${letter}`, line, s.source || `Section ${letter}`);
   }
-  for (const form of metadata.requiredForms || []) add('Required Forms', form, 'Missing form can make response noncompliant');
+  for (const form of metadata.requiredForms || []) add('Required Forms / Attachments', form, 'package manifest or extracted text');
   return rows;
 }
 
 async function extractSolicitationPackage(input) {
   const manifest = await normalizeManifest(input);
   const files = await collectPackageFiles(manifest);
+  if (!files.length) {
+    return {
+      ok: false,
+      status: 'failed',
+      reason: 'no_files',
+      realPackage: true,
+      sample: false,
+      files: [],
+      warnings: ['No package files were available to extract.']
+    };
+  }
   const tmpRoot = manifest.packagePath ? path.join(manifest.packagePath, 'extracted') : '';
   const extractedFiles = [];
   // Phase 25AC item 5 — file-aware extraction. Each file is wrapped in
@@ -236,16 +413,18 @@ async function extractSolicitationPackage(input) {
       });
     }
   }
-  const fullText = extractedFiles.map(f => f.text).filter(Boolean).join('\n\n');
+  const fullText = cleanExtractedText(extractedFiles.map(f => f.text).filter(Boolean).join('\n\n'));
   const sections = classifySections(fullText);
+  const anySectionFound = Object.values(sections).some(s => s && s.found);
   const metadata = extractMetadata(fullText, manifest, extractedFiles);
   const warnings = [];
   for (const f of extractedFiles) {
-    if (f.extractionStatus === 'metadata-only') warnings.push(`${f.fileName}: Stored, text extraction not available yet`);
+    if (f.extractionStatus === 'metadata-only') warnings.push(`${f.fileName}: Stored, text extraction not available yet for this file.`);
     else if (f.extractionStatus === 'failed')   warnings.push(`${f.fileName}: ${f.limitation || 'Extraction error — file skipped'}`);
   }
   return {
     ok: true,
+    status: anySectionFound ? 'extracted' : 'extracted_with_missing_sections',
     realPackage: true,
     sample: false,
     noticeId: manifest.noticeId || '',
@@ -311,5 +490,7 @@ module.exports = {
   plainEnglish,
   _classifySections: classifySections,
   _extractMetadata: extractMetadata,
-  _missingText: missingText
+  _missingText: missingText,
+  _cleanExtractedText: cleanExtractedText,
+  _extractWordXmlText: extractWordXmlText
 };

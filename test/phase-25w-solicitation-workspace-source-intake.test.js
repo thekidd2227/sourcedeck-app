@@ -43,7 +43,7 @@ test('workspace source panel shows fetched description / resource materials', ()
 });
 
 test('Extract Requirements is enabled only when source text/material exists', () => {
-  const start = HTML.indexOf('window.gcSolExtract = function');
+  const start = HTML.indexOf('window.gcSolExtract = async function');
   const body = HTML.slice(start, start + 1600);
   assert.ok(/gcW25CollectSourceText\(\)/.test(body), 'extract pulls linked source text');
   assert.ok(/Download a solicitation package or upload a supported solicitation file before extraction\./.test(body), 'package-needed message present');
