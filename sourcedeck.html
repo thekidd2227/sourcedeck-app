@@ -18035,28 +18035,41 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (p) parts.push('Proposal due ' + p);
     return parts.length ? parts.join(' · ') : 'Deadline not found — add manually';
   }
+  // Phase 25AD — track which saved pursuit rows have their details panel
+  // open so a full re-render (e.g. after a package download) does not
+  // collapse the panel under the user. _renderRow honors this set.
+  if (!window.gcW25OpenRows) window.gcW25OpenRows = {};
   function _renderRow(o){
     var rid = esc(o.id || '');
     var attic = (o.resourceLinks && o.resourceLinks.length) ? (o.resourceLinks.length + ' attachment(s)') : 'no attachments listed';
+    var status = String(o.userStatus || 'saved');
+    var isPursuing = (status === 'pursuing');
     return '' +
       '<tr data-gc-saved-row="' + rid + '">' +
         '<td><div style="font-weight:600">' + esc(o.title || '(untitled)') + '</div><div style="font-size:10px;color:var(--muted)">' + esc(o.agency || o.department || '') + '</div><div style="font-size:9.5px;color:var(--gold2);margin-top:2px">' + esc(_savedTimerText(o)) + '</div></td>' +
         '<td><code style="font-size:10.5px">' + esc(o.solicitationNumber || o.noticeId || '—') + '</code></td>' +
         '<td>' + esc(o.naics || '') + '</td>' +
         '<td>' + esc(o.dueDate || o.responseDeadline || '') + '</td>' +
-        '<td><span style="font-size:9px;padding:2px 7px;border-radius:980px;text-transform:uppercase;letter-spacing:0.06em;background:rgba(176,138,60,0.10);border:1px solid rgba(176,138,60,0.30);color:var(--gold2)">' + esc(o.userStatus || 'saved') + '</span></td>' +
+        '<td><span data-gc-saved-status="' + rid + '" style="font-size:9px;padding:2px 7px;border-radius:980px;text-transform:uppercase;letter-spacing:0.06em;background:rgba(176,138,60,0.10);border:1px solid rgba(176,138,60,0.30);color:var(--gold2)">' + esc(status) + '</span></td>' +
         '<td>' +
           '<div style="display:flex;flex-direction:column;gap:3px;min-width:200px">' +
             '<button class="btn btn-ghost" data-gc-saved-action="view-details" onclick="gcW25ViewDetails(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">👁 View Details</button>' +
             '<button class="btn btn-ghost" data-gc-saved-action="open-notice" onclick="gcW25OpenNotice(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">↗ Open SAM.gov Notice</button>' +
             '<button class="btn btn-gold" data-gc-saved-action="download-package" onclick="gcABDownloadPackage(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">⬇ Download Solicitation Package</button>' +
-            '<button class="btn btn-ghost" data-gc-saved-action="view-attachments" onclick="gcW25ToggleSource(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--gold2)">📎 View Attachments (' + esc(attic) + ')</button>' +
+            '<button class="btn btn-ghost" data-gc-saved-action="view-attachments" onclick="gcW25ViewAttachments(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--gold2)">📎 View Attachments (' + esc(attic) + ')</button>' +
             '<button class="btn btn-ghost" data-gc-saved-action="refresh-source" onclick="gcW25RefreshSource(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">↻ Refresh Source Details</button>' +
             '<button class="btn btn-ghost" data-gc-saved-action="send-to-solicitation-center" onclick="gcW25SendToWorkspace(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--green,#30d158)">→ Send Package to Solicitation Center</button>' +
+            // Phase 25AD — lifecycle controls. Unpursue moves the row back to
+            // saved/watchlist without touching downloaded package files.
+            // Delete removes the saved pursuit row from the local store after
+            // user confirmation; local package files stay until the user runs
+            // a separate cleanup.
+            '<button class="btn btn-ghost" data-gc-saved-action="unpursue" onclick="gcW25Unpursue(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--sub)"' + (isPursuing ? '' : ' disabled') + '>⊘ Unpursue</button>' +
+            '<button class="btn btn-ghost" data-gc-saved-action="delete" onclick="gcW25DeleteSavedPursuit(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--red,#ef4444)">🗑 Delete Saved Pursuit</button>' +
           '</div>' +
         '</td>' +
       '</tr>' +
-      '<tr data-gc-saved-source-row="' + rid + '" style="display:none"><td colspan="6" style="background:var(--panel3,#0E2040);padding:0"><div data-gc-saved-source-panel="' + rid + '" style="padding:12px 14px"></div></td></tr>';
+      '<tr data-gc-saved-source-row="' + rid + '" style="display:' + (window.gcW25OpenRows[o.id] ? '' : 'none') + '"><td colspan="6" style="background:var(--panel3,#0E2040);padding:0"><div data-gc-saved-source-panel="' + rid + '" style="padding:12px 14px"></div></td></tr>';
   }
   async function renderSavedPursuits(){
     var emptyEl = $('gc-tab-saved-empty');
@@ -18082,6 +18095,28 @@ document.addEventListener('DOMContentLoaded',()=>{
     for (var i = 0; i < rows.length; i++) html += _renderRow(rows[i]);
     html += '</tbody></table></div>';
     listEl.innerHTML = html;
+    // Phase 25AD — repopulate any source panels that were open before the
+    // re-render so View Details survives a package download. Without this,
+    // every full table refresh silently collapses the user's open panel.
+    try {
+      var openIds = Object.keys(window.gcW25OpenRows || {});
+      for (var k = 0; k < openIds.length; k++){
+        var openId = openIds[k];
+        if (!window.gcW25OpenRows[openId]) continue;
+        var oRow = window.gcW25SavedMap ? window.gcW25SavedMap[openId] : null;
+        if (!oRow) continue;
+        var panel = listEl.querySelector('[data-gc-saved-source-panel="' + (window.CSS && CSS.escape ? CSS.escape(openId) : openId) + '"]');
+        if (!panel) {
+          var allPanels = listEl.querySelectorAll('[data-gc-saved-source-panel]');
+          for (var pi = 0; pi < allPanels.length; pi++){
+            if (allPanels[pi].getAttribute('data-gc-saved-source-panel') === openId){ panel = allPanels[pi]; break; }
+          }
+        }
+        if (panel && typeof window.gcW25RenderSourcePanel === 'function'){
+          try { window.gcW25RenderSourcePanel(panel, oRow, 'saved'); } catch (e3) {}
+        }
+      }
+    } catch (e4) {}
   }
   // Surface saved-pursuits preview from inside Find Opportunities so
   // the buyer can see what they already have without leaving the
@@ -19295,11 +19330,22 @@ document.addEventListener('DOMContentLoaded',()=>{
       parts.push('<div style="font-weight:600;font-size:11px;color:var(--text);margin-bottom:4px">Solicitation Package · ' + esc((sm.package.downloadedAt || '').slice(0, 19)) + '</div>');
       parts.push('<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Downloaded ' + esc(sm.package.downloadedCount || 0) + ' · Failed ' + esc(sm.package.failedCount || 0) + ' · Local ZIP ' + (sm.package.localZipPath ? 'created' : 'not created') + '</div>');
       var files = sm.package.files || [];
+      // Phase 25AD — file-size pretty-printer for the row chips.
+      var _fb = function(n){
+        if (typeof n !== 'number' || !isFinite(n)) return '';
+        if (n < 1024) return n + ' B';
+        if (n < 1024 * 1024) return (Math.round(n / 102.4) / 10) + ' KB';
+        return (Math.round(n / 1048.576) / 1000) + ' MB';
+      };
       for (var pf = 0; pf < files.length; pf++){
         var f = files[pf];
         parts.push('<div data-gc-ab-attachment-row style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0;border-top:1px solid var(--border2,rgba(255,255,255,0.05))">');
         parts.push('<code style="font-size:10px;color:var(--sub);flex:1;min-width:170px">' + esc(f.fileName || 'attachment') + '</code>');
         parts.push('<span style="font-size:9px;color:' + (f.status === 'downloaded' ? 'var(--green,#30d158)' : 'var(--red,#ef4444)') + '">' + esc(f.status || 'unknown') + '</span>');
+        // Phase 25AD — show size + source chips so the file row reads as a
+        // clean local-package row, not raw SAM.gov listing text.
+        if (typeof f.sizeBytes === 'number') parts.push('<span style="font-size:9px;color:var(--muted)">' + esc(_fb(f.sizeBytes)) + '</span>');
+        if (f.source) parts.push('<span style="font-size:9px;color:var(--muted)">' + esc(String(f.source)) + '</span>');
         parts.push('<button class="btn btn-ghost" onclick="gcABViewAttachment(\'' + esc(o.id) + '\',' + pf + ')" style="padding:2px 7px;font-size:10px">View</button>');
         parts.push('<button class="btn btn-ghost" onclick="gcABExtractAttachment(\'' + esc(o.id) + '\',' + pf + ')" style="padding:2px 7px;font-size:10px">Extract Text</button>');
         parts.push('<button class="btn btn-ghost" onclick="gcABToggleAttachmentIncluded(\'' + esc(o.id) + '\',' + pf + ')" style="padding:2px 7px;font-size:10px">' + (f.excluded ? 'Include in Analysis' : 'Exclude from Analysis') + '</button>');
@@ -19318,15 +19364,11 @@ document.addEventListener('DOMContentLoaded',()=>{
       // unchanged.
       parts.push('<button class="btn btn-ghost" data-gc-ac-save-copy="true" onclick="gcACSaveLocalCopy(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px">⇲ Save copy to…</button>');
       parts.push('</div>');
-      // Phase 25AC item 3 — right-side in-app file preview pane. The pane
-      // is the rendering surface for selected downloaded/uploaded files
-      // (file name, status, size, extracted text snippet). Populated by
-      // `gcACPreviewFile()` when the user clicks View on an attachment.
-      // Stays empty when no file is selected.
-      parts.push('<aside data-gc-ac-preview-pane="true" id="gc-ac-preview-' + esc(o.id) + '" style="margin-top:8px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,0.02);min-height:48px;font-size:10.5px;color:var(--muted)">');
-      parts.push('<div style="font-weight:600;color:var(--text);margin-bottom:3px;font-size:11px">In-app preview</div>');
-      parts.push('<div data-gc-ac-preview-body="true" style="font-size:10px;color:var(--muted)">Select an attachment to preview its name, status, and extracted text snippet locally.</div>');
-      parts.push('</aside>');
+      // Phase 25AD — the small inline preview panel is retired. The
+      // attached right-side viewer (#sd-right-file-viewer) is now the
+      // only preview surface; gcACPreviewFile() populates it when the
+      // user clicks View on a file row.
+      parts.push('<div style="margin-top:6px;font-size:9.5px;color:var(--muted)">Click View on any file above to open it in the right-side viewer (attached to SourceDeck — does not open a separate window).</div>');
       parts.push('</div>');
     }
 
@@ -19373,8 +19415,18 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     if (!row) return;
     var open = row.style.display !== 'none';
-    if (open){ row.style.display = 'none'; return; }
+    if (!window.gcW25OpenRows) window.gcW25OpenRows = {};
+    if (open){
+      row.style.display = 'none';
+      // Phase 25AD — clear the open-state marker so future re-renders do
+      // not auto-expand this row.
+      delete window.gcW25OpenRows[id];
+      return;
+    }
     row.style.display = '';
+    // Phase 25AD — remember that the panel is open so a full table
+    // re-render (e.g. after a package download) restores it.
+    window.gcW25OpenRows[id] = true;
     var panel = row.querySelector('[data-gc-saved-source-panel]');
     var o = await resolve(id);
     renderSourcePanel(panel, o, 'saved');
@@ -19382,6 +19434,73 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.gcW25ViewDetails = async function(id){
     // Reuse the source panel as the details surface (expand it).
     await window.gcW25ToggleSource(id);
+  };
+  // Phase 25AD — View Attachments: ensure the source panel is open, then
+  // scroll to the local package files block if a package exists. If no
+  // package has been downloaded, surface a clear toast.
+  window.gcW25ViewAttachments = async function(id){
+    if (!window.gcW25OpenRows) window.gcW25OpenRows = {};
+    if (!window.gcW25OpenRows[id]) await window.gcW25ToggleSource(id);
+    var sm = getSM(id);
+    var hasPackage = !!(sm && sm.package);
+    if (!hasPackage){
+      toast('No local package downloaded yet. Click Download Solicitation Package.', 'info');
+      return;
+    }
+    setTimeout(function(){
+      try {
+        var panels = document.querySelectorAll('[data-gc-saved-source-panel]');
+        for (var i = 0; i < panels.length; i++){
+          if (panels[i].getAttribute('data-gc-saved-source-panel') === id){
+            var target = panels[i].querySelector('[data-gc-ab-package-summary]');
+            if (target && typeof target.scrollIntoView === 'function') target.scrollIntoView({behavior:'smooth', block:'center'});
+            break;
+          }
+        }
+      } catch (e) {}
+    }, 60);
+  };
+  // Phase 25AD — Unpursue: move the saved pursuit back to a neutral
+  // "saved" status. Local downloaded package files are NOT touched. The
+  // saved pursuit row stays in the list; only the badge changes.
+  window.gcW25Unpursue = async function(id){
+    var o = await resolve(id);
+    if (!o){ toast('Saved pursuit not found.', 'warn'); return; }
+    if (o.userStatus !== 'pursuing'){ toast('This pursuit is not currently in pursuing state.', 'info'); return; }
+    if (!(window.sd && window.sd.govcon && window.sd.govcon.opportunities && window.sd.govcon.opportunities.upsert)){
+      toast('Unpursue requires the SourceDeck desktop app.', 'warn');
+      return;
+    }
+    try {
+      await window.sd.govcon.opportunities.upsert(Object.assign({}, o, { id: o.id, userStatus: 'saved' }));
+      toast('Unpursued. Local package files were not removed.', 'ok');
+      try { if (window.gcW25SavedMap && window.gcW25SavedMap[id]) window.gcW25SavedMap[id].userStatus = 'saved'; } catch (e) {}
+      if (typeof window.gcTabRenderSavedPursuits === 'function') await window.gcTabRenderSavedPursuits();
+    } catch (e){ toast('Unpursue failed locally.', 'warn'); }
+  };
+  // Phase 25AD — Delete Saved Pursuit. Confirms with the user, then
+  // removes the row from the local opportunity store via the credential
+  // boundary. Local solicitation package files are NOT removed by default
+  // (a separate "Clear local package" action covers folder cleanup).
+  window.gcW25DeleteSavedPursuit = async function(id){
+    var o = await resolve(id);
+    if (!o){ toast('Saved pursuit not found.', 'warn'); return; }
+    var prompt = 'Delete this saved pursuit from SourceDeck? Local downloaded package files will remain unless you also clear the package folder.';
+    var ok = false;
+    try { ok = window.confirm(prompt); } catch (e) { ok = false; }
+    if (!ok) return;
+    if (!(window.sd && window.sd.govcon && window.sd.govcon.opportunities && typeof window.sd.govcon.opportunities.remove === 'function')){
+      toast('Delete requires the SourceDeck desktop app.', 'warn');
+      return;
+    }
+    try {
+      var res = await window.sd.govcon.opportunities.remove(id);
+      if (!res || !res.ok){ toast('Could not delete saved pursuit: ' + ((res && res.reason) || 'unknown'), 'warn'); return; }
+      try { if (window.gcW25SavedMap) delete window.gcW25SavedMap[id]; } catch (e) {}
+      try { if (window.gcW25OpenRows) delete window.gcW25OpenRows[id]; } catch (e) {}
+      toast('Saved pursuit deleted. Local package files were not removed.', 'ok');
+      if (typeof window.gcTabRenderSavedPursuits === 'function') await window.gcTabRenderSavedPursuits();
+    } catch (e){ toast('Delete failed locally.', 'warn'); }
   };
   // Phase 25Y — robust external open: prefer the openExternal IPC bridge,
   // fall back to window.open, then offer Copy Link. Never opens an
@@ -19507,26 +19626,76 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (typeof window.gcACPreviewFile === 'function') window.gcACPreviewFile(id, idx);
     toast((f.fileName || 'Attachment') + ' previewed locally. Use Open Local File to view the original.', 'info');
   };
-  // Phase 25AC item 3 — preview pane populator. Reads from the per-file
-  // extraction state already produced by services/govcon/solicitation-
-  // package-extract.js. Pure DOM update; no IPC, no network.
-  window.gcACPreviewFile = function(id, idx){
-    var pane = document.getElementById('gc-ac-preview-' + id);
-    if (!pane) return;
-    var body = pane.querySelector('[data-gc-ac-preview-body]');
-    if (!body) return;
+  // Phase 25AD — Right-side attached file viewer populator. Populates
+  // `#sd-right-file-viewer` (DOM lives at body root, attached to the app
+  // shell, never opens a separate OS/browser window). When the file is a
+  // supported preview type the IPC reads it through the credential
+  // boundary; otherwise the viewer shows a fallback message and offers
+  // Open Local File. This replaces the small inline preview from
+  // Phase 25AC item 3.
+  function _fmtBytes(n){
+    if (typeof n !== 'number' || !isFinite(n)) return '';
+    if (n < 1024) return n + ' B';
+    if (n < 1024 * 1024) return (Math.round(n / 102.4) / 10) + ' KB';
+    return (Math.round(n / 1048.576) / 1000) + ' MB';
+  }
+  window.gcACPreviewFile = async function(id, idx){
+    var viewer = document.getElementById('sd-right-file-viewer');
+    var titleEl = document.getElementById('sd-right-file-viewer-title');
+    var metaEl  = document.getElementById('sd-right-file-viewer-meta');
+    var bodyEl  = document.getElementById('sd-right-file-viewer-body');
+    if (!viewer || !titleEl || !metaEl || !bodyEl) return;
     var sm = getSM(id);
     var f = sm && sm.package && sm.package.files && sm.package.files[idx];
-    if (!f){ body.textContent = 'Attachment not found in local package.'; return; }
+    if (!f){ titleEl.textContent = 'Attachment not found'; metaEl.textContent = ''; bodyEl.innerHTML = ''; window.sdRightFileViewerOpen(); return; }
+    viewer.setAttribute('data-current-pursuit-id', id);
+    viewer.setAttribute('data-current-file-index', String(idx));
+    titleEl.textContent = f.fileName || 'attachment';
+    var metaBits = [];
+    metaBits.push('Status: ' + (f.status || 'unknown'));
+    if (typeof f.sizeBytes === 'number') metaBits.push(_fmtBytes(f.sizeBytes));
+    if (f.source) metaBits.push('Source: ' + f.source);
+    metaEl.textContent = metaBits.join(' · ');
+    window.sdRightFileViewerOpen();
+    bodyEl.innerHTML = '<div style="padding:10px;color:var(--muted);font-size:11px">Loading preview…</div>';
+    // Resolve the local file path. The renderer never builds host-side
+    // paths itself; the IPC handler validates that the path is inside the
+    // canonical solicitations root and refuses anything else.
+    var filePath = f.localPath || f.path || '';
+    var preview = null;
+    if (filePath && window.sd && window.sd.govcon && typeof window.sd.govcon.previewPackageFile === 'function'){
+      try { preview = await window.sd.govcon.previewPackageFile({ filePath: filePath }); } catch (e) { preview = null; }
+    }
     var lines = [];
-    lines.push('<div style="font-weight:600;color:var(--text);font-size:10.5px">' + esc(f.fileName || 'attachment') + '</div>');
-    lines.push('<div style="font-size:9.5px;color:var(--muted);margin-top:2px">Status: ' + esc(f.status || 'unknown') + (typeof f.sizeBytes === 'number' ? (' · ' + (f.sizeBytes < 1024 ? (f.sizeBytes + ' B') : (Math.round(f.sizeBytes / 102.4) / 10) + ' KB')) : '') + '</div>');
-    var snippet = '';
-    if (typeof f.text === 'string' && f.text.length) snippet = String(f.text).slice(0, 800);
-    else if (typeof f.extractedText === 'string' && f.extractedText.length) snippet = String(f.extractedText).slice(0, 800);
-    if (snippet) lines.push('<pre style="margin-top:5px;font-size:9.5px;color:var(--sub);white-space:pre-wrap;word-break:break-word">' + esc(snippet) + '</pre>');
-    else lines.push('<div style="margin-top:5px;font-size:9.5px;color:var(--muted)">No text snippet available for this file (' + esc(f.extractionStatus || 'metadata-only') + '). Use Open Local File to view the original.</div>');
-    body.innerHTML = lines.join('');
+    if (preview && preview.ok && preview.kind === 'text'){
+      lines.push('<div style="font-size:9.5px;color:var(--muted);margin-bottom:6px">Text · ' + _fmtBytes(preview.sizeBytes || 0) + '</div>');
+      lines.push('<pre style="margin:0;font-size:10.5px;color:var(--text);white-space:pre-wrap;word-break:break-word;line-height:1.55;max-height:560px;overflow:auto;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,0.02)">' + esc(String(preview.text || '')) + '</pre>');
+    } else if (preview && preview.ok && preview.kind === 'image'){
+      lines.push('<div style="font-size:9.5px;color:var(--muted);margin-bottom:6px">Image · ' + _fmtBytes(preview.sizeBytes || 0) + '</div>');
+      lines.push('<div style="border:1px solid var(--border);border-radius:8px;padding:10px;background:rgba(255,255,255,0.02);text-align:center"><img src="' + esc(preview.dataUrl || '') + '" alt="' + esc(f.fileName || 'image') + '" style="max-width:100%;max-height:560px;object-fit:contain"></div>');
+    } else if (preview && preview.ok && preview.kind === 'pdf'){
+      lines.push('<div style="font-size:9.5px;color:var(--muted);margin-bottom:6px">PDF · ' + _fmtBytes(preview.sizeBytes || 0) + '</div>');
+      lines.push('<object data="' + esc(preview.dataUrl || '') + '" type="application/pdf" style="width:100%;height:560px;border:1px solid var(--border);border-radius:8px"><div style="padding:10px;color:var(--muted);font-size:11px">PDF preview not available inline. Use Open Local File.</div></object>');
+    } else {
+      // Either an unsupported type, an oversized file, or an extraction-
+      // only fallback. Fall back to the per-file extracted text snippet
+      // when present so DOCX/XLSX still surface something useful.
+      var snippet = '';
+      if (typeof f.text === 'string' && f.text.length) snippet = String(f.text).slice(0, 4000);
+      else if (typeof f.extractedText === 'string' && f.extractedText.length) snippet = String(f.extractedText).slice(0, 4000);
+      var reason = preview && preview.reason ? preview.reason : (f.extractionStatus || 'metadata-only');
+      if (snippet){
+        lines.push('<div style="font-size:9.5px;color:var(--muted);margin-bottom:6px">Extracted text · inline preview not available for this file type · Use Open Local File for the original</div>');
+        lines.push('<pre style="margin:0;font-size:10.5px;color:var(--text);white-space:pre-wrap;word-break:break-word;line-height:1.55;max-height:520px;overflow:auto;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,0.02)">' + esc(snippet) + '</pre>');
+      } else {
+        var msg = 'Inline preview is not available for this file type yet (' + esc(reason) + '). Use Open Local File to view the original.';
+        if (reason === 'too_large') msg = 'File is too large to preview inline. Use Open Local File.';
+        if (reason === 'unsupported_type' && /\.(docx?|xlsx?)$/i.test(f.fileName || '')) msg = 'Office preview not available yet. Use Open Local File.';
+        if (reason === 'unsupported_type' && /\.pdf$/i.test(f.fileName || '')) msg = 'PDF preview not available yet. Use Open Local File.';
+        lines.push('<div style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,0.02);color:var(--muted);font-size:11px;line-height:1.55">' + msg + '</div>');
+      }
+    }
+    bodyEl.innerHTML = lines.join('');
   };
   // Phase 25AC item 4 — let the user pick an external location to save a
   // COPY of the local solicitation package zip. The canonical SourceDeck
@@ -22217,6 +22386,68 @@ document.addEventListener('DOMContentLoaded',()=>{
       if (window.toast) try { window.toast('PDF export failed locally (no network call attempted).', 'err'); } catch (e2) {}
     }
   };
+})();
+</script>
+
+<!-- Phase 25AD — Right-side attached file viewer. A persistent panel docked
+     to the right edge of the SourceDeck app shell. The left content stays
+     visible and usable; clicking View on any downloaded package file opens
+     the file IN PLACE here (never as a separate OS/browser window). The DOM
+     lives at body root so the same viewer is reachable from any tab. -->
+<aside id="sd-right-file-viewer"
+       data-sd-right-file-viewer="true"
+       hidden
+       style="position:fixed;top:64px;right:0;bottom:0;width:520px;max-width:46vw;
+              z-index:9000;background:var(--panel2,#0B1B3A);border-left:1px solid var(--border,rgba(255,255,255,0.08));
+              box-shadow:-12px 0 24px rgba(0,0,0,0.45);display:flex;flex-direction:column;font-family:inherit">
+  <header style="display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border,rgba(255,255,255,0.08));background:rgba(0,0,0,0.18)">
+    <div style="flex:1;min-width:0">
+      <div id="sd-right-file-viewer-title" style="font-weight:700;font-size:12.5px;color:var(--text,#e5e7eb);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">No file selected</div>
+      <div id="sd-right-file-viewer-meta"  style="font-size:9.5px;color:var(--muted,#94a3b8);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis"></div>
+    </div>
+    <button id="sd-right-file-viewer-open-local" class="btn btn-ghost" type="button"
+            style="padding:3px 8px;font-size:10px" title="Open the original file in your default app">Open Local File</button>
+    <button id="sd-right-file-viewer-close" class="btn btn-ghost" type="button"
+            style="padding:3px 8px;font-size:10px" title="Close right-side viewer">✕</button>
+  </header>
+  <div id="sd-right-file-viewer-body"
+       style="flex:1;overflow:auto;padding:12px 14px;font-size:11px;color:var(--text,#e5e7eb)">
+    <div style="color:var(--muted,#94a3b8);font-size:11px;line-height:1.55">
+      Click <strong>View</strong> on a downloaded attachment to inspect it here without leaving SourceDeck.
+    </div>
+  </div>
+</aside>
+<script>
+/* Phase 25AD — Right-side file viewer open/close helpers. The viewer DOM
+   itself is static; gcACPreviewFile() (defined in the Saved Pursuits /
+   Attachments module) populates title/meta/body when the user clicks
+   View on a downloaded file. The viewer never opens a separate OS or
+   browser window — it stays attached to the SourceDeck app shell. */
+(function(){
+  'use strict';
+  var viewer  = document.getElementById('sd-right-file-viewer');
+  var btnClose = document.getElementById('sd-right-file-viewer-close');
+  var btnOpen  = document.getElementById('sd-right-file-viewer-open-local');
+  if (!viewer) return;
+  window.sdRightFileViewerOpen = function(){
+    viewer.hidden = false;
+    viewer.setAttribute('data-open', 'true');
+  };
+  window.sdRightFileViewerClose = function(){
+    viewer.hidden = true;
+    viewer.removeAttribute('data-open');
+    viewer.removeAttribute('data-current-pursuit-id');
+    viewer.removeAttribute('data-current-file-index');
+    var t = document.getElementById('sd-right-file-viewer-title'); if (t) t.textContent = 'No file selected';
+    var m = document.getElementById('sd-right-file-viewer-meta');  if (m) m.textContent = '';
+  };
+  if (btnClose) btnClose.addEventListener('click', function(){ window.sdRightFileViewerClose(); });
+  if (btnOpen)  btnOpen.addEventListener('click', function(){
+    var pid = viewer.getAttribute('data-current-pursuit-id');
+    if (pid && typeof window.gcABOpenLocalPackageFolder === 'function'){
+      try { window.gcABOpenLocalPackageFolder(pid); } catch (e) {}
+    }
+  });
 })();
 </script>
 </body>

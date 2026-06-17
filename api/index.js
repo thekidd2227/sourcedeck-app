@@ -244,7 +244,8 @@ function createAppApi(opts) {
         upsert:    (opp)   => Promise.resolve(opportunities.upsert(opp || {})),
         patch:     (id, p) => Promise.resolve(opportunities.patch(id, p || {})),
         favorite:  (id, v) => Promise.resolve(opportunities.favorite(id, v)),
-        favorites: ()      => Promise.resolve(opportunities.favorites())
+        favorites: ()      => Promise.resolve(opportunities.favorites()),
+        remove:    (id)    => Promise.resolve(opportunities.remove(id))
       },
       deadlines: {
         extract: (input) => Promise.resolve(withOpportunity(opportunities, input, (payload, record) => {

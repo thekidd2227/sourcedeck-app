@@ -66,6 +66,11 @@ contextBridge.exposeInMainWorld('sd', {
     // a user-chosen external location. Canonical SourceDeck userData
     // package stays untouched.
     savePackageCopy: (payload) => ipcRenderer.invoke('govcon:save-package-copy', payload),
+    // Phase 25AD — read a downloaded package file from disk so the
+    // right-side in-app viewer can render it without opening a separate
+    // window. Path is validated against the canonical solicitations root
+    // in the main process; anything outside is refused.
+    previewPackageFile: (payload) => ipcRenderer.invoke('govcon:preview-package-file', payload),
     complianceMatrix:    (payload)  => ipcRenderer.invoke('govcon:compliance-matrix', payload),
     evaluatePreRfp:      (payload)  => ipcRenderer.invoke('govcon:pre-rfp-evaluate', payload),
     pastPerformance: {
@@ -80,7 +85,10 @@ contextBridge.exposeInMainWorld('sd', {
       get:       (id)         => ipcRenderer.invoke('govcon:opportunities-get', id),
       upsert:    (opp)        => ipcRenderer.invoke('govcon:opportunities-upsert', opp),
       favorite:  (id, value)  => ipcRenderer.invoke('govcon:opportunities-favorite', { id, value }),
-      favorites: ()           => ipcRenderer.invoke('govcon:opportunities-favorites')
+      favorites: ()           => ipcRenderer.invoke('govcon:opportunities-favorites'),
+      // Phase 25AD — delete a saved pursuit (renderer asks the user to
+      // confirm first; local solicitation package files are NOT removed).
+      remove:    (id)         => ipcRenderer.invoke('govcon:opportunities-remove', id)
     },
     deadlines: {
       extract:   (input)      => ipcRenderer.invoke('govcon:deadlines-extract', input),

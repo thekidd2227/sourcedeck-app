@@ -99,18 +99,23 @@ test('item 2: SAM attachment listing is hidden when a local package exists', () 
 
 // ───────────────── Item 3 — In-app preview pane ─────────────────
 
-test('item 3: right-side in-app file preview pane scaffold exists', () => {
-  // The aside element with data-gc-ac-preview-pane is injected after the
-  // package summary.
-  assert.ok(/data-gc-ac-preview-pane="true"/.test(HTML),
-    '<aside data-gc-ac-preview-pane="true"> scaffold missing');
-  // The preview body container is present.
-  assert.ok(/data-gc-ac-preview-body="true"/.test(HTML),
-    '[data-gc-ac-preview-body] container missing');
-  // The populator is exposed for the View action.
-  assert.ok(/window\.gcACPreviewFile\s*=\s*function/.test(HTML),
+test('item 3: in-app file preview surface exists (right-side viewer per Phase 25AD)', () => {
+  // Phase 25AC item 3 originally shipped a small inline `<aside
+  // data-gc-ac-preview-pane>` block inside the saved-pursuit details
+  // panel. Phase 25AD retired that small box and replaced it with the
+  // attached right-side file viewer (#sd-right-file-viewer) — see
+  // test/phase-25ad-right-side-file-viewer.test.js. This assertion was
+  // updated to follow the evolution: a preview SURFACE must still exist,
+  // and the View action must still populate it through gcACPreviewFile.
+  assert.ok(/id="sd-right-file-viewer"/.test(HTML),
+    'right-side file viewer (#sd-right-file-viewer) scaffold missing');
+  assert.ok(/id="sd-right-file-viewer-body"/.test(HTML),
+    'right-side viewer body container missing');
+  // The populator is exposed for the View action. (Phase 25AD turned it
+  // into an async function that talks to the credential boundary.)
+  assert.ok(/window\.gcACPreviewFile\s*=\s*(?:async\s+)?function/.test(HTML),
     'window.gcACPreviewFile populator missing');
-  // The existing View button now triggers the preview.
+  // The existing View button still triggers the preview.
   assert.ok(/if \(typeof window\.gcACPreviewFile === 'function'\) window\.gcACPreviewFile\(id, idx\);/.test(HTML),
     'gcABViewAttachment must call gcACPreviewFile when defined');
 });
