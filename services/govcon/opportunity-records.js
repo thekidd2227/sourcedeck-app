@@ -51,7 +51,21 @@ function createOpportunityRecordService(store, nowFn) {
     return list().filter(r => r.favorite === true);
   }
 
-  return { list, get, upsert, patch, favorite, favorites, KEY };
+  // Phase 25AD — Delete a saved pursuit record from the local store. The
+  // matching opportunity row is removed; any downloaded solicitation package
+  // files under app.getPath('userData')/govcon/solicitations stay in place
+  // (a separate user-initiated action covers folder cleanup).
+  function remove(idOrIdentity) {
+    const rows = list();
+    const idx = rows.findIndex(r => r.id === idOrIdentity || identityFor(r) === idOrIdentity);
+    if (idx < 0) return { ok: false, reason: 'not_found' };
+    const next = rows.slice();
+    const removed = next.splice(idx, 1)[0];
+    store.set(KEY, next);
+    return { ok: true, removedId: removed && removed.id };
+  }
+
+  return { list, get, upsert, patch, favorite, favorites, remove, KEY };
 }
 
 function normalizeOpportunityRecord(input) {

@@ -376,6 +376,67 @@ ipcMain.handle('govcon:save-package-copy', async (_event, payload) => {
   }
 });
 
+// Phase 25AD — read a downloaded solicitation package file from disk so the
+// right-side in-app viewer can render it without opening a separate window.
+// Path is validated against the canonical solicitations root; anything
+// outside is refused. Returns one of:
+//   { ok:true, kind:'text', text, sizeBytes, fileName, mimeType }
+//   { ok:true, kind:'image', dataUrl, sizeBytes, fileName, mimeType }
+//   { ok:true, kind:'pdf',   dataUrl, sizeBytes, fileName, mimeType }
+//   { ok:true, kind:'fallback', reason, sizeBytes, fileName }
+// The renderer only ever sees the bytes of the chosen file; no other host
+// filesystem access is exposed.
+ipcMain.handle('govcon:preview-package-file', async (_event, payload) => {
+  payload = payload || {};
+  const filePath = String(payload.filePath || '');
+  if (!filePath) return { ok: false, reason: 'no_file_path' };
+  const root = path.join(app.getPath('userData'), 'govcon', 'solicitations');
+  const target = path.resolve(filePath);
+  const rel = path.relative(root, target);
+  if (!target || rel.startsWith('..') || path.isAbsolute(rel)) {
+    return { ok: false, reason: 'invalid_file_path' };
+  }
+  let stat = null;
+  try { stat = await fs.promises.stat(target); }
+  catch (_) { return { ok: false, reason: 'file_unreadable' }; }
+  if (!stat.isFile()) return { ok: false, reason: 'not_a_file' };
+  const MAX_BYTES = 8 * 1024 * 1024;
+  const fileName = path.basename(target);
+  const ext = path.extname(target).toLowerCase();
+  if (stat.size > MAX_BYTES) {
+    return { ok: true, kind: 'fallback', reason: 'too_large', sizeBytes: stat.size, fileName };
+  }
+  const TEXT_EXT = ['.txt', '.csv', '.json', '.xml', '.html', '.htm', '.md', '.rtf', '.log'];
+  const IMAGE_EXT = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'];
+  const PDF_EXT = ['.pdf'];
+  const IMAGE_MIME = {
+    '.png':  'image/png',
+    '.jpg':  'image/jpeg',
+    '.jpeg': 'image/jpeg',
+    '.webp': 'image/webp',
+    '.gif':  'image/gif',
+    '.bmp':  'image/bmp'
+  };
+  try {
+    if (TEXT_EXT.indexOf(ext) >= 0) {
+      const text = await fs.promises.readFile(target, 'utf8');
+      return { ok: true, kind: 'text', text, sizeBytes: stat.size, fileName, mimeType: 'text/plain' };
+    }
+    if (IMAGE_EXT.indexOf(ext) >= 0) {
+      const buf = await fs.promises.readFile(target);
+      const mime = IMAGE_MIME[ext] || 'application/octet-stream';
+      return { ok: true, kind: 'image', dataUrl: 'data:' + mime + ';base64,' + buf.toString('base64'), sizeBytes: stat.size, fileName, mimeType: mime };
+    }
+    if (PDF_EXT.indexOf(ext) >= 0) {
+      const buf = await fs.promises.readFile(target);
+      return { ok: true, kind: 'pdf', dataUrl: 'data:application/pdf;base64,' + buf.toString('base64'), sizeBytes: stat.size, fileName, mimeType: 'application/pdf' };
+    }
+    return { ok: true, kind: 'fallback', reason: 'unsupported_type', sizeBytes: stat.size, fileName };
+  } catch (e) {
+    return { ok: false, reason: 'read_failed' };
+  }
+});
+
 // Phase 25Y — open an external URL in the user's default browser. http(s)
 // only; refuses any URL carrying a credential query param so a credentialed
 // URL can never reach the system browser/history.
@@ -411,6 +472,11 @@ ipcMain.handle('govcon:opportunities-get',       (_e, id) => appApi.govcon.oppor
 ipcMain.handle('govcon:opportunities-upsert',    (_e, opp) => appApi.govcon.opportunities.upsert(opp || {}));
 ipcMain.handle('govcon:opportunities-favorite',  (_e, payload) => appApi.govcon.opportunities.favorite(payload && payload.id, payload && payload.value));
 ipcMain.handle('govcon:opportunities-favorites', () => appApi.govcon.opportunities.favorites());
+// Phase 25AD — Delete a saved pursuit row from the local store. Local
+// solicitation package files under userData stay in place; a separate
+// "Clear local package" action covers folder cleanup. The renderer asks
+// the user to confirm before calling this.
+ipcMain.handle('govcon:opportunities-remove',    (_e, id) => appApi.govcon.opportunities.remove(id));
 ipcMain.handle('govcon:deadlines-extract',       (_e, input) => appApi.govcon.deadlines.extract(input || {}));
 ipcMain.handle('govcon:deadlines-approve',       (_e, input) => appApi.govcon.deadlines.approve(input || {}));
 ipcMain.handle('govcon:subcontractors-source',   (_e, input) => appApi.govcon.subcontractors.source(input || {}));
