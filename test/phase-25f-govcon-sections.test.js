@@ -47,14 +47,15 @@ test('Phase 25N — required GovCon tab buttons map to the canonical sections', 
   // route to them are renamed and re-shaped (real tab buttons, not
   // scroll-link pills).
   const REQUIRED_TAB_BUTTONS = [
-    { label: 'Solicitation',         tab: 'solicitation' },
+    // Phase 25R — Solicitation renamed "Solicitation Center"; Audit Log moved
+    // to Settings (no longer a GovCon tab).
+    { label: 'Solicitation Center',  tab: 'solicitation' },
     // Phase 25V — Vendors + Pricing split into two focused tabs.
     { label: 'Vendors',              tab: 'vendors' },
     { label: 'Pricing',              tab: 'pricing' },
     { label: 'Past Performance',     tab: 'past-performance' },
     { label: 'Prime Partners',       tab: 'prime-partners' },
     { label: 'Submission Readiness', tab: 'submission-readiness' },
-    { label: 'Audit Log',            tab: 'audit-log' },
   ];
   for (const t of REQUIRED_TAB_BUTTONS) {
     const escLabel = t.label.replace(/[.*+?^${}()|[\]\\+]/g, '\\$&');

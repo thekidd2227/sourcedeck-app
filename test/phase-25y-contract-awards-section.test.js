@@ -12,11 +12,11 @@ let passed = 0, failed = 0;
 function test(n, fn){ try { fn(); passed++; console.log('  ✅ ' + n); } catch (e) { failed++; console.log('  ❌ ' + n + ': ' + e.message); } }
 console.log('\n=== Phase 25Y — Contract Awards section ===\n');
 
-test('Contract Awards GovCon tab + page exist', () => {
-  assert.ok(/data-gc-tab="contract-awards"/.test(HTML), 'Contract Awards tab button');
-  assert.ok(/data-gc-tab-page="contract-awards"/.test(HTML), 'Contract Awards tab page');
-  assert.ok(/id="gc-tab-contract-awards"/.test(HTML), 'Contract Awards section');
-  assert.ok(/>Contract Awards</.test(HTML), 'Contract Awards label');
+test('Contract Awards GovCon tab + page exist (Phase 25R: labeled "Federal Procurement Data")', () => {
+  assert.ok(/data-gc-tab="contract-awards"/.test(HTML), 'Contract Awards tab button (id retained)');
+  assert.ok(/data-gc-tab-page="contract-awards"/.test(HTML), 'Contract Awards tab page (id retained)');
+  assert.ok(/id="gc-tab-contract-awards"/.test(HTML), 'Contract Awards section (id retained)');
+  assert.ok(/>Federal Procurement Data</.test(HTML), 'surface relabeled "Federal Procurement Data"');
 });
 
 test('Dashboard shortcut to Contract Awards exists', () => {
