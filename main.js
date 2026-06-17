@@ -1,4 +1,5 @@
-const { app, BrowserWindow, ipcMain, shell, safeStorage } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, safeStorage, dialog } = require('electron');
+const fs = require('fs');
 const path = require('path');
 const Store = require('electron-store');
 const { autoUpdater } = require('electron-updater');
@@ -338,6 +339,41 @@ ipcMain.handle('govcon:open-solicitation-package-folder', async (_event, package
   if (!target || rel.startsWith('..') || path.isAbsolute(rel)) return { ok: false, reason: 'invalid_package_path' };
   try { await shell.openPath(target); return { ok: true }; }
   catch (e) { return { ok: false, reason: 'open_failed' }; }
+});
+
+// Phase 25AC item 4 — copy the canonical solicitation package ZIP to a
+// user-chosen external location. The canonical package under
+// app.getPath('userData')/govcon/solicitations stays untouched. The
+// renderer-side button calls this via the credential boundary.
+// Source path is restricted to the canonical solicitations root; refuses
+// any path outside that root to prevent arbitrary host-side reads.
+ipcMain.handle('govcon:save-package-copy', async (_event, payload) => {
+  payload = payload || {};
+  const sourcePath = String(payload.sourcePath || '');
+  if (!sourcePath) return { ok: false, reason: 'no_source_path' };
+  const root = path.join(app.getPath('userData'), 'govcon', 'solicitations');
+  const target = path.resolve(sourcePath);
+  const rel = path.relative(root, target);
+  if (!target || rel.startsWith('..') || path.isAbsolute(rel)) return { ok: false, reason: 'invalid_source_path' };
+  try { await fs.promises.access(target, fs.constants.R_OK); }
+  catch (_) { return { ok: false, reason: 'source_unreadable' }; }
+  const suggested = path.basename(target) || 'sourcedeck-package.zip';
+  let dest = null;
+  try {
+    const picked = await dialog.showSaveDialog({
+      title: 'Save copy of solicitation package',
+      defaultPath: suggested,
+      filters: [{ name: 'ZIP archive', extensions: ['zip'] }, { name: 'All files', extensions: ['*'] }]
+    });
+    if (picked.canceled || !picked.filePath) return { ok: false, reason: 'cancelled' };
+    dest = picked.filePath;
+  } catch (e) { return { ok: false, reason: 'dialog_failed' }; }
+  try {
+    await fs.promises.copyFile(target, dest);
+    return { ok: true, destinationPath: dest, canonicalPath: target };
+  } catch (e) {
+    return { ok: false, reason: 'copy_failed' };
+  }
 });
 
 // Phase 25Y — open an external URL in the user's default browser. http(s)

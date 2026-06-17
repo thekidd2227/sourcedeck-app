@@ -216,10 +216,34 @@ async function extractSolicitationPackage(input) {
   const files = await collectPackageFiles(manifest);
   const tmpRoot = manifest.packagePath ? path.join(manifest.packagePath, 'extracted') : '';
   const extractedFiles = [];
-  for (const file of files) extractedFiles.push(await extractFileText(file, tmpRoot));
+  // Phase 25AC item 5 — file-aware extraction. Each file is wrapped in
+  // its own try/catch so a corrupt/unreadable/unsupported file produces
+  // a `status: 'failed'` row WITHOUT failing the whole package. Errors
+  // are surfaced per-file in `warnings` so the renderer can show which
+  // files were skipped and why.
+  for (const file of files) {
+    try {
+      extractedFiles.push(await extractFileText(file, tmpRoot));
+    } catch (err) {
+      extractedFiles.push({
+        fileName: file.fileName || path.basename(file.localPath || ''),
+        localPath: file.localPath || '',
+        source: file.source || 'package',
+        status: 'failed',
+        extractionStatus: 'failed',
+        text: '',
+        limitation: 'Extraction error — file skipped (' + (err && err.code ? err.code : 'error') + ')'
+      });
+    }
+  }
   const fullText = extractedFiles.map(f => f.text).filter(Boolean).join('\n\n');
   const sections = classifySections(fullText);
   const metadata = extractMetadata(fullText, manifest, extractedFiles);
+  const warnings = [];
+  for (const f of extractedFiles) {
+    if (f.extractionStatus === 'metadata-only') warnings.push(`${f.fileName}: Stored, text extraction not available yet`);
+    else if (f.extractionStatus === 'failed')   warnings.push(`${f.fileName}: ${f.limitation || 'Extraction error — file skipped'}`);
+  }
   return {
     ok: true,
     realPackage: true,
@@ -238,7 +262,7 @@ async function extractSolicitationPackage(input) {
     },
     metadata,
     complianceMatrixStarter: complianceMatrixStarter(sections, metadata),
-    warnings: extractedFiles.filter(f => f.extractionStatus === 'metadata-only').map(f => `${f.fileName}: Stored, text extraction not available yet`)
+    warnings
   };
 }
 

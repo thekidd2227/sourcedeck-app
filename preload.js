@@ -62,6 +62,10 @@ contextBridge.exposeInMainWorld('sd', {
     extractSolicitationPackage:  (payload) => ipcRenderer.invoke('govcon:extract-solicitation-package', payload),
     explainSolicitationPackage:  (payload) => ipcRenderer.invoke('govcon:explain-solicitation-package', payload),
     openSolicitationPackageFolder: (packagePath) => ipcRenderer.invoke('govcon:open-solicitation-package-folder', packagePath),
+    // Phase 25AC item 4 — copy the canonical solicitation package ZIP to
+    // a user-chosen external location. Canonical SourceDeck userData
+    // package stays untouched.
+    savePackageCopy: (payload) => ipcRenderer.invoke('govcon:save-package-copy', payload),
     complianceMatrix:    (payload)  => ipcRenderer.invoke('govcon:compliance-matrix', payload),
     evaluatePreRfp:      (payload)  => ipcRenderer.invoke('govcon:pre-rfp-evaluate', payload),
     pastPerformance: {

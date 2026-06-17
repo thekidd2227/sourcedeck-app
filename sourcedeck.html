@@ -19213,7 +19213,19 @@ document.addEventListener('DOMContentLoaded',()=>{
     return null;
   }
   function urlLabel(u){
-    try { var x = new URL(u); var p = x.pathname.split('/').filter(Boolean); return (p[p.length - 1] || x.host); } catch (e) { return String(u).slice(0, 48); }
+    // Phase 25AC item 1 — guard against object-shaped resource links.
+    // Resource links may arrive as {href|url|link|uri, name|label|title}
+    // objects; previously the renderer printed `[object Object]`.
+    if (u && typeof u === 'object') {
+      var label = u.name || u.label || u.title || '';
+      var inner = u.href || u.url || u.link || u.uri || '';
+      if (label) return String(label).slice(0, 80);
+      if (inner) u = inner;
+      else return '';
+    }
+    var s = String(u == null ? '' : u);
+    if (!s || s === '[object Object]') return '';
+    try { var x = new URL(s); var p = x.pathname.split('/').filter(Boolean); return (p[p.length - 1] || x.host); } catch (e) { return s.slice(0, 48); }
   }
 
   // ── Shared Attachments renderer ─────────────────────────────────────
@@ -19251,22 +19263,32 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     parts.push('</div>');
 
-    // Resource links / attachments
-    parts.push('<div style="margin-top:10px"><div style="font-weight:600;font-size:11px;color:var(--text);margin-bottom:3px">Attachments listed by SAM.gov (' + ((o.resourceLinks && o.resourceLinks.length) || 0) + ')</div>');
-    if (o.resourceLinks && o.resourceLinks.length){
-      for (var i = 0; i < o.resourceLinks.length; i++){
-        var u = o.resourceLinks[i];
-        var imported = (sm.resources || []).some(function(r){ return r.sourceUrlSafe === u; });
-        parts.push('<div data-gc-w25-resource style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:5px 0;border-bottom:1px solid var(--border)">');
-        parts.push('<code style="font-size:10px;color:var(--sub);flex:1;min-width:160px;word-break:break-all">' + esc(urlLabel(u)) + '</code>');
-        parts.push('<button class="btn btn-ghost" onclick="gcW25OpenResource(\'' + esc(o.id) + '\',' + i + ')" style="padding:2px 7px;font-size:10px">↗ Open Source</button>');
-        parts.push('<button class="btn btn-ghost" onclick="gcABDownloadPackage(\'' + esc(o.id) + '\')" style="padding:2px 7px;font-size:10px;color:var(--gold2)">' + (imported ? '✓ Package updated' : '⬇ Download Package') + '</button>');
-        parts.push('</div>');
+    // Resource links / attachments.
+    // Phase 25AC item 2 — once the local solicitation package has been
+    // downloaded the SAM.gov listing becomes redundant noise (the local
+    // file list below is the source of truth). Render the SAM listing
+    // only while no local package exists.
+    if (!sm.package) {
+      parts.push('<div data-gc-ac-sam-listing="true" style="margin-top:10px"><div style="font-weight:600;font-size:11px;color:var(--text);margin-bottom:3px">Attachments listed by SAM.gov (' + ((o.resourceLinks && o.resourceLinks.length) || 0) + ')</div>');
+      if (o.resourceLinks && o.resourceLinks.length){
+        for (var i = 0; i < o.resourceLinks.length; i++){
+          var u = o.resourceLinks[i];
+          // Phase 25AC item 1 — extract the safe URL from object-shaped
+          // resource links so downstream matching/labels never see
+          // `[object Object]`.
+          var uLink = (u && typeof u === 'object') ? (u.href || u.url || u.link || u.uri || '') : u;
+          var imported = (sm.resources || []).some(function(r){ return r.sourceUrlSafe === uLink; });
+          parts.push('<div data-gc-w25-resource style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:5px 0;border-bottom:1px solid var(--border)">');
+          parts.push('<code style="font-size:10px;color:var(--sub);flex:1;min-width:160px;word-break:break-all">' + esc(urlLabel(u)) + '</code>');
+          parts.push('<button class="btn btn-ghost" onclick="gcW25OpenResource(\'' + esc(o.id) + '\',' + i + ')" style="padding:2px 7px;font-size:10px">↗ Open Source</button>');
+          parts.push('<button class="btn btn-ghost" onclick="gcABDownloadPackage(\'' + esc(o.id) + '\')" style="padding:2px 7px;font-size:10px;color:var(--gold2)">' + (imported ? '✓ Package updated' : '⬇ Download Package') + '</button>');
+          parts.push('</div>');
+        }
+      } else {
+        parts.push('<div style="font-size:10px;color:var(--muted)">No attachments listed by SAM.gov for this notice.</div>');
       }
-    } else {
-      parts.push('<div style="font-size:10px;color:var(--muted)">No attachments listed by SAM.gov for this notice.</div>');
+      parts.push('</div>');
     }
-    parts.push('</div>');
 
     if (sm.package){
       parts.push('<div data-gc-ab-package-summary="true" style="margin-top:10px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:rgba(255,255,255,0.03)">');
@@ -19289,7 +19311,23 @@ document.addEventListener('DOMContentLoaded',()=>{
       parts.push('<button class="btn btn-gold" onclick="gcABDownloadPackage(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px">Refresh Package</button>');
       parts.push('<button class="btn btn-ghost" onclick="gcW25SendToWorkspace(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px;color:var(--green,#30d158)">Send Package to Solicitation Center</button>');
       parts.push('<button class="btn btn-ghost" onclick="gcABOpenLocalPackageFolder(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px">Open local package folder</button>');
-      parts.push('</div></div>');
+      // Phase 25AC item 4 — let the user choose an additional external
+      // download location WITHOUT moving the canonical SourceDeck userData
+      // package. The IPC handler showSaveDialog + copyFile both happen
+      // through the credential boundary; the canonical package path is
+      // unchanged.
+      parts.push('<button class="btn btn-ghost" data-gc-ac-save-copy="true" onclick="gcACSaveLocalCopy(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px">⇲ Save copy to…</button>');
+      parts.push('</div>');
+      // Phase 25AC item 3 — right-side in-app file preview pane. The pane
+      // is the rendering surface for selected downloaded/uploaded files
+      // (file name, status, size, extracted text snippet). Populated by
+      // `gcACPreviewFile()` when the user clicks View on an attachment.
+      // Stays empty when no file is selected.
+      parts.push('<aside data-gc-ac-preview-pane="true" id="gc-ac-preview-' + esc(o.id) + '" style="margin-top:8px;padding:8px 10px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,0.02);min-height:48px;font-size:10.5px;color:var(--muted)">');
+      parts.push('<div style="font-weight:600;color:var(--text);margin-bottom:3px;font-size:11px">In-app preview</div>');
+      parts.push('<div data-gc-ac-preview-body="true" style="font-size:10px;color:var(--muted)">Select an attachment to preview its name, status, and extracted text snippet locally.</div>');
+      parts.push('</aside>');
+      parts.push('</div>');
     }
 
     // Imported resources (with text)
@@ -19462,7 +19500,51 @@ document.addEventListener('DOMContentLoaded',()=>{
     var f = sm && sm.package && sm.package.files && sm.package.files[idx];
     if (!f){ toast('Attachment not found in local package.', 'warn'); return; }
     if (f.status !== 'downloaded'){ toast((f.fileName || 'Attachment') + ' failed: ' + (f.errorSafe || 'download unavailable'), 'warn'); return; }
-    toast((f.fileName || 'Attachment') + ' is stored locally. Use Open Local File to view it.', 'info');
+    // Phase 25AC item 3 — populate the in-app right-side preview pane.
+    // Best-effort: surface file metadata + extracted text snippet from the
+    // existing per-file extraction state. The canonical local file is not
+    // moved; this is read-only preview.
+    if (typeof window.gcACPreviewFile === 'function') window.gcACPreviewFile(id, idx);
+    toast((f.fileName || 'Attachment') + ' previewed locally. Use Open Local File to view the original.', 'info');
+  };
+  // Phase 25AC item 3 — preview pane populator. Reads from the per-file
+  // extraction state already produced by services/govcon/solicitation-
+  // package-extract.js. Pure DOM update; no IPC, no network.
+  window.gcACPreviewFile = function(id, idx){
+    var pane = document.getElementById('gc-ac-preview-' + id);
+    if (!pane) return;
+    var body = pane.querySelector('[data-gc-ac-preview-body]');
+    if (!body) return;
+    var sm = getSM(id);
+    var f = sm && sm.package && sm.package.files && sm.package.files[idx];
+    if (!f){ body.textContent = 'Attachment not found in local package.'; return; }
+    var lines = [];
+    lines.push('<div style="font-weight:600;color:var(--text);font-size:10.5px">' + esc(f.fileName || 'attachment') + '</div>');
+    lines.push('<div style="font-size:9.5px;color:var(--muted);margin-top:2px">Status: ' + esc(f.status || 'unknown') + (typeof f.sizeBytes === 'number' ? (' · ' + (f.sizeBytes < 1024 ? (f.sizeBytes + ' B') : (Math.round(f.sizeBytes / 102.4) / 10) + ' KB')) : '') + '</div>');
+    var snippet = '';
+    if (typeof f.text === 'string' && f.text.length) snippet = String(f.text).slice(0, 800);
+    else if (typeof f.extractedText === 'string' && f.extractedText.length) snippet = String(f.extractedText).slice(0, 800);
+    if (snippet) lines.push('<pre style="margin-top:5px;font-size:9.5px;color:var(--sub);white-space:pre-wrap;word-break:break-word">' + esc(snippet) + '</pre>');
+    else lines.push('<div style="margin-top:5px;font-size:9.5px;color:var(--muted)">No text snippet available for this file (' + esc(f.extractionStatus || 'metadata-only') + '). Use Open Local File to view the original.</div>');
+    body.innerHTML = lines.join('');
+  };
+  // Phase 25AC item 4 — let the user pick an external location to save a
+  // COPY of the local solicitation package zip. The canonical SourceDeck
+  // userData package stays untouched. Uses the renderer-safe IPC. If the
+  // host has not wired the channel yet, the button explains why.
+  window.gcACSaveLocalCopy = async function(id){
+    var sm = getSM(id);
+    var zip = sm && sm.package && sm.package.localZipPath;
+    if (!zip){ toast('No local package ZIP yet. Download the solicitation package first.', 'warn'); return; }
+    if (!(window.sd && window.sd.govcon && typeof window.sd.govcon.savePackageCopy === 'function')){
+      toast('Save-copy requires the SourceDeck desktop app (this feature ships via the credential boundary).', 'warn');
+      return;
+    }
+    try {
+      var res = await window.sd.govcon.savePackageCopy({ id: id, sourcePath: zip });
+      if (!res || !res.ok){ toast('Save copy cancelled: ' + ((res && res.reason) || 'unknown'), 'warn'); return; }
+      toast('Copy saved to ' + (res.destinationPath || 'chosen location') + '. Canonical SourceDeck package unchanged.', 'ok');
+    } catch (e){ toast('Save copy failed.', 'warn'); }
   };
   window.gcABExtractAttachment = function(id, idx){
     var sm = getSM(id);
