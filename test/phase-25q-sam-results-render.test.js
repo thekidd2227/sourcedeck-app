@@ -67,8 +67,8 @@ fields.forEach(function(f){
   assert(html.indexOf(f) >= 0,
     'Row HTML builder reads field expression: ' + f);
 });
-assert(/>SAM\.gov</.test(html),
-  'Each row labels its source as SAM.gov');
+assert(/Live SAM\.gov|SAM\.gov/.test(html),
+  'Each row labels its source as SAM.gov / Live SAM.gov');
 
 // ── Per-row actions: View Details, Save, Mark Pursue, Archive, Open Source
 const actions = [

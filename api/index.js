@@ -39,6 +39,8 @@
 
 'use strict';
 
+const os = require('os');
+const path = require('path');
 const settings        = require('../services/settings/targeting-profile');
 const credSurface     = require('../services/settings/credentials');
 const operatingProfile = require('../services/settings/govcon-operating-profile');
@@ -69,6 +71,7 @@ const exportSvc      = require('../services/govcon/export');
 const opportunityRecords = require('../services/govcon/opportunity-records');
 const scheduledSam   = require('../services/govcon/scheduled-sam-search');
 const opportunityOutreach = require('../services/govcon/opportunity-outreach');
+const govconIndexSvc = require('../services/govcon/govcon-index');
 
 function createAppApi(opts) {
   opts = opts || {};
@@ -83,7 +86,7 @@ function createAppApi(opts) {
   const audit       = opts.audit || nullAudit();
   const fetchFn     = opts.fetchFn || (typeof fetch === 'function' ? fetch : null);
   const now         = opts.now || (() => Date.now());
-  const userDataPath = opts.userDataPath || '';
+  const userDataPath = opts.userDataPath || path.join(os.tmpdir(), 'sourcedeck-userData-test');
 
   // Construct stateful service instances (bound to store/credentials).
   const targeting       = settings.createTargetingProfileService(store);
@@ -119,6 +122,12 @@ function createAppApi(opts) {
     store,
     samSearch,
     opportunityRecords: opportunities,
+    now
+  });
+  const govconIndex = govconIndexSvc.createGovconIndexService({
+    store,
+    samSearch,
+    userDataPath,
     now
   });
   const outreach = opportunityOutreach.createOpportunityOutreachService({
@@ -181,6 +190,17 @@ function createAppApi(opts) {
         // the credential boundary. The api key is appended only inside the
         // service (main process) and never returned to the renderer.
         fetchSource: (payload) => samSourceFetch.fetchSource(payload || {})
+      },
+      index: {
+        status:   () => Promise.resolve(govconIndex.status()),
+        settings: {
+          get:  () => Promise.resolve(govconIndex.getSettings()),
+          save: (patch) => Promise.resolve(govconIndex.saveSettings(patch || {}))
+        },
+        search:   (filters) => Promise.resolve(govconIndex.search(filters || {})),
+        runNow:   (input) => govconIndex.runNow(input || {}),
+        clear:    () => Promise.resolve(govconIndex.clear()),
+        shouldRunOnStart: () => Promise.resolve(govconIndex.shouldRunOnStart())
       },
       packages: {
         downloadSolicitationPackage: async (input) => {

@@ -264,11 +264,13 @@ function createSamSearchService(deps) {
       params.set('ccode', filters.psc.join(','));
     }
     if (filters.keyword) {
-      params.set('q', filters.keyword);
+      // SAM.gov Opportunities v2 supports `title`; SourceDeck does not
+      // present this live call as reliable full attachment search.
+      params.set('title', filters.keyword);
     }
     if (filters.solicitationNumber) params.set('solnum', String(filters.solicitationNumber).slice(0, 80));
     if (filters.noticeId) params.set('noticeid', String(filters.noticeId).slice(0, 80));
-    if (filters.title) params.set('title', String(filters.title).slice(0, 160));
+    if (filters.title && !params.has('title')) params.set('title', String(filters.title).slice(0, 160));
     if (filters.state) params.set('state', String(filters.state).toUpperCase().slice(0, 2));
     if (filters.zip) params.set('zip', String(filters.zip).replace(/[^\d-]/g, '').slice(0, 10));
     if (filters.organizationName) params.set('organizationName', String(filters.organizationName).slice(0, 120));

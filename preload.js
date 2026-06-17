@@ -50,6 +50,14 @@ contextBridge.exposeInMainWorld('sd', {
     // Phase 25W — fetch a SAM.gov description/resource link through the
     // credential boundary. The renderer never holds or sees the api key.
     samFetchSource:      (payload)  => ipcRenderer.invoke('govcon:sam-fetch-source', payload),
+    index: {
+      status:      ()        => ipcRenderer.invoke('govcon:index-status'),
+      getSettings: ()        => ipcRenderer.invoke('govcon:index-settings-get'),
+      saveSettings:(patch)   => ipcRenderer.invoke('govcon:index-settings-save', patch),
+      search:      (filters) => ipcRenderer.invoke('govcon:index-search', filters),
+      runNow:      (input)   => ipcRenderer.invoke('govcon:index-run-now', input),
+      clear:       ()        => ipcRenderer.invoke('govcon:index-clear')
+    },
     downloadSolicitationPackage: (payload) => ipcRenderer.invoke('govcon:download-solicitation-package', payload),
     extractSolicitationPackage:  (payload) => ipcRenderer.invoke('govcon:extract-solicitation-package', payload),
     explainSolicitationPackage:  (payload) => ipcRenderer.invoke('govcon:explain-solicitation-package', payload),

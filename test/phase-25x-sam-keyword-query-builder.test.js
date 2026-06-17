@@ -1,10 +1,9 @@
 /**
  * Phase 25X — SAM.gov keyword query builder.
  *
- * Proves the keyword is shaped INTO the SAM.gov API request (server-side
- * `q` full-text search) BEFORE any local filtering runs — so keyword search
- * does not depend only on local post-filtering. Also confirms the result
- * limit is honored and the api_key is never exposed.
+ * Proves the keyword is shaped INTO the SAM.gov API request as supported
+ * title metadata search BEFORE any local filtering runs. SourceDeck does
+ * not claim reliable full attachment search from one live SAM.gov response.
  *
  * Runs the real sam-search service with an injected fetch (no network).
  *
@@ -49,23 +48,22 @@ const SAMPLE_BODY = {
   ]
 };
 
-test('keyword maps to SAM.gov `q` param in the request URL', async () => {
+test('keyword maps to SAM.gov `title` param in the request URL', async () => {
   const urls = [];
   const svc = makeService(urls, SAMPLE_BODY);
   await svc.search({ keyword: 'janitorial', limit: 25 });
   assert.ok(urls.length, 'service issued a request');
   const u = new URL(urls[0]);
-  assert.strictEqual(u.searchParams.get('q'), 'janitorial', 'q param carries the keyword');
+  assert.strictEqual(u.searchParams.get('title'), 'janitorial', 'title param carries the keyword');
+  assert.ok(!u.searchParams.get('q'), 'q param is not used for the Phase 25AA title metadata path');
 });
 
-test('keyword is shaped server-side even with NAICS bypassed (keyword-only payload)', async () => {
+test('keyword is shaped server-side even with NAICS ignored', async () => {
   const urls = [];
   const svc = makeService(urls, SAMPLE_BODY);
-  // keyword-only renderer path deletes naics before IPC, so the service
-  // receives keyword with no naics — the q param must still be present.
   await svc.search({ keyword: 'janitorial', limit: 50 });
   const u = new URL(urls[0]);
-  assert.strictEqual(u.searchParams.get('q'), 'janitorial', 'q present without ncode');
+  assert.strictEqual(u.searchParams.get('title'), 'janitorial', 'title present without ncode');
   assert.ok(!u.searchParams.get('ncode'), 'no ncode when NAICS omitted');
 });
 
@@ -84,14 +82,14 @@ test('service returns the SAM.gov rows (no destructive NAICS targeting when none
   assert.strictEqual(out.results.length, 2, 'both keyword rows returned to the renderer');
 });
 
-test('source line maps keyword → q (static guard)', () => {
-  assert.ok(/params\.set\('q', filters\.keyword\)/.test(SAMSRC), 'q mapping present in service');
+test('source line maps keyword → title (static guard)', () => {
+  assert.ok(/params\.set\('title', filters\.keyword\)/.test(SAMSRC), 'title mapping present in service');
 });
 
-test('renderer copies keyword into the IPC payload and never deletes it in keyword-only mode', () => {
-  // ipcFilters copies all filter keys; only naics is deleted for keyword-only.
+test('renderer copies keyword into the IPC payload and never deletes it in ignore mode', () => {
+  // ipcFilters copies all filter keys; only naics is deleted for Ignore NAICS.
   assert.ok(/Object\.keys\(filters\)\.forEach\(function\(k\)\{ ipcFilters\[k\] = filters\[k\]; \}\)/.test(HTML), 'all filters copied to ipcFilters');
-  assert.ok(/if \(filters\.naicsMode === 'keyword-only'\)\{ delete ipcFilters\.naics; \}/.test(HTML), 'keyword-only deletes only naics, keeps keyword');
+  assert.ok(/filters\.naicsMode === 'ignore'[\s\S]*delete ipcFilters\.naics/.test(HTML), 'ignore deletes only naics, keeps keyword');
 });
 
 test('no raw api_key literal leaks in service or status path', () => {

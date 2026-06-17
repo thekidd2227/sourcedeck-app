@@ -2,7 +2,7 @@
 // ──────────────────────────────────────────────────────────────────────
 // When SAM.gov returns rows but exact NAICS filtering drops them all,
 // the buyer used to see a dead-end status message. Phase 25T replaces
-// that with an actionable panel: broader search · keyword-only · open
+// that with an actionable panel: broaden family · ignore NAICS · open
 // Find NAICS · save-anyway · change result count, plus a list of
 // related codes pulled from the local NAICS library.
 
@@ -24,8 +24,8 @@ assert(/data-gc-sam-zero-match="true"/.test(html),
 
 // ── Required actions, copy, helpers ─────────────────────────────────
 [
-  /Search broader related NAICS/,
-  /Clear NAICS and search keyword only/,
+  /Broaden NAICS family/,
+  /Ignore NAICS for this search/,
   /Open Find NAICS/,
   /Save this NAICS anyway/,
   /Change result count/,
@@ -36,12 +36,12 @@ assert(/data-gc-sam-zero-match="true"/.test(html),
 });
 
 // ── Status line carries mode descriptor ─────────────────────────────
-assert(/keyword-only search/.test(html),
-  'Status line can announce keyword-only search');
-assert(/broader NAICS '/.test(html) || /broader NAICS \+ filters\.naics/.test(html) || /'broader NAICS ' \+ filters\.naics/.test(html),
-  'Status line can announce broader NAICS + code');
-assert(/exact NAICS '/.test(html) || /'exact NAICS ' \+ filters\.naics/.test(html),
-  'Status line can announce exact NAICS + code');
+assert(/NAICS ignored by user/.test(html),
+  'Status line can announce ignored NAICS');
+assert(/broadened NAICS family/.test(html),
+  'Status line can announce broadened NAICS family + code');
+assert(/applied NAICS/.test(html),
+  'Status line can announce applied NAICS + code');
 
 // ── Saved profile entries carry verified/source flags ───────────────
 assert(/verified: !!row/.test(html),
@@ -51,7 +51,7 @@ assert(/source: row \? 'local-library' : 'manual'/.test(html),
 
 // ── Sandbox: drive a zero-match through gcTabSearchSam and confirm
 //    the panel renders, status line shows mode descriptor, and the
-//    Save-anyway / broader / keyword-only handlers flip state. ───────
+//    Save-anyway / broaden / ignore handlers flip state. ─────────────
 try {
   var iifeStart = html.lastIndexOf('(function(){', html.indexOf('window.gcTabSearchSam ='));
   var iifeEnd = html.indexOf('</script>', iifeStart);
@@ -71,7 +71,7 @@ try {
   function ge(id){ if (!inputs[id]) inputs[id] = fakeEl(); return inputs[id]; }
   ge('gc-tab-sam-limit')._value = '25';
   ge('gc-tab-f-naics')._value = '541618';
-  ge('gc-tab-f-naics-mode')._value = 'exact';
+  ge('gc-tab-f-naics-mode')._value = 'apply';
 
   var sandbox = {
     document: {
@@ -134,36 +134,36 @@ try {
 
     // Status line shows mode descriptor.
     var st = inputs['gc-tab-sam-search-status'];
-    assert(st && /exact NAICS 541618/.test(st._textContent),
-      'Status line announces exact NAICS 541618 mode (got "' + (st && st._textContent) + '")');
+    assert(st && /applied NAICS 541618/.test(st._textContent),
+      'Status line announces applied NAICS 541618 mode (got "' + (st && st._textContent) + '")');
     assert(st && /visible 0/.test(st._textContent),
       'Status line announces visible 0 count');
     assert(st && /returned 3/.test(st._textContent),
       'Status line announces returned 3 count');
 
-    // Broader handler flips the mode.
+    // Broaden handler flips the mode.
     sandbox.window.gcTabSamBroaderSearch();
     await Promise.resolve();
-    assert(inputs['gc-tab-f-naics-mode']._value === 'broader',
-      'gcTabSamBroaderSearch flips the mode selector to broader');
+    assert(inputs['gc-tab-f-naics-mode']._value === 'broaden',
+      'gcTabSamBroaderSearch flips the mode selector to broaden');
 
-    // Keyword-only handler flips the mode and preserves NAICS field.
-    inputs['gc-tab-f-naics-mode']._value = 'exact';
+    // Ignore handler flips the mode and preserves NAICS field.
+    inputs['gc-tab-f-naics-mode']._value = 'apply';
     sandbox.window.gcTabSamKeywordOnly();
     await Promise.resolve();
-    assert(inputs['gc-tab-f-naics-mode']._value === 'keyword-only',
-      'gcTabSamKeywordOnly flips the mode selector to keyword-only');
+    assert(inputs['gc-tab-f-naics-mode']._value === 'ignore',
+      'gcTabSamKeywordOnly flips the mode selector to ignore');
     assert(inputs['gc-tab-f-naics']._value === '541618',
       'gcTabSamKeywordOnly preserves the NAICS field value');
 
     // ApplyRelated populates the NAICS field with the chosen related code.
-    inputs['gc-tab-f-naics-mode']._value = 'broader';
+    inputs['gc-tab-f-naics-mode']._value = 'broaden';
     sandbox.window.gcTabSamApplyRelated('541330');
     await Promise.resolve();
     assert(inputs['gc-tab-f-naics']._value === '541330',
       'gcTabSamApplyRelated populates the NAICS field with the selected related code');
-    assert(inputs['gc-tab-f-naics-mode']._value === 'exact',
-      'gcTabSamApplyRelated resets mode to exact for the related-code search');
+    assert(inputs['gc-tab-f-naics-mode']._value === 'apply',
+      'gcTabSamApplyRelated resets mode to Apply NAICS for the related-code search');
 
     console.log(process.exitCode ? 'Phase 25T · NAICS zero-match UX: FAILED' : 'Phase 25T · NAICS zero-match UX: OK');
     process.exit(process.exitCode ? 1 : 0);

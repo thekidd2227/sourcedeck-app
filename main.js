@@ -312,6 +312,13 @@ ipcMain.handle('govcon:sam-fetch-source', async (_event, payload) => {
   return appApi.govcon.sam.fetchSource(payload || {});
 });
 
+ipcMain.handle('govcon:index-status',       () => appApi.govcon.index.status());
+ipcMain.handle('govcon:index-settings-get', () => appApi.govcon.index.settings.get());
+ipcMain.handle('govcon:index-settings-save', (_event, patch) => appApi.govcon.index.settings.save(patch || {}));
+ipcMain.handle('govcon:index-search',       (_event, filters) => appApi.govcon.index.search(sanitizeSamFilters(filters)));
+ipcMain.handle('govcon:index-run-now',      (_event, input) => appApi.govcon.index.runNow(input || {}));
+ipcMain.handle('govcon:index-clear',        () => appApi.govcon.index.clear());
+
 ipcMain.handle('govcon:download-solicitation-package', async (_event, payload) => {
   return appApi.govcon.packages.downloadSolicitationPackage(payload || {});
 });
@@ -501,15 +508,44 @@ function sanitizeSamFilters(f) {
     // typeOfSetAside param accepts a code so we also expose the
     // single-code form via setAsideCode below.
     var aliases = {
-      'sba':     ['small business', 'sba'],
-      'sdvosbc': ['sdvosb', 'service-disabled veteran'],
-      'wosb':    ['wosb', 'edwosb', 'women-owned'],
-      'hzc':     ['hubzone', 'hub zone'],
-      '8a':      ['8(a)', '8a'],
-      'vsa':     ['vosb', 'veteran-owned']
+      'sba':      ['small business', 'sba'],
+      'sdvosb':   ['sdvosb', 'service-disabled veteran'],
+      'sdvosbc':  ['sdvosb', 'service-disabled veteran'],
+      'sdvosbs':  ['sdvosb sole', 'service-disabled veteran'],
+      'wosb':     ['wosb', 'women-owned'],
+      'edwosb':   ['edwosb'],
+      'hubzone':  ['hubzone', 'hub zone'],
+      'hzc':      ['hubzone', 'hub zone'],
+      'hzs':      ['hubzone sole', 'hub zone sole'],
+      '8a':       ['8(a)', '8a'],
+      '8(a)':     ['8(a)', '8a'],
+      'vsa':      ['vosb', 'veteran-owned']
     };
     var key = String(sa).toLowerCase();
     return (aliases[key] || [key]).slice(0, 10);
+  }
+  function normalizeSetAsideCode(value) {
+    var key = String(value || '').trim().toLowerCase();
+    var map = {
+      'sdvosb': 'SDVOSBC',
+      'sdvosbc': 'SDVOSBC',
+      'sdvosb set-aside': 'SDVOSBC',
+      'sdvosbs': 'SDVOSBS',
+      'sdvosb sole source': 'SDVOSBS',
+      'hubzone': 'HZC',
+      'hzc': 'HZC',
+      'hubzone set-aside': 'HZC',
+      'hzs': 'HZS',
+      'hubzone sole source': 'HZS',
+      '8a': '8A',
+      '8(a)': '8A',
+      'wosb': 'WOSB',
+      'edwosb': 'EDWOSB',
+      'vosb': 'VSA',
+      'vsa': 'VSA'
+    };
+    if (map[key]) return map[key];
+    return /^[A-Z0-9]{1,12}$/i.test(String(value || '')) ? String(value).trim().toUpperCase().slice(0, 40) : '';
   }
   // dueWithinDays from the renderer means "closing within N days" —
   // i.e. responseDeadLine in [today, today+N]. SAM.gov accepts
@@ -569,12 +605,12 @@ function sanitizeSamFilters(f) {
     offset: typeof f.offset === 'number' ? Math.max(0, f.offset | 0) : 0,
     solicitationNumber: typeof f.solicitationNumber === 'string' ? f.solicitationNumber.trim().slice(0, 80) : '',
     noticeId: typeof f.noticeId === 'string' ? f.noticeId.trim().slice(0, 80) : '',
-    title: typeof f.title === 'string' ? f.title.trim().slice(0, 160) : '',
+    title: typeof f.title === 'string' ? f.title.trim().slice(0, 160) : (typeof f.keyword === 'string' ? f.keyword.trim().slice(0, 160) : ''),
     state: stateRaw,
     zip: typeof f.zip === 'string' ? f.zip.replace(/[^\d-]/g, '').slice(0, 10) : '',
     organizationName: typeof f.organizationName === 'string' ? f.organizationName.trim().slice(0, 120) : '',
     organizationCode: typeof f.organizationCode === 'string' ? f.organizationCode.trim().slice(0, 40) : '',
-    setAsideCode: typeof f.setAsideCode === 'string' ? f.setAsideCode.trim().slice(0, 40) : (typeof f.setAside === 'string' && /^[A-Z0-9]{1,8}$/i.test(f.setAside) ? f.setAside.trim().toUpperCase().slice(0, 40) : ''),
+    setAsideCode: typeof f.setAsideCode === 'string' ? f.setAsideCode.trim().slice(0, 40) : normalizeSetAsideCode(f.setAside),
     responseFrom: responseFrom,
     responseTo: responseTo,
     agencies: f.agencies && typeof f.agencies === 'object' ? {
@@ -583,4 +619,28 @@ function sanitizeSamFilters(f) {
     } : { include: [], exclude: [] },
     setAsides: coerceSetAsides(f)
   };
+}
+
+function normalizeSamSetAsideCode(value) {
+  var key = String(value || '').trim().toLowerCase();
+  var map = {
+    'sdvosb': 'SDVOSBC',
+    'sdvosbc': 'SDVOSBC',
+    'sdvosb set-aside': 'SDVOSBC',
+    'sdvosbs': 'SDVOSBS',
+    'sdvosb sole source': 'SDVOSBS',
+    'hubzone': 'HZC',
+    'hzc': 'HZC',
+    'hubzone set-aside': 'HZC',
+    'hzs': 'HZS',
+    'hubzone sole source': 'HZS',
+    '8a': '8A',
+    '8(a)': '8A',
+    'wosb': 'WOSB',
+    'edwosb': 'EDWOSB',
+    'vosb': 'VSA',
+    'vsa': 'VSA'
+  };
+  if (map[key]) return map[key];
+  return /^[A-Z0-9]{1,12}$/i.test(String(value || '')) ? String(value).trim().toUpperCase().slice(0, 40) : '';
 }

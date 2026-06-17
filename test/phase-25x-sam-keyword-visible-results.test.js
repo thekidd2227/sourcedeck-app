@@ -1,13 +1,10 @@
 /**
  * Phase 25X — SAM.gov keyword search produces VISIBLE results.
  *
- * Regression target (P0): a keyword search ("janitorial") returned 25 rows
- * from SAM.gov but showed 0 because the local keyword relevance backstop
- * rejected every row. Root cause: SAM.gov's v2 list payload delivers the
- * opportunity `description` only as a LINK, never inline text, so the local
- * haystack (title/agency/NAICS/solnum) cannot see the keyword even though
- * SAM.gov's server-side `q` full-text search matched it in the description
- * body. The local matcher therefore must NEVER drop server-relevant rows.
+ * Phase 25AA changes the keyword trust model: SourceDeck uses SAM.gov title
+ * metadata search and only shows rows it can verify against fields it has
+ * locally. Description-link-only rows are not treated as keyword matches
+ * until description text is fetched/indexed.
  *
  * This test runs the real renderer IIFE in a sandbox and drives
  * gcTabSearchSam end-to-end against mock SAM responses.
@@ -97,10 +94,7 @@ function makeSandbox(opts){
 function rowCount(s){ return (s.results._innerHTML.match(/data-gc-sam-fresh-row="/g) || []).length; }
 
 async function run(){
-  // The DESCRIPTION-link scenario: SAM.gov matched "janitorial" in the
-  // description body server-side, but the list rows carry description ONLY
-  // as a URL and the titles do NOT contain the keyword. The OLD code hid
-  // all of these. They MUST now be visible.
+  // Description-link-only rows do not carry local searchable text.
   const descLinkRows = [];
   for (let i = 0; i < 25; i++){
     descLinkRows.push({
@@ -114,17 +108,12 @@ async function run(){
     });
   }
 
-  // ── keyword-only mode: the user-reported failure exactly ──────────────
-  let s = makeSandbox({ inputs: { keyword: 'janitorial', naics: '561720, 238', naicsMode: 'keyword-only' }, rows: descLinkRows, limit: 25 });
+  let s = makeSandbox({ inputs: { keyword: 'janitorial', naics: '561720, 238', naicsMode: 'ignore' }, rows: descLinkRows, limit: 25 });
   await s.sandbox.window.gcTabSearchSam();
   for (let i = 0; i < 8; i++) await Promise.resolve();
-  assert(rowCount(s) === 25, 'keyword-only: all 25 SAM.gov rows are VISIBLE (got ' + rowCount(s) + ', was 0 before fix)');
-  assert(/visible 25/.test(s.status.textContent), 'status line reports visible 25, not visible 0');
-  assert(/keyword: janitorial/.test(s.status.textContent), 'status line surfaces the active keyword');
-  assert(/keyword matched by SAM\.gov full-text/.test(s.status.textContent), 'status explains rows came from server-side relevance');
-  assert(s.zero._innerHTML === '' || s.zero.style.display === 'none', 'no false "0 matches" zero-match panel shown');
-  // keyword-only must NOT pass NAICS to SAM.gov
-  assert(!s.captured.ipcFilters.naics, 'keyword-only strips NAICS from the IPC payload');
+  assert(rowCount(s) === 0, 'ignore NAICS: description-link-only keyword rows are hidden until verified (got ' + rowCount(s) + ')');
+  assert(/visible 0/.test(s.status.textContent) || /No SAM\.gov opportunities matched/.test(s.status.textContent), 'status line reports visible 0');
+  assert(!s.captured.ipcFilters.naics, 'Ignore NAICS strips NAICS from the IPC payload');
   assert(s.captured.ipcFilters.keyword === 'janitorial', 'keyword is still sent to SAM.gov in the IPC payload');
 
   // ── keyword present in TITLE: locally verifiable, still all visible ───
@@ -135,12 +124,12 @@ async function run(){
   assert(rowCount(s2) === 10, 'title-match: all 10 rows visible (got ' + rowCount(s2) + ')');
   assert(/keyword matched locally/.test(s2.status.textContent), 'status notes locally-verified keyword match');
 
-  // ── mixed: 3 title-hits + 22 description-only — ALL 25 visible, hits first
+  // ── mixed: 3 title-hits + 22 description-link-only — only verified hits visible
   const mixed = titleRows.slice(0, 3).concat(descLinkRows.slice(0, 22));
-  let s3 = makeSandbox({ inputs: { keyword: 'janitorial', naicsMode: 'keyword-only' }, rows: mixed, limit: 25 });
+  let s3 = makeSandbox({ inputs: { keyword: 'janitorial', naicsMode: 'ignore' }, rows: mixed, limit: 25 });
   await s3.sandbox.window.gcTabSearchSam();
   for (let i = 0; i < 8; i++) await Promise.resolve();
-  assert(rowCount(s3) === 25, 'mixed set: ALL 25 rows visible — no genuine row hidden (got ' + rowCount(s3) + ')');
+  assert(rowCount(s3) === 3, 'mixed set: only 3 locally verified rows visible (got ' + rowCount(s3) + ')');
   const diag = s3.sandbox.window._samGetFilterDiag();
   assert(diag.keywordStrong === 3 && diag.keywordFallback === false, 'diag: 3 strong hits, no fallback in mixed set');
   // strong rows promoted to top
@@ -149,7 +138,7 @@ async function run(){
 
   // ── structural filter (set-aside) genuinely removes all → honest 0 ────
   const saRows = descLinkRows.map(function(r){ return Object.assign({}, r, { typeOfSetAsideDescription: 'Total Small Business' }); });
-  let s4 = makeSandbox({ inputs: { keyword: 'janitorial', setAside: 'wosb', naicsMode: 'keyword-only' }, rows: saRows, limit: 25 });
+  let s4 = makeSandbox({ inputs: { keyword: 'janitorial', setAside: 'wosb', naicsMode: 'ignore' }, rows: saRows, limit: 25 });
   await s4.sandbox.window.gcTabSearchSam();
   for (let i = 0; i < 8; i++) await Promise.resolve();
   assert(rowCount(s4) === 0, 'set-aside mismatch: honestly 0 visible (the set-aside, not the keyword, removed them)');
