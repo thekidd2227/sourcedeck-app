@@ -33,11 +33,11 @@ test('saved pursuit row exposes the full action set', () => {
   assert.ok(/Refresh Source Details/.test(HTML), 'Refresh Source Details present (for older pursuits missing metadata)');
 });
 
-test('Source Materials panel shows description + resource links + POC', () => {
-  assert.ok(/Resource links \/ attachments/.test(HTML), 'resource links section');
-  assert.ok(/Fetch Description/.test(HTML), 'fetch description');
+test('Attachments panel shows description + resource links + POC', () => {
+  assert.ok(/Attachments listed by SAM\.gov/.test(HTML), 'attachments section');
+  assert.ok(/Download Solicitation Package/.test(HTML), 'package download');
   assert.ok(/Point of contact/.test(HTML), 'point of contact');
-  assert.ok(/Import to SourceDeck/.test(HTML), 'import action');
+  assert.ok(/Download Package/.test(HTML), 'download action');
 });
 
 test('Award / Incumbent Clues surfaced on the pursuit', () => {

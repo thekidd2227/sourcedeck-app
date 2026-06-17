@@ -1,9 +1,9 @@
 /**
- * Phase 25W — Solicitation Workspace source intake.
+ * Phase 25W/25AB — Solicitation Center package intake.
  *
- * Asserts saved pursuits feed the Solicitation Workspace selector, selecting
- * one loads its source metadata + Source Materials panel, and Extract
- * Requirements only proceeds when source text/material exists.
+ * Asserts saved pursuits feed the Solicitation Center selector, selecting
+ * one loads its source metadata + Attachments panel, and Extract
+ * Requirements only proceeds when package/upload text exists.
  *
  * Run:  node test/phase-25w-solicitation-workspace-source-intake.test.js
  */
@@ -21,18 +21,18 @@ function test(name, fn) {
   catch (e) { failed++; console.log('  ❌ ' + name + ': ' + e.message); }
 }
 
-console.log('\n=== Phase 25W — Solicitation Workspace source intake ===\n');
+console.log('\n=== Phase 25W/25AB — Solicitation Center package intake ===\n');
 
-test('saved pursuits feed the Solicitation Workspace selector', () => {
+test('saved pursuits feed the Solicitation Center selector', () => {
   assert.ok(/id="gc-sol-opp-select"/.test(HTML), 'solicitation selector present');
   assert.ok(/window\.sd\.govcon\.opportunities\.list/.test(HTML), 'reads saved opportunities');
   assert.ok(/gcV25SolHook/.test(HTML), 'tab hook populates selector');
 });
 
-test('selecting a saved pursuit loads source metadata + Source Materials panel', () => {
+test('selecting a saved pursuit loads source metadata + Attachments panel', () => {
   assert.ok(/gcV25RenderSolMeta/.test(HTML), 'metadata renderer present');
-  assert.ok(/id="gc-sol-source-materials"/.test(HTML), 'Source Materials panel present');
-  assert.ok(/id="gc-sol-source-materials-body"/.test(HTML), 'Source Materials body present');
+  assert.ok(/id="gc-sol-source-materials"/.test(HTML), 'Attachments panel present');
+  assert.ok(/id="gc-sol-source-materials-body"/.test(HTML), 'Attachments body present');
   assert.ok(/gcW25RenderWorkspaceSource/.test(HTML), 'workspace source renderer present');
 });
 
@@ -44,14 +44,14 @@ test('workspace source panel shows fetched description / resource materials', ()
 
 test('Extract Requirements is enabled only when source text/material exists', () => {
   const start = HTML.indexOf('window.gcSolExtract = function');
-  const body = HTML.slice(start, start + 900);
+  const body = HTML.slice(start, start + 1600);
   assert.ok(/gcW25CollectSourceText\(\)/.test(body), 'extract pulls linked source text');
-  assert.ok(/Paste solicitation text or fetch\/import source materials before extraction\./.test(body), 'source-material-needed message present');
+  assert.ok(/Download a solicitation package or upload a supported solicitation file before extraction\./.test(body), 'package-needed message present');
 });
 
-test('empty Source Materials state guides the user to fetch/import/upload/paste', () => {
-  assert.ok(/No source material has been fetched yet\. Use Fetch Description, download resource links, upload a solicitation file, or paste text\./.test(HTML),
-    'empty source-material guidance present');
+test('empty Attachments state guides the user to package/upload flow', () => {
+  assert.ok(/No solicitation package selected yet\. Select a saved pursuit, download its SAM\.gov package, or upload a solicitation package\./.test(HTML),
+    'empty package guidance present');
 });
 
 console.log(`\n=== ${failed === 0 ? 'PASS' : 'FAIL'} — ${passed}/${passed + failed} Phase 25W solicitation-workspace-source-intake checks ===\n`);

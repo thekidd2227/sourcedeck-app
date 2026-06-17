@@ -3,7 +3,7 @@
  *
  * Asserts the local extractor turns source text into a structured
  * Solicitation Summary + FAR-aligned sections + compliance matrix starter,
- * that Extract Requirements combines pasted text with linked source text,
+ * that Extract Requirements prefers package extraction and retains linked source fallback,
  * and that no legal-certification claim is made.
  *
  * Run:  node test/phase-25w-extract-requirements-linked-source.test.js
@@ -24,9 +24,10 @@ function test(name, fn) {
 
 console.log('\n=== Phase 25W — Extract Requirements linked source ===\n');
 
-test('Extract Requirements combines pasted text + linked source text', () => {
+test('Extract Requirements prefers package extraction + keeps linked source fallback', () => {
   const start = HTML.indexOf('window.gcSolExtract = function');
-  const body = HTML.slice(start, start + 900);
+  const body = HTML.slice(start, start + 1800);
+  assert.ok(/gcABExtractPackageToCenter/.test(body), 'package extraction path present');
   assert.ok(/gcW25CollectSourceText\(\)/.test(body), 'extract pulls linked description/imported text');
   assert.ok(/extractFromText\(text\)/.test(body), 'extract runs the local extractor over combined text');
 });

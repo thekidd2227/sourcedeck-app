@@ -123,9 +123,9 @@ test('stale "Solicitation Workspace placeholder — Phase 22C ships the full sur
 });
 
 // 8. Solicitation Workspace current copy exists.
-test('current Solicitation Workspace open copy exists', () => {
-  assert.ok(/Open the Solicitation Workspace below to extract instructions, requirements, deadlines, risks, and a compliance matrix\./.test(HTML),
-    'updated "Open the Solicitation Workspace below…" copy missing');
+test('current Solicitation Center open copy exists', () => {
+  assert.ok(/Open the Solicitation Center below to extract instructions, requirements, deadlines, risks, and a compliance matrix\./.test(HTML),
+    'updated "Open the Solicitation Center below…" copy missing');
 });
 
 // 9. Submission readiness empty state is not misleading.
