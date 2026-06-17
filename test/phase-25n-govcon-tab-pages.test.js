@@ -65,9 +65,9 @@ assert(/data-gc-find-action="search-sam"/.test(html),
   'Search SAM.gov action is tagged');
 assert(/data-gc-find-action="upload-solicitation"/.test(html),
   'Upload Solicitation action is tagged');
-assert(/data-gc-find-action="paste-solicitation"/.test(html),
-  'Paste Solicitation Text action is tagged');
-assert(/Search SAM\.gov, upload a solicitation, or paste solicitation text to begin\./.test(html),
+assert(/data-gc-find-action="download-package"/.test(html),
+  'Download SAM.gov Package action is tagged');
+assert(/Search SAM\.gov, upload a solicitation, or download a saved SAM\.gov package to begin\./.test(html),
   'Find Opportunities empty-state copy is present');
 
 // ── SAM.gov key presence-only status on the tab ─────────────────────

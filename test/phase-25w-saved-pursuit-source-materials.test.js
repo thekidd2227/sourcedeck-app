@@ -3,7 +3,7 @@
  *
  * Asserts saving/pursuing a SAM.gov result preserves the source metadata
  * needed to work the solicitation later, that Saved Pursuits rows expose the
- * Source Materials actions, and that the raw api_key is never persisted.
+ * attachments/package actions, and that the raw api_key is never persisted.
  *
  * Static string assertions on sourcedeck.html.
  *
@@ -52,20 +52,21 @@ test('no literal api_key concatenation into a stored field', () => {
   assert.ok(!/descriptionLink:[^,]*api_key=/.test(UPSERT), 'no api_key in descriptionLink literal');
 });
 
-test('Saved Pursuits row exposes Source Materials actions', () => {
+test('Saved Pursuits row exposes Attachments / Package actions', () => {
   assert.ok(/gcW25ViewDetails\(/.test(HTML), 'View Details action');
   assert.ok(/gcW25OpenNotice\(/.test(HTML), 'Open SAM.gov Notice action');
   assert.ok(/Open SAM\.gov Notice/.test(HTML), 'Open SAM.gov Notice label');
-  assert.ok(/gcW25ToggleSource\(/.test(HTML), 'Source Materials action');
-  assert.ok(/Source Materials/.test(HTML), 'Source Materials label');
+  assert.ok(/gcW25ToggleSource\(/.test(HTML), 'View Attachments action');
+  assert.ok(/View Attachments/.test(HTML), 'View Attachments label');
+  assert.ok(/gcABDownloadPackage\(/.test(HTML), 'Download package action');
   assert.ok(/gcW25RefreshSource\(/.test(HTML), 'Refresh Source Details action');
   assert.ok(/Refresh Source Details/.test(HTML), 'Refresh Source Details label');
-  assert.ok(/gcW25SendToWorkspace\(/.test(HTML), 'Send to Solicitation Workspace action');
+  assert.ok(/gcW25SendToWorkspace\(/.test(HTML), 'Send to Solicitation Center action');
 });
 
-test('Source Materials panel renders description + resource links when present', () => {
+test('Attachments panel renders description + resource links when present', () => {
   assert.ok(/gcW25RenderSourcePanel|function renderSourcePanel\(/.test(HTML), 'source panel renderer present');
-  assert.ok(/Resource links \/ attachments/.test(HTML), 'resource links section');
+  assert.ok(/Attachments listed by SAM\.gov/.test(HTML), 'attachments section');
   assert.ok(/SAM\.gov source link was not included for this record\. Try/.test(HTML), 'no-link fallback message');
 });
 

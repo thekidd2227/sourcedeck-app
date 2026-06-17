@@ -53,7 +53,7 @@ test('selecting a saved pursuit loads solicitation metadata', () => {
 
 // 4. Empty-state copy when no saved pursuits.
 test('empty-state copy when no saved solicitations', () => {
-  assert.ok(/No saved solicitations yet\. Save or mark pursue from Find Opportunities, upload a solicitation, or paste solicitation text/.test(HTML),
+  assert.ok(/No saved solicitations yet\. Save or mark pursue from Find Opportunities, upload a solicitation, or download a package/.test(HTML),
     'empty-state copy present');
 });
 

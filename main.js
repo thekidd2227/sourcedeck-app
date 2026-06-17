@@ -38,7 +38,8 @@ const appApi = createAppApi({
   store,
   credentials,
   audit,
-  fetchFn: typeof fetch === 'function' ? fetch : null
+  fetchFn: typeof fetch === 'function' ? fetch : null,
+  userDataPath: app.getPath('userData')
 });
 
 // ─── First-run privacy scrub ──────────────────────────────────────────
@@ -309,6 +310,27 @@ ipcMain.handle('govcon:sam-search', async (_event, filters) => {
 // renderer receives text + a key-free sourceUrlSafe, never the api key.
 ipcMain.handle('govcon:sam-fetch-source', async (_event, payload) => {
   return appApi.govcon.sam.fetchSource(payload || {});
+});
+
+ipcMain.handle('govcon:download-solicitation-package', async (_event, payload) => {
+  return appApi.govcon.packages.downloadSolicitationPackage(payload || {});
+});
+
+ipcMain.handle('govcon:extract-solicitation-package', async (_event, payload) => {
+  return appApi.govcon.packages.extractSolicitationPackage(payload || {});
+});
+
+ipcMain.handle('govcon:explain-solicitation-package', async (_event, payload) => {
+  return appApi.govcon.packages.explainSolicitationPackage(payload || {});
+});
+
+ipcMain.handle('govcon:open-solicitation-package-folder', async (_event, packagePath) => {
+  const root = path.join(app.getPath('userData'), 'govcon', 'solicitations');
+  const target = path.resolve(String(packagePath || ''));
+  const rel = path.relative(root, target);
+  if (!target || rel.startsWith('..') || path.isAbsolute(rel)) return { ok: false, reason: 'invalid_package_path' };
+  try { await shell.openPath(target); return { ok: true }; }
+  catch (e) { return { ok: false, reason: 'open_failed' }; }
 });
 
 // Phase 25Y — open an external URL in the user's default browser. http(s)

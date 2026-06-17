@@ -40,8 +40,8 @@ test('saved pursuit + solicitation shortcuts open it', () => {
 test('selected solicitation loads + source selection exists', () => {
   assert.ok(/id="gc-fi-sol-select"/.test(HTML), 'saved pursuit source selector present');
   assert.ok(/gcFiSelectSolicitation/.test(HTML), 'selection loads solicitation');
-  assert.ok(/id="gc-fi-text"/.test(HTML), 'paste solicitation text area present');
-  assert.ok(/Fetch\/import solicitation source material or paste solicitation text before generating questions\./.test(HTML), 'no-source guidance present');
+  assert.ok(/id="gc-fi-text"/.test(HTML), 'local notes text area present');
+  assert.ok(/Download the solicitation package or add local notes before generating questions\./.test(HTML), 'no-source guidance present');
 });
 
 test('generate + draft controls exist', () => {

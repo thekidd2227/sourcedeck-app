@@ -1,8 +1,8 @@
 // Phase 25M · Proposal Workspace solicitation selector
 // ──────────────────────────────────────────────────────────────────────
 // Asserts Proposal Workspace exposes a solicitation selector with
-// three intake routes (SAM.gov imported, manually uploaded, pasted
-// text), an Upload / Paste / Extract / Clear action row, and that
+// package/upload intake routes (SAM.gov imported/downloaded packages and
+// manually uploaded files), an Upload / Extract / Clear action row, and that
 // Extract Key Details renders 6 FAR-aligned sections each with Draft
 // / Approve / Needs revision / Retry with notes controls.
 
@@ -34,7 +34,6 @@ assert(/id="pw-sol-current-status"/.test(html),
 // ── Required action buttons + handlers ──────────────────────────────
 const requiredActions = [
   { id: 'pw-sol-upload-btn',  attr: 'data-pw-sol-action="upload"',  handler: 'pwSolOpenFilePicker' },
-  { id: 'pw-sol-paste-btn',   attr: 'data-pw-sol-action="paste"',   handler: 'pwSolTogglePasteArea' },
   { id: 'pw-sol-extract-btn', attr: 'data-pw-sol-action="extract"', handler: 'pwSolExtractKeyDetails' },
   { id: 'pw-sol-clear-btn',   attr: 'data-pw-sol-action="clear"',   handler: 'pwSolClearSelected' }
 ];
@@ -46,6 +45,10 @@ requiredActions.forEach(function(a){
   assert(html.includes('window.' + a.handler + ' ='),
     'Handler window.' + a.handler + ' is defined');
 });
+assert(!/id="pw-sol-paste-btn"/.test(html),
+  'Paste button is removed from runtime intake');
+assert(html.includes('window.pwSolTogglePasteArea ='),
+  'Deprecated paste handler remains for compatibility');
 
 // ── File input accepts pdf, docx, txt, md ────────────────────────────
 const m = html.match(/id="pw-sol-file"[^>]*accept="([^"]+)"/);
@@ -56,12 +59,12 @@ if (m){
   });
 }
 
-// ── Paste textarea present ───────────────────────────────────────────
-assert(/id="pw-sol-paste-text"/.test(html),
-  'Paste textarea exists');
+// ── Paste textarea removed ───────────────────────────────────────────
+assert(!/id="pw-sol-paste-text"/.test(html),
+  'Paste textarea is removed from runtime intake');
 
 // ── Empty-state copy ─────────────────────────────────────────────────
-assert(/No solicitation selected\. Search SAM\.gov, upload a solicitation, or paste solicitation text to begin\./.test(html),
+assert(/No solicitation selected\. Search SAM\.gov, download a package, or upload a solicitation to begin\./.test(html),
   'Empty state copy matches the Phase 25M spec');
 
 // ── 6 FAR-aligned categories registered in the renderer ─────────────
@@ -96,7 +99,7 @@ assert(/Phase 25M — Solicitation Intake/.test(html),
 // ── Dashboard "Start a pursuit" card routes here ─────────────────────
 assert(/data-dash-card="start-pursuit"/.test(html),
   'Dashboard "Start a pursuit" card exists');
-const startActions = ['search-sam','upload-solicitation','paste-solicitation'];
+const startActions = ['search-sam','upload-solicitation','download-package'];
 startActions.forEach(function(a){
   const re = new RegExp('data-dash-start-action="' + a + '"');
   assert(re.test(html),
