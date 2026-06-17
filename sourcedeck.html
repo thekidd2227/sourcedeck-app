@@ -989,9 +989,9 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             </div>
             <!-- Phase 25Y — Contract Awards shortcut. -->
             <div class="card" data-dash-card="contract-awards" style="padding:11px 13px;background:var(--panel2,#0f1e32);border:1px solid rgba(176,138,60,0.20)">
-              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold2);margin-bottom:5px">Contract Awards</div>
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold2);margin-bottom:5px">Federal Procurement Data</div>
               <div style="font:600 12px/1.4 'Syne',sans-serif;color:var(--text);margin-bottom:7px">Research existing contracts &amp; previous awards.</div>
-              <button type="button" class="btn btn-ghost" data-dash-action="contract-awards" onclick="openTab('govcon'); setTimeout(function(){ if (typeof gcTabSwitch === 'function') gcTabSwitch('contract-awards'); }, 80);" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Contract Awards">Open Contract Awards →</button>
+              <button type="button" class="btn btn-ghost" data-dash-action="contract-awards" onclick="openTab('govcon'); setTimeout(function(){ if (typeof gcTabSwitch === 'function') gcTabSwitch('contract-awards'); }, 80);" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Federal Procurement Data">Open Federal Procurement Data →</button>
             </div>
             <div class="card" data-dash-card="active-pursuits" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
               <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Active pursuits</div>
@@ -1781,6 +1781,27 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div class="pane-body">
         <div id="settings-workspace-readiness-banner" class="workspace-readiness" hidden></div>
 
+        <!-- Phase 25R — Audit Log relocated here from GovCon. Same content,
+             no functional change to logging. -->
+        <div class="card mb-14" id="settings-audit-log" data-settings-audit-log="true">
+          <div class="sl">Audit Log</div>
+          <div style="padding:6px 0;font-size:12px;line-height:1.6;color:var(--sub)">
+            <p style="margin-top:0">Local-only evidence trail of AI, storage, context, and sensitive-action events. Never includes API keys, raw prompts, or document contents.</p>
+            <p style="margin-bottom:0">Audit log entries appear here as they are recorded. SourceDeck does not upload audit log entries anywhere.</p>
+          </div>
+        </div>
+
+        <!-- Phase 25R — consolidated disclaimer relocated out of operational
+             screens into Settings → Legal (also mirrored in Help / FAQ). -->
+        <div class="card mb-14" id="settings-legal" data-settings-legal="true">
+          <div class="sl">Legal &amp; Disclaimers</div>
+          <div style="padding:6px 0;font-size:12px;line-height:1.6;color:var(--sub)">
+            <p style="margin-top:0">SourceDeck helps you research, organize, and draft GovCon pursuit work. Drafts produced in SourceDeck are not legal review, not compliance certification, and not final proposals.</p>
+            <p>SourceDeck does not send, submit, or upload anything to SAM.gov, PIEE, eBuy, GSA, agency portals, email, or any external service. You are responsible for every external action, including verifying solicitation requirements and taking any finalized material outside SourceDeck.</p>
+            <p style="margin-bottom:0">Award and web-intel data depend on available public sources — verify before relying on it.</p>
+          </div>
+        </div>
+
         <div class="grid-2">
           <div>
             <div class="card mb-14">
@@ -2282,15 +2303,15 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div style="display:flex;flex-wrap:wrap;gap:5px;align-items:center;font-family:'IBM Plex Mono',monospace;font-size:10.5px;letter-spacing:0.05em;text-transform:uppercase">
             <button type="button" class="gc-tab-btn active" role="tab" aria-selected="true" data-gc-tab="find-opportunities" onclick="gcTabSwitch('find-opportunities')" style="padding:6px 12px;border-radius:6px;background:rgba(176,138,60,0.14);border:1px solid rgba(176,138,60,0.45);color:var(--text);cursor:pointer">Find Opportunities</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="saved-pursuits" onclick="gcTabSwitch('saved-pursuits')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Saved Pursuits</button>
-            <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="solicitation" onclick="gcTabSwitch('solicitation')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Solicitation</button>
+            <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="solicitation" onclick="gcTabSwitch('solicitation')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Solicitation Center</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="vendors" onclick="gcTabSwitch('vendors')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Vendors</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="pricing" onclick="gcTabSwitch('pricing')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Pricing</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="past-performance" onclick="gcTabSwitch('past-performance')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Past Performance</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="prime-partners" onclick="gcTabSwitch('prime-partners')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Prime Partners</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="far-reference" onclick="gcTabSwitch('far-reference')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">FAR Reference</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="submission-readiness" onclick="gcTabSwitch('submission-readiness')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Submission Readiness</button>
-            <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="contract-awards" onclick="gcTabSwitch('contract-awards')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Contract Awards</button>
-            <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="audit-log" onclick="gcTabSwitch('audit-log')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Audit Log</button>
+            <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="contract-awards" onclick="gcTabSwitch('contract-awards')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Federal Procurement Data</button>
+            <!-- Phase 25R — Audit Log moved out of GovCon to Settings → Audit Log. -->
           </div>
         </nav>
 
@@ -2558,7 +2579,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           </div>
           <div id="gc-tab-saved-list" data-gc-saved-list="true" style="display:none"></div>
           <div style="margin-top:14px;font-size:10px;color:var(--muted);line-height:1.55">
-            Internal review only. SourceDeck does not submit, send, or upload.
+            Draft-only. SourceDeck does not submit, upload, or send.
           </div>
         </section>
 
@@ -2597,7 +2618,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <section data-gc-tab-page="contract-awards" id="gc-tab-contract-awards" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;flex-wrap:wrap">
             <div>
-              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">GovCon · Contract Awards</div>
+              <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">GovCon · Federal Procurement Data</div>
               <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text)">Research existing contracts &amp; previous awards</div>
               <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px">Award data depends on available public sources. Verify before relying on it. SourceDeck does not fabricate awards and does not claim a complete incumbent search.</div>
             </div>
@@ -2648,14 +2669,10 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div style="margin-top:12px;font-size:10px;color:var(--muted);line-height:1.55">Award data depends on available public sources · verify before relying on it · no complete-incumbent-search claim · no auto-search on load · no send/submit/upload.</div>
         </section>
 
-        <section data-gc-tab-page="audit-log" id="gc-tab-audit-log" style="display:none">
-          <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">GovCon · Audit Log</div>
-          <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:10px">Local audit trail</div>
-          <div style="padding:18px 22px;background:var(--panel2,#0f1e32);border:1px solid var(--border);border-radius:8px;font-size:12px;line-height:1.6;color:var(--sub)">
-            <p style="margin-top:0">Local-only evidence trail of AI, storage, context, and sensitive-action events. Never includes API keys, raw prompts, or document contents.</p>
-            <p>Audit log entries appear here as they are recorded. SourceDeck does not upload audit log entries anywhere.</p>
-          </div>
-        </section>
+        <!-- Phase 25R — Audit Log removed from GovCon and relocated to
+             Settings → Audit Log (#settings-audit-log). No functional change
+             to logging. -->
+        <div data-gc-tab-page="hidden-internal" style="display:none"></div>
 
         <!-- ═══════════════════════════════════════════════════════════════
              PHASE 23B — GovCon Mode Indicator
@@ -4016,10 +4033,9 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Ask FAR questions, review clauses, and check draft materials against acquisition.gov references</div>
           </div>
 
-          <div style="background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:8px;padding:9px 13px;margin-bottom:14px;font-size:11px;color:var(--text);line-height:1.55">
-            <strong style="color:var(--gold2)">Internal review only.</strong>
-            SourceDeck provides internal review support only. This is not legal advice. Verify against the current solicitation and acquisition.gov FAR text before relying on it. SourceDeck does not certify any document as FAR-compliant.
-          </div>
+          <!-- Phase 25R — internal-review banner relocated to Settings → Legal
+               and Help / FAQ. Concise footer only on this operational screen. -->
+          <div style="margin-bottom:14px;font-size:10px;color:var(--muted);line-height:1.5">Reference support. Verify against the current solicitation and acquisition.gov FAR text. See Settings → Legal for full disclaimers.</div>
 
           <!-- ═══════ A. FAR Browse / Reference ═══════ -->
           <div class="gc-or-panel" data-section="govcon-far-browse" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
@@ -4422,20 +4438,72 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
     -->
     <div class="tab-pane" id="tab-execution">
       <div class="pane-hdr">
-        <div>
-          <div class="pane-title"><span class="brief-head">Proposal Workspace</span></div>
-          <div class="pane-sub">Section-by-section internal review drafting · Human approval gate on every section</div>
-        </div>
+        <div><!-- Phase 25R — redundant in-page H1/subtitle removed; sidebar already labels this Proposal Workspace. --></div>
         <div class="pane-actions">
-          <button class="btn btn-ghost" onclick="pwExportInternalReview()" title="Export internal review markdown of all approved/finalized sections (local file only)">↗ Export Internal Review Draft (Markdown)</button>
-          <button class="btn btn-ghost" onclick="pwExportInternalReviewWord()" title="Export internal review as a Word-compatible document (local file only — no submission)">📄 Export Internal Review Draft (Word)</button>
-          <button class="btn btn-ghost" onclick="pwExportInternalReviewPdf()" title="Export internal review as PDF via the browser print dialog (local file only — no submission)">📑 Export Internal Review Draft (PDF)</button>
+          <button class="btn btn-ghost" onclick="pwExportInternalReview()" title="Export your proposal draft (Markdown, local file only)">↗ Export Proposal Draft (Markdown)</button>
+          <button class="btn btn-ghost" onclick="pwExportInternalReviewWord()" title="Export your proposal draft as a Word-compatible document (local file only — no submission)">📄 Export Proposal Draft (Word)</button>
+          <button class="btn btn-ghost" onclick="pwExportInternalReviewPdf()" title="Export your proposal draft as PDF via the browser print dialog (local file only — no submission)">📑 Export Proposal Draft (PDF)</button>
         </div>
       </div>
-      <div class="pane-body">
-        <div id="pw-disclaimer" style="background:rgba(176,138,60,0.08);border:1px solid rgba(176,138,60,0.30);border-radius:8px;padding:10px 14px;margin-bottom:14px;font-size:11px;color:var(--text);line-height:1.55">
-          <strong style="color:var(--gold2)">Internal review only.</strong>
-          Drafts produced here are not legal review, not compliance certification, and not final proposals. SourceDeck does not send, submit, or upload anything to SAM.gov, PIEE, eBuy, GSA, or any agency portal. The user is responsible for every external action.
+      <div class="pane-body" id="pw-body" style="display:grid;grid-template-columns:210px 1fr;gap:16px;align-items:start">
+        <!-- Phase 25R — Proposal Workspace left-rail sub-tabs. Each opens its
+             own panel (panel switch, not scroll anchors). Shared sections
+             (Past Performance, Pricing, Compliance Matrix, etc.) reuse the
+             canonical GovCon surfaces via a jump button — logic is not
+             duplicated. The first panel shown is Solicitation Intake. -->
+        <div id="pw-subtab-rail" data-pw-subtab-rail="true" role="tablist" style="grid-column:1;display:flex;flex-direction:column;gap:3px;position:sticky;top:0">
+            <button type="button" class="pw-subtab-btn active" role="tab" data-pw-subtab="solicitation-intake" aria-selected="true" onclick="pwSubtab('solicitation-intake')" style="text-align:left;padding:7px 10px;border-radius:6px;border:1px solid rgba(176,138,60,0.45);background:rgba(176,138,60,0.14);color:var(--text);cursor:pointer;font-size:11.5px;width:100%">Solicitation Intake</button>
+            <button type="button" class="pw-subtab-btn" role="tab" data-pw-subtab="metadata-summary" aria-selected="false" onclick="pwSubtab('metadata-summary')" style="text-align:left;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--sub);cursor:pointer;font-size:11.5px;width:100%">Solicitation Metadata & Summary</button>
+            <button type="button" class="pw-subtab-btn" role="tab" data-pw-subtab="scope-of-work" aria-selected="false" onclick="pwSubtab('scope-of-work')" style="text-align:left;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--sub);cursor:pointer;font-size:11.5px;width:100%">Scope of Work</button>
+            <button type="button" class="pw-subtab-btn" role="tab" data-pw-subtab="place-of-performance" aria-selected="false" onclick="pwSubtab('place-of-performance')" style="text-align:left;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--sub);cursor:pointer;font-size:11.5px;width:100%">Place of Performance</button>
+            <button type="button" class="pw-subtab-btn" role="tab" data-pw-subtab="subcontractor-prep" aria-selected="false" onclick="pwSubtab('subcontractor-prep')" style="text-align:left;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--sub);cursor:pointer;font-size:11.5px;width:100%">Subcontractor ID & Prep</button>
+            <button type="button" class="pw-subtab-btn" role="tab" data-pw-subtab="compliance-matrix" aria-selected="false" onclick="pwSubtab('compliance-matrix')" style="text-align:left;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--sub);cursor:pointer;font-size:11.5px;width:100%">Compliance Matrix</button>
+            <button type="button" class="pw-subtab-btn" role="tab" data-pw-subtab="capability-studio" aria-selected="false" onclick="pwSubtab('capability-studio')" style="text-align:left;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--sub);cursor:pointer;font-size:11.5px;width:100%">Capability Statement Studio</button>
+            <button type="button" class="pw-subtab-btn" role="tab" data-pw-subtab="past-performance" aria-selected="false" onclick="pwSubtab('past-performance')" style="text-align:left;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--sub);cursor:pointer;font-size:11.5px;width:100%">Past Performance</button>
+            <button type="button" class="pw-subtab-btn" role="tab" data-pw-subtab="clarification-questions" aria-selected="false" onclick="pwSubtab('clarification-questions')" style="text-align:left;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--sub);cursor:pointer;font-size:11.5px;width:100%">Clarification Questions</button>
+            <button type="button" class="pw-subtab-btn" role="tab" data-pw-subtab="pricing-strategy" aria-selected="false" onclick="pwSubtab('pricing-strategy')" style="text-align:left;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--sub);cursor:pointer;font-size:11.5px;width:100%">Pricing Strategy</button>
+            <button type="button" class="pw-subtab-btn" role="tab" data-pw-subtab="proposal-draft" aria-selected="false" onclick="pwSubtab('proposal-draft')" style="text-align:left;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--sub);cursor:pointer;font-size:11.5px;width:100%">Proposal Draft</button>
+            <button type="button" class="pw-subtab-btn" role="tab" data-pw-subtab="submission-checklist" aria-selected="false" onclick="pwSubtab('submission-checklist')" style="text-align:left;padding:7px 10px;border-radius:6px;border:1px solid var(--border);background:transparent;color:var(--sub);cursor:pointer;font-size:11.5px;width:100%">Submission Checklist</button>
+        </div>
+        <div data-pw-panel="metadata-summary" class="card pw-panel" style="grid-column:2;display:none;padding:14px 16px">
+          <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Solicitation Metadata & Summary</div>
+          <div style="font-size:11.5px;color:var(--sub);line-height:1.55;margin-bottom:10px">Loaded from the selected solicitation’s extracted summary, agency, solicitation number, and deadlines. Run Extract Key Details in Solicitation Intake, or open the GovCon Solicitation Center.</div>
+          <button type="button" class="btn btn-gold" onclick="openTab('govcon'); setTimeout(function(){ if(typeof gcTabSwitch==='function') gcTabSwitch('solicitation'); },80)" style="padding:5px 11px;font-size:11px">Open Solicitation Center</button>
+        </div>
+        <div data-pw-panel="scope-of-work" class="card pw-panel" style="grid-column:2;display:none;padding:14px 16px">
+          <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Scope of Work</div>
+          <div style="font-size:11.5px;color:var(--sub);line-height:1.55;margin-bottom:10px">Scope / PWS / SOW is parsed by Extract Key Details and shown in the Solicitation Center.</div>
+          <button type="button" class="btn btn-gold" onclick="openTab('govcon'); setTimeout(function(){ if(typeof gcTabSwitch==='function') gcTabSwitch('solicitation'); },80)" style="padding:5px 11px;font-size:11px">Open Solicitation Center</button>
+        </div>
+        <div data-pw-panel="place-of-performance" class="card pw-panel" style="grid-column:2;display:none;padding:14px 16px">
+          <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Place of Performance</div>
+          <div style="font-size:11.5px;color:var(--sub);line-height:1.55;margin-bottom:10px">Place of performance is read from the saved pursuit / extracted solicitation metadata.</div>
+          <button type="button" class="btn btn-gold" onclick="openTab('govcon'); setTimeout(function(){ if(typeof gcTabSwitch==='function') gcTabSwitch('solicitation'); },80)" style="padding:5px 11px;font-size:11px">Open Solicitation Center</button>
+        </div>
+        <div data-pw-panel="subcontractor-prep" class="card pw-panel" style="grid-column:2;display:none;padding:14px 16px">
+          <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Subcontractor ID & Prep</div>
+          <div style="font-size:11.5px;color:var(--sub);line-height:1.55;margin-bottom:10px">Identify and prepare subcontractors/vendors for this pursuit. Uses the canonical GovCon Vendors surface — no duplicate logic.</div>
+          <button type="button" class="btn btn-gold" onclick="openTab('govcon'); setTimeout(function(){ if(typeof gcTabSwitch==='function') gcTabSwitch('vendors'); },80)" style="padding:5px 11px;font-size:11px">Open Vendors</button>
+        </div>
+        <div data-pw-panel="compliance-matrix" class="card pw-panel" style="grid-column:2;display:none;padding:14px 16px">
+          <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Compliance Matrix</div>
+          <div style="font-size:11.5px;color:var(--sub);line-height:1.55;margin-bottom:10px">Build the compliance matrix from the extracted solicitation in the Solicitation Center.</div>
+          <button type="button" class="btn btn-gold" onclick="openTab('govcon'); setTimeout(function(){ if(typeof gcTabSwitch==='function') gcTabSwitch('solicitation'); },80)" style="padding:5px 11px;font-size:11px">Open Solicitation Center</button>
+        </div>
+        <div data-pw-panel="past-performance" class="card pw-panel" style="grid-column:2;display:none;padding:14px 16px">
+          <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Past Performance</div>
+          <div style="font-size:11.5px;color:var(--sub);line-height:1.55;margin-bottom:10px">Manage relevant past performance for this proposal. Uses the canonical GovCon Past Performance surface — no duplicate logic.</div>
+          <button type="button" class="btn btn-gold" onclick="openTab('govcon'); setTimeout(function(){ if(typeof gcTabSwitch==='function') gcTabSwitch('past-performance'); },80)" style="padding:5px 11px;font-size:11px">Open Past Performance</button>
+        </div>
+        <div data-pw-panel="pricing-strategy" class="card pw-panel" style="grid-column:2;display:none;padding:14px 16px">
+          <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Pricing Strategy</div>
+          <div style="font-size:11.5px;color:var(--sub);line-height:1.55;margin-bottom:10px">Build pricing for this pursuit. Uses the canonical GovCon Pricing surface — no duplicate logic.</div>
+          <button type="button" class="btn btn-gold" onclick="openTab('govcon'); setTimeout(function(){ if(typeof gcTabSwitch==='function') gcTabSwitch('pricing'); },80)" style="padding:5px 11px;font-size:11px">Open Pricing</button>
+        </div>
+        <div data-pw-panel="submission-checklist" class="card pw-panel" style="grid-column:2;display:none;padding:14px 16px">
+          <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Submission Checklist</div>
+          <div style="font-size:11.5px;color:var(--sub);line-height:1.55;margin-bottom:10px">Confirm submission readiness for this pursuit. Uses the canonical GovCon Submission Readiness surface — no duplicate logic.</div>
+          <button type="button" class="btn btn-gold" onclick="openTab('govcon'); setTimeout(function(){ if(typeof gcTabSwitch==='function') gcTabSwitch('submission-readiness'); },80)" style="padding:5px 11px;font-size:11px">Open Submission Readiness</button>
         </div>
 
         <!-- Phase 25M — Solicitation Intake + Selector. Three routes:
@@ -4447,7 +4515,7 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
              sd.proposalWorkspace.solicitationIntake. Extract Key
              Details runs locally and surfaces the 6 FAR-aligned
              sections below. -->
-        <div class="card mb-14" id="pw-solicitation-intake" data-pw-solicitation-intake="true" style="border-left:3px solid var(--gold)">
+        <div class="card mb-14 pw-panel" id="pw-solicitation-intake" data-pw-solicitation-intake="true" data-pw-panel="solicitation-intake" style="border-left:3px solid var(--gold);grid-column:2">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:10px;flex-wrap:wrap">
             <div>
               <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Solicitation Intake</div>
@@ -4496,7 +4564,7 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
              Preview. Internal review draft only — SourceDeck does not
              send, submit, upload, or certify this content.
              ═══════════════════════════════════════════════════════════════ -->
-        <div class="card mb-14" id="pw-capability-studio" data-pw-capability-studio="true" style="border-left:3px solid var(--gold)">
+        <div class="card mb-14 pw-panel" id="pw-capability-studio" data-pw-capability-studio="true" data-pw-panel="capability-studio" style="border-left:3px solid var(--gold);grid-column:2;display:none">
           <section id="gc-cs" class="gc-cs" data-section="govcon-capability-statement-studio" style="margin-bottom:18px">
             <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
               <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Capability Statement Studio</div>
@@ -4558,7 +4626,7 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
              from a selected saved pursuit / fetched source / pasted text.
              Draft-only — SourceDeck never sends email or contacts a COR.
              ═══════════════════════════════════════════════════════════════ -->
-        <div class="card mb-14" id="pw-first-impression" data-pw-first-impression="true" style="border-left:3px solid var(--gold)">
+        <div class="card mb-14 pw-panel" id="pw-first-impression" data-pw-first-impression="true" data-pw-panel="clarification-questions" style="border-left:3px solid var(--gold);grid-column:2;display:none">
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;flex-wrap:wrap;margin-bottom:10px">
             <div>
               <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Make the Right First Impression</div>
@@ -4641,7 +4709,7 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
           <div class="gc-fi-footer gc-safety-footer" style="font-size:10px;color:var(--muted);line-height:1.5">Draft only. SourceDeck does not send email. Verify solicitation communication rules before contacting the COR.</div>
         </div>
 
-        <div class="grid-2" style="grid-template-columns:240px 1fr;gap:14px;align-items:start">
+        <div class="grid-2 pw-panel" data-pw-panel="proposal-draft" style="grid-template-columns:240px 1fr;gap:14px;align-items:start;grid-column:2;display:none">
 
           <!-- Section navigation rail -->
           <div class="card" style="padding:8px 4px">
@@ -4742,6 +4810,11 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
       <div class="pane-body">
         <div style="background:rgba(176,138,60,0.06);border:1px solid rgba(176,138,60,0.22);border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--text);line-height:1.55">
           <strong style="color:var(--gold2)">Help / FAQ.</strong> Plain-English answers written at a fourth-grade reading level. Read the full manual at <code style="font-family:'IBM Plex Mono',monospace;font-size:10px">docs/manuals/sourcedeck-user-manual-4th-grade.md</code>. If a word still feels hard, tell your operator.
+        </div>
+        <!-- Phase 25R — consolidated disclaimer (also in Settings → Legal). -->
+        <div id="help-legal-disclaimer" data-help-legal-disclaimer="true" style="background:var(--panel2,#0f1e32);border:1px solid var(--border);border-radius:8px;padding:10px 14px;margin-bottom:12px;font-size:11px;color:var(--sub);line-height:1.6">
+          <div style="font-weight:700;color:var(--text);margin-bottom:4px">Disclaimer</div>
+          Drafts produced in SourceDeck are not legal review, not compliance certification, and not final proposals. SourceDeck does not send, submit, or upload anything to SAM.gov, PIEE, eBuy, GSA, agency portals, email, or any external service — you are responsible for every external action. Award and web-intel data depend on available public sources; verify before relying on it.
         </div>
         <div class="form-group" style="margin-bottom:12px">
           <label class="label">Search</label>
@@ -16704,7 +16777,22 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (stat) stat.textContent = rec.status || 'not started';
     if (empty) empty.style.display = 'none';
     if (ext){
-      if (rec.extracted){ ext.style.display = ''; renderExtractionSections(rec); }
+      var host = $('pw-sol-extraction-sections');
+      if (rec.status === 'failed'){
+        // Phase 25R — honest failure UI. No "Extracted" / "N sections" claim.
+        ext.style.display = '';
+        if (host) host.innerHTML =
+          '<div class="card" data-pw-sol-extraction-failed="true" style="padding:13px 15px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.30)">' +
+            '<div style="font:700 10px/1 \'Azeret Mono\',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:5px">Extraction failed</div>' +
+            '<div style="font-size:12px;color:var(--text);line-height:1.55;margin-bottom:9px">No structured data could be extracted from this document.' +
+              (rec.extractionLog && rec.extractionLog.rawTextChars === 0 ? ' PDF/DOCX text extraction is not available in this build — use <strong>Paste Solicitation Text</strong>.' : ' Verify the source text, paste the solicitation text, or map sections manually.') + '</div>' +
+            '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
+              '<button class="btn btn-gold" onclick="pwSolRetryExtraction()" style="padding:4px 10px;font-size:11px">↻ Retry Extraction</button>' +
+              '<button class="btn btn-ghost" onclick="pwSolViewExtractionLog()" style="padding:4px 10px;font-size:11px">📄 View Extraction Log</button>' +
+              '<button class="btn btn-ghost" onclick="pwSolManualMapping()" style="padding:4px 10px;font-size:11px">✎ Manual Mapping</button>' +
+            '</div>' +
+          '</div>';
+      } else if (rec.extracted){ ext.style.display = ''; renderExtractionSections(rec); }
       else { ext.style.display = 'none'; }
     }
   }
@@ -16844,12 +16932,17 @@ document.addEventListener('DOMContentLoaded',()=>{
       };
       r.readAsText(f);
     } else {
+      // Phase 25R — PDF/DOCX text extraction is not available in this build.
+      // Do not fake extraction: attach the file reference, state it plainly,
+      // and route the user to Paste Solicitation Text.
       rec.rawText = '';
+      rec.status = 'pdf-parse-unavailable';
       _state.records.push(rec);
       _state.activeId = rec.id;
       saveState().then(renderSelector);
       var area = $('pw-sol-paste-area'); if (area) area.style.display = '';
-      if (window.toast) try { window.toast('File attached locally. Paste solicitation text to extract details in this build.', 'info'); } catch (e) {}
+      var ta = $('pw-sol-paste-text'); if (ta) ta.focus();
+      if (window.toast) try { window.toast('PDF/DOCX text extraction is not available in this build. Open the file and paste its text below, then Extract Key Details.', 'info'); } catch (e) {}
     }
   };
   window.pwSolTogglePasteArea = function(){
@@ -16858,6 +16951,20 @@ document.addEventListener('DOMContentLoaded',()=>{
     a.style.display = willShow ? '' : 'none';
     if (willShow){ var ta = $('pw-sol-paste-text'); if (ta) ta.focus(); }
   };
+  // Phase 25R — count fields that actually got data, so status reflects
+  // populated fields, never scaffold count.
+  function _pwCountPopulated(extracted){
+    if (!extracted) return 0;
+    var n = 0;
+    Object.keys(extracted).forEach(function(sid){
+      var data = extracted[sid] || {};
+      Object.keys(data).forEach(function(k){
+        var v = data[k];
+        if (typeof v === 'string' ? v.trim().length : (Array.isArray(v) ? v.length : !!v)) n++;
+      });
+    });
+    return n;
+  }
   window.pwSolExtractKeyDetails = function(){
     var ta = $('pw-sol-paste-text');
     var pasted = ta ? String(ta.value || '') : '';
@@ -16875,12 +16982,71 @@ document.addEventListener('DOMContentLoaded',()=>{
       }
     }
     if (pasted.trim() && !rec.rawText){ rec.rawText = pasted; }
-    rec.extracted = extract(rec.rawText);
-    rec.status = 'extracted';
+    // Phase 25R — extraction honesty. Run the parser, then count fields that
+    // actually got data. Status/toast reflect populated fields, NEVER scaffold
+    // count. Zero fields = FAILED (no false "Extracted / N sections" success).
+    var rawLen = String(rec.rawText || '').trim().length;
+    var result = extract(rec.rawText);
+    var populated = _pwCountPopulated(result);
     rec.extractedAt = new Date().toISOString();
+    rec.extractionLog = {
+      at: rec.extractedAt,
+      source: rec.source,
+      fileName: rec.fileName || '',
+      rawTextChars: rawLen,
+      fieldsPopulated: populated,
+      note: rawLen === 0
+        ? 'No source text was available (PDF/DOCX text extraction is not available in this build — use Paste Solicitation Text).'
+        : (populated === 0 ? 'Source text was present but no FAR-aligned fields matched the heuristic patterns.' : populated + ' field(s) populated from source text.')
+    };
+    if (populated === 0){
+      rec.extracted = null;
+      rec.status = 'failed';
+      saveState().then(renderSelector);
+      renderActive();
+      if (window.toast) try { window.toast('Extraction failed — no structured data could be extracted from this document.', 'warn'); } catch (e) {}
+      return;
+    }
+    rec.extracted = result;
+    rec.status = 'extracted';
     saveState().then(renderSelector);
     renderActive();
-    if (window.toast) try { window.toast('Extracted into 6 FAR-aligned sections.', 'ok'); } catch (e) {}
+    if (window.toast) try { window.toast('Extracted ' + populated + ' field(s) into FAR-aligned sections. Verify against the source.', 'ok'); } catch (e) {}
+  };
+  // Phase 25R — failure-path controls.
+  window.pwSolRetryExtraction = function(){ window.pwSolExtractKeyDetails(); };
+  window.pwSolViewExtractionLog = function(){
+    var rec = activeRecord(); var log = rec && rec.extractionLog;
+    var msg = log ? ('Extraction log · ' + (log.at || '').slice(0,19) + '\nSource: ' + log.source + (log.fileName ? ' (' + log.fileName + ')' : '') + '\nSource text chars: ' + log.rawTextChars + '\nFields populated: ' + log.fieldsPopulated + '\n' + log.note) : 'No extraction has been attempted yet.';
+    if (window.toast) try { window.toast(msg, 'info'); } catch (e) {}
+    try { console.info('[pw-extraction-log]', log || {}); } catch (e) {}
+  };
+  window.pwSolManualMapping = function(){
+    // Manual mapping = open the paste area so the user can paste real text,
+    // and create/keep a record whose fields they fill in by hand.
+    var area = $('pw-sol-paste-area'); if (area) area.style.display = '';
+    var ta = $('pw-sol-paste-text'); if (ta) ta.focus();
+    if (window.toast) try { window.toast('Paste the solicitation text, then Extract — or fill section notes/drafts by hand.', 'info'); } catch (e) {}
+  };
+
+  // Phase 25R — Proposal Workspace left-rail sub-tab switcher. Shows one
+  // panel at a time (panel switch, not scroll); updates rail button states.
+  window.pwSubtab = function(id){
+    id = id || 'solicitation-intake';
+    var panels = document.querySelectorAll('#pw-body [data-pw-panel]');
+    for (var i = 0; i < panels.length; i++){
+      panels[i].style.display = (panels[i].getAttribute('data-pw-panel') === id) ? '' : 'none';
+    }
+    var btns = document.querySelectorAll('#pw-subtab-rail [data-pw-subtab]');
+    for (var j = 0; j < btns.length; j++){
+      var on = btns[j].getAttribute('data-pw-subtab') === id;
+      btns[j].setAttribute('aria-selected', on ? 'true' : 'false');
+      btns[j].classList.toggle('active', on);
+      btns[j].style.background = on ? 'rgba(176,138,60,0.14)' : 'transparent';
+      btns[j].style.borderColor = on ? 'rgba(176,138,60,0.45)' : 'var(--border)';
+      btns[j].style.color = on ? 'var(--text)' : 'var(--sub)';
+    }
+    try { localStorage.setItem('sd.pw.lastSubtab', id); } catch (e) {}
   };
   window.pwSolClearSelected = function(){
     var ok = false;
@@ -21440,7 +21606,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     try {
       var win = window.open('', '_blank', 'width=900,height=1100');
       if (!win){
-        if (window.toast) try { window.toast('PDF export needs popup permission. Allow popups, then click Export Internal Review Draft (PDF) again.', 'info'); } catch (e) {}
+        if (window.toast) try { window.toast('PDF export needs popup permission. Allow popups, then click Export Proposal Draft (PDF) again.', 'info'); } catch (e) {}
         return;
       }
       win.document.open();

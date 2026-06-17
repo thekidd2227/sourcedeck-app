@@ -40,12 +40,15 @@ test('Execution nav button label is "Proposal Workspace"', () => {
   assert.doesNotMatch(navMatch[0], />Execution</);
 });
 
-test('Proposal Workspace pane title is "Proposal Workspace"', () => {
-  const paneMatch = HTML.match(
-    /<div class="tab-pane" id="tab-execution"[\s\S]*?<div class="pane-title">[\s\S]*?<\/div>/
-  );
-  assert.ok(paneMatch, 'execution pane title not found');
-  assert.match(paneMatch[0], /Proposal Workspace/);
+test('Phase 25R — redundant in-pane "Proposal Workspace" H1/subtitle removed; left-rail sub-tabs present', () => {
+  // The sidebar already labels this Proposal Workspace; the in-page H1 +
+  // "Section-by-section / Human approval gate" subtitle were removed.
+  const pane = HTML.match(/<div class="tab-pane" id="tab-execution"[\s\S]*?id="pw-subtab-rail"/);
+  assert.ok(pane, 'Proposal Workspace left-rail sub-tabs not found');
+  assert.ok(!/<div class="pane-sub">Section-by-section internal review drafting/.test(HTML),
+    '"Section-by-section …" subtitle must be removed');
+  assert.ok(/data-pw-subtab="solicitation-intake"/.test(HTML), 'first sub-tab is Solicitation Intake');
+  assert.ok(/window\.pwSubtab = function/.test(HTML), 'sub-tab panel switcher present');
 });
 
 test('pre-Phase-25E.2 locked Execution teaser is gone', () => {
@@ -120,16 +123,16 @@ test('per-section notes and draft textareas are present', () => {
   assert.match(HTML, /id="pw-section-draft"/);
 });
 
-test('"Internal review only" disclaimer is present in the pane', () => {
-  // The pane-level banner that fires the Phase 25A no-send/no-submit posture.
-  const disclaimerBlock = HTML.match(/id="pw-disclaimer"[\s\S]{0,800}/);
-  assert.ok(disclaimerBlock, 'pw-disclaimer element missing');
-  assert.match(disclaimerBlock[0], /Internal review only/i);
-  assert.match(
-    disclaimerBlock[0],
-    /does not send, submit, or upload/i,
-    'disclaimer must reproduce the Phase 25A no-send / no-submit / no-upload posture'
-  );
+test('Phase 25R — pane-level "Internal review only" banner removed; disclaimer relocated to Settings/Legal + Help', () => {
+  // The large in-pane disclaimer banner was removed from the operational
+  // screen and consolidated into Settings → Legal and Help / FAQ. The
+  // behavioral no-send / no-submit / no-upload guardrails remain.
+  assert.ok(!/id="pw-disclaimer"/.test(HTML), 'pw-disclaimer banner must be removed from the pane');
+  assert.ok(/id="settings-legal"[\s\S]{0,600}not legal review, not compliance certification/.test(HTML),
+    'consolidated disclaimer present in Settings → Legal');
+  assert.ok(/data-help-legal-disclaimer="true"/.test(HTML), 'consolidated disclaimer present in Help / FAQ');
+  assert.ok(/does not send, submit, or upload/i.test(HTML),
+    'no-send / no-submit / no-upload posture text preserved (relocated)');
 });
 
 test('no full-proposal one-click generation control is present', () => {

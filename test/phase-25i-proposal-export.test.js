@@ -22,15 +22,14 @@ const REPO_ROOT = path.resolve(__dirname, '..');
 const HTML = fs.readFileSync(path.join(REPO_ROOT, 'sourcedeck.html'), 'utf8');
 
 test('Proposal Workspace exposes three export buttons (Markdown / Word / PDF)', () => {
-  // Markdown button — Phase 25E.2 baseline retained.
+  // Phase 25R — buttons relabeled "Export Proposal Draft (…)" (the
+  // "Internal Review" wording was removed from operational UI); handlers unchanged.
   assert.match(HTML, /onclick="pwExportInternalReview\(\)"/);
-  assert.match(HTML, />.*Export Internal Review Draft \(Markdown\).*</);
-  // Word — Phase 25I addition.
+  assert.match(HTML, />.*Export Proposal Draft \(Markdown\).*</);
   assert.match(HTML, /onclick="pwExportInternalReviewWord\(\)"/);
-  assert.match(HTML, />.*Export Internal Review Draft \(Word\).*</);
-  // PDF — Phase 25I addition.
+  assert.match(HTML, />.*Export Proposal Draft \(Word\).*</);
   assert.match(HTML, /onclick="pwExportInternalReviewPdf\(\)"/);
-  assert.match(HTML, />.*Export Internal Review Draft \(PDF\).*</);
+  assert.match(HTML, />.*Export Proposal Draft \(PDF\).*</);
 });
 
 test('Word export uses application/msword Blob (zero-dep) and ends with .doc', () => {
@@ -57,15 +56,15 @@ test('PDF export opens a print window and triggers window.print() (zero-dep)', (
   assert.match(src, /Nothing is uploaded|Save as PDF/i);
 });
 
-test('Both new exports use "Internal Review Draft" label, not "Submit"', () => {
-  // The button labels carry "Internal Review Draft" — never "Submit"
-  // or "Final" or "agency-ready" wording.
+test('Both new exports use "Proposal Draft" label, not "Submit"', () => {
+  // Phase 25R — relabeled "Export Proposal Draft (…)" (the "Internal Review"
+  // wording was removed from operational UI). Still never "Submit"/"Final"/"agency-ready".
   const button = HTML.match(/onclick="pwExportInternalReviewWord\(\)"[^>]*title="[^"]*"[^>]*>([^<]*)</);
   assert.ok(button);
-  assert.match(button[1], /Internal Review Draft \(Word\)/);
+  assert.match(button[1], /Proposal Draft \(Word\)/);
   const button2 = HTML.match(/onclick="pwExportInternalReviewPdf\(\)"[^>]*title="[^"]*"[^>]*>([^<]*)</);
   assert.ok(button2);
-  assert.match(button2[1], /Internal Review Draft \(PDF\)/);
+  assert.match(button2[1], /Proposal Draft \(PDF\)/);
   // No forbidden labels on the buttons.
   const buttonsBlock = HTML.match(/pwExportInternalReview[^"]*Markdown[\s\S]{0,800}/);
   assert.ok(buttonsBlock);

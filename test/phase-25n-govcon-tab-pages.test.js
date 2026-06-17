@@ -28,7 +28,10 @@ assert(/role="tablist"/.test(html),
 const required = [
   { tab: 'find-opportunities',   label: 'Find Opportunities'    },
   { tab: 'saved-pursuits',       label: 'Saved Pursuits'        },
-  { tab: 'solicitation',         label: 'Solicitation'          },
+  // Phase 25R — "Solicitation" renamed "Solicitation Center"; Audit Log moved
+  // out of GovCon to Settings → Audit Log; Contract Awards relabeled
+  // "Federal Procurement Data" (tab id retained).
+  { tab: 'solicitation',         label: 'Solicitation Center'   },
   // Phase 25V — Scope tab removed (lives in Proposal Workspace intake);
   // Vendors + Pricing split into two focused tabs; Prime Partners promoted
   // to its own GovCon tab.
@@ -38,7 +41,7 @@ const required = [
   { tab: 'prime-partners',       label: 'Prime Partners'        },
   { tab: 'far-reference',        label: 'FAR Reference'         },
   { tab: 'submission-readiness', label: 'Submission Readiness'  },
-  { tab: 'audit-log',            label: 'Audit Log'             }
+  { tab: 'contract-awards',      label: 'Federal Procurement Data' }
 ];
 required.forEach(function(r){
   const buttonRe = new RegExp('data-gc-tab="' + r.tab + '"[\\s\\S]{0,500}>' + r.label.replace(/[.*+?^${}()|[\]\\+]/g, '\\$&') + '<');
