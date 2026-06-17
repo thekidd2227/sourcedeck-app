@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <title>SourceDeck</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&family=Inter+Tight:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -39,6 +39,13 @@
   --sd-font-display:'Cormorant Garamond',Georgia,serif;
   --sd-font-body:'Instrument Sans',sans-serif;
   --sd-font-mono:'IBM Plex Mono','Azeret Mono',monospace;
+  /* Phase 24D — workspace-title tech voice for operational screens that
+     should feel like a GovCon command platform rather than editorial.
+     Additive: Cormorant remains the brand-editorial default; opt-in by
+     adding the .workspace-title-tech class alongside existing .brief-head
+     (or any other element that should feel tech). No existing class is
+     overridden globally. */
+  --sd-font-workspace-title:'Inter Tight','Instrument Sans',sans-serif;
   --sd-letter-tight:-0.01em; --sd-letter-wide:0.12em;
   /* spacing + radius */
   --sd-space-1:4px; --sd-space-2:8px; --sd-space-3:12px; --sd-space-4:16px;
@@ -728,6 +735,117 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 .btn-gold:focus-visible{
   outline:2px solid rgba(243,214,132,0.85);
   outline-offset:2px;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+   PHASE 24D — GovCon-First Buyer Surface Tightening
+   ─────────────────────────────────────────────────────────────────
+   Surgical visual polish only. Additive utility classes that opt-in
+   elements get a more premium, tech-command-platform voice WITHOUT
+   un-shipping Phase 23A-23H or undoing the GovCon-primary sidebar.
+
+   What this block provides:
+     1. .workspace-title-tech — Inter Tight 26px / 650 / -0.02em. Apply
+        alongside (or in place of) .brief-head on operational pane
+        titles that should feel like a workspace, not an editorial
+        spread. CORMORANT IS PRESERVED for GovCon brand-essential
+        surfaces (the GovCon Capture Command Center headline, brand
+        sub-label "GovCon Capture OS", the Phase 22B-22F section
+        headlines etc. — they carry the SoHo x DC brand voice and the
+        Phase 22B-22F guard tests are unaffected by this block).
+     2. .pane-quiet-borders — opt-in border-density reduction. Replaces
+        nested 1px borders with subtle elevation + spacing on the panel
+        and its direct .card children, preserving active/selected-state
+        accents. Applied selectively, not globally.
+     3. .mono-discipline-body — explicitly override Plex Mono back to
+        body font for non-technical explanatory copy that accidentally
+        inherited mono. IBM Plex Mono remains the voice for solicitation
+        IDs, NAICS, FAR refs, status tags, deadlines, the GovCon Mode
+        indicator, brand sub-label, and Last Updated chips.
+     4. Phase 24D spacing scale (28/32/20/44) is available via existing
+        --sd-space-* tokens; we do not redefine them here — we only
+        document the intended use in the audit doc.
+
+   No existing class is overridden globally. Every Phase 23 guard test
+   and every Phase 22B-22F guard test remains green. */
+.workspace-title-tech{
+  font-family:var(--sd-font-workspace-title);
+  font-style:normal;
+  font-weight:650;
+  font-size:26px;
+  letter-spacing:-0.02em;
+  line-height:1.15;
+}
+@media (max-width: 899px){
+  .workspace-title-tech{font-size:22px}
+}
+/* When applied next to .brief-head, win the cascade so the operational
+   pane reads as tech-forward, not editorial. */
+.brief-head.workspace-title-tech,
+.workspace-title-tech.brief-head{
+  font-family:var(--sd-font-workspace-title)!important;
+  font-style:normal!important;
+  font-weight:650!important;
+  font-size:26px!important;
+  letter-spacing:-0.02em!important;
+}
+/* Phase 24D — scoped tech-voice for OPERATIONAL pane titles. Targets the
+   .brief-head span ONLY when it's inside one of the operational/workspace
+   tab-panes the user mission listed (Dashboard, Proposal Workspace,
+   Response Desk, Pipeline, Pilot Tracker / reports, Settings). HTML
+   markup is NOT modified — existing exact-markup tests
+   (test/phase-25l1-dashboard-consolidation.test.js, etc.) continue to
+   match verbatim. GovCon Capture OS surface (#tab-govcon) is
+   DELIBERATELY EXCLUDED so the Cormorant Garamond italic brand voice
+   stays on the GovCon command surface where it carries the SoHo x DC
+   brand. Phase 22B-22F section headlines inside #tab-govcon are also
+   preserved by this exclusion. */
+#tab-dashboard .pane-title .brief-head,
+#tab-execution .pane-title .brief-head,
+#tab-reply .pane-title .brief-head,
+#tab-pipeline .pane-title .brief-head,
+#tab-delivery .pane-title .brief-head,
+#tab-settings .pane-title .brief-head{
+  font-family:var(--sd-font-workspace-title);
+  font-style:normal;
+  font-weight:650;
+  font-size:26px;
+  letter-spacing:-0.02em;
+}
+@media (max-width: 899px){
+  #tab-dashboard .pane-title .brief-head,
+  #tab-execution .pane-title .brief-head,
+  #tab-reply .pane-title .brief-head,
+  #tab-pipeline .pane-title .brief-head,
+  #tab-delivery .pane-title .brief-head,
+  #tab-settings .pane-title .brief-head{font-size:22px}
+}
+
+/* Border-density reduction utility. Opt-in: add to a panel/card to
+   trade hard outlines for soft elevation + spacing. Active/selected
+   accents inside the panel keep their borders so interactive state
+   remains obvious. */
+.pane-quiet-borders{border-color:transparent!important;box-shadow:var(--sd-shadow-panel)}
+.pane-quiet-borders > .card,
+.pane-quiet-borders .card.card-quiet{
+  border-color:transparent;
+  box-shadow:var(--sd-shadow-soft);
+}
+.pane-quiet-borders > .card.card-active,
+.pane-quiet-borders > .card[aria-selected="true"],
+.pane-quiet-borders > .card[data-active="true"]{
+  border-color:var(--gold);
+  box-shadow:0 0 0 2px rgba(201,148,26,0.18),var(--sd-shadow-panel);
+}
+
+/* Mono-discipline override. Apply to body copy that accidentally
+   inherited Plex Mono and is not a technical token (ID, NAICS, FAR,
+   status, deadline). Preserves Plex Mono everywhere the technical
+   voice belongs. */
+.mono-discipline-body{
+  font-family:var(--sd-font-body)!important;
+  letter-spacing:0!important;
+  text-transform:none!important;
 }
 </style>
 <!-- Response Desk deterministic classifier (UMD; same module used by test/response-desk.test.js) -->
