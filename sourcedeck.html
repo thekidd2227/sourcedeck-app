@@ -158,6 +158,33 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 .nav-icon{font-size:14px;width:17px;text-align:center;flex-shrink:0;display:flex;align-items:center;justify-content:center}.nav-icon svg{stroke:currentColor}
 .nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:7px;font-weight:700;padding:2px 5px;border-radius:8px;font-family:'Azeret Mono',monospace;min-width:16px;text-align:center}
 
+/* fix(nav): sidebar sub-nav buttons under GovCon and Proposal Workspace.
+   Indented child of .nav-btn — same color tokens, smaller padding/font, no
+   nav-icon, no new colors. Inherits hover/.active from .nav-btn above so
+   no visual surface is redesigned. */
+.nav-btn-sub{
+  width:100%;display:flex;align-items:center;gap:8px;
+  padding:5px 12px 5px 28px;border-radius:var(--r2);border:none;cursor:pointer;
+  font-size:11px;font-weight:500;color:var(--muted);background:transparent;
+  text-align:left;transition:var(--sd-transition-medium);font-family:'Instrument Sans',sans-serif;
+  position:relative;
+}
+.nav-btn-sub:hover{background:rgba(255,255,255,0.04);color:var(--sub)}
+.nav-btn-sub.active{
+  background:linear-gradient(135deg,rgba(176,138,60,0.10),rgba(23,32,51,0.08));
+  color:var(--sd-brass-gold-light);
+}
+
+/* fix(nav): the in-pane navigation layers must remain in the DOM (Phase 25
+   tests assert their markup exists) but should NOT render alongside the
+   new sidebar sub-nav. Hide the in-pane GovCon horizontal tab strip, the
+   Proposal Workspace left-rail, and the duplicate "GovCon Pipeline" pane
+   title via CSS. JS routing (gcTabSwitch / pwSubtab) is unchanged. */
+#gc-tab-nav{display:none!important}
+#pw-subtab-rail{display:none!important}
+#pw-body{grid-template-columns:1fr!important}
+[data-nav-fix-hide-duplicate-title="govcon-pipeline"]{display:none!important}
+
 /* MAIN */
 .main-content{flex:1;overflow:hidden;display:flex;flex-direction:column;background:var(--bg)}
 .tab-pane{display:none;flex:1;flex-direction:column;overflow:hidden}
@@ -919,11 +946,40 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
     <div class="nav-section" id="nav-section-govcon-primary" data-section="govcon-primary-nav">
       <div class="nav-label">GovCon</div>
       <button class="nav-btn active" data-tab="govcon"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><path d="M3 10h18"/><path d="M3 18h18"/><path d="M5 6h14l1 4H4l1-4z"/><rect x="3" y="18" width="18" height="3" rx="1"/></svg></span>GovCon</button>
+      <!-- fix(nav): GovCon sub-items in sidebar. Each routes through the
+           existing gcTabSwitch() state machine — no new feature, just a
+           sidebar entry point for the in-pane tabs. No data-tab attribute
+           so bindNav() does not override the inline handler. -->
+      <button type="button" class="nav-btn-sub" data-nav-sub="gc-find-opportunities"   onclick="if(typeof openTab==='function')openTab('govcon');setTimeout(function(){if(typeof gcTabSwitch==='function')gcTabSwitch('find-opportunities');},60);return false;">Find Opportunities</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="gc-saved-pursuits"       onclick="if(typeof openTab==='function')openTab('govcon');setTimeout(function(){if(typeof gcTabSwitch==='function')gcTabSwitch('saved-pursuits');},60);return false;">Saved Pursuits</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="gc-solicitation"         onclick="if(typeof openTab==='function')openTab('govcon');setTimeout(function(){if(typeof gcTabSwitch==='function')gcTabSwitch('solicitation');},60);return false;">Solicitation Center</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="gc-vendors"              onclick="if(typeof openTab==='function')openTab('govcon');setTimeout(function(){if(typeof gcTabSwitch==='function')gcTabSwitch('vendors');},60);return false;">Vendors</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="gc-pricing"              onclick="if(typeof openTab==='function')openTab('govcon');setTimeout(function(){if(typeof gcTabSwitch==='function')gcTabSwitch('pricing');},60);return false;">Pricing</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="gc-past-performance"     onclick="if(typeof openTab==='function')openTab('govcon');setTimeout(function(){if(typeof gcTabSwitch==='function')gcTabSwitch('past-performance');},60);return false;">Past Performance</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="gc-prime-partners"       onclick="if(typeof openTab==='function')openTab('govcon');setTimeout(function(){if(typeof gcTabSwitch==='function')gcTabSwitch('prime-partners');},60);return false;">Prime Partners</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="gc-far-reference"        onclick="if(typeof openTab==='function')openTab('govcon');setTimeout(function(){if(typeof gcTabSwitch==='function')gcTabSwitch('far-reference');},60);return false;">FAR Reference</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="gc-submission-readiness" onclick="if(typeof openTab==='function')openTab('govcon');setTimeout(function(){if(typeof gcTabSwitch==='function')gcTabSwitch('submission-readiness');},60);return false;">Submission Readiness</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="gc-contract-awards"      onclick="if(typeof openTab==='function')openTab('govcon');setTimeout(function(){if(typeof gcTabSwitch==='function')gcTabSwitch('contract-awards');},60);return false;">Federal Procurement Data</button>
     </div>
     <!-- Phase 25V — Proposal Workspace moved directly under GovCon. -->
     <div class="nav-section" id="nav-section-execution" data-section="proposal-workspace-nav">
       <div class="nav-label">Proposal Workspace</div>
       <button class="nav-btn" data-tab="execution"><span class="nav-icon"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>Proposal Workspace</button>
+      <!-- fix(nav): Proposal Workspace sub-items in sidebar. Each routes
+           through the existing pwSubtab() panel switcher — no new feature,
+           just a sidebar entry point for the in-pane sub-tabs. -->
+      <button type="button" class="nav-btn-sub" data-nav-sub="pw-solicitation-intake"     onclick="if(typeof openTab==='function')openTab('execution');setTimeout(function(){if(typeof pwSubtab==='function')pwSubtab('solicitation-intake');},60);return false;">Solicitation Intake</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="pw-metadata-summary"        onclick="if(typeof openTab==='function')openTab('execution');setTimeout(function(){if(typeof pwSubtab==='function')pwSubtab('metadata-summary');},60);return false;">Solicitation Metadata &amp; Summary</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="pw-scope-of-work"           onclick="if(typeof openTab==='function')openTab('execution');setTimeout(function(){if(typeof pwSubtab==='function')pwSubtab('scope-of-work');},60);return false;">Scope of Work</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="pw-place-of-performance"    onclick="if(typeof openTab==='function')openTab('execution');setTimeout(function(){if(typeof pwSubtab==='function')pwSubtab('place-of-performance');},60);return false;">Place of Performance</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="pw-subcontractor-prep"      onclick="if(typeof openTab==='function')openTab('execution');setTimeout(function(){if(typeof pwSubtab==='function')pwSubtab('subcontractor-prep');},60);return false;">Subcontractor ID &amp; Prep</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="pw-compliance-matrix"       onclick="if(typeof openTab==='function')openTab('execution');setTimeout(function(){if(typeof pwSubtab==='function')pwSubtab('compliance-matrix');},60);return false;">Compliance Matrix</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="pw-capability-studio"       onclick="if(typeof openTab==='function')openTab('execution');setTimeout(function(){if(typeof pwSubtab==='function')pwSubtab('capability-studio');},60);return false;">Capability Statement Studio</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="pw-past-performance"        onclick="if(typeof openTab==='function')openTab('execution');setTimeout(function(){if(typeof pwSubtab==='function')pwSubtab('past-performance');},60);return false;">Past Performance</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="pw-clarification-questions" onclick="if(typeof openTab==='function')openTab('execution');setTimeout(function(){if(typeof pwSubtab==='function')pwSubtab('clarification-questions');},60);return false;">Clarification Questions</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="pw-pricing-strategy"        onclick="if(typeof openTab==='function')openTab('execution');setTimeout(function(){if(typeof pwSubtab==='function')pwSubtab('pricing-strategy');},60);return false;">Pricing Strategy</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="pw-proposal-draft"          onclick="if(typeof openTab==='function')openTab('execution');setTimeout(function(){if(typeof pwSubtab==='function')pwSubtab('proposal-draft');},60);return false;">Proposal Draft</button>
+      <button type="button" class="nav-btn-sub" data-nav-sub="pw-submission-checklist"    onclick="if(typeof openTab==='function')openTab('execution');setTimeout(function(){if(typeof pwSubtab==='function')pwSubtab('submission-checklist');},60);return false;">Submission Checklist</button>
     </div>
     <div class="nav-section" id="nav-section-leads" data-section="leads-nav">
       <div class="nav-label">Leads</div>
@@ -2361,7 +2417,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 
     <div class="tab-pane active" id="tab-govcon">
       <div class="pane-hdr">
-        <div><div class="pane-title"><span class="brief-head">GovCon Pipeline</span></div><div class="pane-sub" id="gc-count">Federal opportunities · SAM.gov</div></div>
+        <div data-nav-fix-hide-duplicate-title="govcon-pipeline"><div class="pane-title"><span class="brief-head">GovCon Pipeline</span></div><div class="pane-sub" id="gc-count">Federal opportunities · SAM.gov</div></div>
         <div class="pane-actions" style="flex-wrap:wrap;gap:7px">
           <select class="select" id="gc-filter" onchange="renderGovcon()">
             <option value="">All Opportunities</option>

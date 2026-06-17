@@ -57,6 +57,12 @@ expectedOrder.forEach(function(item, i){
 });
 
 // ── Removed-from-active-nav surfaces must not appear in visible sidebar ──
+// "Prime Partners" used to be in this removed-from-active-nav list under
+// Phase 25L-1. The fix(nav) navigation-flatten work explicitly returns
+// "Prime Partners" to the sidebar as a GovCon sub-item (one of the 10
+// items the product spec requires under the GovCon nav-section), so it
+// must NOT be in this removal list anymore. The other 13 items stay
+// removed exactly as Phase 25L-1 intended.
 const removedItems = [
   'Email Tracker',
   'Pilot Tracker',
@@ -70,8 +76,7 @@ const removedItems = [
   'Revenue',
   'Ad Engine',
   'Socials',
-  'Outreach',
-  'Prime Partners'
+  'Outreach'
 ];
 removedItems.forEach(function(label){
   const inVisible = sidebarVisibleSlice.includes('>' + label + '<') || sidebarVisibleSlice.includes('>' + label + ' <span');
