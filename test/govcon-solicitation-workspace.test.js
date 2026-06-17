@@ -81,10 +81,11 @@ test('Compliance Matrix table exists', () => {
 });
 
 // 8. Matrix columns exist.
-test('Compliance Matrix has all 10 spec columns', () => {
+test('Compliance Matrix has all 11 spec columns', () => {
   for (const col of [
     'Requirement ID',
-    'Source section/page',
+    'Source',
+    'Section/Page/File',
     'Requirement text',
     'Mandatory / optional',
     'Proposal section',
@@ -103,7 +104,7 @@ test('empty states present and no fake solicitation / agency / deadlines', () =>
   // Required empty-state copies
   assert.ok(/No solicitation package loaded yet\. Download a SAM\.gov package or upload a solicitation file\./.test(HTML),
     'Summary empty state missing');
-  assert.ok(/No requirements extracted yet\. Download a package or upload a solicitation, then run extraction\./.test(HTML),
+  assert.ok(/No compliance requirements extracted yet\. Run extraction on a readable package or manually map requirements\./.test(HTML),
     'Matrix empty state missing');
   // No fake solicitation numbers, agencies, or deadlines hardcoded inside the workspace section.
   const slice = HTML.split(/data-section="govcon-solicitation-workspace"/)[1] || '';

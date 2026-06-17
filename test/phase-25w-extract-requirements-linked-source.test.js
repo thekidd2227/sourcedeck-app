@@ -25,7 +25,7 @@ function test(name, fn) {
 console.log('\n=== Phase 25W — Extract Requirements linked source ===\n');
 
 test('Extract Requirements prefers package extraction + keeps linked source fallback', () => {
-  const start = HTML.indexOf('window.gcSolExtract = function');
+  const start = HTML.indexOf('window.gcSolExtract = async function');
   const body = HTML.slice(start, start + 1800);
   assert.ok(/gcABExtractPackageToCenter/.test(body), 'package extraction path present');
   assert.ok(/gcW25CollectSourceText\(\)/.test(body), 'extract pulls linked description/imported text');
