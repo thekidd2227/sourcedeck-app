@@ -19,7 +19,7 @@ test('keyword is read from the UI filter', () => {
 });
 
 test('keyword is passed into the SAM.gov query', () => {
-  assert.ok(/params\.set\('q', filters\.keyword\)/.test(SAMSRC), 'keyword passed to SAM API q param');
+  assert.ok(/params\.set\('title', filters\.keyword\)/.test(SAMSRC), 'keyword passed to SAM API title param');
 });
 
 test('renderer has a local keyword relevance backstop', () => {

@@ -1167,6 +1167,14 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               <div style="font:600 12px/1.4 'Syne',sans-serif;color:var(--text);margin-bottom:7px">Research existing contracts &amp; previous awards.</div>
               <button type="button" class="btn btn-ghost" data-dash-action="contract-awards" onclick="openTab('govcon'); setTimeout(function(){ if (typeof gcTabSwitch === 'function') gcTabSwitch('contract-awards'); }, 80);" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open Federal Procurement Data">Open Federal Procurement Data →</button>
             </div>
+            <div class="card" data-dash-card="govcon-index" style="padding:11px 13px;background:var(--panel2,#0f1e32);border:1px solid rgba(96,165,250,0.22)">
+              <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:#60a5fa;margin-bottom:5px">GovCon Index</div>
+              <div id="dash-govcon-index-status" style="font-size:10.5px;line-height:1.5;color:var(--sub);margin-bottom:7px">Last indexed: never · Records: 0 · Next run: 8:00 AM · Status: local</div>
+              <div style="display:flex;flex-direction:column;gap:4px">
+                <button type="button" class="btn btn-ghost" data-dash-action="govcon-index-settings" onclick="openTab('settings'); setTimeout(function(){ var el=document.getElementById('settings-govcon-index'); if(el) el.scrollIntoView({behavior:'smooth',block:'center'}); },80);" style="padding:4px 9px;font-size:10.5px;width:100%" title="Open GovCon Index Settings">Open GovCon Index Settings</button>
+                <button type="button" class="btn btn-gold" data-dash-action="govcon-index-run-now" onclick="gcIndexRunNow()" style="padding:4px 9px;font-size:10.5px;width:100%" title="Run GovCon Index Now">Run Now</button>
+              </div>
+            </div>
             <div class="card" data-dash-card="active-pursuits" style="padding:11px 13px;background:var(--panel2,#0f1e32)">
               <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted);margin-bottom:5px">Active pursuits</div>
               <div style="font:800 22px/1 'Instrument Sans',sans-serif;color:var(--gold2);margin-bottom:4px" id="dash-card-pursuits">0</div>
@@ -2083,6 +2091,25 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               <div class="sl">System Identifiers</div>
               <div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No system identifiers configured. Set integrations in Settings.</div>
             </div>
+            <div class="card mb-14" id="settings-govcon-index" data-settings-govcon-index="true">
+              <div class="sl">GovCon Data Index</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-bottom:10px">Local daily SAM.gov metadata index. Uses saved NAICS profiles by default. SourceDeck does not download all attachments.</div>
+              <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin-bottom:10px">
+                <label style="font-size:11px;color:var(--text)"><input type="checkbox" id="gc-index-enabled"> Enable daily index</label>
+                <label class="label">Run time <input class="input" id="gc-index-run-time" type="time" value="08:00" style="margin-top:4px"></label>
+                <label class="label">Deadline window <input class="input" id="gc-index-deadline-window" type="number" min="30" max="365" value="180" style="margin-top:4px"></label>
+                <label class="label">Max records <input class="input" id="gc-index-max-records" type="number" min="100" max="10000" value="10000" style="margin-top:4px"></label>
+                <label style="font-size:11px;color:var(--text)"><input type="checkbox" id="gc-index-descriptions"> Index descriptions</label>
+                <label style="font-size:11px;color:var(--text)"><input type="checkbox" id="gc-index-broader"> Allow broader indexing</label>
+              </div>
+              <div id="gc-index-settings-status" style="font-size:10.5px;color:var(--muted);line-height:1.5;margin-bottom:10px">Index status loading…</div>
+              <div style="display:flex;gap:7px;flex-wrap:wrap">
+                <button type="button" class="btn btn-gold" id="gc-index-run-now" onclick="gcIndexRunNow()" style="font-size:11px;padding:5px 10px">Run Index Now</button>
+                <button type="button" class="btn btn-ghost" id="gc-index-save-settings" onclick="gcIndexSaveSettings()" style="font-size:11px;padding:5px 10px">Save Index Settings</button>
+                <button type="button" class="btn btn-ghost" id="gc-index-clear" onclick="gcIndexClear()" style="font-size:11px;padding:5px 10px">Clear Local Index</button>
+                <button type="button" class="btn btn-ghost" id="gc-index-rebuild" onclick="gcIndexRebuild()" style="font-size:11px;padding:5px 10px">Rebuild Index</button>
+              </div>
+            </div>
             <div class="card mb-14">
               <div class="sl">Automation Path</div>
               <div style="font-size:11px;color:var(--muted);line-height:1.55;padding:6px 0">No automation path defined. Connect tools in Settings to populate this panel.</div>
@@ -2541,18 +2568,15 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                    blocking. -->
               <div id="gc-tab-f-naics-validation" data-gc-tab-naics-validation="true" style="display:none;margin-top:6px;font-size:10.5px;line-height:1.45;font-family:'IBM Plex Mono',monospace"></div>
             </div>
-            <!-- Phase 25T — NAICS search mode. Exact NAICS is the
-                 default so the user never sees unrelated NAICS as
-                 matches. Broader / related runs the search against a
-                 prefix family (e.g. 5416 for 541618). Keyword only
-                 skips the NAICS filter for that single search and
-                 does not delete the saved value. -->
+            <!-- Phase 25AA — NAICS search mode. Apply NAICS is the
+                 default so typed NAICS matters unless the user
+                 explicitly chooses Ignore NAICS. -->
             <div class="form-group" style="margin:0">
               <label class="label">NAICS mode</label>
               <select class="select" id="gc-tab-f-naics-mode" data-gc-tab-naics-mode="true" style="width:100%">
-                <option value="exact" selected>Exact NAICS</option>
-                <option value="broader">Broader / related NAICS</option>
-                <option value="keyword-only">Keyword only</option>
+                <option value="apply" selected>Apply NAICS</option>
+                <option value="broaden">Broaden NAICS family</option>
+                <option value="ignore">Ignore NAICS</option>
               </select>
             </div>
             <div class="form-group" style="margin:0">
@@ -2566,9 +2590,12 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               <select class="select" id="gc-tab-f-setaside" data-gc-tab-sam-filter="setaside" style="width:100%">
                 <option value="">Any</option>
                 <option value="SBA">Small Business</option>
-                <option value="SDVOSBC">SDVOSB</option>
-                <option value="WOSB">WOSB / EDWOSB</option>
-                <option value="HZC">HUBZone</option>
+                <option value="SDVOSBC">SDVOSB set-aside</option>
+                <option value="SDVOSBS">SDVOSB sole source</option>
+                <option value="WOSB">WOSB</option>
+                <option value="EDWOSB">EDWOSB</option>
+                <option value="HZC">HUBZone set-aside</option>
+                <option value="HZS">HUBZone sole source</option>
                 <option value="8A">8(a)</option>
                 <option value="VSA">VOSB</option>
               </select>
@@ -8056,7 +8083,78 @@ function renderDashboardLaunchpad(stats){
   }).length;
   setText('dash-card-open-risks', openRisks);
   setText('dash-card-leads', (Array.isArray(allLeads) ? allLeads.length : 0));
+  if (typeof window.gcIndexRefreshStatus === 'function') window.gcIndexRefreshStatus();
 }
+
+async function gcIndexRefreshStatus(){
+  if (!(window.sd && window.sd.govcon && window.sd.govcon.index && window.sd.govcon.index.status)) return;
+  var st;
+  try { st = await window.sd.govcon.index.status(); } catch (e) { return; }
+  var s = st.settings || {};
+  function setVal(id, val){ var el = document.getElementById(id); if (el) el.value = val; }
+  function setChk(id, val){ var el = document.getElementById(id); if (el) el.checked = !!val; }
+  setChk('gc-index-enabled', s.enabled);
+  setVal('gc-index-run-time', s.runTime || '08:00');
+  setVal('gc-index-deadline-window', s.deadlineWindowDays || 180);
+  setVal('gc-index-max-records', s.maxRecordsPerRun || 10000);
+  setChk('gc-index-descriptions', s.indexDescriptions);
+  setChk('gc-index-broader', s.broaderIndexing);
+  var last = st.lastRun && (st.lastRun.completedAt || st.lastRun.startedAt);
+  var statusText = 'Last run: ' + (last ? gcIndexFmtDate(last) : 'never') +
+    ' · Records: ' + (st.recordCount || 0) +
+    ' · Next run: ' + (st.nextRunAt ? gcIndexFmtDate(st.nextRunAt) : '8:00 AM') +
+    ' · Storage: ' + (st.estimatedStorageLabel || '0 B') +
+    (st.hasSavedNaicsProfiles ? '' : ' · No NAICS profile saved. Add NAICS profiles to enable daily GovCon index.');
+  var settingsEl = document.getElementById('gc-index-settings-status');
+  if (settingsEl) settingsEl.textContent = statusText;
+  var dashEl = document.getElementById('dash-govcon-index-status');
+  if (dashEl) dashEl.textContent = 'Last indexed: ' + (last ? gcIndexFmtDate(last) : 'never') + ' · Records: ' + (st.recordCount || 0) + ' · Next run: ' + (st.nextRunAt ? gcIndexFmtDate(st.nextRunAt) : '8:00 AM') + ' · Status: ' + (st.stale ? 'stale cache' : 'fresh local');
+}
+window.gcIndexRefreshStatus = gcIndexRefreshStatus;
+
+function gcIndexFmtDate(s){
+  try {
+    var d = new Date(s);
+    if (isNaN(d.getTime())) return String(s || '');
+    return d.toLocaleString([], { month:'short', day:'numeric', hour:'numeric', minute:'2-digit' });
+  } catch (e) { return String(s || ''); }
+}
+
+function gcIndexSettingsPayload(){
+  function val(id){ var el = document.getElementById(id); return el ? el.value : ''; }
+  function chk(id){ var el = document.getElementById(id); return !!(el && el.checked); }
+  return {
+    enabled: chk('gc-index-enabled'),
+    runTime: val('gc-index-run-time') || '08:00',
+    deadlineWindowDays: parseInt(val('gc-index-deadline-window') || '180', 10),
+    maxRecordsPerRun: parseInt(val('gc-index-max-records') || '10000', 10),
+    indexDescriptions: chk('gc-index-descriptions'),
+    broaderIndexing: chk('gc-index-broader')
+  };
+}
+window.gcIndexSaveSettings = async function(){
+  if (!(window.sd && window.sd.govcon && window.sd.govcon.index && window.sd.govcon.index.saveSettings)) return;
+  await window.sd.govcon.index.saveSettings(gcIndexSettingsPayload());
+  if (window.toast) try { window.toast('GovCon index settings saved.', 'ok'); } catch (e) {}
+  gcIndexRefreshStatus();
+};
+window.gcIndexRunNow = async function(){
+  if (!(window.sd && window.sd.govcon && window.sd.govcon.index && window.sd.govcon.index.runNow)) return;
+  await window.gcIndexSaveSettings();
+  var res = await window.sd.govcon.index.runNow(gcIndexSettingsPayload());
+  if (window.toast) try { window.toast(res && res.ok ? 'GovCon index refreshed.' : ((res && res.message) || 'GovCon index did not run.'), res && res.ok ? 'ok' : 'warn'); } catch (e) {}
+  gcIndexRefreshStatus();
+};
+window.gcIndexClear = async function(){
+  if (!(window.sd && window.sd.govcon && window.sd.govcon.index && window.sd.govcon.index.clear)) return;
+  await window.sd.govcon.index.clear();
+  if (window.toast) try { window.toast('Local GovCon index cleared.', 'info'); } catch (e) {}
+  gcIndexRefreshStatus();
+};
+window.gcIndexRebuild = async function(){
+  await window.gcIndexClear();
+  await window.gcIndexRunNow();
+};
 
 function renderActivityFeed(){
   const feed=document.getElementById('activity-feed');if(!feed)return;
@@ -18094,11 +18192,10 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (!wanted.length) return true;
     var have = _samRowNaics(r);
     if (!have) return false;
-    // Phase 25T — broader mode matches by 4-digit prefix family.
-    // Exact mode keeps the original strict match. Keyword-only mode
-    // is handled upstream (we drop the NAICS filter before reaching
-    // this helper) so it should never fire here.
-    if (mode === 'broader'){
+    // Phase 25AA — broaden mode matches by 4-digit prefix family.
+    // Apply mode keeps the original strict match. Ignore mode is
+    // handled upstream so this helper sees no NAICS requirement.
+    if (mode === 'broaden' || mode === 'broader'){
       for (var i = 0; i < wanted.length; i++){
         var prefix = wanted[i].slice(0, 4);
         if (prefix && have.indexOf(prefix) === 0) return true;
@@ -18113,9 +18210,14 @@ document.addEventListener('DOMContentLoaded',()=>{
     // Map the dropdown value codes to substrings the SAM.gov fields use.
     var aliases = {
       'sba': ['small business', 'sba'],
+      'sdvosb': ['sdvosb', 'service-disabled veteran'],
       'sdvosbc': ['sdvosb', 'service-disabled veteran'],
-      'wosb': ['wosb', 'edwosb', 'women-owned'],
+      'sdvosbs': ['sdvosb sole', 'service-disabled veteran'],
+      'wosb': ['wosb', 'women-owned'],
+      'edwosb': ['edwosb'],
+      'hubzone': ['hubzone', 'hub zone'],
       'hzc': ['hubzone', 'hub zone'],
+      'hzs': ['hubzone sole', 'hub zone sole'],
       '8a': ['8(a)', '8a'],
       'vsa': ['vosb', 'veteran-owned']
     };
@@ -18127,8 +18229,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     return false;
   }
-  // Phase 25Y — keyword relevance backstop. SAM.gov's full-text `q`
-  // parameter returns loosely-related records (e.g. "janitorial" returning
+  // Phase 25AA — keyword relevance backstop. SAM.gov title metadata
+  // search can still return loosely-related records (e.g. "janitorial" returning
   // unrelated DoD part/item notices). We re-filter returned rows so the
   // visible list actually contains the keyword across the meaningful fields.
   var _SAM_KW_GENERIC = { support:1, services:1, service:1, repair:1, supplies:1, supply:1, system:1, the:1, of:1, and:1, 'for':1, a:1, to:1, in:1, on:1, with:1 };
@@ -18156,7 +18258,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Phase 25X — diagnostics from the most recent local-filter pass. The
   // renderer reads this to explain HOW the visible set was produced
   // (precise local keyword match vs. trusting SAM.gov's server-side
-  // full-text relevance) so a keyword search never silently collapses to
+  // local metadata relevance) so a keyword search never silently collapses to
   // a false "0 results".
   var _samLastFilterDiag = { returned: 0, structural: 0, keywordStrong: 0, keywordFallback: false };
   function _samFilterDiagReset(returned){ _samLastFilterDiag = { returned: returned || 0, structural: 0, keywordStrong: 0, keywordFallback: false }; }
@@ -18164,11 +18266,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     filters = filters || {};
     if (!Array.isArray(rows)){ _samFilterDiagReset(0); return []; }
     _samFilterDiagReset(rows.length);
-    // Phase 25T — keyword-only mode bypasses the NAICS backstop for
-    // a single search. The saved filters.naics value is intentionally
+    // Phase 25AA — ignore mode bypasses the NAICS backstop for a
+    // single search. The saved filters.naics value is intentionally
     // preserved so the field doesn't appear cleared after the search.
-    var mode = filters.naicsMode || 'exact';
-    var naicsForFilter = (mode === 'keyword-only') ? '' : filters.naics;
+    var mode = filters.naicsMode || 'apply';
+    var naicsForFilter = (mode === 'ignore' || mode === 'keyword-only') ? '' : filters.naics;
     // Stage 1 — structural filters we can evaluate directly from each row:
     // NAICS (unless keyword-only) and set-aside. These are reliable because
     // every row carries its own naics code + set-aside descriptor.
@@ -18178,43 +18280,30 @@ document.addEventListener('DOMContentLoaded',()=>{
       return true;
     });
     _samLastFilterDiag.structural = structural.length;
-    // Stage 2 — keyword relevance. CRITICAL (Phase 25X): SAM.gov already
-    // performed an AUTHORITATIVE full-text match on the keyword server-side
-    // via the `q` parameter — INCLUDING the opportunity description body,
-    // which the v2 list payload delivers only as a LINK (never inline text;
-    // see _samRowHaystack, which deliberately excludes URL-valued
-    // descriptions). The local matcher can therefore inspect only
-    // title/agency/NAICS/solicitation number, so a local "miss" is NOT proof
-    // the row is irrelevant — the keyword may simply live in the description
-    // body we don't hold locally. We must NOT use the local matcher to DROP
-    // server-relevant rows (that is exactly the bug that produced
-    // "returned 25 · visible 0"). Instead we use it only to RANK: rows whose
-    // keyword hit is locally verifiable are promoted to the top; every other
-    // server-returned row is kept below them, trusting SAM.gov's relevance.
+    // Stage 2 — keyword relevance. Phase 25AA does not claim reliable
+    // full attachment search from one live SAM.gov list response. Live
+    // keyword goes to SAM.gov title metadata and the local matcher checks
+    // title/agency/NAICS/solicitation/descriptionText when present.
     if (!filters.keyword || !String(filters.keyword).trim()) return structural;
     var strong = structural.filter(function(r){
       if (!_samMatchesKeyword(r, filters.keyword)) return false;
       return true;
     });
     _samLastFilterDiag.keywordStrong = strong.length;
-    // keywordFallback = we have rows to show but NONE were locally verifiable,
-    // so the visible set rests entirely on SAM.gov's server-side relevance.
-    _samLastFilterDiag.keywordFallback = (strong.length === 0 && structural.length > 0);
-    if (!strong.length || strong.length === structural.length) return structural;
-    // Promote locally-verified rows to the top, preserve the rest in order.
-    var rest = structural.filter(function(r){ return strong.indexOf(r) < 0; });
-    return strong.concat(rest);
+    _samLastFilterDiag.keywordFallback = false;
+    if (!strong.length) return [];
+    return strong;
   }
   function _samActiveFilterSummary(filters){
     var parts = [];
     if (filters.keyword) parts.push('Keyword: ' + filters.keyword);
-    // Phase 25T — surface NAICS mode alongside the code so the user
-    // can see whether the search is exact, broader, or keyword-only.
-    var mode = filters.naicsMode || 'exact';
-    if (mode === 'keyword-only'){
-      parts.push('NAICS: not applied (keyword-only)');
+    // Phase 25AA — surface NAICS mode alongside the code so the user
+    // can see whether the search is applied, broadened, or ignored.
+    var mode = filters.naicsMode || 'apply';
+    if (mode === 'ignore' || mode === 'keyword-only'){
+      parts.push('NAICS ignored by user.');
     } else if (filters.naics){
-      var label = (mode === 'broader') ? 'broader NAICS' : 'exact NAICS';
+      var label = (mode === 'broaden' || mode === 'broader') ? 'broadened NAICS family' : 'applied NAICS';
       parts.push(label + ': ' + filters.naics);
     }
     if (filters.setAside) parts.push('Set-aside: ' + filters.setAside);
@@ -18395,7 +18484,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         '<td>' + _esc(_fmtDate(r.responseDeadLine || r.dueDate)) + '</td>' +
         '<td>' + _esc(pop || '—') + '</td>' +
         '<td>' +
-          '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em">SAM.gov</div>' +
+          '<div style="font-size:9px;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em">' + _esc(r._sourceLabel || r.source || 'Live SAM.gov') + '</div>' +
           '<div data-gc-sam-fresh-status-pill="' + id + '" style="margin-top:3px;font-size:9px;padding:2px 7px;border-radius:980px;background:rgba(255,255,255,0.05);border:1px solid var(--border);color:var(--sub);text-transform:uppercase;letter-spacing:0.06em;display:inline-block">' + _esc(status) + '</div>' +
         '</td>' +
         '<td>' +
@@ -18498,8 +18587,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     var pop = v('gc-tab-f-pop'); if (pop) filters.placeOfPerformance = pop;
     var dueRaw = v('gc-tab-f-due'); if (dueRaw){ var dueN = parseInt(dueRaw, 10); if (!isNaN(dueN) && dueN > 0) filters.dueWithinDays = dueN; }
     var status = v('gc-tab-f-status'); if (status) filters.status = status;
-    // Phase 25T — NAICS mode: exact | broader | keyword-only.
-    var mode = v('gc-tab-f-naics-mode') || 'exact';
+    // Phase 25AA — NAICS mode: apply | broaden | ignore.
+    var mode = v('gc-tab-f-naics-mode') || 'apply';
     filters.naicsMode = mode;
     return filters;
   }
@@ -18533,7 +18622,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
     var anyUnverified = entries.some(function(e){ return !e.verified; });
     if (anyUnverified){
-      rows.push('<div style="margin-top:4px;font-size:9.5px;color:var(--muted);font-style:italic">You can still search exact, choose a related code, or search by keyword. SourceDeck does not legally classify NAICS — only filters your search.</div>');
+      rows.push('<div style="margin-top:4px;font-size:9.5px;color:var(--muted);font-style:italic">You can still apply NAICS, choose a related code, or explicitly ignore NAICS. SourceDeck does not legally classify NAICS — only filters your search.</div>');
     }
     host.style.display = '';
     host.innerHTML = rows.join('');
@@ -18584,8 +18673,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       '<div style="font:700 12px/1.35 \'Syne\',sans-serif;color:var(--text);margin-bottom:5px">No exact NAICS matches found</div>' +
       '<div style="font-size:11px;color:var(--sub);margin-bottom:10px">' + headline + '</div>' +
       '<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">' +
-        '<button class="btn btn-gold" onclick="gcTabSamBroaderSearch()" style="padding:5px 11px;font-size:11px">↔ Search broader related NAICS</button>' +
-        '<button class="btn btn-ghost" onclick="gcTabSamKeywordOnly()" style="padding:5px 11px;font-size:11px">⌕ Clear NAICS and search keyword only</button>' +
+        '<button class="btn btn-gold" onclick="gcTabSamBroaderSearch()" style="padding:5px 11px;font-size:11px">↔ Broaden NAICS family</button>' +
+        '<button class="btn btn-ghost" onclick="gcTabSamKeywordOnly()" style="padding:5px 11px;font-size:11px">⌕ Ignore NAICS for this search</button>' +
         '<button class="btn btn-ghost" onclick="naicsFinderOpen()" style="padding:5px 11px;font-size:11px">🔎 Open Find NAICS</button>' +
         '<button class="btn btn-ghost" onclick="gcTabSamSaveNaicsAnyway()" style="padding:5px 11px;font-size:11px">💾 Save this NAICS anyway</button>' +
         '<button class="btn btn-ghost" onclick="gcTabSamChangeResultCount()" style="padding:5px 11px;font-size:11px">🔢 Change result count</button>' +
@@ -18594,18 +18683,18 @@ document.addEventListener('DOMContentLoaded',()=>{
       '<div style="margin-top:8px;font-size:10px;color:var(--muted);font-style:italic">SourceDeck does not show unrelated NAICS results as matches.</div>';
   }
   window.gcTabSamBroaderSearch = function(){
-    var sel = $('gc-tab-f-naics-mode'); if (sel) sel.value = 'broader';
-    if (window.toast) try { window.toast('Switched to broader / related NAICS search.', 'info'); } catch (e) {}
+    var sel = $('gc-tab-f-naics-mode'); if (sel) sel.value = 'broaden';
+    if (window.toast) try { window.toast('Switched to broaden NAICS family.', 'info'); } catch (e) {}
     window.gcTabSearchSam();
   };
   window.gcTabSamKeywordOnly = function(){
-    var sel = $('gc-tab-f-naics-mode'); if (sel) sel.value = 'keyword-only';
-    if (window.toast) try { window.toast('NAICS filter will not be applied for this search.', 'info'); } catch (e) {}
+    var sel = $('gc-tab-f-naics-mode'); if (sel) sel.value = 'ignore';
+    if (window.toast) try { window.toast('NAICS ignored by user.', 'info'); } catch (e) {}
     window.gcTabSearchSam();
   };
   window.gcTabSamApplyRelated = function(code){
     var input = $('gc-tab-f-naics'); if (input){ input.value = String(code || ''); if (typeof window.gcTabNaicsValidate === 'function') window.gcTabNaicsValidate(); }
-    var sel = $('gc-tab-f-naics-mode'); if (sel) sel.value = 'exact';
+    var sel = $('gc-tab-f-naics-mode'); if (sel) sel.value = 'apply';
     window.gcTabSearchSam();
   };
   window.gcTabSamSaveNaicsAnyway = function(){
@@ -18630,16 +18719,41 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
     var due = $('gc-tab-f-due'); if (due) due.value = '30';
     var prof = $('gc-tab-f-naics-profile'); if (prof) prof.value = '';
-    // Phase 25T — reset NAICS mode to exact (the safe default) and
+    // Phase 25AA — reset NAICS mode to Apply NAICS (the safe default) and
     // clear the validation chip so the field doesn't show stale
     // verified/unverified hints from the previous search.
-    var mode = $('gc-tab-f-naics-mode'); if (mode) mode.value = 'exact';
+    var mode = $('gc-tab-f-naics-mode'); if (mode) mode.value = 'apply';
     var val = $('gc-tab-f-naics-validation'); if (val){ val.style.display = 'none'; val.innerHTML = ''; }
     var zero = $('gc-tab-sam-zero-match'); if (zero){ zero.style.display = 'none'; zero.innerHTML = ''; }
   };
 
   window.gcTabSearchSam = async function(opts){
     opts = opts || {};
+    var limit = _samLimit();
+    var filters = _samFilters();
+    filters.limit = limit;
+    var zeroHost = $('gc-tab-sam-zero-match'); if (zeroHost){ zeroHost.style.display = 'none'; zeroHost.innerHTML = ''; }
+    window.gcTabNaicsValidate();
+    _samRenderFilterChips(filters);
+    if (!opts.live && window.sd && window.sd.govcon && window.sd.govcon.index && typeof window.sd.govcon.index.status === 'function'){
+      try {
+        var idxStatus = await window.sd.govcon.index.status();
+        if (idxStatus && idxStatus.recordCount > 0 && !idxStatus.stale && typeof window.sd.govcon.index.search === 'function'){
+          var local = await window.sd.govcon.index.search(filters);
+          var localRows = (local && local.results) || [];
+          localRows.forEach(function(r){ r._sourceLabel = 'Local GovCon Index'; });
+          _samFreshResults = localRows.slice(0, limit);
+          renderSamFreshResults(_samFreshResults);
+          var last = local && local.lastRun && (local.lastRun.completedAt || local.lastRun.startedAt);
+          _samStatus('Source: local GovCon index from ' + (last ? _fmtDate(last) : 'today') + ' · visible ' + _samFreshResults.length + ' of ' + (local.total || _samFreshResults.length));
+          if (window.toast) try { window.toast('Searched local GovCon index.', 'ok'); } catch (e) {}
+          refreshSavedPursuitsPreview();
+          return;
+        } else if (idxStatus && idxStatus.recordCount > 0 && idxStatus.stale) {
+          _samStatus('Local index is stale. Refresh now or search SAM.gov live.');
+        }
+      } catch (e) {}
+    }
     var present = false;
     try {
       if (window.sd && window.sd.credentials && window.sd.credentials.status){
@@ -18657,30 +18771,24 @@ document.addEventListener('DOMContentLoaded',()=>{
       if (window.toast) try { window.toast('SAM search bridge unavailable in this build. Rebuild the trial package.', 'err'); } catch (e) {}
       return;
     }
-    var limit = _samLimit();
-    var filters = _samFilters();
-    filters.limit = limit;
     // Phase 25T — reset zero-match panel from previous run + validate
     // NAICS so the chip reflects the input that will be searched.
-    var zeroHost = $('gc-tab-sam-zero-match'); if (zeroHost){ zeroHost.style.display = 'none'; zeroHost.innerHTML = ''; }
-    window.gcTabNaicsValidate();
     // Phase 25S — surface the active filter chips immediately so the
     // user can see WHICH constraints are about to be applied (and
     // understand why an upcoming "0 results" message happens).
-    _samRenderFilterChips(filters);
-    // Phase 25T — keyword-only mode strips NAICS from the IPC payload
+    // Phase 25AA — Ignore NAICS strips NAICS from the IPC payload
     // and the local backstop. Saved field value is preserved so the
     // user doesn't have to retype it for the next search.
     var ipcFilters = {};
     Object.keys(filters).forEach(function(k){ ipcFilters[k] = filters[k]; });
-    if (filters.naicsMode === 'keyword-only'){ delete ipcFilters.naics; }
-    // Phase 25U — broader mode expands the user's NAICS code into the
+    if (filters.naicsMode === 'ignore' || filters.naicsMode === 'keyword-only'){ delete ipcFilters.naics; }
+    // Phase 25U/25AA — broaden mode expands the user's NAICS code into the
     // 4-digit prefix family using the local NAICS library so the
     // SAM.gov query reaches all sibling codes server-side, not just
     // the exact code. Without this expansion broader mode would only
     // match what the local backstop's prefix matcher could find on
     // page 1 of the exact-code response.
-    if (filters.naicsMode === 'broader' && filters.naics && typeof window.naicsRelatedCodes === 'function'){
+    if ((filters.naicsMode === 'broaden' || filters.naicsMode === 'broader') && filters.naics && typeof window.naicsRelatedCodes === 'function'){
       var rootCodes = _samNaicsList(filters.naics);
       var expanded = rootCodes.slice();
       rootCodes.forEach(function(code){
@@ -18717,18 +18825,16 @@ document.addEventListener('DOMContentLoaded',()=>{
     renderSamFreshResults(res);
     // Phase 25T — build the status-line mode descriptor.
     var modeDescriptor;
-    if (filters.naicsMode === 'keyword-only') modeDescriptor = 'keyword-only search';
-    else if (filters.naicsMode === 'broader' && filters.naics) modeDescriptor = 'broader NAICS ' + filters.naics;
-    else if (filters.naics) modeDescriptor = 'exact NAICS ' + filters.naics;
+    if (filters.naicsMode === 'ignore' || filters.naicsMode === 'keyword-only') modeDescriptor = 'NAICS ignored by user';
+    else if ((filters.naicsMode === 'broaden' || filters.naicsMode === 'broader') && filters.naics) modeDescriptor = 'broadened NAICS family ' + filters.naics;
+    else if (filters.naics) modeDescriptor = 'applied NAICS ' + filters.naics;
     else modeDescriptor = 'no NAICS filter';
     // Phase 25Y — surface the active keyword in the status line.
     var kwDescriptor = filters.keyword ? (' · keyword: ' + filters.keyword) : '';
     // Phase 25X — relevance descriptor. When the visible rows came from
-    // SAM.gov's server-side full-text match (no local keyword hit in the
-    // truncated list payload), say so plainly so the user understands the
-    // keyword still drove the search even though the title may not echo it.
+    // local metadata/descriptionText when available.
     var relDescriptor = '';
-    if (filters.keyword && _samLastFilterDiag.keywordFallback) relDescriptor = ' · keyword matched by SAM.gov full-text';
+    if (filters.keyword && _samLastFilterDiag.keywordFallback) relDescriptor = ' · keyword searched in SAM.gov title metadata';
     else if (filters.keyword && _samLastFilterDiag.keywordStrong) relDescriptor = ' · keyword matched locally';
     if (!res.length){
       // Phase 25X — by the time we reach here with a keyword set, the
@@ -18739,7 +18845,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       // filter (NAICS / set-aside) removed every row. Attribute it honestly.
       if (returned === 0){
         // SAM.gov itself had nothing for this query shape.
-        if (filters.naics && filters.naicsMode !== 'keyword-only') _samRenderZeroMatch(filters, 0);
+        if (filters.naics && filters.naicsMode !== 'ignore' && filters.naicsMode !== 'keyword-only') _samRenderZeroMatch(filters, 0);
         _samStatus('Showing up to ' + limit + ' results · returned 0 · visible 0' + kwDescriptor + ' · ' + modeDescriptor);
         if (window.toast) try { window.toast('SAM.gov returned 0 records for this search. Broaden the keyword, NAICS, or date range.', 'info'); } catch (e) {}
         return;
@@ -18748,10 +18854,10 @@ document.addEventListener('DOMContentLoaded',()=>{
       // actionable zero-match panel whenever a NAICS filter is set so the
       // buyer always sees a forward path — whether SAM.gov returned 0 rows
       // for that NAICS or returned rows the broader/set-aside backstop dropped.
-      if (filters.naics && filters.naicsMode !== 'keyword-only'){
+      if (filters.naics && filters.naicsMode !== 'ignore' && filters.naicsMode !== 'keyword-only'){
         _samRenderZeroMatch(filters, returned);
         _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible 0' + kwDescriptor + ' · ' + modeDescriptor);
-        if (window.toast) try { window.toast('No exact NAICS matches — try broader related NAICS or keyword-only search.', 'info'); } catch (e) {}
+        if (window.toast) try { window.toast('No applied NAICS matches — broaden the NAICS family or explicitly ignore NAICS.', 'info'); } catch (e) {}
       } else if (filters.setAside && filters.setAside !== 'Any'){
         // A keyword may be present; the set-aside filter is what emptied the set.
         if (zeroHost){

@@ -1,9 +1,9 @@
 // Phase 25T · NAICS fallback search modes
 // ──────────────────────────────────────────────────────────────────────
 // The buyer can choose how strict the NAICS filter is per search:
-//   - Exact NAICS (default) — only rows whose NAICS matches exactly.
-//   - Broader / related NAICS — match by 4-digit prefix family.
-//   - Keyword only — skip the NAICS filter entirely for one search.
+//   - Apply NAICS (default) — only rows whose NAICS matches exactly.
+//   - Broaden NAICS family — match by 4-digit prefix family.
+//   - Ignore NAICS — skip the NAICS filter entirely for one search.
 
 const fs = require('fs');
 const path = require('path');
@@ -20,12 +20,12 @@ assert(/id="gc-tab-f-naics-mode"/.test(html),
   'NAICS mode selector #gc-tab-f-naics-mode exists');
 assert(/data-gc-tab-naics-mode="true"/.test(html),
   'NAICS mode selector carries data-gc-tab-naics-mode attribute');
-assert(/<option value="exact" selected>Exact NAICS<\/option>/.test(html),
-  'Default mode is Exact NAICS');
-assert(/<option value="broader">Broader \/ related NAICS<\/option>/.test(html),
-  'Broader / related NAICS option present');
-assert(/<option value="keyword-only">Keyword only<\/option>/.test(html),
-  'Keyword only option present');
+assert(/<option value="apply" selected>Apply NAICS<\/option>/.test(html),
+  'Default mode is Apply NAICS');
+assert(/<option value="broaden">Broaden NAICS family<\/option>/.test(html),
+  'Broaden NAICS family option present');
+assert(/<option value="ignore">Ignore NAICS<\/option>/.test(html),
+  'Ignore NAICS option present');
 
 // ── Handlers ────────────────────────────────────────────────────────
 [
@@ -43,17 +43,17 @@ assert(/<option value="keyword-only">Keyword only<\/option>/.test(html),
 assert(/filters\.naicsMode = mode/.test(html),
   '_samFilters records the active NAICS mode on the filters object');
 
-// ── Keyword-only mode drops NAICS from the IPC payload ──────────────
-assert(/if \(filters\.naicsMode === 'keyword-only'\)\{ delete ipcFilters\.naics; \}/.test(html),
-  'Keyword-only mode strips NAICS from the IPC payload before the SAM call');
+// ── Ignore mode drops NAICS from the IPC payload ────────────────────
+assert(/filters\.naicsMode === 'ignore'[\s\S]*delete ipcFilters\.naics/.test(html),
+  'Ignore mode strips NAICS from the IPC payload before the SAM call');
 
-// ── Broader mode uses prefix matching ───────────────────────────────
-assert(/if \(mode === 'broader'\)/.test(html),
-  '_samMatchesNaics branches on broader mode');
+// ── Broaden mode uses prefix matching ───────────────────────────────
+assert(/mode === 'broaden'/.test(html),
+  '_samMatchesNaics branches on broaden mode');
 assert(/wanted\[i\]\.slice\(0, 4\)/.test(html),
-  'Broader mode uses 4-digit prefix matching');
+  'Broaden mode uses 4-digit prefix matching');
 
-// ── Sandbox: simulate exact vs broader vs keyword-only ──────────────
+// ── Sandbox: simulate apply vs broaden vs ignore ────────────────────
 try {
   var iifeStart = html.lastIndexOf('(function(){', html.indexOf('window.gcTabSearchSam ='));
   var iifeEnd = html.indexOf('</script>', iifeStart);
@@ -94,36 +94,36 @@ try {
     { noticeId: 'd', naicsCode: '541990' }   // sibling — broader match
   ];
 
-  // Exact: only 541618 row survives.
+  // Apply: only 541618 row survives.
   var exact = sandbox.window._samApplyLocalFilters(rows, {
-    naics: '541618', naicsMode: 'exact'
+    naics: '541618', naicsMode: 'apply'
   });
   assert(exact.length === 1 && exact[0].noticeId === 'a',
-    'Exact mode keeps only the exact NAICS 541618 row');
+    'Apply mode keeps only the exact NAICS 541618 row');
 
-  // Broader: 5416-prefix rows pass (541618, 541611); 541990 (5419)
+  // Broaden: 5416-prefix rows pass (541618, 541611); 541990 (5419)
   // and 334519 drop because they don't share the 4-digit prefix.
   var broader = sandbox.window._samApplyLocalFilters(rows, {
-    naics: '541618', naicsMode: 'broader'
+    naics: '541618', naicsMode: 'broaden'
   });
   assert(broader.length === 2,
-    'Broader mode keeps 5416-prefix family (got ' + broader.length + ')');
+    'Broaden mode keeps 5416-prefix family (got ' + broader.length + ')');
   assert(broader.every(function(r){ return /^5416/.test(r.naicsCode); }),
-    'Every broader-mode row shares the 5416 four-digit prefix');
+    'Every broaden-mode row shares the 5416 four-digit prefix');
   assert(broader.every(function(r){ return r.naicsCode !== '334519'; }),
-    'Broader mode drops the unrelated 334519 row');
+    'Broaden mode drops the unrelated 334519 row');
 
-  // Keyword-only: NAICS filter is bypassed.
+  // Ignore: NAICS filter is bypassed.
   var keywordOnly = sandbox.window._samApplyLocalFilters(rows, {
-    naics: '541618', naicsMode: 'keyword-only'
+    naics: '541618', naicsMode: 'ignore'
   });
   assert(keywordOnly.length === 4,
-    'Keyword-only mode does NOT apply the NAICS backstop (all rows pass)');
+    'Ignore mode does NOT apply the NAICS backstop (all rows pass)');
 
-  // Defaulting to exact when mode is missing.
+  // Defaulting to Apply when mode is missing.
   var noMode = sandbox.window._samApplyLocalFilters(rows, { naics: '541618' });
   assert(noMode.length === 1,
-    'Missing mode defaults to exact (only exact 541618 row passes)');
+    'Missing mode defaults to Apply NAICS (only exact 541618 row passes)');
 } catch (e) {
   assert(false, 'Sandbox failed to bootstrap: ' + e.message);
 }

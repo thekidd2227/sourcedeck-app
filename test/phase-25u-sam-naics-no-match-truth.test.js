@@ -19,8 +19,8 @@ function assert(c, m){ if(!c){ console.error('  ✗ ' + m); process.exitCode = 1
 console.log('Phase 25U · SAM.gov NAICS no-match truth');
 
 // ── Renderer expands broader-mode NAICS before the IPC call ─────────
-assert(/if \(filters\.naicsMode === 'broader'/.test(html),
-  "Renderer branches on broader mode before sending to IPC");
+assert(/filters\.naicsMode === 'broaden'/.test(html),
+  "Renderer branches on broaden mode before sending to IPC");
 assert(/window\.naicsRelatedCodes\(code/.test(html),
   'Broader-mode IPC payload is expanded via naicsRelatedCodes');
 assert(/ipcFilters\.naics = expanded\.join\(','\)/.test(html),
@@ -39,8 +39,8 @@ assert(!/SAM\.gov returned ' \+ returned \+ ' row[^"]*but none matched NAICS/.te
   'Old "SAM.gov returned N rows but none matched NAICS" copy is removed');
 
 // ── No-match panel still surfaces when NAICS is set regardless of count
-assert(/if \(filters\.naics && filters\.naicsMode !== 'keyword-only'\)\{[\s\S]*_samRenderZeroMatch/.test(html),
-  'Renderer always shows the zero-match panel when NAICS is set and mode is not keyword-only');
+assert(/filters\.naicsMode !== 'ignore'[\s\S]*_samRenderZeroMatch/.test(html),
+  'Renderer shows the zero-match panel when NAICS is set and mode is not Ignore NAICS');
 
 // ── Sandbox: drive _samRenderZeroMatch directly ─────────────────────
 try {

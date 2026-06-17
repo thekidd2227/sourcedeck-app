@@ -2,9 +2,8 @@
  * Phase 25X — SAM filter diagnostics.
  *
  * When SAM.gov returns rows but the visible list differs, the renderer must
- * explain WHY — distinguishing (a) precise local keyword hits, (b) reliance
- * on SAM.gov's server-side full-text relevance (description-only matches),
- * and (c) rows removed by structural NAICS / set-aside filters. This guards
+ * explain WHY — distinguishing (a) precise local keyword hits and
+ * (b) rows removed by structural NAICS / set-aside filters. This guards
  * against the silent "returned N · visible 0" failure mode.
  *
  * Run:  node test/phase-25x-sam-filter-diagnostics.test.js
@@ -23,7 +22,7 @@ console.log('\n=== Phase 25X — SAM filter diagnostics ===\n');
 // ── static guards: diagnostic plumbing exists ────────────────────────────
 assert(/_samLastFilterDiag/.test(html), 'renderer tracks a _samLastFilterDiag object');
 assert(/keywordFallback/.test(html) && /keywordStrong/.test(html), 'diag records keywordStrong + keywordFallback');
-assert(/keyword matched by SAM\.gov full-text/.test(html), 'status descriptor for server-side relevance present');
+assert(!/keyword matched by SAM\.gov full-text/.test(html), 'no false server-side full-text descriptor present');
 assert(/returned ' \+ returned \+ ' · visible/.test(html), 'status line shows returned + visible counts');
 
 // ── runtime: exercise _samApplyLocalFilters + diag directly ──────────────
@@ -56,11 +55,11 @@ const rowsTitle = [
   { noticeId: '4', title: 'Janitorial Services B', naicsCode: '561720', description: descLink }
 ];
 
-// (a) fallback: keyword set, no local hit → all rows kept, fallback flagged
+// (a) keyword set, no local hit → rows dropped until description text is fetched/indexed
 let out = W._samApplyLocalFilters(rowsDescOnly, { keyword: 'janitorial', naicsMode: 'keyword-only' });
 let d = W._samGetFilterDiag();
-assert(out.length === 2, 'fallback keeps both server-relevant rows');
-assert(d.keywordFallback === true && d.keywordStrong === 0, 'diag flags fallback (no local hit)');
+assert(out.length === 0, 'description-link-only rows are not kept as keyword matches');
+assert(d.keywordFallback === false && d.keywordStrong === 0, 'diag does not claim fallback/full-text match');
 assert(d.returned === 2 && d.structural === 2, 'diag records returned + structural counts');
 
 // (b) strong: keyword in title → no fallback
