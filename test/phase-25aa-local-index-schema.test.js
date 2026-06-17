@@ -9,8 +9,9 @@ const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sd-25aa-index-'));
 const db = createGovconIndexDb({ userDataPath: dir });
 const schema = db.ensureSchema();
 
-assert.strictEqual(schema.dbPath, path.join(dir, 'govcon-cache.sqlite'));
-assert.strictEqual(schema.storageEngine, 'jsonl-fallback');
+// Phase 25AA-TIGHTEN-2: cache filename matches the actual JSON backend.
+assert.strictEqual(schema.dbPath, path.join(dir, 'govcon-cache.json'));
+assert.strictEqual(schema.storageEngine, 'json');
 for (const t of TABLES) assert.ok(schema.tables.includes(t), 'schema has ' + t);
 assert.ok(schema.tables.includes('govcon_opportunities_fts'), 'FTS/search index contract exists');
 

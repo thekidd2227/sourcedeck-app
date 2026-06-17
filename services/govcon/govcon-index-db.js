@@ -4,29 +4,38 @@ const fs = require('fs');
 const path = require('path');
 
 const SCHEMA_VERSION = 1;
-
+// Phase 25AA-TIGHTEN-2: the active backend is JSON. SQLite/FTS5 is a
+// future scaling phase. Do not mislabel the cache file as `.sqlite`
+// while `better-sqlite3` is not in package.json. The TABLES contract is
+// kept as documentation a future SQLite migration must satisfy.
 const TABLES = Object.freeze([
   'govcon_opportunities',
   'govcon_opportunities_fts',
   'govcon_index_batches',
   'govcon_saved_pursuits'
 ]);
+const BACKEND = 'json';
 
 function createGovconIndexDb(opts) {
   opts = opts || {};
   const userDataPath = opts.userDataPath;
   if (!userDataPath) throw new Error('govcon-index-db: userDataPath required');
-  const dbPath = opts.dbPath || path.join(userDataPath, 'govcon-cache.sqlite');
+  // Phase 25AA-TIGHTEN-2: cache filename matches the actual backend.
+  const dbPath = opts.dbPath || path.join(userDataPath, 'govcon-cache.json');
 
   function ensureDir() {
     fs.mkdirSync(path.dirname(dbPath), { recursive: true });
   }
 
   function emptyState() {
+    const now = new Date().toISOString();
     return {
       schemaVersion: SCHEMA_VERSION,
-      storageEngine: 'jsonl-fallback',
+      backend: BACKEND,
+      storageEngine: 'json',
       sqliteContract: TABLES,
+      createdAt: now,
+      updatedAt: now,
       tables: {
         govcon_opportunities: [],
         govcon_opportunities_fts: [],

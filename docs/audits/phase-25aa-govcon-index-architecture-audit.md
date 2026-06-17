@@ -11,8 +11,8 @@ The implemented index is local-only, userData-scoped, and safe for desktop use. 
 - Persistence: existing saved pursuits remain in electron-store; index cache is file-backed at userData.
 - Source materials: saved as key-stripped links and fetched on demand.
 
-## SQLite Decision
-`better-sqlite3` is not currently in `package.json`. Phase 25AA therefore implements a JSON-backed cache file named `govcon-cache.sqlite` with the SQLite/FTS table contract documented in code. Moving to FTS5 later can preserve the IPC and table shape.
+## Cache Backend Decision (corrected by Phase 25AA-TIGHTEN-2)
+`better-sqlite3` is not in `package.json`. Phase 25AA implements a **JSON-backed cache file** named `govcon-cache.json` (not `.sqlite`). The cache root JSON carries `backend: "json"` and `storageEngine: "json"` plus the documented `sqliteContract` table names a future SQLite migration must satisfy. Moving to SQLite/FTS5 later can preserve the IPC and table shape — that work is a future scaling phase, not the current implementation. Earlier docs incorrectly named the file `.sqlite`; Phase 25AA-TIGHTEN-2 corrected the naming so docs match the actual on-disk artifact.
 
 ## Risk Controls
 - No raw SAM.gov API key stored.

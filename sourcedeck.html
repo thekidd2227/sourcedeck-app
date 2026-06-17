@@ -18235,24 +18235,51 @@ document.addEventListener('DOMContentLoaded',()=>{
   // visible list actually contains the keyword across the meaningful fields.
   var _SAM_KW_GENERIC = { support:1, services:1, service:1, repair:1, supplies:1, supply:1, system:1, the:1, of:1, and:1, 'for':1, a:1, to:1, in:1, on:1, with:1 };
   function _samKwTokens(kw){ return String(kw == null ? '' : kw).toLowerCase().split(/[^a-z0-9]+/).filter(Boolean); }
+  // Phase 25AA-TIGHTEN-2 — narrow keyword haystack. The previous haystack
+  // included agency, NAICS code/description, and classification code,
+  // which made unrelated rows (e.g. "boiler testing" with NAICS 561720)
+  // appear to match the keyword "janitorial" because NAICS 561720's
+  // description text contains janitorial. Per the SAM.gov API boundary
+  // the only fields that may justify a keyword match are: title,
+  // solicitationNumber, noticeId, and (when present) fetched description
+  // text or imported source text. Agency, NAICS-as-text, and
+  // classificationCode are explicitly EXCLUDED.
   function _samRowHaystack(r){
     if (!r) return '';
     var desc = (typeof r.description === 'string' && !/^https?:\/\//i.test(r.description)) ? r.description : '';
-    var cls = '';
-    if (r.classificationCode) cls = String(r.classificationCode);
-    return [r.title, r.solicitationNumber, r.noticeId, _samAgencyString(r), _samRowNaics(r), _samRowSetAside(r), cls, desc]
-      .map(function(x){ return String(x == null ? '' : x).toLowerCase(); }).join('  ');
+    if (!desc && typeof r.descriptionText === 'string') desc = r.descriptionText;
+    return [r.title, r.solicitationNumber, r.noticeId, desc]
+      .map(function(x){ return String(x == null ? '' : x).toLowerCase(); }).join('  ');
   }
-  function _samMatchesKeyword(r, keyword){
-    if (!keyword || !String(keyword).trim()) return true;
-    var hay = _samRowHaystack(r);
+  // Phase 25AA-TIGHTEN-2 — verified-match reason per row. Returns null
+  // when the row should NOT be visible for the given keyword. Returns a
+  // human-readable string describing which verified field carried the
+  // match. Visible-row gating uses this reason; rows without one are
+  // hidden when a keyword filter is active.
+  function _samKeywordMatchReason(r, keyword){
+    if (!keyword || !String(keyword).trim()) return 'No keyword filter';
+    if (!r) return null;
     var phrase = String(keyword).trim().toLowerCase();
-    if (hay.indexOf(phrase) >= 0) return true;              // exact phrase wins
+    var title = String(r.title || '').toLowerCase();
+    var sol   = String(r.solicitationNumber || '').toLowerCase();
+    var nid   = String(r.noticeId || '').toLowerCase();
+    var desc  = '';
+    if (typeof r.description === 'string' && !/^https?:\/\//i.test(r.description)) desc = r.description.toLowerCase();
+    else if (typeof r.descriptionText === 'string') desc = r.descriptionText.toLowerCase();
+    if (title.indexOf(phrase) >= 0) return 'Matched title: ' + keyword;
+    if (sol.indexOf(phrase) >= 0)   return 'Matched solicitation #: ' + (r.solicitationNumber || '');
+    if (nid.indexOf(phrase) >= 0)   return 'Matched notice ID: ' + (r.noticeId || '');
+    if (desc.indexOf(phrase) >= 0)  return 'Matched description: ' + keyword;
     var toks = _samKwTokens(keyword);
     var sig = toks.filter(function(t){ return !_SAM_KW_GENERIC[t] && t.length >= 3; });
-    if (!sig.length) sig = toks;                            // all-generic: require literal tokens
-    for (var i = 0; i < sig.length; i++){ if (hay.indexOf(sig[i]) < 0) return false; } // AND across significant terms
-    return true;
+    if (!sig.length) sig = toks;
+    var hay = [title, sol, nid, desc].join('  ');
+    for (var i = 0; i < sig.length; i++){ if (hay.indexOf(sig[i]) < 0) return null; }
+    return 'Matched title: ' + keyword;
+  }
+  window.gcSamKeywordMatchReason = _samKeywordMatchReason;
+  function _samMatchesKeyword(r, keyword){
+    return _samKeywordMatchReason(r, keyword) !== null;
   }
   window.gcSamMatchesKeyword = _samMatchesKeyword; // exposed for tests
   // Phase 25X — diagnostics from the most recent local-filter pass. The
