@@ -18153,20 +18153,57 @@ document.addEventListener('DOMContentLoaded',()=>{
     return true;
   }
   window.gcSamMatchesKeyword = _samMatchesKeyword; // exposed for tests
+  // Phase 25X — diagnostics from the most recent local-filter pass. The
+  // renderer reads this to explain HOW the visible set was produced
+  // (precise local keyword match vs. trusting SAM.gov's server-side
+  // full-text relevance) so a keyword search never silently collapses to
+  // a false "0 results".
+  var _samLastFilterDiag = { returned: 0, structural: 0, keywordStrong: 0, keywordFallback: false };
+  function _samFilterDiagReset(returned){ _samLastFilterDiag = { returned: returned || 0, structural: 0, keywordStrong: 0, keywordFallback: false }; }
   function _samApplyLocalFilters(rows, filters){
-    if (!Array.isArray(rows)) return [];
+    filters = filters || {};
+    if (!Array.isArray(rows)){ _samFilterDiagReset(0); return []; }
+    _samFilterDiagReset(rows.length);
     // Phase 25T — keyword-only mode bypasses the NAICS backstop for
     // a single search. The saved filters.naics value is intentionally
     // preserved so the field doesn't appear cleared after the search.
     var mode = filters.naicsMode || 'exact';
     var naicsForFilter = (mode === 'keyword-only') ? '' : filters.naics;
-    return rows.filter(function(r){
+    // Stage 1 — structural filters we can evaluate directly from each row:
+    // NAICS (unless keyword-only) and set-aside. These are reliable because
+    // every row carries its own naics code + set-aside descriptor.
+    var structural = rows.filter(function(r){
       if (!_samMatchesNaics(r, naicsForFilter, mode)) return false;
       if (!_samMatchesSetAside(r, filters.setAside)) return false;
-      // Phase 25Y — keyword relevance backstop (applies in every mode when set).
+      return true;
+    });
+    _samLastFilterDiag.structural = structural.length;
+    // Stage 2 — keyword relevance. CRITICAL (Phase 25X): SAM.gov already
+    // performed an AUTHORITATIVE full-text match on the keyword server-side
+    // via the `q` parameter — INCLUDING the opportunity description body,
+    // which the v2 list payload delivers only as a LINK (never inline text;
+    // see _samRowHaystack, which deliberately excludes URL-valued
+    // descriptions). The local matcher can therefore inspect only
+    // title/agency/NAICS/solicitation number, so a local "miss" is NOT proof
+    // the row is irrelevant — the keyword may simply live in the description
+    // body we don't hold locally. We must NOT use the local matcher to DROP
+    // server-relevant rows (that is exactly the bug that produced
+    // "returned 25 · visible 0"). Instead we use it only to RANK: rows whose
+    // keyword hit is locally verifiable are promoted to the top; every other
+    // server-returned row is kept below them, trusting SAM.gov's relevance.
+    if (!filters.keyword || !String(filters.keyword).trim()) return structural;
+    var strong = structural.filter(function(r){
       if (!_samMatchesKeyword(r, filters.keyword)) return false;
       return true;
     });
+    _samLastFilterDiag.keywordStrong = strong.length;
+    // keywordFallback = we have rows to show but NONE were locally verifiable,
+    // so the visible set rests entirely on SAM.gov's server-side relevance.
+    _samLastFilterDiag.keywordFallback = (strong.length === 0 && structural.length > 0);
+    if (!strong.length || strong.length === structural.length) return structural;
+    // Promote locally-verified rows to the top, preserve the rest in order.
+    var rest = structural.filter(function(r){ return strong.indexOf(r) < 0; });
+    return strong.concat(rest);
   }
   function _samActiveFilterSummary(filters){
     var parts = [];
@@ -18686,30 +18723,43 @@ document.addEventListener('DOMContentLoaded',()=>{
     else modeDescriptor = 'no NAICS filter';
     // Phase 25Y — surface the active keyword in the status line.
     var kwDescriptor = filters.keyword ? (' · keyword: ' + filters.keyword) : '';
+    // Phase 25X — relevance descriptor. When the visible rows came from
+    // SAM.gov's server-side full-text match (no local keyword hit in the
+    // truncated list payload), say so plainly so the user understands the
+    // keyword still drove the search even though the title may not echo it.
+    var relDescriptor = '';
+    if (filters.keyword && _samLastFilterDiag.keywordFallback) relDescriptor = ' · keyword matched by SAM.gov full-text';
+    else if (filters.keyword && _samLastFilterDiag.keywordStrong) relDescriptor = ' · keyword matched locally';
     if (!res.length){
-      // Phase 25Y — keyword relevance produced zero visible rows even though
-      // SAM.gov returned records. Be explicit rather than show unrelated rows.
-      if (returned > 0 && filters.keyword){
-        _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible 0' + kwDescriptor + ' · ' + modeDescriptor);
-        if (zeroHost){
-          zeroHost.style.display = '';
-          zeroHost.innerHTML = '<div style="font-weight:600;margin-bottom:4px">No keyword matches after relevance filtering.</div>' +
-            '<div style="font-size:11px;color:var(--sub);line-height:1.55">SAM.gov returned ' + returned + ' records, but none matched keyword &ldquo;' + _esc(filters.keyword) + '&rdquo; after relevance filtering. Clear the keyword or broaden the search.</div>';
-        }
-        if (window.toast) try { window.toast('No results matched keyword “' + filters.keyword + '” after relevance filtering.', 'info'); } catch (e) {}
+      // Phase 25X — by the time we reach here with a keyword set, the
+      // keyword can never be the *sole* cause of zero visible rows: when
+      // the local matcher finds no hit we fall back to SAM.gov's
+      // server-side keyword relevance (see _samApplyLocalFilters). So a
+      // zero result means either SAM.gov returned nothing, or a structural
+      // filter (NAICS / set-aside) removed every row. Attribute it honestly.
+      if (returned === 0){
+        // SAM.gov itself had nothing for this query shape.
+        if (filters.naics && filters.naicsMode !== 'keyword-only') _samRenderZeroMatch(filters, 0);
+        _samStatus('Showing up to ' + limit + ' results · returned 0 · visible 0' + kwDescriptor + ' · ' + modeDescriptor);
+        if (window.toast) try { window.toast('SAM.gov returned 0 records for this search. Broaden the keyword, NAICS, or date range.', 'info'); } catch (e) {}
         return;
       }
-      // Phase 25U — after the sanitizer fix, SAM.gov filters by NAICS
-      // server-side. Render the actionable zero-match panel whenever
-      // a NAICS filter is set so the buyer always sees a forward
-      // path — whether SAM.gov returned 0 rows for that NAICS or
-      // returned rows that the broader/set-aside backstop dropped.
+      // Phase 25U — SAM.gov filters by NAICS server-side. Render the
+      // actionable zero-match panel whenever a NAICS filter is set so the
+      // buyer always sees a forward path — whether SAM.gov returned 0 rows
+      // for that NAICS or returned rows the broader/set-aside backstop dropped.
       if (filters.naics && filters.naicsMode !== 'keyword-only'){
         _samRenderZeroMatch(filters, returned);
-        _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible 0 · ' + modeDescriptor);
+        _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible 0' + kwDescriptor + ' · ' + modeDescriptor);
         if (window.toast) try { window.toast('No exact NAICS matches — try broader related NAICS or keyword-only search.', 'info'); } catch (e) {}
-      } else if (returned > 0 && filters.setAside && filters.setAside !== 'Any'){
-        _samStatus('SAM.gov returned ' + returned + ' rows but none matched set-aside ' + filters.setAside + '. Clear that filter or pick a different value.');
+      } else if (filters.setAside && filters.setAside !== 'Any'){
+        // A keyword may be present; the set-aside filter is what emptied the set.
+        if (zeroHost){
+          zeroHost.style.display = '';
+          zeroHost.innerHTML = '<div style="font-weight:600;margin-bottom:4px">' + (filters.keyword ? 'No keyword matches after relevance filtering.' : 'No matches after filtering.') + '</div>' +
+            '<div style="font-size:11px;color:var(--sub);line-height:1.55">SAM.gov returned ' + returned + ' record' + (returned === 1 ? '' : 's') + (filters.keyword ? ' for keyword &ldquo;' + _esc(filters.keyword) + '&rdquo;' : '') + ', but none matched set-aside ' + _esc(filters.setAside) + '. Clear that filter or pick a different value.</div>';
+        }
+        _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible 0' + kwDescriptor + ' · ' + modeDescriptor);
         if (window.toast) try { window.toast('No SAM.gov opportunities matched set-aside ' + filters.setAside + '.', 'info'); } catch (e) {}
       } else {
         _samStatus('No SAM.gov opportunities matched this search. Adjust filters or increase result count.');
@@ -18717,7 +18767,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       }
       return;
     }
-    _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible ' + res.length + kwDescriptor + ' · ' + modeDescriptor);
+    _samStatus('Showing up to ' + limit + ' results · returned ' + returned + ' · visible ' + res.length + kwDescriptor + relDescriptor + ' · ' + modeDescriptor);
     if (window.toast) try { window.toast('Returned ' + returned + ' opportunit' + (returned === 1 ? 'y' : 'ies') + ' · ' + res.length + ' matched filters. Review results below, then save or mark pursue.', 'ok'); } catch (e) {}
     refreshSavedPursuitsPreview();
   };
