@@ -1,7 +1,7 @@
 /**
- * Phase 22C — GovCon Solicitation Workspace + Compliance Matrix regression test.
+ * Phase 22C — GovCon Solicitation Center + Compliance Matrix regression test.
  *
- * Asserts the buyer-facing Solicitation Workspace surface exists in
+ * Asserts the buyer-facing Solicitation Center surface exists in
  * sourcedeck.html with the seven extraction panels (Summary / Section L /
  * Section M / PWS-SOW / Required Forms / Deadlines / Risks), the
  * Compliance Matrix table with the 10 spec'd columns, the required
@@ -33,20 +33,20 @@ function test(name, fn) {
   catch (e) { failed++; console.log('  ❌ ' + name + ': ' + e.message); }
 }
 
-console.log('\n=== Phase 22C — Solicitation Workspace + Compliance Matrix ===\n');
+console.log('\n=== Phase 22C — Solicitation Center + Compliance Matrix ===\n');
 
-// 1. Solicitation Workspace exists.
-test('Solicitation Workspace section exists', () => {
+// 1. Solicitation Center exists.
+test('Solicitation Center section exists', () => {
   assert.ok(/id="gc-sol-workspace"/.test(HTML), 'gc-sol-workspace section id missing');
-  assert.ok(/Solicitation Workspace/.test(HTML), 'Solicitation Workspace title missing');
+  assert.ok(/Solicitation Center/.test(HTML), 'Solicitation Center title missing');
   assert.ok(/data-section="govcon-solicitation-workspace"/.test(HTML), 'data-section anchor missing');
 });
 
-// 2. Solicitation text/manual import field exists.
-test('Solicitation text input + linked opportunity selector exist', () => {
-  assert.ok(/id="gc-sol-text"/.test(HTML), 'gc-sol-text textarea missing');
+// 2. Package/upload intake + linked opportunity selector exists.
+test('Package/upload intake + linked opportunity selector exist', () => {
+  assert.ok(/Download Solicitation Package/.test(HTML), 'package download action missing');
   assert.ok(/id="gc-sol-opp-select"/.test(HTML), 'gc-sol-opp-select missing');
-  assert.ok(/Paste solicitation text/.test(HTML), 'paste solicitation text label/placeholder missing');
+  assert.ok(/Upload Solicitation/.test(HTML), 'upload solicitation action missing');
 });
 
 // 3. Section L panel exists.
@@ -101,9 +101,9 @@ test('Compliance Matrix has all 10 spec columns', () => {
 // 9. Empty states exist and contain no fake solicitation data.
 test('empty states present and no fake solicitation / agency / deadlines', () => {
   // Required empty-state copies
-  assert.ok(/No solicitation loaded yet\. Paste solicitation text or add opportunity details manually\./.test(HTML),
+  assert.ok(/No solicitation package loaded yet\. Download a SAM\.gov package or upload a solicitation file\./.test(HTML),
     'Summary empty state missing');
-  assert.ok(/No requirements extracted yet\. Paste solicitation text and run extraction\./.test(HTML),
+  assert.ok(/No requirements extracted yet\. Download a package or upload a solicitation, then run extraction\./.test(HTML),
     'Matrix empty state missing');
   // No fake solicitation numbers, agencies, or deadlines hardcoded inside the workspace section.
   const slice = HTML.split(/data-section="govcon-solicitation-workspace"/)[1] || '';

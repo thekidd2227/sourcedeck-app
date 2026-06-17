@@ -58,6 +58,10 @@ contextBridge.exposeInMainWorld('sd', {
       runNow:      (input)   => ipcRenderer.invoke('govcon:index-run-now', input),
       clear:       ()        => ipcRenderer.invoke('govcon:index-clear')
     },
+    downloadSolicitationPackage: (payload) => ipcRenderer.invoke('govcon:download-solicitation-package', payload),
+    extractSolicitationPackage:  (payload) => ipcRenderer.invoke('govcon:extract-solicitation-package', payload),
+    explainSolicitationPackage:  (payload) => ipcRenderer.invoke('govcon:explain-solicitation-package', payload),
+    openSolicitationPackageFolder: (packagePath) => ipcRenderer.invoke('govcon:open-solicitation-package-folder', packagePath),
     complianceMatrix:    (payload)  => ipcRenderer.invoke('govcon:compliance-matrix', payload),
     evaluatePreRfp:      (payload)  => ipcRenderer.invoke('govcon:pre-rfp-evaluate', payload),
     pastPerformance: {

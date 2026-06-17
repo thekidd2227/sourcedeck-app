@@ -1149,16 +1149,16 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(195px,1fr));gap:10px">
             <!-- Phase 25M — "Start a pursuit" intake. Three routes
                  into a new pursuit: SAM.gov in-app search, manually
-                 uploaded solicitation / RFQ / RFP, or pasted text.
+                 uploaded solicitation / RFQ / RFP, or downloaded package.
                  Surface the intake at the top of the Dashboard so
                  buyers don't have to hunt for it. -->
             <div class="card" data-dash-card="start-pursuit" style="padding:11px 13px;background:var(--panel2,#0f1e32);border:1px solid rgba(176,138,60,0.32)">
               <div style="font:600 9px/1 'Azeret Mono',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--gold2);margin-bottom:5px">Start a pursuit</div>
-              <div style="font:600 12px/1.4 'Syne',sans-serif;color:var(--text);margin-bottom:7px">Search SAM.gov, upload a solicitation, or paste solicitation text.</div>
+              <div style="font:600 12px/1.4 'Syne',sans-serif;color:var(--text);margin-bottom:7px">Search SAM.gov, upload a solicitation, or download a saved SAM.gov package.</div>
               <div style="display:flex;flex-direction:column;gap:4px">
                 <button type="button" class="btn btn-gold" data-dash-start-action="search-sam" onclick="openTab('govcon'); gcScrollTo(event,'gc-sam-pipeline');" style="padding:4px 9px;font-size:10.5px;width:100%" title="Search SAM.gov">🔎 Search SAM.gov</button>
                 <button type="button" class="btn btn-ghost" data-dash-start-action="upload-solicitation" onclick="openTab('execution'); setTimeout(function(){ if (typeof pwSolOpenFilePicker === 'function') pwSolOpenFilePicker(); }, 100);" style="padding:4px 9px;font-size:10.5px;width:100%" title="Upload solicitation / RFQ / RFP">📎 Upload Solicitation / RFQ / RFP</button>
-                <button type="button" class="btn btn-ghost" data-dash-start-action="paste-solicitation" onclick="openTab('execution'); setTimeout(function(){ if (typeof pwSolTogglePasteArea === 'function') pwSolTogglePasteArea(); }, 100);" style="padding:4px 9px;font-size:10.5px;width:100%" title="Paste solicitation text">📋 Paste Solicitation Text</button>
+                <button type="button" class="btn btn-ghost" data-dash-start-action="download-package" onclick="openTab('govcon'); setTimeout(function(){ if(typeof gcTabSwitch==='function') gcTabSwitch('saved-pursuits'); },80);" style="padding:4px 9px;font-size:10.5px;width:100%" title="Download a selected saved SAM.gov solicitation package">⬇ Download SAM.gov Package</button>
               </div>
             </div>
             <!-- Phase 25Y — Contract Awards shortcut. -->
@@ -2518,7 +2518,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 
         <!-- Phase 25N — Find Opportunities tab (default landing).
              Clean intake surface: SAM.gov key status, Search SAM.gov
-             button, Upload Solicitation, Paste Solicitation Text, and
+             button, Upload Solicitation, Download SAM.gov Package, and
              an empty-state copy that steers the user to start a
              pursuit. No raw API key input here. No auto-search on
              load. -->
@@ -2526,7 +2526,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px;margin-bottom:12px;flex-wrap:wrap">
             <div>
               <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">GovCon · Find Opportunities</div>
-              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text)">Search SAM.gov, upload a solicitation, or paste solicitation text to begin.</div>
+              <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:15px;color:var(--text)">Search SAM.gov, upload a solicitation, or download a saved SAM.gov package to begin.</div>
             </div>
             <span id="gc-tab-sam-key-status" data-gc-sam-key-status="true" style="font:600 10px/1.4 'Azeret Mono',monospace;letter-spacing:0.06em;padding:4px 10px;border-radius:980px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted)">SAM.gov key: checking…</span>
           </div>
@@ -2634,7 +2634,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               </select>
             </label>
             <button type="button" class="btn btn-ghost" id="gc-tab-upload-btn" data-gc-find-action="upload-solicitation" onclick="openTab('execution'); setTimeout(function(){ if (typeof pwSolOpenFilePicker === 'function') pwSolOpenFilePicker(); }, 100);" title="Upload solicitation / RFQ / RFP">📎 Upload Solicitation</button>
-            <button type="button" class="btn btn-ghost" id="gc-tab-paste-btn" data-gc-find-action="paste-solicitation" onclick="openTab('execution'); setTimeout(function(){ if (typeof pwSolTogglePasteArea === 'function') pwSolTogglePasteArea(); }, 100);" title="Paste solicitation text">📋 Paste Solicitation Text</button>
+            <button type="button" class="btn btn-ghost" id="gc-tab-package-btn" data-gc-find-action="download-package" onclick="gcTabSwitch('saved-pursuits')" title="Download all attachments for a saved SAM.gov pursuit">⬇ Download SAM.gov Package</button>
             <button type="button" class="btn btn-ghost" id="gc-tab-open-setup-btn" data-gc-find-action="open-setup" onclick="openGovconSetupWizard()" title="Open GovCon Setup Wizard" style="margin-left:auto">⚙ Open GovCon Setup</button>
           </div>
           <div id="gc-tab-sam-search-status" data-gc-sam-search-status="true" style="display:none;font-size:11px;color:var(--sub);margin-bottom:10px;font-family:'IBM Plex Mono',monospace;letter-spacing:0.03em"></div>
@@ -2651,7 +2651,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div id="gc-tab-sam-zero-match" data-gc-sam-zero-match="true" style="display:none;border:1px solid rgba(255,176,32,0.30);background:rgba(255,176,32,0.06);border-radius:8px;padding:14px 16px;margin-bottom:12px;color:var(--text);line-height:1.55"></div>
           <div id="gc-tab-find-empty" data-gc-find-empty="true" style="text-align:center;padding:48px 24px;border:1px dashed var(--border);border-radius:8px;color:var(--muted);background:rgba(255,255,255,0.02)">
             <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text);margin-bottom:6px">No saved or pursuing opportunities yet.</div>
-            <div style="font-size:11.5px;line-height:1.55;max-width:480px;margin:0 auto">Search SAM.gov, upload a solicitation, or paste solicitation text to begin. Saved opportunities will appear under <strong>Saved Pursuits</strong>.</div>
+            <div style="font-size:11.5px;line-height:1.55;max-width:480px;margin:0 auto">Search SAM.gov, upload a solicitation, or download a saved SAM.gov package to begin. Saved opportunities will appear under <strong>Saved Pursuits</strong>.</div>
           </div>
           <div id="gc-tab-find-results" data-gc-find-results="true" style="display:none;margin-top:8px"></div>
           <!-- Phase 25S — in-app View Details modal. Opens from a fresh
@@ -3081,7 +3081,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <div class="gc-cc-card" data-cc="solready" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Solicitation Readiness</div>
               <div id="gc-cc-solready-count" style="font-family:'Syne',sans-serif;font-weight:800;font-size:22px;color:var(--text);line-height:1;margin:4px 0">0</div>
-              <div id="gc-cc-solready-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation workspaces prepared yet. Solicitation Workspace lives inside the GovCon Solicitation section.</div>
+              <div id="gc-cc-solready-empty" class="gc-cc-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation centers prepared yet. Solicitation Center lives inside the GovCon Solicitation section.</div>
             </div>
             <div class="gc-cc-card" data-cc="vendor" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
               <div style="font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted)">Vendor Needs (capture board)</div>
@@ -3120,7 +3120,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 <button type="submit" class="btn btn-gold">Add to Capture Board</button>
                 <button type="button" class="btn btn-ghost" onclick="gcCaptureRunBidNoBid()">Run Bid/No-Bid Review</button>
                 <button type="button" class="btn btn-ghost" onclick="gcCaptureExtractDeadlines()">Extract Deadlines</button>
-                <button type="button" class="btn btn-ghost" onclick="gcCaptureSolicitationPlaceholder()">Prepare Solicitation Workspace</button>
+                <button type="button" class="btn btn-ghost" onclick="gcCaptureSolicitationPlaceholder()">Prepare Solicitation Center</button>
               </div>
               <div style="grid-column:1/-1;font-size:10px;color:var(--muted);line-height:1.55;margin-top:4px">Manual intake only. SourceDeck does not auto-submit bids and does not auto-send outreach. Every recommendation is advisory and requires human approval. Follow solicitation instructions and communication windows.</div>
             </form>
@@ -3356,7 +3356,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           </div>
         </section>
         <!-- ═══════════════════════════════════════════════════════════════
-             PHASE 22C — Solicitation Workspace + Compliance Matrix
+             PHASE 22C — Solicitation Center + Compliance Matrix
              Buyer-facing solicitation triage surface. Manual paste/import
              only. SourceDeck does not submit bids and does not auto-send
              outreach. Every extracted requirement is a draft and requires
@@ -3365,7 +3365,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
              ═══════════════════════════════════════════════════════════════ -->
         <section id="gc-sol-workspace" class="gc-sol-workspace" data-section="govcon-solicitation-workspace" data-gc-tab-page="solicitation" style="display:none;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
           <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
-            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Solicitation Workspace</div>
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Solicitation Center</div>
             <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Section L · Section M · PWS/SOW · Required forms · Deadlines · Risks · Compliance matrix</div>
             <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">Draft extraction — verify against source document. SourceDeck does not submit bids. All outputs require human review. No outreach is drafted, sent, or queued.</div>
             <!-- Phase 23D — Last Updated indicator (local-only, advisory). -->
@@ -3381,31 +3381,29 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                   <option value="">— Not linked —</option>
                 </select>
               </label>
-              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px">
-                <span>Paste solicitation text</span>
-                <textarea class="input" id="gc-sol-text" rows="6" placeholder="Paste solicitation PDF text here. Include Section L, Section M, PWS/SOW, required forms, deadlines, and risks. SourceDeck will run a local draft extraction. No text leaves this device."></textarea>
-              </label>
               <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <button type="button" class="btn btn-gold" onclick="gcSolExtract()">Extract Requirements</button>
+                <button type="button" class="btn btn-ghost" onclick="gcSolExplainPlainEnglish()">Explain Package in Plain English</button>
                 <button type="button" class="btn btn-ghost" onclick="gcSolBuildMatrix()">Build Compliance Matrix</button>
+                <button type="button" class="btn btn-ghost" onclick="gcSolCreateProposalOutline()">Create Proposal Outline</button>
                 <button type="button" class="btn btn-ghost" onclick="gcSolMarkReviewed()">Mark Requirement Reviewed</button>
                 <button type="button" class="btn btn-ghost" onclick="gcSolExportPlaceholder()">Export Matrix Placeholder</button>
                 <!-- Phase 25X — shortcut into Make the Right First Impression. -->
                 <button type="button" class="btn btn-ghost" onclick="gcFiOpenFor((document.getElementById('gc-sol-opp-select')||{}).value||'')" style="color:var(--gold2)">✦ Make First Impression</button>
               </div>
-              <div style="font-size:10px;color:var(--muted);line-height:1.55">Manual extraction only. SourceDeck does not submit bids. All outputs require human review and verification against the source document.</div>
+              <div style="font-size:10px;color:var(--muted);line-height:1.55">Package or upload extraction only. SourceDeck does not submit bids, contact anyone, or upload to any portal. All outputs require human review and verification against the source document.</div>
             </div>
           </div>
 
-          <!-- Phase 25W — Source Materials panel for the linked saved pursuit.
+          <!-- Phase 25AB — Attachments panel for the linked saved pursuit.
                Populated when a saved pursuit is selected: SAM.gov description
                fetch, resource links/attachments, point of contact, metadata.
-               Extract Requirements runs against fetched/imported source text
-               plus any pasted text. Local intake only — no upload, no send. -->
+               Extract Requirements runs against downloaded package text where
+               available. Local intake only — no upload, no send. -->
           <div class="gc-sol-panel" id="gc-sol-source-materials" data-gc-sol-source-materials="true" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">
-            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Source Materials</div>
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Attachments</div>
             <div id="gc-sol-source-materials-body" data-gc-sol-source-materials-body="true">
-              <div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No source material has been fetched yet. Use Fetch Description, download resource links, upload a solicitation file, or paste text. Select a saved pursuit above to load its SAM.gov source materials.</div>
+              <div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation package selected yet. Select a saved pursuit, download its SAM.gov package, or upload a solicitation package.</div>
             </div>
           </div>
 
@@ -3413,7 +3411,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <div class="gc-sol-panels" style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
             <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
               <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Solicitation Summary</div>
-              <div id="gc-sol-summary"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation loaded yet. Paste solicitation text or add opportunity details manually.</div></div>
+              <div id="gc-sol-summary"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation package loaded yet. Download a saved SAM.gov package or upload a solicitation file.</div></div>
             </div>
             <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
               <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Section L — Instructions to Offerors</div>
@@ -3463,7 +3461,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 </tr>
               </thead>
               <tbody id="gc-sol-matrix-body">
-                <tr><td colspan="10" class="gc-sol-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No requirements extracted yet. Paste solicitation text and run extraction. SourceDeck does not submit bids. All outputs require human review.</td></tr>
+                <tr><td colspan="10" class="gc-sol-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No requirements extracted yet. Download a package or upload a solicitation, then run extraction. SourceDeck does not submit bids. All outputs require human review.</td></tr>
               </tbody>
             </table>
           </div>
@@ -3497,7 +3495,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <select class="select" id="gc-vendors-sol-select" data-gc-sol-scope="vendors" onchange="gcVendorsSolSelect(this.value)">
               <option value="">— No solicitation selected (general vendor list) —</option>
             </select>
-            <span id="gc-vendors-sol-empty" style="font-size:10px;color:var(--muted);line-height:1.5">No saved solicitations yet. Save or mark pursue from Find Opportunities, upload a solicitation, or paste solicitation text. Vendor rows save locally per solicitation.</span>
+            <span id="gc-vendors-sol-empty" style="font-size:10px;color:var(--muted);line-height:1.5">No saved solicitations yet. Save or mark pursue from Find Opportunities, upload a solicitation, or download a package. Vendor rows save locally per solicitation.</span>
           </label>
 
           <!-- ─── Vendor Quote Room ─── -->
@@ -3613,7 +3611,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <select class="select" id="gc-pricing-sol-select" data-gc-sol-scope="pricing" onchange="gcPricingSolSelect(this.value)">
               <option value="">— No solicitation selected (general pricing) —</option>
             </select>
-            <span id="gc-pricing-sol-empty" style="font-size:10px;color:var(--muted);line-height:1.5">No saved solicitations yet. Save or mark pursue from Find Opportunities, upload a solicitation, or paste solicitation text. Pricing saves locally per solicitation.</span>
+            <span id="gc-pricing-sol-empty" style="font-size:10px;color:var(--muted);line-height:1.5">No saved solicitations yet. Save or mark pursue from Find Opportunities, upload a solicitation, or download a package. Pricing saves locally per solicitation.</span>
           </label>
 
           <!-- ─── Pricing Worksheet ─── -->
@@ -3826,7 +3824,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <select class="select" id="gc-ppf-sol-select" data-gc-sol-scope="prime-partners" onchange="gcPpfSolSelect(this.value)">
               <option value="">— No solicitation selected (general prime list) —</option>
             </select>
-            <span id="gc-ppf-sol-empty" style="font-size:10px;color:var(--muted);line-height:1.5">No saved solicitations yet. Save or mark pursue from Find Opportunities, upload a solicitation, or paste solicitation text. Prime partner rows save locally per solicitation.</span>
+            <span id="gc-ppf-sol-empty" style="font-size:10px;color:var(--muted);line-height:1.5">No saved solicitations yet. Save or mark pursue from Find Opportunities, upload a solicitation, or download a package. Prime partner rows save locally per solicitation.</span>
           </label>
           <section id="gc-ppf" class="gc-ppf" data-section="govcon-prime-partner-finder" style="margin-bottom:18px">
             <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
@@ -4721,9 +4719,9 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
             <div>
               <div style="font:700 10px/1 'Azeret Mono',monospace;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">Solicitation Intake</div>
               <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text)">Choose a solicitation to work on</div>
-              <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px">Select an opportunity you saved from SAM.gov, upload a solicitation file locally, or paste the raw text. Extraction is local · no portal upload · no email send · no bid submission.</div>
+              <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px">Select a downloaded SAM.gov package, choose an opportunity saved from SAM.gov, or upload a solicitation file locally. Extraction is local · no portal upload · no email send · no bid submission.</div>
             </div>
-            <input type="file" id="pw-sol-file" accept=".pdf,.docx,.txt,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown" style="display:none" onchange="pwSolOnFileChosen(event)">
+            <input type="file" id="pw-sol-file" accept=".pdf,.docx,.doc,.xlsx,.xls,.csv,.txt,.zip,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown,text/csv,application/zip" style="display:none" onchange="pwSolOnFileChosen(event)">
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
             <div class="form-group" style="margin:0">
@@ -4743,16 +4741,11 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
           </div>
           <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:10px">
             <button type="button" class="btn btn-ghost" id="pw-sol-upload-btn" data-pw-sol-action="upload" onclick="pwSolOpenFilePicker()" title="Upload solicitation / RFQ / RFP">📎 Upload Solicitation / RFQ / RFP</button>
-            <button type="button" class="btn btn-ghost" id="pw-sol-paste-btn" data-pw-sol-action="paste" onclick="pwSolTogglePasteArea()" title="Paste solicitation text">📋 Paste Solicitation Text</button>
             <button type="button" class="btn btn-gold" id="pw-sol-extract-btn" data-pw-sol-action="extract" onclick="pwSolExtractKeyDetails()" title="Extract key details into FAR-aligned sections">🔎 Extract Key Details</button>
             <button type="button" class="btn btn-ghost" id="pw-sol-clear-btn" data-pw-sol-action="clear" onclick="pwSolClearSelected()" title="Clear the selected solicitation" style="color:var(--red);margin-left:auto">⊘ Clear selected solicitation</button>
           </div>
-          <div id="pw-sol-paste-area" data-pw-sol-paste-area="true" style="display:none;margin-bottom:10px">
-            <label class="label">Paste solicitation text</label>
-            <textarea class="textarea" id="pw-sol-paste-text" placeholder="Paste the full solicitation, RFQ, or RFP text here. Include Section L, Section M, statement of work, performance work statement, instructions to offerors, evaluation criteria, FAR clauses, deadlines, points of contact, place of performance, and any attachments worth referencing." style="min-height:160px;font-family:'IBM Plex Mono',monospace;font-size:11px"></textarea>
-          </div>
           <div id="pw-sol-intake-empty" data-pw-sol-empty="true" style="font-size:11px;color:var(--muted);line-height:1.55;padding:10px 0;text-align:center">
-            No solicitation selected. Search SAM.gov, upload a solicitation, or paste solicitation text to begin.
+            No solicitation selected. Search SAM.gov, download a package, or upload a solicitation to begin.
           </div>
           <div id="pw-sol-extraction" data-pw-sol-extraction="true" style="display:none">
             <div id="pw-sol-extraction-sections" data-pw-sol-extraction-sections="true" style="display:grid;grid-template-columns:1fr;gap:8px;margin-top:6px"></div>
@@ -4841,15 +4834,15 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
             <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px">
               <span>Solicitation source (saved pursuit)</span>
               <select class="select" id="gc-fi-sol-select" data-gc-fi-sol-select="true" onchange="gcFiSelectSolicitation(this.value)">
-                <option value="">— Select a saved pursuit (or paste text below) —</option>
+                <option value="">— Select a saved pursuit or downloaded package —</option>
               </select>
-              <span id="gc-fi-sol-empty" style="font-size:10px;color:var(--muted);line-height:1.5">No saved solicitations yet. Save or mark pursue from Find Opportunities, or paste solicitation text below.</span>
+              <span id="gc-fi-sol-empty" style="font-size:10px;color:var(--muted);line-height:1.5">No saved solicitations yet. Save or mark pursue from Find Opportunities, then download the solicitation package.</span>
             </label>
             <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px">
-              <span>Paste solicitation text (optional — combined with fetched source material)</span>
-              <textarea class="input" id="gc-fi-text" rows="4" placeholder="Paste solicitation text, or use Fetch Description / Import on the saved pursuit's Source Materials. SourceDeck runs locally — no text is uploaded or sent."></textarea>
+              <span>Solicitation notes (optional — combined with downloaded package text)</span>
+              <textarea class="input" id="gc-fi-text" rows="4" placeholder="Add local notes or excerpts after downloading the package. SourceDeck runs locally — no text is uploaded or sent."></textarea>
             </label>
-            <div id="gc-fi-source-status" data-gc-fi-source-status="true" style="font-size:10px;color:var(--muted);line-height:1.5">Fetch/import solicitation source material or paste solicitation text before generating questions.</div>
+            <div id="gc-fi-source-status" data-gc-fi-source-status="true" style="font-size:10px;color:var(--muted);line-height:1.5">Download the solicitation package or add local notes before generating questions.</div>
           </div>
 
           <!-- Deadlines / timer -->
@@ -5726,7 +5719,7 @@ END:VCALENDAR" style="min-height:180px;font-family:'IBM Plex Mono',monospace;fon
         <div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;font-size:11px;line-height:1.55">
           <div data-tour-feature="capture-command-center"><strong>Capture Command Center</strong> — Central pursuit board showing active pursuits, deadlines, Q&amp;A windows, bid/no-bid review counts. Add opportunities as you intake them; advisory recommendations only.</div>
           <div data-tour-feature="operating-rhythm"><strong>Operating Rhythm</strong> — Daily capture rhythm with Daily Rhythm, Deadline &amp; Q&amp;A Calendar, Pre-RFP Intelligence, and Agency Targeting Insights panels. Local-only operating view.</div>
-          <div data-tour-feature="solicitation-workspace"><strong>Solicitation Workspace</strong> — Paste solicitation text to get a Section L / M / B / C / H / K shred and a starter compliance matrix. Human review required before proposal use.</div>
+          <div data-tour-feature="solicitation-workspace"><strong>Solicitation Center</strong> — Use downloaded packages or uploaded solicitations to extract Sections A-M and a starter compliance matrix. Human review required before proposal use.</div>
           <div data-tour-feature="compliance-matrix"><strong>Compliance Matrix</strong> — Per-requirement matrix bound to the solicitation. Mark each requirement Draft → Addressed → Reviewed → Approved as your team works it.</div>
           <div data-tour-feature="vendor-quote-room"><strong>Vendor Quote Room</strong> — Vendor candidates with manual quote-status tracking. SourceDeck does not email vendors or submit quote requests on your behalf.</div>
           <div data-tour-feature="pricing-worksheet"><strong>Pricing Worksheet</strong> — Advisory price/margin worksheet. Operator sets the bid price; SourceDeck does not auto-quote and does not submit pricing.</div>
@@ -14649,7 +14642,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (el && el.scrollIntoView) try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
   };
   window.gcCaptureSolicitationPlaceholder = function(){
-    if (window.toast) try { window.toast('Open the Solicitation Workspace below to extract instructions, requirements, deadlines, risks, and a compliance matrix.', 'info'); } catch (e) {}
+    if (window.toast) try { window.toast('Open the Solicitation Center below to extract instructions, requirements, deadlines, risks, and a compliance matrix.', 'info'); } catch (e) {}
     var el = document.getElementById('gc-sol-workspace'); if (el && el.scrollIntoView) try { el.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (e) {}
   };
   window.gcCaptureRenderBidNoBid = renderBidNoBidOut;
@@ -14662,7 +14655,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 })();
 </script>
 <script>
-/* Phase 22C — Solicitation Workspace + Compliance Matrix renderer.
+/* Phase 22C — Solicitation Center + Compliance Matrix renderer.
    Pure browser code. No network, no auto-send, no auto-submit, no
    bid submission. Every extracted row is a DRAFT and requires human
    review against the source document. SourceDeck does not submit
@@ -14703,7 +14696,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       + '</ul>';
   }
   // ── Local extraction heuristics ────────────────────────────────────
-  // Pure draft extraction from user-pasted text. No external call.
+  // Pure draft extraction from local package/upload text. No external call.
   function extractFromText(text){
     var out = {
       summary: null,
@@ -14789,13 +14782,13 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   function renderPanels(state){
     if (!state || !state.sections) {
-      setHTML('gc-sol-summary',   emptyDiv('No solicitation loaded yet. Paste solicitation text or add opportunity details manually.'));
-      setHTML('gc-sol-section-l', emptyDiv('No Section L instructions extracted yet. Draft extraction — verify against source document.'));
-      setHTML('gc-sol-section-m', emptyDiv('No Section M evaluation criteria extracted yet. Draft extraction — verify against source document.'));
-      setHTML('gc-sol-pws',       emptyDiv('No PWS / SOW requirements extracted yet. Draft extraction — verify against source document.'));
-      setHTML('gc-sol-forms',     emptyDiv('No required forms or attachments extracted yet. Draft extraction — verify against source document.'));
-      setHTML('gc-sol-deadlines', emptyDiv('No deadlines extracted yet. Draft extraction — verify against source document.'));
-      setHTML('gc-sol-risks',     emptyDiv('No risks or deal killers extracted yet. Draft extraction — verify against source document.'));
+      setHTML('gc-sol-summary',   emptyDiv('No solicitation package loaded yet. Download a SAM.gov package or upload a solicitation file.'));
+      setHTML('gc-sol-section-l', emptyDiv('No Section L instructions extracted yet. Verify source package.'));
+      setHTML('gc-sol-section-m', emptyDiv('No Section M evaluation criteria extracted yet. Verify source package.'));
+      setHTML('gc-sol-pws',       emptyDiv('No Section C/F scope requirements extracted yet. Verify source package.'));
+      setHTML('gc-sol-forms',     emptyDiv('No Section J required forms or attachments extracted yet. Verify source package.'));
+      setHTML('gc-sol-deadlines', emptyDiv('No deadlines extracted yet. Verify source package.'));
+      setHTML('gc-sol-risks',     emptyDiv('No risks or deal killers extracted yet. Verify source package.'));
       return;
     }
     var s = state.sections;
@@ -14803,20 +14796,20 @@ document.addEventListener('DOMContentLoaded',()=>{
       state.summary
         ? '<div style="font-size:11px;color:var(--text);line-height:1.55">' + safeText(state.summary) + '</div>'
           + '<div style="margin-top:6px;font-size:10px;color:var(--muted);font-style:italic">Draft extraction — verify against source document.</div>'
-        : emptyDiv('No solicitation loaded yet. Paste solicitation text or add opportunity details manually.')
+        : emptyDiv('No solicitation package loaded yet. Download a SAM.gov package or upload a solicitation file.')
     );
-    setHTML('gc-sol-section-l', listDiv(s.sectionL,  'No Section L instructions extracted yet. Draft extraction — verify against source document.'));
-    setHTML('gc-sol-section-m', listDiv(s.sectionM,  'No Section M evaluation criteria extracted yet. Draft extraction — verify against source document.'));
-    setHTML('gc-sol-pws',       listDiv(s.pws,       'No PWS / SOW requirements extracted yet. Draft extraction — verify against source document.'));
-    setHTML('gc-sol-forms',     listDiv(s.forms,     'No required forms or attachments extracted yet. Draft extraction — verify against source document.'));
-    setHTML('gc-sol-deadlines', listDiv(s.deadlines, 'No deadlines extracted yet. Draft extraction — verify against source document.'));
-    setHTML('gc-sol-risks',     listDiv(s.risks,     'No risks or deal killers extracted yet. Draft extraction — verify against source document.'));
+    setHTML('gc-sol-section-l', listDiv(s.sectionL,  'No Section L instructions extracted yet. Verify source package.'));
+    setHTML('gc-sol-section-m', listDiv(s.sectionM,  'No Section M evaluation criteria extracted yet. Verify source package.'));
+    setHTML('gc-sol-pws',       listDiv(s.pws,       'No Section C/F scope requirements extracted yet. Verify source package.'));
+    setHTML('gc-sol-forms',     listDiv(s.forms,     'No Section J required forms or attachments extracted yet. Verify source package.'));
+    setHTML('gc-sol-deadlines', listDiv(s.deadlines, 'No deadlines extracted yet. Verify source package.'));
+    setHTML('gc-sol-risks',     listDiv(s.risks,     'No risks or deal killers extracted yet. Verify source package.'));
   }
   function renderMatrix(matrix){
     var body = $('gc-sol-matrix-body');
     if (!body) return;
     if (!matrix || !matrix.length) {
-      body.innerHTML = '<tr><td colspan="10" class="gc-sol-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No requirements extracted yet. Paste solicitation text and run extraction. SourceDeck does not submit bids. All outputs require human review.</td></tr>';
+      body.innerHTML = '<tr><td colspan="10" class="gc-sol-empty" style="padding:18px;text-align:center;color:var(--muted);font-size:10.5px;line-height:1.55">No requirements extracted yet. Download a package or upload a solicitation, then run extraction. SourceDeck does not submit bids. All outputs require human review.</td></tr>';
       return;
     }
     var rows = [];
@@ -14856,17 +14849,71 @@ document.addEventListener('DOMContentLoaded',()=>{
     renderPanels(state);
     renderMatrix(state.matrix);
   }
+  function activeSolId(){
+    try { return localStorage.getItem('sd.govcon.activeSolicitation.v1') || (($('gc-sol-opp-select') || {}).value || ''); } catch (e) { return (($('gc-sol-opp-select') || {}).value || ''); }
+  }
+  function mapPackageExtraction(ex){
+    ex = ex || {};
+    var sections = ex.sections || {};
+    function arr(letter){
+      var s = sections[letter] || {};
+      if (!s.text) return [];
+      return [s.text];
+    }
+    return {
+      summary: (ex.metadata && (ex.metadata.title || ex.metadata.summary)) || ex.solicitationNumber || ex.noticeId || 'Solicitation package extracted locally.',
+      sectionL: arr('L'),
+      sectionM: arr('M'),
+      pws: arr('C').concat(arr('F')),
+      forms: arr('J').concat((ex.metadata && ex.metadata.requiredForms) || []),
+      deadlines: [ex.metadata && ex.metadata.responseDeadline, ex.metadata && ex.metadata.qaDeadline, ex.metadata && ex.metadata.siteVisit].filter(Boolean),
+      risks: ((ex.metadata && ex.metadata.complianceRisks) || []).concat((ex.warnings || []))
+    };
+  }
+  window.gcABExtractPackageToCenter = async function(id){
+    id = id || activeSolId();
+    var sm = null;
+    try { if (typeof window.gcW25GetSourceMaterials === 'function') sm = window.gcW25GetSourceMaterials(id); } catch (e) {}
+    if (!sm || !sm.package){
+      if (window.toast) try { window.toast('Download or select a solicitation package before extraction.', 'info'); } catch (e2) {}
+      return null;
+    }
+    if (!(window.sd && window.sd.govcon && window.sd.govcon.extractSolicitationPackage)){
+      if (window.toast) try { window.toast('Package extraction requires the SourceDeck desktop app.', 'warn'); } catch (e3) {}
+      return null;
+    }
+    var ex = await window.sd.govcon.extractSolicitationPackage({ manifest: sm.package });
+    var mapped = mapPackageExtraction(ex);
+    var state = loadState();
+    state.summary = mapped.summary;
+    state.sections = mapped;
+    state.matrix = (ex && ex.complianceMatrixStarter) || [];
+    state.solId = id || '';
+    state.real = true;
+    state.packageExtraction = ex;
+    saveState(state);
+    renderPanels(state);
+    renderMatrix(state.matrix);
+    if (window.toast) try { window.toast('Package extraction complete. Verify every section against the downloaded files.', 'ok'); } catch (e4) {}
+    return ex;
+  };
   window.gcSolExtract = function(){
-    var ta = $('gc-sol-text');
-    var pasted = ta ? String(ta.value || '') : '';
-    // Phase 25W — combine pasted text with any fetched description /
-    // imported resource text for the linked saved pursuit. Extraction never
-    // pretends: with no source text at all it asks for source material.
+    var activeId = activeSolId();
+    var pkg = null;
+    try { if (typeof window.gcABGetPackageSummary === 'function') pkg = window.gcABGetPackageSummary(activeId); } catch (e) {}
+    if (pkg && window.gcABExtractPackageToCenter){
+      window.gcABExtractPackageToCenter(activeId);
+      return;
+    }
+    var pasted = '';
+    // Phase 25AB — combine downloaded package text with any legacy fetched
+    // description / imported resource text for the linked saved pursuit.
+    // Extraction never pretends: with no source text it asks for a package.
     var linked = '';
     try { if (typeof window.gcW25CollectSourceText === 'function') linked = String(window.gcW25CollectSourceText() || ''); } catch (e) {}
     var text = [pasted, linked].filter(function(s){ return s && s.trim(); }).join('\n\n');
     if (!text.trim()) {
-      if (window.toast) try { window.toast('Paste solicitation text or fetch/import source materials before extraction.', 'info'); } catch (e) {}
+      if (window.toast) try { window.toast('Download a solicitation package or upload a supported solicitation file before extraction.', 'info'); } catch (e) {}
       return;
     }
     var ex = extractFromText(text);
@@ -14899,7 +14946,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.gcSolBuildMatrix = function(){
     var state = loadState();
     if (!state.sections || (!state.sections.sectionL && !state.sections.sectionM && !state.sections.pws)) {
-      if (window.toast) try { window.toast('Extract requirements first — paste solicitation text and run Extract Requirements.', 'info'); } catch (e) {}
+      if (window.toast) try { window.toast('Extract requirements from a downloaded package or uploaded solicitation first.', 'info'); } catch (e) {}
       return;
     }
     state.matrix = buildMatrixFromExtraction(state.sections);
@@ -14922,6 +14969,38 @@ document.addEventListener('DOMContentLoaded',()=>{
     saveState(state);
     renderMatrix(state.matrix);
     if (window.toast) try { window.toast('Row ' + state.matrix[idx].id + ' marked Reviewed. Human review responsibility belongs to the operator.', 'ok'); } catch (e) {}
+  };
+  window.gcSolExplainPlainEnglish = async function(){
+    var id = activeSolId();
+    var state = loadState();
+    var ex = state.packageExtraction || null;
+    if (!ex && window.gcABExtractPackageToCenter) ex = await window.gcABExtractPackageToCenter(id);
+    if (!ex){
+      if (window.toast) try { window.toast('Download and extract a solicitation package first.', 'info'); } catch (e) {}
+      return;
+    }
+    var plain = null;
+    try {
+      if (window.sd && window.sd.govcon && window.sd.govcon.explainSolicitationPackage) plain = await window.sd.govcon.explainSolicitationPackage(ex);
+    } catch (e2) {}
+    if (!plain || !plain.sections){ if (window.toast) try { window.toast('Plain-English explanation unavailable.', 'warn'); } catch (e3) {} return; }
+    var lines = [];
+    Object.keys(plain.sections).forEach(function(k){
+      var s = plain.sections[k];
+      lines.push('Section ' + k + ': ' + s.means + ' What to do: ' + s.mustDo);
+    });
+    setHTML('gc-sol-summary', '<div style="font-size:11px;color:var(--text);line-height:1.55"><strong>Plain-English package explanation.</strong><br>' + safeText(lines.join('\n\n')).replace(/\n/g, '<br>') + '<br><br><em>Not legal advice. Verify against source documents.</em></div>');
+    if (window.toast) try { window.toast('Plain-English explanation created. Verify against the source package.', 'ok'); } catch (e4) {}
+  };
+  window.gcSolCreateProposalOutline = function(){
+    var state = loadState();
+    var lines = [];
+    var s = state.sections || {};
+    if (s.sectionL && s.sectionL.length) lines.push('Volume I — Instructions response: align to Section L.');
+    if (s.pws && s.pws.length) lines.push('Volume II — Technical approach: address Section C/F scope and deliverables.');
+    if (s.sectionM && s.sectionM.length) lines.push('Volume III — Evaluation alignment: map every Section M factor.');
+    if (s.forms && s.forms.length) lines.push('Submission checklist: attach required forms and Section J items.');
+    setHTML('gc-sol-summary', '<div style="font-size:11px;color:var(--text);line-height:1.55"><strong>Proposal outline starter.</strong><ul style="margin:6px 0 0 16px">' + (lines.length ? lines.map(function(x){ return '<li>' + safeText(x) + '</li>'; }).join('') : '<li>Extract a package first, then build the outline.</li>') + '</ul></div>');
   };
   window.gcSolExportPlaceholder = function(){
     if (window.toast) try { window.toast('Export Matrix placeholder — internal review export only. SourceDeck does not submit bids.', 'info'); } catch (e) {}
@@ -16246,7 +16325,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   // docs/demo/phase-23g-local-demo-recording-review.md.
   var SECTION_DEFS = [
     { id: 'capture-cc',     label: 'GovCon Capture Command Center', keys: ['sd.govcon.captureBoard.v1'] },
-    { id: 'sol-workspace',  label: 'Solicitation Workspace',        keys: ['sd.govcon.solWorkspace.v1'] },
+    { id: 'sol-workspace',  label: 'Solicitation Center',           keys: ['sd.govcon.solWorkspace.v1'] },
     { id: 'vendor-pricing', label: 'Vendor Quote Room + Pricing Worksheet', keys: ['sd.govcon.vendorQuotes.v1','sd.govcon.pricingWorksheet.v1'] },
     { id: 'past-perf',      label: 'Past Performance + Capability + Prime Partner', keys: ['sd.govcon.pastPerformance.v1','sd.govcon.capabilityStatement.v1','sd.govcon.primePartners.v1'] },
     { id: 'sub-gate',       label: 'Submission Readiness Gate',     keys: ['sd.govcon.submissionReadiness.v1'] }
@@ -16941,9 +17020,10 @@ document.addEventListener('DOMContentLoaded',()=>{
      (2) Manually uploaded .pdf / .docx / .txt / .md
      (3) Pasted text
 
-   Extraction is heuristic + local. PDF/DOCX parsing is accepted as a
-   file-attached fallback but the user is steered to paste-text for
-   structured extraction. Output is 6 FAR-aligned sections:
+   Extraction is heuristic + local. PDF/DOCX text extraction is not available in this build
+   through this legacy intake path; package
+   extraction stores those files and reports the limitation plainly.
+   Output is 6 FAR-aligned sections:
      1. Solicitation Metadata & Summary
      2. Scope of Work
      3. Place of Performance
@@ -17057,7 +17137,7 @@ document.addEventListener('DOMContentLoaded',()=>{
           '<div class="card" data-pw-sol-extraction-failed="true" style="padding:13px 15px;background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.30)">' +
             '<div style="font:700 10px/1 \'Azeret Mono\',monospace;letter-spacing:0.1em;text-transform:uppercase;color:var(--red);margin-bottom:5px">Extraction failed</div>' +
             '<div style="font-size:12px;color:var(--text);line-height:1.55;margin-bottom:9px">No structured data could be extracted from this document.' +
-              (rec.extractionLog && rec.extractionLog.rawTextChars === 0 ? ' PDF/DOCX text extraction is not available in this build — use <strong>Paste Solicitation Text</strong>.' : ' Verify the source text, paste the solicitation text, or map sections manually.') + '</div>' +
+              (rec.extractionLog && rec.extractionLog.rawTextChars === 0 ? ' Stored, text extraction not available yet for this file type.' : ' Verify the source package or map sections manually.') + '</div>' +
             '<div style="display:flex;gap:6px;flex-wrap:wrap">' +
               '<button class="btn btn-gold" onclick="pwSolRetryExtraction()" style="padding:4px 10px;font-size:11px">↻ Retry Extraction</button>' +
               '<button class="btn btn-ghost" onclick="pwSolViewExtractionLog()" style="padding:4px 10px;font-size:11px">📄 View Extraction Log</button>' +
@@ -17191,7 +17271,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     var f = ev && ev.target && ev.target.files && ev.target.files[0]; if (!f) return;
     var name = (f.name || '').toLowerCase();
     var mime = (f.type || '').toLowerCase();
-    var isText = /\.txt$|\.md$/.test(name) || /^text\//.test(mime) || mime === 'text/markdown';
+    var isText = /\.txt$|\.md$|\.csv$/.test(name) || /^text\//.test(mime) || mime === 'text/markdown' || mime === 'text/csv';
     var rec = newRecord('Upload', { fileName: f.name, title: f.name });
     if (isText){
       var r = new FileReader();
@@ -17204,24 +17284,18 @@ document.addEventListener('DOMContentLoaded',()=>{
       };
       r.readAsText(f);
     } else {
-      // Phase 25R — PDF/DOCX text extraction is not available in this build.
-      // Do not fake extraction: attach the file reference, state it plainly,
-      // and route the user to Paste Solicitation Text.
+      // Phase 25AB — store unsupported/binary uploads without fake extraction.
       rec.rawText = '';
-      rec.status = 'pdf-parse-unavailable';
+      rec.status = 'stored-text-extraction-unavailable';
+      rec.limitation = 'Stored, text extraction not available yet';
       _state.records.push(rec);
       _state.activeId = rec.id;
       saveState().then(renderSelector);
-      var area = $('pw-sol-paste-area'); if (area) area.style.display = '';
-      var ta = $('pw-sol-paste-text'); if (ta) ta.focus();
-      if (window.toast) try { window.toast('PDF/DOCX text extraction is not available in this build. Open the file and paste its text below, then Extract Key Details.', 'info'); } catch (e) {}
+      if (window.toast) try { window.toast('File stored locally. Text extraction is not available yet for this type.', 'info'); } catch (e) {}
     }
   };
   window.pwSolTogglePasteArea = function(){
-    var a = $('pw-sol-paste-area'); if (!a) return;
-    var willShow = a.style.display === 'none' || a.style.display === '';
-    a.style.display = willShow ? '' : 'none';
-    if (willShow){ var ta = $('pw-sol-paste-text'); if (ta) ta.focus(); }
+    if (window.toast) try { window.toast('Text paste intake is deprecated. Upload a solicitation or use a downloaded SAM.gov package.', 'info'); } catch (e) {}
   };
   // Phase 25R — count fields that actually got data, so status reflects
   // populated fields, never scaffold count.
@@ -17238,20 +17312,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     return n;
   }
   window.pwSolExtractKeyDetails = function(){
-    var ta = $('pw-sol-paste-text');
-    var pasted = ta ? String(ta.value || '') : '';
+    var pasted = '';
     var rec = activeRecord();
     if (!rec || /^sam:/.test(rec.id)){
-      // Either no record selected OR a SAM-imported one with no local text.
-      // If user pasted text without selecting a record, create a paste record.
-      if (pasted.trim()){
-        rec = newRecord('Paste', { title: 'Pasted solicitation · ' + new Date().toISOString().slice(0,10), rawText: pasted });
-        _state.records.push(rec);
-        _state.activeId = rec.id;
-      } else {
-        if (window.toast) try { window.toast('Select an uploaded solicitation or paste text first.', 'warn'); } catch (e) {}
-        return;
-      }
+      if (window.toast) try { window.toast('Select an uploaded solicitation or downloaded package first.', 'warn'); } catch (e) {}
+      return;
     }
     if (pasted.trim() && !rec.rawText){ rec.rawText = pasted; }
     // Phase 25R — extraction honesty. Run the parser, then count fields that
@@ -17268,7 +17333,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       rawTextChars: rawLen,
       fieldsPopulated: populated,
       note: rawLen === 0
-        ? 'No source text was available (PDF/DOCX text extraction is not available in this build — use Paste Solicitation Text).'
+        ? 'No source text was available (stored, text extraction not available yet for this file type).'
         : (populated === 0 ? 'Source text was present but no FAR-aligned fields matched the heuristic patterns.' : populated + ' field(s) populated from source text.')
     };
     if (populated === 0){
@@ -17294,11 +17359,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     try { console.info('[pw-extraction-log]', log || {}); } catch (e) {}
   };
   window.pwSolManualMapping = function(){
-    // Manual mapping = open the paste area so the user can paste real text,
-    // and create/keep a record whose fields they fill in by hand.
-    var area = $('pw-sol-paste-area'); if (area) area.style.display = '';
-    var ta = $('pw-sol-paste-text'); if (ta) ta.focus();
-    if (window.toast) try { window.toast('Paste the solicitation text, then Extract — or fill section notes/drafts by hand.', 'info'); } catch (e) {}
+    if (window.toast) try { window.toast('Manual mapping is available in the section notes and drafts after selecting an uploaded solicitation.', 'info'); } catch (e) {}
   };
 
   // Phase 25R — Proposal Workspace left-rail sub-tab switcher. Shows one
@@ -17988,9 +18049,10 @@ document.addEventListener('DOMContentLoaded',()=>{
           '<div style="display:flex;flex-direction:column;gap:3px;min-width:200px">' +
             '<button class="btn btn-ghost" data-gc-saved-action="view-details" onclick="gcW25ViewDetails(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">👁 View Details</button>' +
             '<button class="btn btn-ghost" data-gc-saved-action="open-notice" onclick="gcW25OpenNotice(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">↗ Open SAM.gov Notice</button>' +
-            '<button class="btn btn-ghost" data-gc-saved-action="source-materials" onclick="gcW25ToggleSource(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--gold2)">📎 Source Materials (' + esc(attic) + ')</button>' +
+            '<button class="btn btn-gold" data-gc-saved-action="download-package" onclick="gcABDownloadPackage(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">⬇ Download Solicitation Package</button>' +
+            '<button class="btn btn-ghost" data-gc-saved-action="view-attachments" onclick="gcW25ToggleSource(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--gold2)">📎 View Attachments (' + esc(attic) + ')</button>' +
             '<button class="btn btn-ghost" data-gc-saved-action="refresh-source" onclick="gcW25RefreshSource(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">↻ Refresh Source Details</button>' +
-            '<button class="btn btn-ghost" data-gc-saved-action="send-to-workspace" onclick="gcW25SendToWorkspace(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--green,#30d158)">→ Send to Solicitation Workspace</button>' +
+            '<button class="btn btn-ghost" data-gc-saved-action="send-to-solicitation-center" onclick="gcW25SendToWorkspace(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--green,#30d158)">→ Send Package to Solicitation Center</button>' +
           '</div>' +
         '</td>' +
       '</tr>' +
@@ -18001,7 +18063,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     var listEl = $('gc-tab-saved-list');
     if (!listEl) return;
     var rows = await _listSaved();
-    // Phase 25W — cache saved pursuits so the Source Materials handlers can
+    // Phase 25W/25AB — cache saved pursuits so the attachment handlers can
     // resolve the full opportunity record by id.
     try {
       window.gcW25Saved = rows;
@@ -18518,6 +18580,7 @@ document.addEventListener('DOMContentLoaded',()=>{
           '<div style="display:flex;flex-direction:column;gap:3px;min-width:170px">' +
             '<button class="btn btn-ghost" data-gc-sam-fresh-action="view-details" data-gc-sam-fresh-row-id="' + id + '" onclick="gcTabSamViewDetails(\'' + id + '\')" style="padding:3px 7px;font-size:10px">👁 View Details</button>' +
             '<button class="btn btn-ghost" data-gc-sam-fresh-action="save-to-sourcedeck" data-gc-sam-fresh-row-id="' + id + '" onclick="gcTabSamSave(\'' + id + '\')" style="padding:3px 7px;font-size:10px;color:var(--green,#30d158)">+ Save to SourceDeck</button>' +
+            '<button class="btn btn-gold" data-gc-sam-fresh-action="download-package" data-gc-sam-fresh-row-id="' + id + '" onclick="gcTabSamDownloadPackage(\'' + id + '\')" style="padding:3px 7px;font-size:10px">⬇ Download Solicitation Package</button>' +
             '<button class="btn btn-ghost" data-gc-sam-fresh-action="mark-pursue" data-gc-sam-fresh-row-id="' + id + '" onclick="gcTabSamMarkPursue(\'' + id + '\')" style="padding:3px 7px;font-size:10px;color:var(--gold2)">★ Mark Pursue</button>' +
             '<button class="btn btn-ghost" data-gc-sam-fresh-action="archive" data-gc-sam-fresh-row-id="' + id + '" onclick="gcTabSamArchive(\'' + id + '\')" style="padding:3px 7px;font-size:10px;color:var(--muted)">⊘ Archive</button>' +
             '<button class="btn btn-ghost" data-gc-sam-fresh-action="open-sam-source" data-gc-sam-fresh-row-id="' + id + '" onclick="gcTabSamOpenSource(\'' + id + '\')" style="padding:3px 7px;font-size:10px">↗ Open SAM.gov Source</button>' +
@@ -18565,6 +18628,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (opp && window.toast) try { window.toast('Saved · "' + (opp.title || '').slice(0, 40) + '"', 'ok'); } catch (e) {}
     refreshSavedPursuitsPreview();
     try { if (typeof window.renderDashboardLaunchpad === 'function') window.renderDashboardLaunchpad({}); } catch (e) {}
+  };
+  window.gcTabSamDownloadPackage = async function(id){
+    var opp = await _samUpsert(id, 'saved');
+    if (!opp){ if (window.toast) try { window.toast('Save failed; package download was not started.', 'warn'); } catch (e) {} return; }
+    if (typeof window.gcABDownloadPackage === 'function') await window.gcABDownloadPackage(opp.id);
   };
   window.gcTabSamMarkPursue = async function(id){
     var opp = await _samUpsert(id, 'pursuing');
@@ -18991,7 +19059,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     });
     var opp = pursuitMap[id];
     if (opp) gcV25RenderSolMeta(opp);
-    // Phase 25W — refresh the Solicitation Workspace Source Materials panel
+    // Phase 25AB — refresh the Solicitation Center attachments panel
     // for the newly selected solicitation.
     try { if (typeof window.gcW25RenderWorkspaceSource === 'function') window.gcW25RenderWorkspaceSource(id); } catch (e) {}
     // Phase 25Y — clear any demo/foreign extraction so a real pursuit never
@@ -19077,7 +19145,7 @@ document.addEventListener('DOMContentLoaded',()=>{
           });
         }
         var cur = activeSol(); if (cur){ try { ss.value = cur; } catch (e3) {} if (pursuitMap[cur]) gcV25RenderSolMeta(pursuitMap[cur]); }
-        // Phase 25W — render the Source Materials panel for the active sol.
+        // Phase 25AB — render the attachments panel for the active sol.
         try { if (typeof window.gcW25RenderWorkspaceSource === 'function') window.gcW25RenderWorkspaceSource(cur); } catch (e4) {}
       }
     });
@@ -19102,17 +19170,17 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 
 <script>
-/* Phase 25W — SAM.gov source materials for saved pursuits + Solicitation
+/* Phase 25W/25AB — SAM.gov attachments for saved pursuits + Solicitation
    Workspace source intake.
 
    - Saved pursuits keep SAM.gov source metadata (descriptionLink,
      resourceLinks, uiLink, sourceUrl, pointOfContact) — see _samUpsert.
-   - Source Materials panel: Fetch Description (through the credential
+   - Attachments panel: package download (through the credential
      boundary; api key appended only in the main process, redacted from UI),
      resource links (Open / Import to SourceDeck — local intake only), point
      of contact, place of performance, metadata.
    - Imported/fetched source text is stored locally per pursuit and feeds
-     Extract Requirements in the Solicitation Workspace.
+     Extract Requirements in the Solicitation Center.
 
    Boundaries: GET-only fetch through the credential boundary; no upload, no
    email, no send. The raw api key never reaches the renderer. */
@@ -19131,6 +19199,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   function getSM(id){ var m = allSM(); return m[id] || { description: null, resources: [] }; }
   function setSM(id, sm){ var m = allSM(); m[id] = sm; saveJSON(SM_KEY, m); }
   window.gcW25GetSourceMaterials = getSM;
+  window.gcABGetPackageSummary = function(id){ var sm = getSM(id); return sm && sm.package ? sm.package : null; };
 
   // Resolve a saved pursuit record by id (cache first, then the store).
   async function resolve(id){
@@ -19147,9 +19216,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     try { var x = new URL(u); var p = x.pathname.split('/').filter(Boolean); return (p[p.length - 1] || x.host); } catch (e) { return String(u).slice(0, 48); }
   }
 
-  // ── Shared Source Materials renderer ────────────────────────────────
+  // ── Shared Attachments renderer ─────────────────────────────────────
   // Renders into hostEl for a given opportunity record. `context` is
-  // 'saved' (Saved Pursuits) or 'workspace' (Solicitation Workspace).
+  // 'saved' (Saved Pursuits) or 'workspace' (Solicitation Center).
   function renderSourcePanel(hostEl, o, context){
     if (!hostEl) return;
     if (!o){ hostEl.innerHTML = '<div style="font-size:10.5px;color:var(--muted)">Opportunity not found.</div>'; return; }
@@ -19159,7 +19228,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
     // Metadata header
     parts.push('<div style="display:flex;flex-direction:column;gap:2px;margin-bottom:8px">');
-    parts.push('<div style="font:700 9px/1 \'Azeret Mono\',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2)">SAM.gov Source Materials</div>');
+    parts.push('<div style="font:700 9px/1 \'Azeret Mono\',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2)">SAM.gov Attachments</div>');
     parts.push('<div style="font-size:10px;color:var(--muted)">Notice ' + esc(o.noticeId || '—') + ' · Sol ' + esc(o.solicitationNumber || '—') + ' · NAICS ' + esc(o.naics || '—') + '</div>');
     if (o.placeOfPerformance) parts.push('<div style="font-size:10px;color:var(--muted)">Place of performance: ' + esc(o.placeOfPerformance) + '</div>');
     parts.push('</div>');
@@ -19173,9 +19242,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (sm.description && sm.description.text){
       parts.push('<div data-gc-w25-desc-status="ready" style="font-size:10px;color:var(--green,#30d158);margin-bottom:4px">Fetched ' + esc((sm.description.fetchedAt || '').slice(0, 19)) + ' · ' + (sm.description.text.length) + ' chars</div>');
       parts.push('<div style="font-size:10.5px;color:var(--sub);max-height:120px;overflow:auto;border:1px solid var(--border);border-radius:6px;padding:8px;line-height:1.5">' + esc(sm.description.text.slice(0, 1200)) + (sm.description.text.length > 1200 ? '…' : '') + '</div>');
-      parts.push('<button class="btn btn-ghost" onclick="gcW25UseInWorkspace(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px;margin-top:5px;color:var(--green,#30d158)">Use description in Solicitation Workspace</button>');
+      parts.push('<button class="btn btn-ghost" onclick="gcW25UseInWorkspace(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px;margin-top:5px;color:var(--green,#30d158)">Use in Solicitation Center</button>');
     } else if (o.descriptionLink){
-      parts.push('<button class="btn btn-gold" data-gc-w25-action="fetch-description" onclick="gcW25FetchDescription(\'' + esc(o.id) + '\')" style="padding:4px 10px;font-size:10.5px">⬇ Fetch Description</button>');
+      parts.push('<button class="btn btn-gold" data-gc-w25-action="fetch-description" onclick="gcABDownloadPackage(\'' + esc(o.id) + '\')" style="padding:4px 10px;font-size:10.5px">⬇ Download Solicitation Package</button>');
       parts.push('<div style="font-size:10px;color:var(--muted);margin-top:3px">Fetched locally through the credential boundary. The SAM.gov key never appears in the URL, UI, or logs.</div>');
     } else {
       parts.push('<div style="font-size:10px;color:var(--muted)">No description link included for this record.</div>');
@@ -19183,7 +19252,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     parts.push('</div>');
 
     // Resource links / attachments
-    parts.push('<div style="margin-top:10px"><div style="font-weight:600;font-size:11px;color:var(--text);margin-bottom:3px">Resource links / attachments (' + ((o.resourceLinks && o.resourceLinks.length) || 0) + ')</div>');
+    parts.push('<div style="margin-top:10px"><div style="font-weight:600;font-size:11px;color:var(--text);margin-bottom:3px">Attachments listed by SAM.gov (' + ((o.resourceLinks && o.resourceLinks.length) || 0) + ')</div>');
     if (o.resourceLinks && o.resourceLinks.length){
       for (var i = 0; i < o.resourceLinks.length; i++){
         var u = o.resourceLinks[i];
@@ -19191,13 +19260,37 @@ document.addEventListener('DOMContentLoaded',()=>{
         parts.push('<div data-gc-w25-resource style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;padding:5px 0;border-bottom:1px solid var(--border)">');
         parts.push('<code style="font-size:10px;color:var(--sub);flex:1;min-width:160px;word-break:break-all">' + esc(urlLabel(u)) + '</code>');
         parts.push('<button class="btn btn-ghost" onclick="gcW25OpenResource(\'' + esc(o.id) + '\',' + i + ')" style="padding:2px 7px;font-size:10px">↗ Open Source</button>');
-        parts.push('<button class="btn btn-ghost" onclick="gcW25ImportResource(\'' + esc(o.id) + '\',' + i + ')" style="padding:2px 7px;font-size:10px;color:var(--gold2)">' + (imported ? '✓ Imported' : '⬇ Import to SourceDeck') + '</button>');
+        parts.push('<button class="btn btn-ghost" onclick="gcABDownloadPackage(\'' + esc(o.id) + '\')" style="padding:2px 7px;font-size:10px;color:var(--gold2)">' + (imported ? '✓ Package updated' : '⬇ Download Package') + '</button>');
         parts.push('</div>');
       }
     } else {
-      parts.push('<div style="font-size:10px;color:var(--muted)">No resource links / attachments included for this record.</div>');
+      parts.push('<div style="font-size:10px;color:var(--muted)">No attachments listed by SAM.gov for this notice.</div>');
     }
     parts.push('</div>');
+
+    if (sm.package){
+      parts.push('<div data-gc-ab-package-summary="true" style="margin-top:10px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:rgba(255,255,255,0.03)">');
+      parts.push('<div style="font-weight:600;font-size:11px;color:var(--text);margin-bottom:4px">Solicitation Package · ' + esc((sm.package.downloadedAt || '').slice(0, 19)) + '</div>');
+      parts.push('<div style="font-size:10px;color:var(--muted);margin-bottom:6px">Downloaded ' + esc(sm.package.downloadedCount || 0) + ' · Failed ' + esc(sm.package.failedCount || 0) + ' · Local ZIP ' + (sm.package.localZipPath ? 'created' : 'not created') + '</div>');
+      var files = sm.package.files || [];
+      for (var pf = 0; pf < files.length; pf++){
+        var f = files[pf];
+        parts.push('<div data-gc-ab-attachment-row style="display:flex;gap:6px;align-items:center;flex-wrap:wrap;padding:4px 0;border-top:1px solid var(--border2,rgba(255,255,255,0.05))">');
+        parts.push('<code style="font-size:10px;color:var(--sub);flex:1;min-width:170px">' + esc(f.fileName || 'attachment') + '</code>');
+        parts.push('<span style="font-size:9px;color:' + (f.status === 'downloaded' ? 'var(--green,#30d158)' : 'var(--red,#ef4444)') + '">' + esc(f.status || 'unknown') + '</span>');
+        parts.push('<button class="btn btn-ghost" onclick="gcABViewAttachment(\'' + esc(o.id) + '\',' + pf + ')" style="padding:2px 7px;font-size:10px">View</button>');
+        parts.push('<button class="btn btn-ghost" onclick="gcABExtractAttachment(\'' + esc(o.id) + '\',' + pf + ')" style="padding:2px 7px;font-size:10px">Extract Text</button>');
+        parts.push('<button class="btn btn-ghost" onclick="gcABToggleAttachmentIncluded(\'' + esc(o.id) + '\',' + pf + ')" style="padding:2px 7px;font-size:10px">' + (f.excluded ? 'Include in Analysis' : 'Exclude from Analysis') + '</button>');
+        parts.push('<button class="btn btn-ghost" onclick="gcABOpenLocalPackageFolder(\'' + esc(o.id) + '\')" style="padding:2px 7px;font-size:10px">Open Local File</button>');
+        if (f.errorSafe) parts.push('<span style="font-size:9px;color:var(--red,#ef4444)">' + esc(f.errorSafe) + '</span>');
+        parts.push('</div>');
+      }
+      parts.push('<div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:7px">');
+      parts.push('<button class="btn btn-gold" onclick="gcABDownloadPackage(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px">Refresh Package</button>');
+      parts.push('<button class="btn btn-ghost" onclick="gcW25SendToWorkspace(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px;color:var(--green,#30d158)">Send Package to Solicitation Center</button>');
+      parts.push('<button class="btn btn-ghost" onclick="gcABOpenLocalPackageFolder(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px">Open local package folder</button>');
+      parts.push('</div></div>');
+    }
 
     // Imported resources (with text)
     var withText = (sm.resources || []).filter(function(r){ return r.text; });
@@ -19222,11 +19315,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     parts.push('<div style="margin-top:10px;display:flex;gap:6px;flex-wrap:wrap">');
     parts.push('<button class="btn btn-ghost" onclick="gcW25OpenNotice(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px">↗ Open SAM.gov Notice</button>');
     parts.push('<button class="btn btn-ghost" onclick="gcW25RefreshSource(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px">↻ Refresh Source Details</button>');
-    if (context !== 'workspace') parts.push('<button class="btn btn-ghost" onclick="gcW25SendToWorkspace(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px;color:var(--green,#30d158)">→ Send to Solicitation Workspace</button>');
+    if (context !== 'workspace') parts.push('<button class="btn btn-ghost" onclick="gcW25SendToWorkspace(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px;color:var(--green,#30d158)">→ Send Package to Solicitation Center</button>');
     // Phase 25X — shortcut into Make the Right First Impression.
     parts.push('<button class="btn btn-ghost" onclick="gcFiOpenFor(\'' + esc(o.id) + '\')" style="padding:3px 8px;font-size:10px;color:var(--gold2)">✦ Make First Impression</button>');
     parts.push('</div>');
-    parts.push('<div style="margin-top:8px;font-size:9.5px;color:var(--muted);line-height:1.5">Local source-material intake only. SourceDeck does not upload, submit, or send. The SAM.gov key never appears in the URL, UI, or logs.</div>');
+    parts.push('<div style="margin-top:8px;font-size:9.5px;color:var(--muted);line-height:1.5">Local package intake only. SourceDeck does not upload, submit, or send. The SAM.gov key never appears in the URL, UI, or logs.</div>');
 
     hostEl.innerHTML = parts.join('');
   }
@@ -19329,6 +19422,66 @@ document.addEventListener('DOMContentLoaded',()=>{
     else toast('This file may require opening SAM.gov directly.', 'info');
     _rerender(id, o);
   };
+  window.gcABDownloadPackage = async function(id){
+    var o = await resolve(id); if (!o) return;
+    if (!(window.sd && window.sd.govcon && window.sd.govcon.downloadSolicitationPackage)){
+      toast('Package download requires the SourceDeck desktop app.', 'warn');
+      return;
+    }
+    if (!(o.resourceLinks && o.resourceLinks.length) && !o.descriptionLink){
+      toast('No attachments listed by SAM.gov for this notice.', 'warn');
+      return;
+    }
+    toast('Downloading every listed SAM.gov attachment for this selected pursuit…', 'info');
+    var res = null;
+    try { res = await window.sd.govcon.downloadSolicitationPackage({ id: id, opportunity: o }); } catch (e) { res = null; }
+    if (!res || !res.ok){
+      toast('Solicitation package download failed: ' + ((res && (res.reason || res.errorSafe)) || 'unknown error'), 'warn');
+      return;
+    }
+    var sm = getSM(id);
+    sm.package = res;
+    sm.packageIncluded = {};
+    (res.files || []).forEach(function(f, i){ sm.packageIncluded[i] = f.status === 'downloaded'; });
+    setSM(id, sm);
+    try { if (typeof window.gcTabRenderSavedPursuits === 'function') await window.gcTabRenderSavedPursuits(); } catch (e2) {}
+    _rerender(id, o);
+    toast('Solicitation package ready: ' + (res.downloadedCount || 0) + ' downloaded, ' + (res.failedCount || 0) + ' failed.', res.failedCount ? 'warn' : 'ok');
+  };
+  window.gcABOpenLocalPackageFolder = async function(id){
+    var sm = getSM(id);
+    var p = sm && sm.package && sm.package.packagePath;
+    if (!p){ toast('No local package folder yet. Download the solicitation package first.', 'warn'); return; }
+    try {
+      var r = await window.sd.govcon.openSolicitationPackageFolder(p);
+      if (!r || !r.ok) toast('Could not open local package folder.', 'warn');
+    } catch (e) { toast('Could not open local package folder.', 'warn'); }
+  };
+  window.gcABViewAttachment = function(id, idx){
+    var sm = getSM(id);
+    var f = sm && sm.package && sm.package.files && sm.package.files[idx];
+    if (!f){ toast('Attachment not found in local package.', 'warn'); return; }
+    if (f.status !== 'downloaded'){ toast((f.fileName || 'Attachment') + ' failed: ' + (f.errorSafe || 'download unavailable'), 'warn'); return; }
+    toast((f.fileName || 'Attachment') + ' is stored locally. Use Open Local File to view it.', 'info');
+  };
+  window.gcABExtractAttachment = function(id, idx){
+    var sm = getSM(id);
+    var f = sm && sm.package && sm.package.files && sm.package.files[idx];
+    if (!f){ toast('Attachment not found in local package.', 'warn'); return; }
+    if (f.status !== 'downloaded'){ toast('Cannot extract a failed download.', 'warn'); return; }
+    if (!/\.(txt|csv|md|json|xml|html|htm)$/i.test(f.fileName || '')){
+      toast('Stored, text extraction not available yet for this file type.', 'info');
+      return;
+    }
+    toast('Text extraction will run when you click Extract Requirements for the package.', 'info');
+  };
+  window.gcABToggleAttachmentIncluded = function(id, idx){
+    var sm = getSM(id);
+    if (!sm || !sm.package || !sm.package.files || !sm.package.files[idx]) return;
+    sm.package.files[idx].excluded = !sm.package.files[idx].excluded;
+    setSM(id, sm);
+    toast(sm.package.files[idx].excluded ? 'Attachment excluded from analysis.' : 'Attachment included in analysis.', 'ok');
+  };
   window.gcW25RefreshSource = async function(id){
     var o = await resolve(id); if (!o) return;
     if (!(window.sd && window.sd.govcon && window.sd.govcon.samSearch)){ toast('Refresh requires the SourceDeck desktop app.', 'warn'); return; }
@@ -19368,19 +19521,23 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (sel){ try { sel.value = id; } catch (e) {} }
     try { if (typeof window.gcV25RenderSolMeta === 'function') window.gcV25RenderSolMeta(o); } catch (e) {}
     window.gcW25RenderWorkspaceSource(id);
-    toast('Loaded into Solicitation Workspace. Fetch/import source materials, then Extract Requirements.', 'ok');
+    var sm = getSM(id);
+    if (sm && sm.package && typeof window.gcABExtractPackageToCenter === 'function') {
+      try { await window.gcABExtractPackageToCenter(id); } catch (e) {}
+    }
+    toast('Loaded into Solicitation Center. Download the package if needed, then Extract Requirements.', 'ok');
   };
   window.gcW25UseInWorkspace = async function(id){
     await window.gcW25SendToWorkspace(id);
   };
 
-  // ── Solicitation Workspace source panel ─────────────────────────────
+  // ── Solicitation Center attachments panel ───────────────────────────
   window.gcW25RenderWorkspaceSource = async function(id){
     var host = document.getElementById('gc-sol-source-materials-body');
     if (!host) return;
     id = id || activeSol();
     if (!id){
-      host.innerHTML = '<div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No source material has been fetched yet. Use Fetch Description, download resource links, upload a solicitation file, or paste text. Select a saved pursuit above to load its SAM.gov source materials.</div>';
+      host.innerHTML = '<div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation package selected yet. Select a saved pursuit, download its SAM.gov package, or upload a solicitation package.</div>';
       return;
     }
     var o = await resolve(id);
@@ -19417,7 +19574,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script>
 /* Phase 25X (Part A) — Make the Right First Impression.
    Drafts 3 clarification questions + a COR email from a selected saved
-   pursuit / fetched 25W source material / pasted text. Deterministic and
+   pursuit / downloaded package text / local notes. Deterministic and
    local: works without an AI key; a Copy AI Prompt action is offered for
    users who want to run it through a configured provider. Draft only —
    SourceDeck never sends email or contacts a COR. */
@@ -19451,7 +19608,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     var list = await savedPursuits();
     fiMap = {}; for (var i = 0; i < list.length; i++) fiMap[list[i].id] = list[i];
     var cur = sel.value || (function(){ try { return localStorage.getItem(ACTIVE_KEY) || ''; } catch (e) { return ''; } })();
-    var opts = ['<option value="">— Select a saved pursuit (or paste text below) —</option>'];
+    var opts = ['<option value="">— Select a saved pursuit or downloaded package —</option>'];
     for (var j = 0; j < list.length; j++){
       var o = list[j]; var label = (o.title || o.solicitationNumber || o.noticeId || o.id);
       if (o.agency) label += ' — ' + o.agency;
@@ -19514,7 +19671,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       el.textContent = 'Source material ready (' + src.trim().length + ' chars). You can generate questions.';
     } else {
       el.style.color = 'var(--muted)';
-      el.textContent = 'Fetch/import solicitation source material or paste solicitation text before generating questions.';
+      el.textContent = 'Download the solicitation package or add local notes before generating questions.';
     }
   }
 
@@ -19597,8 +19754,8 @@ document.addEventListener('DOMContentLoaded',()=>{
     var id = selId();
     var src = collectSource(id);
     if (!src || src.trim().length < 40){
-      var st = $('gc-fi-source-status'); if (st){ st.style.color = 'var(--warn,#C4820A)'; st.textContent = 'Fetch/import solicitation source material or paste solicitation text before generating questions.'; }
-      toast('Fetch/import source material or paste solicitation text first.', 'info');
+      var st = $('gc-fi-source-status'); if (st){ st.style.color = 'var(--warn,#C4820A)'; st.textContent = 'Download the solicitation package or add local notes before generating questions.'; }
+      toast('Download the solicitation package or add local notes first.', 'info');
       return;
     }
     var qs = analyze(src);
@@ -19661,7 +19818,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.gcFiDraftEmail = function(){
     var id = selId();
     var src = collectSource(id);
-    if (!src || src.trim().length < 40){ toast('Fetch/import source material or paste solicitation text first.', 'info'); return; }
+    if (!src || src.trim().length < 40){ toast('Download the solicitation package or add local notes first.', 'info'); return; }
     var fi = getFi(id);
     if (!fi.questions || !fi.questions.length){ fi.questions = analyze(src); }
     renderQuestions(fi.questions);
@@ -19931,7 +20088,7 @@ document.addEventListener('DOMContentLoaded',()=>{
           '<button class="btn btn-ghost" onclick="gcWiOpenSource(' + i + ')" style="padding:2px 6px;font-size:9.5px">↗ Open Source</button>' +
           '<button class="btn btn-ghost" onclick="gcWiSave(' + i + ',\'saved\')" style="padding:2px 6px;font-size:9.5px;color:var(--green,#30d158)">+ Save to SourceDeck</button>' +
           '<button class="btn btn-ghost" onclick="gcWiSave(' + i + ',\'pursuing\')" style="padding:2px 6px;font-size:9.5px;color:var(--gold2)">★ Mark Pursue</button>' +
-          '<button class="btn btn-ghost" onclick="gcWiSendToWorkspace(' + i + ')" style="padding:2px 6px;font-size:9.5px">→ Solicitation Workspace</button>' +
+          '<button class="btn btn-ghost" onclick="gcWiSendToWorkspace(' + i + ')" style="padding:2px 6px;font-size:9.5px">→ Solicitation Center</button>' +
           '<button class="btn btn-ghost" onclick="gcWiCheckSam(' + i + ')" style="padding:2px 6px;font-size:9.5px">✔ Check in SAM.gov</button>' +
           '<button class="btn btn-ghost" onclick="gcWiAddNote(' + i + ')" style="padding:2px 6px;font-size:9.5px">✎ Add Note</button>' +
         '</div></td></tr>';
@@ -19990,7 +20147,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     var id = 'webintel:' + (r.solicitationNumber || r.title).toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 60);
     try { if (typeof window.gcV25SelectSolicitation === 'function') window.gcV25SelectSolicitation(id); } catch (e) {}
     try { if (typeof window.gcTabSwitch === 'function') window.gcTabSwitch('solicitation'); } catch (e) {}
-    toast('Sent to Solicitation Workspace (Web Intel — verify on source).', 'ok');
+    toast('Sent to Solicitation Center (Web Intel — verify on source).', 'ok');
   };
   // Cross-check a Web Intel row against the SAM.gov API (user-triggered).
   window.gcWiCheckSam = async function(i){

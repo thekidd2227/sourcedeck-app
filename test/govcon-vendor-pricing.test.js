@@ -213,9 +213,9 @@ test('Phase 22B GovCon Capture Command Center remains intact', () => {
 });
 
 // 21. Phase 22C Solicitation Workspace remains.
-test('Phase 22C Solicitation Workspace remains intact', () => {
+test('Phase 22C Solicitation Center remains intact', () => {
   assert.ok(/id="gc-sol-workspace"/.test(HTML), 'Solicitation Workspace section missing');
-  assert.ok(/Solicitation Workspace/.test(HTML), 'Solicitation Workspace title missing');
+  assert.ok(/Solicitation Center/.test(HTML), 'Solicitation Center title missing');
   for (const id of ['gc-sol-summary','gc-sol-section-l','gc-sol-section-m','gc-sol-pws','gc-sol-forms','gc-sol-deadlines','gc-sol-risks','gc-sol-matrix-table','gc-sol-matrix-body']) {
     assert.ok(new RegExp('id="' + id + '"').test(HTML), 'Solicitation Workspace anchor missing: ' + id);
   }

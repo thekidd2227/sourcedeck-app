@@ -319,6 +319,27 @@ ipcMain.handle('govcon:index-search',       (_event, filters) => appApi.govcon.i
 ipcMain.handle('govcon:index-run-now',      (_event, input) => appApi.govcon.index.runNow(input || {}));
 ipcMain.handle('govcon:index-clear',        () => appApi.govcon.index.clear());
 
+ipcMain.handle('govcon:download-solicitation-package', async (_event, payload) => {
+  return appApi.govcon.packages.downloadSolicitationPackage(payload || {});
+});
+
+ipcMain.handle('govcon:extract-solicitation-package', async (_event, payload) => {
+  return appApi.govcon.packages.extractSolicitationPackage(payload || {});
+});
+
+ipcMain.handle('govcon:explain-solicitation-package', async (_event, payload) => {
+  return appApi.govcon.packages.explainSolicitationPackage(payload || {});
+});
+
+ipcMain.handle('govcon:open-solicitation-package-folder', async (_event, packagePath) => {
+  const root = path.join(app.getPath('userData'), 'govcon', 'solicitations');
+  const target = path.resolve(String(packagePath || ''));
+  const rel = path.relative(root, target);
+  if (!target || rel.startsWith('..') || path.isAbsolute(rel)) return { ok: false, reason: 'invalid_package_path' };
+  try { await shell.openPath(target); return { ok: true }; }
+  catch (e) { return { ok: false, reason: 'open_failed' }; }
+});
+
 // Phase 25Y — open an external URL in the user's default browser. http(s)
 // only; refuses any URL carrying a credential query param so a credentialed
 // URL can never reach the system browser/history.

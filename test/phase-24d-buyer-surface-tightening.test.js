@@ -187,8 +187,8 @@ test('GovCon-brand-essential Cormorant headlines on workflow surfaces preserved'
   // excluded from the Phase 24D operational-pane rule).
   assert.ok(/GovCon Capture Command Center/.test(HTML),
     'Phase 22B Capture Command Center brand headline text missing');
-  assert.ok(/Solicitation Workspace/.test(HTML),
-    'Phase 22C Solicitation Workspace brand headline text missing');
+  assert.ok(/Solicitation Center/.test(HTML),
+    'Phase 22C Solicitation Center brand headline text missing');
   assert.ok(/Vendor Quote Room/.test(HTML),
     'Phase 22D Vendor Quote Room brand headline text missing');
   assert.ok(/Past Performance Library/.test(HTML),

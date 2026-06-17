@@ -49,6 +49,8 @@ const premiumContent = require('../services/govcon/premium-content-agent');
 const watsonxReadiness = require('../services/ai/watsonx-readiness');
 const sam             = require('../services/sam');
 const samSourceFetchSvc = require('../services/govcon/sam-source-fetch');
+const samPackageDownloadSvc = require('../services/govcon/sam-package-download');
+const solicitationPackageExtractSvc = require('../services/govcon/solicitation-package-extract');
 const compliance      = require('../services/compliance');
 const stakeholders    = require('../services/stakeholders');
 const capture         = require('../services/capture');
@@ -100,6 +102,17 @@ function createAppApi(opts) {
     fetch: fetchFn,
     getApiKey: async () => credentials.get('sam-gov')
   });
+  // Phase 25AB — selected-opportunity solicitation package download.
+  // Stores attachments under Electron userData only. The renderer receives a
+  // sanitized manifest summary and never receives keyed SAM.gov URLs.
+  const samPackageDownload = userDataPath
+    ? samPackageDownloadSvc.createSamPackageDownloadService({
+        fetch: fetchFn,
+        getApiKey: async () => credentials.get('sam-gov'),
+        userDataPath,
+        now
+      })
+    : null;
   const airtableSvc     = airtable.createAirtableService({ credentials, fetchFn, audit });
   const apolloSvc       = apollo.createApolloService({ credentials, fetchFn, audit });
   const openaiSvc       = openaiProvider.createOpenaiProvider({ credentials, fetchFn, audit });
@@ -188,6 +201,42 @@ function createAppApi(opts) {
         runNow:   (input) => govconIndex.runNow(input || {}),
         clear:    () => Promise.resolve(govconIndex.clear()),
         shouldRunOnStart: () => Promise.resolve(govconIndex.shouldRunOnStart())
+      },
+      packages: {
+        downloadSolicitationPackage: async (input) => {
+          if (!samPackageDownload) return { ok: false, reason: 'user_data_path_unavailable' };
+          input = input || {};
+          let opp = input.opportunity || input;
+          const id = input.id || input.noticeId || input.opportunityId || opp.id || '';
+          if ((!opp || !opp.resourceLinks) && id) {
+            const stored = opportunities.get(id);
+            if (stored) opp = stored;
+          }
+          const result = await samPackageDownload.downloadPackage(opp || {});
+          if (result && result.ok && id) {
+            try {
+              opportunities.patch(id, {
+                solicitationPackage: {
+                  downloadedAt: result.downloadedAt,
+                  downloadedCount: result.downloadedCount,
+                  failedCount: result.failedCount,
+                  resourceCount: result.resourceCount,
+                  packagePath: result.packagePath,
+                  localZipPath: result.localZipPath,
+                  files: result.files
+                }
+              });
+            } catch (e) {}
+          }
+          return result;
+        },
+        extractSolicitationPackage: (input) =>
+          solicitationPackageExtractSvc.extractSolicitationPackage(input || {}),
+        explainSolicitationPackage: async (input) => {
+          const extraction = input && input.sections ? input : await solicitationPackageExtractSvc.extractSolicitationPackage(input || {});
+          return solicitationPackageExtractSvc.plainEnglish(extraction);
+        },
+        acceptedUploadTypes: () => Promise.resolve(solicitationPackageExtractSvc.acceptedUploadTypes())
       },
       opportunities: {
         list:      ()      => Promise.resolve(opportunities.list()),

@@ -30,9 +30,9 @@ test('selecting a pursuit clears foreign/demo extraction', () => {
   assert.ok(/gcSolResetForSelection\(id\)/.test(HTML), 'reset wired into selection');
 });
 
-test('Solicitation Workspace shows source-material status + needs message', () => {
+test('Solicitation Center shows attachments status + needs message', () => {
   assert.ok(/id="gc-sol-source-materials"/.test(HTML), 'source materials panel');
-  assert.ok(/No source material has been fetched yet/.test(HTML), 'source-needed guidance');
+  assert.ok(/No solicitation package selected yet/.test(HTML), 'package-needed guidance');
 });
 
 test('extraction output covers the required sections', () => {
