@@ -45,8 +45,19 @@ test('guard does not flag a genuine solicitation attachment', () => {
 });
 
 test('every documented marker is covered', () => {
-  ['SourceDeck GovCon Pipeline', 'Operating Hub', '.cmd-flow', '.cmd-pill', 'cc-lcc-grid', 'sourcedeck.html']
+  ['SourceDeck GovCon Pipeline', 'Operating Hub', 'GovCon Find Opportunities',
+   '.cmd-flow', '.cmd-pill', 'cc-lcc-grid', 'sourcedeck.html',
+   'tab-govcon', 'tab-dashboard', 'SourceDeck does not auto-send']
     .forEach(m => assert.ok(guard.APP_SHELL_MARKERS.indexOf(m) >= 0, 'marker missing: ' + m));
+});
+
+test('named helper looksLikeSourceDeckAppShellPreview is exported and detects shell text', () => {
+  assert.strictEqual(typeof guard.looksLikeSourceDeckAppShellPreview, 'function',
+    'looksLikeSourceDeckAppShellPreview must be exported');
+  assert.ok(guard.looksLikeSourceDeckAppShellPreview('… GovCon Find Opportunities … tab-govcon …'),
+    'named helper must flag app-shell text');
+  assert.ok(!guard.looksLikeSourceDeckAppShellPreview('SECTION L — Instructions to Offerors'),
+    'named helper must not flag a real attachment');
 });
 
 test('main.js blocks app-shell text with a safe message (no throw)', () => {

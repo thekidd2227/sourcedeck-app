@@ -65,13 +65,16 @@ New pure, dependency-free guard module (reached from `main.js` via
   — never an uncaught throw.
 
 ### App-shell preview guard
-Both the main process and the renderer detect SourceDeck app-shell markers
-(`SourceDeck GovCon Pipeline`, `Operating Hub`, `.cmd-flow`, `.cmd-pill`,
-`cc-lcc-grid`, `sourcedeck.html`; dotted CSS markers also match the HTML
-`class="…"` form). On a match the content is **blocked** (`previewKind:
-'blocked'`) with the message "Preview blocked because the selected content
-appears to be the SourceDeck app shell, not a solicitation attachment." This
-is defensive — path validation should already prevent it — but guarantees a
+Both the main process and the renderer detect SourceDeck app-shell markers via
+`looksLikeSourceDeckAppShellPreview()` (aliased to `containsAppShell`):
+`SourceDeck GovCon Pipeline`, `Operating Hub`, `GovCon Find Opportunities`,
+`.cmd-flow`, `.cmd-pill`, `cc-lcc-grid`, `sourcedeck.html`, `tab-govcon`,
+`tab-dashboard`, `SourceDeck does not auto-send`; dotted CSS markers also match
+the HTML `class="…"` form. On a match the content is **blocked**
+(`previewKind: 'blocked'`) with the message "Preview blocked because the
+selected content appears to be the SourceDeck app shell, not a solicitation
+attachment." This is defensive — path validation should already prevent it —
+but guarantees a
 shell payload can never freeze or impersonate an attachment.
 
 ### Safe rendering (no raw innerHTML / no srcdoc)

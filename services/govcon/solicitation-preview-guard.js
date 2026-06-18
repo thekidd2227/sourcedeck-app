@@ -48,10 +48,14 @@ const IMAGE_MIME = {
 const APP_SHELL_MARKERS = [
   'SourceDeck GovCon Pipeline',
   'Operating Hub',
+  'GovCon Find Opportunities',
   '.cmd-flow',
   '.cmd-pill',
   'cc-lcc-grid',
-  'sourcedeck.html'
+  'sourcedeck.html',
+  'tab-govcon',
+  'tab-dashboard',
+  'SourceDeck does not auto-send'
 ];
 
 function solicitationsRoot(userDataPath) {
@@ -168,5 +172,7 @@ module.exports = {
   classifyPreviewKind,
   imageMimeForExt,
   truncateText,
-  containsAppShell
+  containsAppShell,
+  // Phase 25AG mission alias — same detector under the documented name.
+  looksLikeSourceDeckAppShellPreview: containsAppShell
 };
