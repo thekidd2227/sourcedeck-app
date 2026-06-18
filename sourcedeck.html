@@ -2035,6 +2035,14 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           </div>
         </div>
 
+        <div class="card mb-14" id="settings-source-cache-maintenance" data-settings-source-cache-maintenance="true">
+          <div class="sl">Maintenance</div>
+          <div style="font-size:11px;font-weight:600;color:var(--text);margin-bottom:4px">Source Cache</div>
+          <div style="font-size:10px;color:var(--muted);margin-bottom:6px">Clears stored solicitation text, extraction results, and First Impression drafts. Does not delete credentials, saved pursuits, or downloaded package files on disk.</div>
+          <button class="btn btn-ghost" onclick="sdClearSourceCache()" style="padding:4px 10px;font-size:10px;color:var(--warn)">Clear contaminated source cache</button>
+          <span id="sd-clear-cache-status" style="font-size:10px;color:var(--muted);margin-left:8px"></span>
+        </div>
+
         <div class="grid-2">
           <div>
             <div class="card mb-14">
@@ -12193,8 +12201,18 @@ async function _gcWizSaveKey(service, inputId, statusFn){
     const r = await sd.credentials.set(service, val);
     if (input) input.value = ''; // never retain raw key in the DOM
     saved = !!(r && r.ok);
-    toast(saved ? 'Key saved' : 'Could not save key', saved ? 'ok' : 'err');
-  } catch(_) { if (input) input.value=''; toast('Could not save key','err'); }
+    if (!saved) {
+      // Phase 25AK — surface the safe error code so operators can diagnose
+      // credential save failures without exposing the credential value.
+      var errDetail = (r && r.error) ? ' (' + r.error + ')' : '';
+      toast('Could not save key' + errDetail + '. Try restarting the app.', 'err');
+    } else {
+      toast('Key saved', 'ok');
+    }
+  } catch(credErr) {
+    if (input) input.value='';
+    toast('Could not save key — IPC error: ' + (credErr && credErr.message ? credErr.message : 'unknown') + '. Restart and try again.', 'err');
+  }
   // Phase 25M — optimistic + verified status refresh. The save call
   // above resolves once the credential boundary has persisted the key,
   // but sd.credentials.status() can return a stale snapshot for a
@@ -12233,6 +12251,49 @@ async function _gcWizRemoveKey(service, inputId, statusFn){
 async function gcWizSaveSam(){ await _gcWizSaveKey('sam-gov', 'gcwiz-sam', _gcWizUpdateSamStatus); }
 async function gcWizRemoveSam(){ await _gcWizRemoveKey('sam-gov', 'gcwiz-sam', _gcWizUpdateSamStatus); }
 window.gcWizSaveSam = gcWizSaveSam; window.gcWizRemoveSam = gcWizRemoveSam;
+
+// Phase 25AK — emergency credential setter for DevTools use.
+// Usage: sd_forceSetKey('sam-gov', 'your-key-here')
+// Safe: key is passed to sd.credentials.set (IPC boundary), never
+// stored in the DOM, never logged. For dev/operator recovery only.
+window.sd_forceSetKey = async function(service, value){
+  if (!service || !value){ console.error('Usage: sd_forceSetKey("sam-gov","your-key")'); return; }
+  if (!window.sd || !window.sd.credentials){ console.error('sd.credentials not available'); return; }
+  var r = await window.sd.credentials.set(service, value);
+  console.log('sd_forceSetKey result:', JSON.stringify(r));
+  if (r && r.ok){
+    if (typeof window.gcSamRefreshKeyStatus === 'function') window.gcSamRefreshKeyStatus();
+    if (typeof window.gcTabRefreshSamKeyStatus === 'function') window.gcTabRefreshSamKeyStatus();
+    console.log('Key saved. Search SAM.gov button should now be enabled.');
+  } else {
+    console.error('Key save failed:', r && r.error);
+  }
+};
+
+// Phase 25AK — clear only source/extraction caches. Credentials, saved
+// pursuits, and downloaded package files on disk are intentionally preserved.
+window.sdClearSourceCache = function(){
+  var KEYS = [
+    'sd.govcon.sourceMaterials.v1',
+    'sd.govcon.solWorkspace.v1',
+    'sd.govcon.firstImpression.v1',
+    'sd.govcon.sourceMaterialQuarantine.v1',
+    'sd.govcon.activeSolicitation.v1'
+  ];
+  var cleared = [];
+  for (var _i = 0; _i < KEYS.length; _i++){
+    try {
+      if (localStorage.getItem(KEYS[_i]) !== null){
+        localStorage.removeItem(KEYS[_i]);
+        cleared.push(KEYS[_i]);
+      }
+    } catch (_e) {}
+  }
+  var _st = document.getElementById('sd-clear-cache-status');
+  if (_st) _st.textContent = cleared.length ? ('Cleared: ' + cleared.length + ' keys. Reload to apply.') : 'No cache keys found.';
+  if (window.toast) window.toast('Source cache cleared. Re-download the solicitation package to rebuild.', 'ok');
+  try { if (typeof window.gcW25RenderWorkspaceSource === 'function') window.gcW25RenderWorkspaceSource(''); } catch (_e2) {}
+};
 
 // ── Phase 25M — GovCon SAM Pipeline (in-app search + save/pursue) ───
 // All UI lives inside SourceDeck (`#gc-sam-pipeline`). The SAM.gov
@@ -14987,8 +15048,53 @@ document.addEventListener('DOMContentLoaded',()=>{
         if (window.toast) try { window.toast('Package extraction requires the SourceDeck desktop app.', 'warn'); } catch (e3) {}
         return null;
       }
+      // Phase 25AK — validate every on-disk file in the manifest before
+      // sending it to extraction. This rejects stale app-shell files written
+      // before classifyDownloadedBody existed and paths outside userData.
+      if (typeof window.sd.govcon.validatePackageFiles === 'function'){
+        try {
+          var _val = await window.sd.govcon.validatePackageFiles({ manifest: sm.package });
+          if (!_val || !Array.isArray(_val.results)) throw new Error('validation_unavailable');
+          var _pkgCopy = JSON.parse(JSON.stringify(sm.package));
+          for (var _vi = 0; _vi < _val.results.length; _vi++){
+            var _vr = _val.results[_vi];
+            if (_vr.ok) continue;
+            var _targetIndex = typeof _vr.index === 'number' ? _vr.index : -1;
+            if (_targetIndex < 0){
+              for (var _findIndex = 0; _findIndex < (_pkgCopy.files || []).length; _findIndex++){
+                if (_pkgCopy.files[_findIndex].id === _vr.id){ _targetIndex = _findIndex; break; }
+              }
+            }
+            var _rejectedFile = (_pkgCopy.files || [])[_targetIndex];
+            if (_rejectedFile){
+              _rejectedFile.status = 'rejected_' + (_vr.reason || 'invalid');
+              _rejectedFile.localPath = '';
+              (_rejectedFile.extractedFiles || []).forEach(function(_child){ if (_child) _child.localPath = ''; });
+            }
+          }
+          var _validFiles = (_pkgCopy.files || []).filter(function(f){ return f && f.localPath; });
+          if (!_validFiles.length){
+            if (window.toast) window.toast('All package files rejected (app-shell or invalid path). Clear source cache and re-download.', 'warn');
+            return null;
+          }
+          sm = JSON.parse(JSON.stringify(sm));
+          sm.package = _pkgCopy;
+        } catch (_vErr) {
+          if (window.toast) window.toast('Package validation failed. Clear source cache and re-download before extraction.', 'warn');
+          return null;
+        }
+      } else {
+        if (window.toast) window.toast('Package validation is unavailable. Restart SourceDeck before extraction.', 'warn');
+        return null;
+      }
       var ex = await window.sd.govcon.extractSolicitationPackage({ manifest: sm.package });
       var mapped = mapPackageExtraction(ex);
+      // Phase 25AK — belt-and-suspenders post-extraction guard. Never persist
+      // or render an extraction result that contains SourceDeck app-shell text.
+      if (ex && ex.fullText && typeof window._w25LooksLikeBadSource === 'function' && window._w25LooksLikeBadSource(ex.fullText)){
+        if (window.toast) window.toast('Extraction result contains SourceDeck UI text. Clear source cache and re-download.', 'warn');
+        return null;
+      }
       var state = loadState();
       state.summary = mapped.summary;
       state.sections = mapped;
@@ -20405,6 +20511,37 @@ document.addEventListener('DOMContentLoaded',()=>{
         }
       }
     } catch (e3) {}
+    // 4) Phase 25AK — sanitize package paths that clearly reference the app
+    // shell, repository, installed app bundle, or Desktop trial bundle.
+    // Renderer code cannot read disk contents; extraction-time content
+    // validation is enforced by govcon:validate-package-files.
+    try {
+      var raw4 = localStorage.getItem(SM_KEY);
+      if (raw4){
+        var all4 = JSON.parse(raw4);
+        if (all4 && typeof all4 === 'object'){
+          var dirty4 = false;
+          var ids4 = Object.keys(all4);
+          for (var m4 = 0; m4 < ids4.length; m4++){
+            var rec4 = all4[ids4[m4]];
+            if (!rec4 || !rec4.package) continue;
+            var files4 = rec4.package.files || [];
+            for (var n4 = 0; n4 < files4.length; n4++){
+              var f4 = files4[n4];
+              if (!f4) continue;
+              var lp4 = String(f4.localPath || '');
+              if (/sourcedeck\.html|sourcedeck-app\/|SourceDeck\.app\/|Desktop\/SourceDeck/i.test(lp4)){
+                f4.localPath = '';
+                f4.status = 'rejected_boot_path_sanitized';
+                (f4.extractedFiles || []).forEach(function(child4){ if (child4) child4.localPath = ''; });
+                dirty4 = true;
+              }
+            }
+          }
+          if (dirty4){ localStorage.setItem(SM_KEY, JSON.stringify(all4)); cleaned = true; }
+        }
+      }
+    } catch (e6) {}
     // Migration marker + one concise, non-blocking notice (first time only).
     if (cleaned){
       try {

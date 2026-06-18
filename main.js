@@ -325,8 +325,19 @@ ipcMain.handle('govcon:download-solicitation-package', async (_event, payload) =
 });
 
 ipcMain.handle('govcon:extract-solicitation-package', async (_event, payload) => {
-  return appApi.govcon.packages.extractSolicitationPackage(payload || {});
+  payload = await appApi.govcon.packages.sanitizePackageManifest(payload || {});
+  return appApi.govcon.packages.extractSolicitationPackage(payload);
 });
+
+// Phase 25AK — re-validate package files already present on disk before
+// extraction. This closes the gap for stale manifests written before the
+// package body classifier existed. Results contain safe reason codes only;
+// file contents are never returned to the renderer.
+ipcMain.handle('govcon:validate-package-files', async (_event, payload) => {
+  return appApi.govcon.packages.validatePackageFiles(payload || {});
+});
+
+ipcMain.handle('govcon:get-user-data-path', () => app.getPath('userData'));
 
 ipcMain.handle('govcon:explain-solicitation-package', async (_event, payload) => {
   return appApi.govcon.packages.explainSolicitationPackage(payload || {});

@@ -60,6 +60,8 @@ contextBridge.exposeInMainWorld('sd', {
     },
     downloadSolicitationPackage: (payload) => ipcRenderer.invoke('govcon:download-solicitation-package', payload),
     extractSolicitationPackage:  (payload) => ipcRenderer.invoke('govcon:extract-solicitation-package', payload),
+    validatePackageFiles:        (payload) => ipcRenderer.invoke('govcon:validate-package-files', payload),
+    getUserDataPath:             ()        => ipcRenderer.invoke('govcon:get-user-data-path'),
     explainSolicitationPackage:  (payload) => ipcRenderer.invoke('govcon:explain-solicitation-package', payload),
     openSolicitationPackageFolder: (packagePath) => ipcRenderer.invoke('govcon:open-solicitation-package-folder', packagePath),
     // Phase 25AC item 4 — copy the canonical solicitation package ZIP to
