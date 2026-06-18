@@ -101,9 +101,81 @@ function classifyResponseText(text, contentType) {
   return classifyResponseBody(String(text), contentType);
 }
 
+// Phase 25AJ — shared plain-text classifier for SourceDeck app-shell /
+// UI text that has been stripped of HTML tags (e.g. via innerText or
+// text extraction). This catches the case where the app's own page
+// content was fetched or stored as plain text — the HTML classifier
+// above won't fire because the tags are gone, but the UI strings remain.
+//
+// Returns true when the text looks like SourceDeck app-shell / UI dump.
+// Designed to be importable by both Node services and mirrored in the
+// renderer (the renderer has its own inline copy for sandboxed use).
+const APP_SHELL_TEXT_MARKERS = [
+  'SourceDeck GovCon Pipeline',
+  'Operating Hub Dashboard',
+  'GovCon Find Opportunities',
+  'Readiness',
+  'Proposal Workspace',
+  'Solicitation Center',
+  'Response Desk',
+  'Revenue Path',
+  'Generated Leads',
+  'Social Access Points',
+  '.cc-ribbon',
+  '.cmd-pill',
+  '.cmd-flow',
+  '.cc-lcc-grid',
+  'tab-govcon',
+  'tab-dashboard',
+  'SourceDeck does not auto-send',
+  'sourcedeck.html'
+];
+
+const APP_SHELL_STRONG_TEXT_MARKERS = [
+  'SourceDeck GovCon Pipeline',
+  '.cc-ribbon',
+  '.cmd-pill',
+  '.cmd-flow',
+  '.cc-lcc-grid',
+  'tab-govcon',
+  'tab-dashboard',
+  'SourceDeck does not auto-send',
+  'sourcedeck.html'
+];
+
+function looksLikeAppShellText(text) {
+  if (typeof text !== 'string' || text.length === 0) return false;
+  const sample = text.slice(0, 64 * 1024);
+  for (let i = 0; i < APP_SHELL_STRONG_TEXT_MARKERS.length; i += 1) {
+    if (sample.indexOf(APP_SHELL_STRONG_TEXT_MARKERS[i]) >= 0) return true;
+  }
+  let hits = 0;
+  for (let i = 0; i < APP_SHELL_TEXT_MARKERS.length; i += 1) {
+    if (sample.indexOf(APP_SHELL_TEXT_MARKERS[i]) >= 0) {
+      hits += 1;
+      if (hits >= 2) return true;
+    }
+  }
+  return false;
+}
+
+// Full text-level classification: returns { ok, reason } like the body
+// classifier. Runs the plain-text app-shell check, then falls through
+// to classifyResponseText for HTML/login detection on already-stored text.
+function classifySourceText(text) {
+  if (text == null || text === '') return { ok: true };
+  const s = String(text);
+  if (looksLikeAppShellText(s)) return { ok: false, reason: 'app_shell_text' };
+  return classifyResponseText(s);
+}
+
 module.exports = {
   classifyResponseBody,
   classifyResponseText,
+  classifySourceText,
+  looksLikeAppShellText,
   APP_SHELL_MARKERS,
+  APP_SHELL_TEXT_MARKERS,
+  APP_SHELL_STRONG_TEXT_MARKERS,
   _hasBinaryAttachmentMagic: hasBinaryAttachmentMagic
 };

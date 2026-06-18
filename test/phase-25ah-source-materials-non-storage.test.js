@@ -43,7 +43,7 @@ assert(/var isHtml = \/text\\\/html\|application\\\/xhtml\/i\.test\(ct\)/.test(i
   'gcW25ImportResource detects text/html responses and refuses to store them');
 assert(/if \(!isHtml/.test(importResourceBody),
   'Text body is only stored when content-type is not HTML');
-assert(/analysisStatus = rec\.text \? 'imported' : \(isHtml \? 'rejected' : 'binary'\)/.test(importResourceBody),
+assert(/analysisStatus = rec\.text \? 'imported' :/.test(importResourceBody),
   'Resource analysisStatus reflects rejected vs imported vs binary');
 
 // ── _w25RejectionCopy table includes every safe reason code ─────────

@@ -1,8 +1,9 @@
-# `/web/` — Web app target (placeholder)
+# `/web/` — Web/PWA companion target (placeholder)
 
 This directory is reserved for the SourceDeck web app. It is
-**not built yet**. See `docs/architecture-web-first-roadmap.md` for
-the rollout plan.
+**not built yet**. The first target is an installable tablet companion,
+not an Electron rewrite. See `docs/architecture-web-first-roadmap.md`
+and `docs/tablet-companion-plan.md` for the rollout plan.
 
 ## Contract with the rest of the repo
 
@@ -16,6 +17,22 @@ the Electron renderer (eventually) uses. It must never:
   `services/settings/credentials.js`).
 - Reach DOM patterns that aren't browser-safe (no `node:fs`, no
   `electron`, no `safeStorage` direct).
+- Download, preview, unzip, or deeply extract local solicitation packages.
+  Those workflows remain in Electron; the PWA receives sanitized summaries,
+  manifests, and operator-approved draft data through authenticated HTTP APIs.
+
+## First tablet slice
+
+The companion starts with saved pursuits, pipeline status, solicitation
+summaries, deadlines, notes, vendor/partner coordination, and First Impression
+drafts. Each screen calls an authenticated HTTP facade over `createAppApi`.
+The browser client never imports `api/index.js` directly and never receives
+backend credentials or host filesystem paths.
+
+PWA caching is shell-only. Service workers may cache versioned static assets,
+but must not cache solicitation source text, draft content, API responses, or
+credential-bearing requests. Offline mutation queues are deferred until the
+API has tenant-scoped revision IDs and conflict handling.
 
 ## Recommended stack (when we start)
 
@@ -23,5 +40,5 @@ the Electron renderer (eventually) uses. It must never:
   zone and avoids paid SaaS dependencies).
 - The same Tailwind / design tokens used by the public site
   (`sourcedeck-site` repo) so the web app inherits the brand.
-- The audit-log UI panel is a good first screen — it consumes
-  `api.audit.list()` and validates the boundary end-to-end.
+- The first authenticated tablet screen should be Saved Pursuits backed by
+  `api.govcon.opportunities.list()`. Audit-log remains the boundary smoke test.
