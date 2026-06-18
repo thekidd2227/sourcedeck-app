@@ -45,7 +45,7 @@ function fnSource(name) {
 
   const sandbox = {
     document: { getElementById: (id) => elements[id] || null },
-    console
+    console, Date, JSON
   };
   vm.createContext(sandbox);
   const src = [
@@ -56,6 +56,16 @@ function fnSource(name) {
     fnSource('cleanDisplayText'),
     fnSource('emptyDiv'),
     fnSource('listDiv'),
+    // Phase 25AL — renderPanels/renderMatrix now screen every rendered field
+    // through the render-time app-shell guard. Provide the real guard helpers
+    // (extracted from source) so this isolated-extraction binding test exercises
+    // the actual code path. With clean extraction payloads they pass through.
+    'var SAL25_BLOCK_MSG = "SourceDeck blocked app UI text from being rendered as solicitation content. Clear source cache and re-download the package.";',
+    'var _sal25Diag = [];',
+    fnSource('_sal25IsAppShell'),
+    fnSource('_sal25RecordBlock'),
+    fnSource('_sal25SafeText'),
+    fnSource('_sal25SafeList'),
     fnSource('mapPackageExtraction'),
     fnSource('renderPanels'),
     fnSource('renderMatrix'),

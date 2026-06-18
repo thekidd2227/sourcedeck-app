@@ -14453,6 +14453,13 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (looksRawMarkup(out)) return 'This file contains structured document markup. SourceDeck stored it, but readable extraction needs review.';
     return out;
   }
+  // Phase 25AL — expose the markup-stripping display helper on window so the
+  // Phase 22C Solicitation Center renderer (a separate IIFE) can reach it.
+  // Previously `cleanDisplayText` was private to this Phase 22B IIFE while the
+  // Phase 22C block referenced it, throwing `ReferenceError: cleanDisplayText
+  // is not defined` and silently breaking Extract Requirements / Plain-English
+  // explanation. Same function, shared safely — behavior is unchanged.
+  if (!window.sdCleanDisplayText) window.sdCleanDisplayText = cleanDisplayText;
   window.sdSetActionBusy = window.sdSetActionBusy || function(actionId, label){
     var btn = actionId && actionId.nodeType === 1 ? actionId : (document.getElementById(actionId) || document.querySelector('[data-sd-action-id="' + String(actionId || '').replace(/"/g, '\\"') + '"]'));
     if (!btn) return null;
@@ -14660,6 +14667,79 @@ document.addEventListener('DOMContentLoaded',()=>{
   'use strict';
   var STORAGE_KEY = 'sd.govcon.solWorkspace.v1';
   var CAPTURE_KEY = 'sd.govcon.captureBoard.v1';
+  // Phase 25AL — bind the shared display helper exposed by the Phase 22B IIFE.
+  // `cleanDisplayText` was referenced throughout this Solicitation Center block
+  // but defined privately in another IIFE, so every extraction/explain/matrix
+  // render threw `ReferenceError: cleanDisplayText is not defined`. Bind a local
+  // reference (with a conservative fallback) so those paths run again. Resolved
+  // at call time as well, in case this block parses before window export.
+  function cleanDisplayText(s){
+    var fn = (typeof window !== 'undefined') ? window.sdCleanDisplayText : null;
+    if (typeof fn === 'function') return fn(s);
+    return String(s == null ? '' : s);
+  }
+  // Phase 25AL — render-time app-shell guard for the Solicitation Center.
+  // Prior phases (25AH/25AJ/25AK) guarded extraction INPUT only. The visible
+  // app-shell/UI/CSS dump came from the render SINK: renderPanels painted
+  // persisted state.summary / state.sections / state.matrix through safeText,
+  // which strips only angle brackets — it does NOT block `.cmd-flow`,
+  // `.cmd-pill`, `.cc-lcc-grid`, SourceDeck nav labels, or CSS-rule text. This
+  // helper screens every rendered field with the shared app-shell detector and
+  // substitutes a safe message instead of dumping raw UI text. It never throws,
+  // never stores the raw blocked payload, and never freezes the UI.
+  var SAL25_BLOCK_MSG = 'SourceDeck blocked app UI text from being rendered as solicitation content. Clear source cache and re-download the package.';
+  var _sal25Diag = [];
+  function _sal25IsAppShell(text){
+    if (typeof text !== 'string' || !text) return false;
+    try {
+      if (typeof window !== 'undefined' && typeof window._w25LooksLikeBadSource === 'function') {
+        return !!window._w25LooksLikeBadSource(text);
+      }
+    } catch (e) {}
+    // Fallback: strongest single-hit app-shell markers (mirrors
+    // _w25StrongAppShellTextMarkers) used only if the shared detector has not
+    // been exposed yet at call time.
+    var strong = ['SourceDeck GovCon Pipeline', '.cc-ribbon', '.cmd-pill', '.cmd-flow', '.cc-lcc-grid', 'tab-govcon', 'tab-dashboard', 'SourceDeck does not auto-send', 'sourcedeck.html'];
+    var sample = text.slice(0, 64 * 1024);
+    for (var i = 0; i < strong.length; i++) { if (sample.indexOf(strong[i]) >= 0) return true; }
+    return false;
+  }
+  function _sal25RecordBlock(text, context){
+    try {
+      var probe = ['SourceDeck GovCon Pipeline', 'Operating Hub Dashboard', 'GovCon Find Opportunities', '.cmd-flow', '.cmd-pill', '.cc-lcc-grid', 'Revenue Path', 'Generated Leads', 'Social Access Points', 'tab-govcon', 'tab-dashboard'];
+      var markers = [];
+      for (var i = 0; i < probe.length; i++) { if (String(text).indexOf(probe[i]) >= 0) markers.push(probe[i]); }
+      // Lightweight diagnostic only: context, markers, length. Never the raw payload.
+      _sal25Diag.push({ at: new Date().toISOString(), context: String(context || 'unknown'), markers: markers, length: String(text == null ? '' : text).length });
+      if (_sal25Diag.length > 50) _sal25Diag.shift();
+      if (typeof window !== 'undefined') window.sdSolRenderBlockDiagnostics = _sal25Diag;
+      if (typeof console !== 'undefined' && console.warn) console.warn('[Phase 25AL] Blocked app-shell text from Solicitation Center render', { context: String(context || 'unknown'), markers: markers, length: String(text == null ? '' : text).length });
+    } catch (e) {}
+  }
+  // Returns a render-safe string: the original text, or the block message when
+  // it looks like SourceDeck app shell.
+  function _sal25SafeText(text, context){
+    var s = (text == null) ? '' : String(text);
+    if (s && _sal25IsAppShell(s)) { _sal25RecordBlock(s, context); return SAL25_BLOCK_MSG; }
+    return s;
+  }
+  // Guards an array of section items: contaminated entries are replaced with the
+  // block message (deduped), clean entries pass through untouched.
+  function _sal25SafeList(items, context){
+    if (!Array.isArray(items)) return items;
+    var blocked = false;
+    var out = [];
+    for (var i = 0; i < items.length; i++) {
+      var t = items[i];
+      var str = (t && typeof t === 'object') ? (t.item || t.fileName || t.text || t.label || '') : t;
+      if (typeof str === 'string' && str && _sal25IsAppShell(str)) { _sal25RecordBlock(str, context); blocked = true; continue; }
+      out.push(t);
+    }
+    if (blocked && !out.length) out.push(SAL25_BLOCK_MSG);
+    else if (blocked) out.unshift(SAL25_BLOCK_MSG);
+    return out;
+  }
+  if (typeof window !== 'undefined') { window.sdSolRenderGuard = _sal25SafeText; window.sdSolRenderGuardList = _sal25SafeList; }
   function loadState(){
     try {
       var raw = window.localStorage && window.localStorage.getItem(STORAGE_KEY);
@@ -14787,18 +14867,23 @@ document.addEventListener('DOMContentLoaded',()=>{
       return;
     }
     var s = state.sections;
+    // Phase 25AL — every rendered field is screened by the render-time app-shell
+    // guard before it reaches safeText()/listDiv(). safeText() alone only strips
+    // angle brackets and would still paint `.cmd-flow`, nav labels, and CSS-rule
+    // text. _sal25SafeText / _sal25SafeList substitute the block message instead.
+    var _safeSummary = _sal25SafeText(state.summary, 'summary');
     setHTML('gc-sol-summary',
-      state.summary
-        ? '<div style="font-size:11px;color:var(--text);line-height:1.55">' + safeText(state.summary) + '</div>'
+      _safeSummary
+        ? '<div style="font-size:11px;color:var(--text);line-height:1.55">' + safeText(_safeSummary) + '</div>'
           + '<div style="margin-top:6px;font-size:10px;color:var(--muted);font-style:italic">Draft extraction — verify against source document.</div>'
         : emptyDiv('No solicitation package loaded yet. Download a SAM.gov package or upload a solicitation file.')
     );
-    setHTML('gc-sol-section-l', listDiv(s.sectionL,  'No Section L instructions extracted yet. Verify source package.'));
-    setHTML('gc-sol-section-m', listDiv(s.sectionM,  'No Section M evaluation criteria extracted yet. Verify source package.'));
-    setHTML('gc-sol-pws',       listDiv(s.pws,       'No Section C/F scope requirements extracted yet. Verify source package.'));
-    setHTML('gc-sol-forms',     listDiv(s.forms,     'No Section J required forms or attachments extracted yet. Verify source package.'));
-    setHTML('gc-sol-deadlines', listDiv(s.deadlines, 'No deadlines extracted yet. Verify source package.'));
-    setHTML('gc-sol-risks',     listDiv(s.risks,     'No risks or deal killers extracted yet. Verify source package.'));
+    setHTML('gc-sol-section-l', listDiv(_sal25SafeList(s.sectionL,  'sectionL'), 'No Section L instructions extracted yet. Verify source package.'));
+    setHTML('gc-sol-section-m', listDiv(_sal25SafeList(s.sectionM,  'sectionM'), 'No Section M evaluation criteria extracted yet. Verify source package.'));
+    setHTML('gc-sol-pws',       listDiv(_sal25SafeList(s.pws,       'pws'),      'No Section C/F scope requirements extracted yet. Verify source package.'));
+    setHTML('gc-sol-forms',     listDiv(_sal25SafeList(s.forms,     'forms'),    'No Section J required forms or attachments extracted yet. Verify source package.'));
+    setHTML('gc-sol-deadlines', listDiv(_sal25SafeList(s.deadlines, 'deadlines'),'No deadlines extracted yet. Verify source package.'));
+    setHTML('gc-sol-risks',     listDiv(_sal25SafeList(s.risks,     'risks'),    'No risks or deal killers extracted yet. Verify source package.'));
   }
   function renderMatrix(matrix){
     var body = $('gc-sol-matrix-body');
@@ -14810,7 +14895,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     var rows = [];
     for (var i = 0; i < matrix.length; i++) {
       var r = matrix[i];
-      var requirementText = cleanDisplayText(r.requirementText || r.requirement || r.text || '');
+      // Phase 25AL — screen matrix requirement text through the render-time
+      // app-shell guard so contaminated rows never paint UI/CSS text into cells.
+      var requirementText = _sal25SafeText(cleanDisplayText(r.requirementText || r.requirement || r.text || ''), 'matrix');
       if (!requirementText || /^Required Forms$/i.test(requirementText)) continue;
       rows.push('<tr style="border-top:1px solid var(--border2,rgba(255,255,255,0.05));font-family:\'Instrument Sans\',sans-serif">'
         + '<td style="padding:7px 6px;font-family:\'Azeret Mono\',monospace;color:var(--text)">' + safeText(r.id) + '</td>'
@@ -15072,7 +15159,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         var s = plain.sections[k];
         lines.push('Section ' + k + ': ' + s.means + ' What to do: ' + s.mustDo);
       });
-      setHTML('gc-sol-summary', '<div style="font-size:11px;color:var(--text);line-height:1.55"><strong>Plain-English package explanation.</strong><br>' + safeText(cleanDisplayText(lines.join('\n\n'))).replace(/\n/g, '<br>') + '<br><br><em>Not legal advice. Verify against source documents.</em></div>');
+      setHTML('gc-sol-summary', '<div style="font-size:11px;color:var(--text);line-height:1.55"><strong>Plain-English package explanation.</strong><br>' + safeText(_sal25SafeText(cleanDisplayText(lines.join('\n\n')), 'explain')).replace(/\n/g, '<br>') + '<br><br><em>Not legal advice. Verify against source documents.</em></div>');
       if (window.toast) try { window.toast('Plain-English explanation created. Verify against the source package.', 'ok'); } catch (e4) {}
     } finally {
       if (window.sdClearActionBusy) window.sdClearActionBusy('sol-explain');
