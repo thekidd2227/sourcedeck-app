@@ -17,7 +17,7 @@
 
 'use strict';
 
-const { classifyResponseBody } = require('./sam-body-classifier');
+const { classifyResponseBody, looksLikeAppShellText } = require('./sam-body-classifier');
 
 const MAX_TEXT = 200000; // cap returned text so a huge attachment can't blow the IPC channel
 
@@ -132,6 +132,20 @@ function createSamSourceFetchService(deps) {
       try { text = buf.toString('utf8'); } catch (e) { text = ''; }
     }
     text = redact(text);
+
+    // Phase 25AJ — second gate: reject stripped SourceDeck app-shell /
+    // UI text that passed the HTML-level classifier (e.g. because the
+    // content-type was text/plain or the HTML tags were already stripped).
+    if (looksLikeAppShellText(text)) {
+      return {
+        ok: false,
+        reason: 'app_shell_text',
+        status: status,
+        contentType: contentType,
+        sourceUrlSafe: safeUrl
+      };
+    }
+
     const truncated = text.length > MAX_TEXT;
 
     return {
