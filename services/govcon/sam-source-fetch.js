@@ -17,6 +17,8 @@
 
 'use strict';
 
+const { classifyResponseBody } = require('./sam-body-classifier');
+
 const MAX_TEXT = 200000; // cap returned text so a huge attachment can't blow the IPC channel
 
 // Remove any api_key (or apikey) query param from a URL string.
@@ -87,8 +89,48 @@ function createSamSourceFetchService(deps) {
       return { ok: false, reason: 'http_error', status: status, sourceUrlSafe: safeUrl };
     }
 
-    let text = '';
-    try { text = await resp.text(); } catch (e) { text = ''; }
+    // Phase 25AH — read the body and run it through the shared body
+    // classifier BEFORE returning any text to the renderer. Without
+    // this gate SAM.gov "description" fetches that redirect to a portal
+    // page or an error page surfaced raw HTML through sourceMaterials.v1
+    // and contaminated the extraction pipeline.
+    //
+    // Prefer arrayBuffer() because the classifier can magic-sniff
+    // genuine binary attachments (PDF, ZIP, DOCX, XLSX, legacy OLE).
+    // Fall back to text() when the response (or test mock) does not
+    // expose arrayBuffer.
+    let buf = null;
+    let textBody = null;
+    if (typeof resp.arrayBuffer === 'function'){
+      try {
+        const ab = await resp.arrayBuffer();
+        buf = Buffer.from(ab);
+      } catch (e) { buf = null; }
+    }
+    if (!buf){
+      try { textBody = await resp.text(); }
+      catch (e) {
+        return { ok: false, reason: 'fetch_failed', error: redact(e && e.message), sourceUrlSafe: safeUrl };
+      }
+      try { buf = Buffer.from(String(textBody || ''), 'utf8'); }
+      catch (e) { buf = Buffer.alloc(0); }
+    }
+    const verdict = classifyResponseBody(buf, contentType);
+    if (!verdict.ok){
+      // Never return the rejected body. The reason is a stable code the
+      // renderer can map to user-safe copy.
+      return {
+        ok: false,
+        reason: verdict.reason,
+        status: status,
+        contentType: contentType,
+        sourceUrlSafe: safeUrl
+      };
+    }
+    let text = textBody != null ? String(textBody) : '';
+    if (!text){
+      try { text = buf.toString('utf8'); } catch (e) { text = ''; }
+    }
     text = redact(text);
     const truncated = text.length > MAX_TEXT;
 
