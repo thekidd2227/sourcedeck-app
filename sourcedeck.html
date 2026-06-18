@@ -20324,57 +20324,97 @@ document.addEventListener('DOMContentLoaded',()=>{
   window._w25LooksLikeBadSource = _w25LooksLikeBadSource;
   window._w25LooksLikeAppShellText = _w25LooksLikeAppShellText;
 
-  // Phase 25AJ — one-time boot sanitizer: scan all entries in
-  // sd.govcon.sourceMaterials.v1 and drop any contaminated text that
-  // was stored before the classifier patches landed.
+  // Phase 25AH — one-time boot sanitizer + quarantine migration. Scans the
+  // three runtime caches that can hold source text stored before the
+  // classifier patches landed — sd.govcon.sourceMaterials.v1, the
+  // solicitation extraction workspace (sd.govcon.solWorkspace.v1), and the
+  // First Impression drafts (sd.govcon.firstImpression.v1) — and strips any
+  // SourceDeck app-shell / UI contamination. Sanitizing runs every boot
+  // (idempotent); the migration marker + user notice fire only once.
   (function _bootSanitize(){
+    var QUAR_KEY = 'sd.govcon.sourceMaterialQuarantine.v1';
+    var cleaned = false;
+    // 1) Source-materials cache (per-pursuit description + imported resources).
     try {
       var raw = localStorage.getItem(SM_KEY);
-      if (!raw) return;
-      var all = JSON.parse(raw);
-      if (!all || typeof all !== 'object') return;
-      var dirty = false;
-      var ids = Object.keys(all);
-      for (var i = 0; i < ids.length; i++){
-        var sm = all[ids[i]];
-        if (!sm) continue;
-        if (sm.description && sm.description.text && _w25LooksLikeBadSource(sm.description.text)){
-          sm.description.text = '';
-          sm.description.status = 'rejected';
-          sm.description.rejectionReason = sm.description.rejectionReason || 'boot_sanitized';
-          dirty = true;
-        }
-        if (Array.isArray(sm.resources)){
-          for (var j = 0; j < sm.resources.length; j++){
-            var r = sm.resources[j];
-            if (r && r.text && _w25LooksLikeBadSource(r.text)){
-              r.text = '';
-              r.analysisStatus = 'rejected';
-              r.rejectionReason = r.rejectionReason || 'boot_sanitized';
+      if (raw){
+        var all = JSON.parse(raw);
+        if (all && typeof all === 'object'){
+          var dirty = false;
+          var ids = Object.keys(all);
+          for (var i = 0; i < ids.length; i++){
+            var sm = all[ids[i]];
+            if (!sm) continue;
+            if (sm.description && sm.description.text && _w25LooksLikeBadSource(sm.description.text)){
+              sm.description.text = '';
+              sm.description.status = 'rejected';
+              sm.description.rejectionReason = sm.description.rejectionReason || 'boot_sanitized';
               dirty = true;
             }
+            if (Array.isArray(sm.resources)){
+              for (var j = 0; j < sm.resources.length; j++){
+                var r = sm.resources[j];
+                if (r && r.text && _w25LooksLikeBadSource(r.text)){
+                  r.text = '';
+                  r.analysisStatus = 'rejected';
+                  r.rejectionReason = r.rejectionReason || 'boot_sanitized';
+                  dirty = true;
+                }
+              }
+            }
           }
+          if (dirty){ localStorage.setItem(SM_KEY, JSON.stringify(all)); cleaned = true; }
         }
       }
-      // Also sanitize the solicitation extraction workspace state.
+    } catch (e) {}
+    // 2) Solicitation extraction workspace. Scan the complete extraction
+    // state, not only the summary — app-shell text may have landed in
+    // sections or matrix rows while the summary stayed clean.
+    try {
       var solRaw = localStorage.getItem('sd.govcon.solWorkspace.v1');
       if (solRaw){
-        try {
-          var sol = JSON.parse(solRaw);
-          // Scan the complete extraction state, not only summary. App-shell
-          // text may have landed in sections or matrix rows while the summary
-          // remained clean.
-          if (sol && _w25LooksLikeBadSource(JSON.stringify(sol))){
-            sol.summary = null;
-            sol.sections = {};
-            sol.matrix = [];
-            sol.real = false;
-            localStorage.setItem('sd.govcon.solWorkspace.v1', JSON.stringify(sol));
-          }
-        } catch (e2) {}
+        var sol = JSON.parse(solRaw);
+        if (sol && _w25LooksLikeBadSource(JSON.stringify(sol))){
+          sol.summary = null;
+          sol.sections = {};
+          sol.matrix = [];
+          sol.real = false;
+          localStorage.setItem('sd.govcon.solWorkspace.v1', JSON.stringify(sol));
+          cleaned = true;
+        }
       }
-      if (dirty) localStorage.setItem(SM_KEY, JSON.stringify(all));
-    } catch (e) {}
+    } catch (e2) {}
+    // 3) First Impression drafts — drop any draft whose stored context
+    // contains app-shell text. Drafts regenerate from the (now guarded)
+    // source collector, so removing a contaminated entry is non-destructive.
+    try {
+      var fiRaw = localStorage.getItem('sd.govcon.firstImpression.v1');
+      if (fiRaw){
+        var fi = JSON.parse(fiRaw);
+        if (fi && typeof fi === 'object'){
+          var fiDirty = false;
+          var fiIds = Object.keys(fi);
+          for (var k = 0; k < fiIds.length; k++){
+            var entry = fi[fiIds[k]];
+            if (entry && _w25LooksLikeBadSource(JSON.stringify(entry))){
+              delete fi[fiIds[k]];
+              fiDirty = true;
+            }
+          }
+          if (fiDirty){ localStorage.setItem('sd.govcon.firstImpression.v1', JSON.stringify(fi)); cleaned = true; }
+        }
+      }
+    } catch (e3) {}
+    // Migration marker + one concise, non-blocking notice (first time only).
+    if (cleaned){
+      try {
+        var hadMarker = !!localStorage.getItem(QUAR_KEY);
+        localStorage.setItem(QUAR_KEY, JSON.stringify({ at: new Date().toISOString(), v: 1 }));
+        if (!hadMarker && window.toast){
+          try { window.toast('SourceDeck removed contaminated cached source text from a previous session.', 'info'); } catch (e4) {}
+        }
+      } catch (e5) {}
+    }
   })();
 })();
 </script>
