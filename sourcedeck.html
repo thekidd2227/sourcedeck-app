@@ -19621,6 +19621,29 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (o.uiLink) toast('A SAM.gov login/role may be required to view this notice.', 'info');
     await window.gcOpenExternal(url, 'SAM.gov notice');
   };
+  // Phase 25AH — toast copy for each safe rejection reason the source
+  // fetch service can return. Keys are stable codes; values are the
+  // user-facing message. Anything not in the table maps to the generic
+  // fallback. The renderer NEVER stores the rejected body text; only
+  // status metadata is persisted so a future Refresh Source Details
+  // can decide whether to retry.
+  var _w25RejectionCopy = {
+    app_shell_html_response:       'Source link returned a SourceDeck app-shell HTML response — not a real attachment. Skipped.',
+    sam_login_html_response:       'Source link required SAM.gov sign-in. Nothing was imported.',
+    non_attachment_html_response:  'Source link returned an HTML error page from SAM.gov. Nothing was imported.',
+    unexpected_html_response:      'Source link returned an HTML page instead of an attachment. Nothing was imported.',
+    http_error:                    'SAM.gov returned an HTTP error for the source link.',
+    no_api_key:                    'SAM.gov key missing — add it in Setup or Settings.',
+    invalid_url:                   'Source link URL was rejected by the credential boundary.',
+    fetch_failed:                  'Source link fetch failed (network or server issue).'
+  };
+  function _w25RejectionMessage(reason){
+    // Preserves the Phase 25W safe-error contract: when the reason is
+    // not in the lookup we fall back to the legacy generic copy
+    // ("Description unavailable or SAM.gov returned an error.") so
+    // downstream toast consumers and audits keep seeing a known string.
+    return _w25RejectionCopy[reason] || 'Description unavailable or SAM.gov returned an error.';
+  }
   window.gcW25FetchDescription = async function(id){
     var o = await resolve(id); if (!o) return;
     if (!o.descriptionLink){ toast('No description link on this record.', 'warn'); return; }
@@ -19628,11 +19651,26 @@ document.addEventListener('DOMContentLoaded',()=>{
     toast('Fetching description through the credential boundary…', 'info');
     var res = null;
     try { res = await window.sd.govcon.samFetchSource({ url: o.descriptionLink, kind: 'description' }); } catch (e) { res = null; }
+    var sm = getSM(id);
     if (!res || !res.ok){
-      toast('Description unavailable or SAM.gov returned an error.', 'warn');
+      // Phase 25AH — store ONLY safe status metadata on rejected
+      // fetches; never persist the rejected body. The previous code
+      // path stored res.text even when res.ok was false (it short-
+      // circuited on !ok), which is why the audit found stale HTML in
+      // localStorage even though the service had stopped returning text.
+      var reason = (res && res.reason) || 'fetch_failed';
+      sm.description = {
+        text: '',
+        fetchedAt: new Date().toISOString(),
+        status: 'rejected',
+        rejectionReason: reason,
+        sourceUrlSafe: (res && res.sourceUrlSafe) || o.descriptionLink
+      };
+      setSM(id, sm);
+      toast(_w25RejectionMessage(reason), 'warn');
+      _rerender(id, o);
       return;
     }
-    var sm = getSM(id);
     sm.description = { text: String(res.text || ''), fetchedAt: new Date().toISOString(), status: 'fetched', sourceUrlSafe: res.sourceUrlSafe || o.descriptionLink };
     setSM(id, sm);
     toast('Description fetched and stored locally. Review before any use.', 'ok');
@@ -19652,22 +19690,40 @@ document.addEventListener('DOMContentLoaded',()=>{
     var sm = getSM(id);
     sm.resources = sm.resources || [];
     var rec = { savedPursuitId: id, fileName: urlLabel(url), sourceUrlSafe: url, mimeType: '', downloadedAt: new Date().toISOString(), text: '', analysisStatus: 'pending' };
+    var rejectionReason = '';
     if (window.sd && window.sd.govcon && window.sd.govcon.samFetchSource){
       try {
         var res = await window.sd.govcon.samFetchSource({ url: url, kind: 'resource' });
         if (res && res.ok){
           rec.mimeType = res.contentType || '';
-          // Only retain text-like content for local analysis.
-          if (/text|json|xml|html|plain/i.test(res.contentType || '') || (res.text && res.text.length)) rec.text = String(res.text || '');
-          rec.analysisStatus = rec.text ? 'imported' : 'binary';
+          // Phase 25AH — drop text/html content. We do NOT want to surface
+          // raw HTML pages as imported source material. The service's
+          // body classifier already rejects most cases, but if a SAM
+          // host advertises a non-html content-type for an HTML response,
+          // the service may still return text — so we double-check here.
+          // Office/text/xml/json/plain are retained.
+          var ct = String(res.contentType || '');
+          var isHtml = /text\/html|application\/xhtml/i.test(ct);
+          if (!isHtml && (/text|json|xml|plain/i.test(ct) || (res.text && res.text.length))){
+            rec.text = String(res.text || '');
+          }
+          rec.analysisStatus = rec.text ? 'imported' : (isHtml ? 'rejected' : 'binary');
+          if (isHtml) rejectionReason = 'unexpected_html_response';
         } else {
-          rec.analysisStatus = 'fetch_failed';
+          rejectionReason = (res && res.reason) || 'fetch_failed';
+          rec.analysisStatus = 'rejected';
+          rec.rejectionReason = rejectionReason;
         }
-      } catch (e) { rec.analysisStatus = 'fetch_failed'; }
+      } catch (e) {
+        rec.analysisStatus = 'rejected';
+        rec.rejectionReason = 'fetch_failed';
+        rejectionReason = 'fetch_failed';
+      }
     }
     sm.resources.push(rec);
     setSM(id, sm);
     if (rec.text) toast('Imported to SourceDeck (local). Available for Extract Requirements.', 'ok');
+    else if (rejectionReason) toast(_w25RejectionMessage(rejectionReason), 'warn');
     else toast('This file may require opening SAM.gov directly.', 'info');
     _rerender(id, o);
   };
@@ -20013,14 +20069,110 @@ document.addEventListener('DOMContentLoaded',()=>{
   // ── Source text collection for Extract Requirements ─────────────────
   // Concatenates the fetched description + imported resource text for the
   // active solicitation. Returns '' when only metadata exists.
+  //
+  // Phase 25AH — sanitize stale source materials before returning. Old
+  // localStorage from before the body classifier landed can still
+  // contain raw HTML / SourceDeck app-shell text. _w25LooksLikeBadSource
+  // scans the candidate text for HTML / app-shell / SAM-login markers
+  // and drops the entry (and persists the cleanup) so the extraction
+  // pipeline never sees it.
+  function _w25LooksLikeBadSource(text){
+    if (typeof text !== 'string' || text.length === 0) return false;
+    var sample = text.slice(0, 64 * 1024);
+    // Explicit app-shell markers (>=2 to avoid false positives).
+    var markers = [
+      'SourceDeck GovCon Pipeline',
+      'GovCon Find Opportunities',
+      'Operating Hub',
+      '.cmd-flow',
+      '.cmd-pill',
+      '.cc-lcc-grid',
+      'tab-govcon',
+      'tab-dashboard',
+      'SourceDeck does not auto-send'
+    ];
+    var hits = 0;
+    for (var i = 0; i < markers.length; i++){
+      if (sample.indexOf(markers[i]) >= 0){ hits++; if (hits >= 2) return true; }
+    }
+    var head = sample.slice(0, 4096);
+    // Generic HTML document sniff.
+    if (/<!doctype\s+html/i.test(head)) return true;
+    if (/<html[\s>]/i.test(head)) return true;
+    if (/<head[\s>]/i.test(sample) && /<body[\s>]/i.test(sample)) return true;
+    if (/<meta\b[^>]*\b(?:charset|http-equiv)/i.test(head) && /<\/html\s*>/i.test(sample)) return true;
+    // SAM login / auth markers.
+    if (/sam\.gov[\s\S]{0,80}(?:sign\s*in|log\s*in|logon)/i.test(sample)) return true;
+    if (/please (?:sign|log)\s*in|authentication required|session (?:has )?(?:expired|timed out)/i.test(sample)) return true;
+    return false;
+  }
+  function _w25SanitizeSourceMaterials(sm, persistIfDirty, id){
+    if (!sm) return sm;
+    var dirty = false;
+    if (sm.description && sm.description.text && _w25LooksLikeBadSource(sm.description.text)){
+      sm.description.text = '';
+      sm.description.status = 'rejected';
+      sm.description.rejectionReason = sm.description.rejectionReason || 'stale_html_sanitized';
+      dirty = true;
+    }
+    if (Array.isArray(sm.resources)){
+      for (var i = 0; i < sm.resources.length; i++){
+        var r = sm.resources[i];
+        if (r && r.text && _w25LooksLikeBadSource(r.text)){
+          r.text = '';
+          r.analysisStatus = 'rejected';
+          r.rejectionReason = r.rejectionReason || 'stale_html_sanitized';
+          dirty = true;
+        }
+      }
+    }
+    if (dirty && persistIfDirty && id){
+      try { setSM(id, sm); } catch (e) {}
+    }
+    return sm;
+  }
   window.gcW25CollectSourceText = function(solId){
     var id = solId || activeSol();
     if (!id) return '';
-    var sm = getSM(id);
+    var sm = _w25SanitizeSourceMaterials(getSM(id), true, id);
     var bits = [];
     if (sm.description && sm.description.text) bits.push(sm.description.text);
     (sm.resources || []).forEach(function(r){ if (r && r.text) bits.push(r.text); });
     return bits.join('\n\n');
+  };
+
+  // Phase 25AH — Clear Source Material action. Drops fetched
+  // description text and imported resource text for the selected
+  // pursuit so the user can recover from contaminated source material
+  // without deleting the saved opportunity. Package files on disk
+  // (managed by the credential boundary) are untouched.
+  window.gcW25ClearSourceMaterials = async function(id){
+    if (!id) return { ok: false, reason: 'no_id' };
+    var sm = getSM(id);
+    if (sm){
+      if (sm.description){
+        sm.description.text = '';
+        sm.description.status = 'cleared';
+        sm.description.clearedAt = new Date().toISOString();
+      }
+      if (Array.isArray(sm.resources)){
+        for (var i = 0; i < sm.resources.length; i++){
+          if (sm.resources[i]) {
+            sm.resources[i].text = '';
+            sm.resources[i].analysisStatus = 'cleared';
+            sm.resources[i].clearedAt = new Date().toISOString();
+          }
+        }
+      }
+      try { setSM(id, sm); } catch (e) {}
+    }
+    var o = null;
+    try { o = await resolve(id); } catch (e) {}
+    if (typeof toast === 'function') {
+      try { toast('Source material cleared for this pursuit. Re-fetch description or re-import resources to rebuild.', 'info'); } catch (e) {}
+    }
+    try { _rerender(id, o); } catch (e) {}
+    return { ok: true };
   };
 
   function _rerender(id, o){
