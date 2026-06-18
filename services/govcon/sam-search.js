@@ -103,7 +103,7 @@ function normalizeSamRecord(rec, nowMs) {
     descriptionLink:    rec.descriptionLink || rec.descriptionUrl || null,
     officeAddress:      rec.officeAddress || rec.address || null,
     samUrl:             rec.uiLink || rec.link || rec.url || null,
-    resourceLinks:      normalizeResources(rec.resourceLinks || rec.links || rec.attachments || rec.additionalInfoLink),
+    resourceLinks:      normalizeResources(rec.resourceLinks || rec.resources || rec.attachments),
     _source:            'sam.gov',
     _normalizedAt:      new Date(nowMs || Date.now()).toISOString()
   });
@@ -136,12 +136,51 @@ function normalizeOnePoc(v) {
   return { name, email, phone, role };
 }
 
+// A SAM.gov "resource link" is only a downloadable attachment when it is an
+// http(s) URL pointing at the resource/download API — NOT the human-facing
+// sam.gov portal (notice view pages, search pages). Treating the broad
+// `links` HATEOAS array or a notice/search URL as a downloadable attachment
+// is how portal/app-shell HTML ended up being fetched and stored as a
+// "package file". We therefore (a) only read URL-like attachment fields,
+// never a bare label, and (b) drop SAM human notice/search links.
+function isHumanSamPortalUrl(url) {
+  let u;
+  try { u = new URL(url); } catch (_) { return true; } // unparseable → not a safe attachment URL
+  const host = u.host.toLowerCase();
+  const pathname = u.pathname.toLowerCase();
+  // The human portal hosts (sam.gov / www.sam.gov / beta.sam.gov) serve
+  // notice and search HTML. The download API lives on api.sam.gov, which is
+  // a legitimate attachment source and must be preserved.
+  if (host === 'sam.gov' || host === 'www.sam.gov' || host === 'beta.sam.gov') return true;
+  if (/(^|\/)search(\/|$)/.test(pathname)) return true;
+  if (/\/opp\/[^/]+\/view(\/|$)/.test(pathname)) return true;
+  return false;
+}
+
 function normalizeResources(v) {
   const arr = Array.isArray(v) ? v : v ? [v] : [];
-  return arr.map((r) => {
-    if (typeof r === 'string') return { label: r, url: r };
-    return { label: r.name || r.title || r.label || r.url || null, url: r.url || r.href || r.link || null };
-  }).filter(r => r.url || r.label);
+  const out = [];
+  const seen = new Set();
+  for (const r of arr) {
+    let url = null;
+    let label = null;
+    if (typeof r === 'string') {
+      url = r;
+    } else if (r && typeof r === 'object') {
+      // Only URL-like attachment/download fields — never a plain label.
+      url = r.url || r.href || r.link || r.uri || r.downloadUrl || r.resourceUrl || null;
+      label = r.name || r.title || r.label || null;
+    }
+    if (typeof url !== 'string') continue;
+    url = url.trim();
+    if (!/^https?:\/\//i.test(url)) continue;       // must be an http(s) resource
+    if (isHumanSamPortalUrl(url)) continue;         // skip SAM notice/search portal links
+    const key = url.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push({ label: label || url, url });
+  }
+  return out;
 }
 
 // Dedupe by noticeId then by solicitationNumber.

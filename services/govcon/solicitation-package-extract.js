@@ -4,7 +4,7 @@ const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
 const zlib = require('zlib');
-const { _extractZip } = require('./sam-package-download');
+const { _extractZip, _classifyDownloadedBody } = require('./sam-package-download');
 
 const SECTION_DEFS = [
   ['A', 'Part I', 'The Schedule', 'Solicitation/Contract Form'],
@@ -22,7 +22,12 @@ const SECTION_DEFS = [
   ['M', 'Part IV', 'Representations and Instructions', 'Evaluation Factors for Award']
 ];
 
-const TEXT_EXT = new Set(['.txt', '.csv', '.md', '.json', '.xml', '.html', '.htm', '.rtf']);
+// .html / .htm are intentionally NOT readable text here. SAM.gov / linked
+// resources return portal, login, error, or app-shell HTML pages, and feeding
+// those into the extracted solicitation text leaks UI/CSS/markup into the
+// workspace. HTML is handled by a dedicated reject branch in extractFileText.
+const TEXT_EXT = new Set(['.txt', '.csv', '.md', '.json', '.xml', '.rtf']);
+const HTML_REJECT_LIMITATION = 'HTML / web page excluded from extraction — not a solicitation attachment (portal, login, error, or app-shell page).';
 const ACCEPTED_UPLOAD_EXT = new Set(['.pdf', '.docx', '.doc', '.xlsx', '.xls', '.csv', '.txt', '.zip']);
 
 // Phase 25AF — extraction status vocabulary.
@@ -496,8 +501,35 @@ async function extractFileText(file, tmpRoot) {
     });
   }
 
+  if ((ext === '.html' || ext === '.htm') && file.localPath) {
+    return fileResult(file, {
+      status: 'rejected',
+      extractionStatus: 'rejected',
+      text: '',
+      limitation: HTML_REJECT_LIMITATION,
+      warnings: [HTML_REJECT_LIMITATION]
+    });
+  }
+
   if (TEXT_EXT.has(ext)) {
-    const raw = await readTextFile(file.localPath);
+    const buf = await fsp.readFile(file.localPath);
+    // App-shell / portal / login / error HTML can masquerade as a .txt or
+    // other "text" file (e.g. a SAM link that redirected to the host app or
+    // a portal page saved with a .txt name). Refuse to surface it as
+    // extracted solicitation text.
+    if (typeof _classifyDownloadedBody === 'function') {
+      const verdict = _classifyDownloadedBody(buf, '');
+      if (verdict && verdict.ok === false) {
+        return fileResult(file, {
+          status: 'rejected',
+          extractionStatus: 'rejected',
+          text: '',
+          limitation: HTML_REJECT_LIMITATION,
+          warnings: [HTML_REJECT_LIMITATION]
+        });
+      }
+    }
+    const raw = cleanExtractedText(buf.toString('utf8'));
     return fileResult(file, {
       extractionStatus: raw ? 'text' : 'metadata-only',
       text: looksLikeRawMarkup(raw) ? cleanExtractedText(raw) : raw,
@@ -915,7 +947,8 @@ async function extractSolicitationPackage(input) {
   const aliases = buildAliases(sections, metadata, extractedFiles);
   const warnings = [];
   for (const f of extractedFiles) {
-    if (f.extractionStatus === 'metadata-only') warnings.push(`${f.fileName}: ${STORED_LIMITATION}`);
+    if (f.extractionStatus === 'rejected') warnings.push(`${f.fileName}: ${f.limitation || HTML_REJECT_LIMITATION}`);
+    else if (f.extractionStatus === 'metadata-only') warnings.push(`${f.fileName}: ${STORED_LIMITATION}`);
     else if (f.extractionStatus === 'failed') warnings.push(`${f.fileName}: ${f.limitation || 'Extraction error — file skipped'}`);
     else if (f.extractionStatus === 'partial' && f.limitation) warnings.push(`${f.fileName}: ${f.limitation}`);
     for (const w of (f.warnings || [])) {

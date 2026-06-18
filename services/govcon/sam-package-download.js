@@ -19,6 +19,87 @@ function redact(s) {
   return String(s == null ? '' : s).replace(/((?:api_key|apikey)=)[^&#\s"']+/gi, '$1REDACTED');
 }
 
+// ---------------------------------------------------------------------------
+// Response content validation.
+//
+// SAM.gov and linked resources sometimes answer a "download" request with an
+// HTML page instead of the actual attachment: a portal/notice page, a login
+// or session-expired redirect, a 4xx/5xx error page, or — worst case — the
+// SourceDeck app shell itself (when a request bounced back to the host app
+// index). Persisting those bodies leaked UI/CSS/app text into the right-side
+// viewer and the solicitation workspace.
+//
+// classifyDownloadedBody is the gate: it runs before any body is written to
+// disk, included in a ZIP entry, or recorded as a downloaded attachment. It
+// preserves genuine binary attachments (PDF/ZIP/Office/legacy OLE) by magic
+// bytes regardless of the advertised content-type, and rejects HTML / app
+// shell / login / error responses with a stable, safe reason code.
+const APP_SHELL_MARKERS = [
+  'SourceDeck GovCon Pipeline',
+  'GovCon Find Opportunities',
+  'Operating Hub',
+  '.cmd-flow',
+  '.cmd-pill',
+  '.cc-lcc-grid',
+  'tab-govcon',
+  'tab-dashboard',
+  'SourceDeck does not auto-send'
+];
+
+const NON_ATTACHMENT_HTML_RE = /(sign in|log in|logon|please (?:sign|log) in|authentication required|session (?:has )?(?:expired|timed out)|access denied|not authorized|unauthorized|forbidden|error\s*[45]\d\d|http\s*[45]\d\d|page not found|<title>[^<]*(?:login|sign[\s-]?in|log[\s-]?on|error|forbidden|not found|access denied)[^<]*<\/title>)/i;
+
+function hasBinaryAttachmentMagic(buf) {
+  if (!buf || buf.length < 4) return false;
+  // %PDF
+  if (buf[0] === 0x25 && buf[1] === 0x50 && buf[2] === 0x44 && buf[3] === 0x46) return true;
+  // ZIP / DOCX / XLSX / PPTX  (PK\x03\x04, PK\x05\x06, PK\x07\x08)
+  if (buf[0] === 0x50 && buf[1] === 0x4b && (buf[2] === 0x03 || buf[2] === 0x05 || buf[2] === 0x07)) return true;
+  // Legacy OLE compound (.doc / .xls): D0 CF 11 E0
+  if (buf[0] === 0xd0 && buf[1] === 0xcf && buf[2] === 0x11 && buf[3] === 0xe0) return true;
+  return false;
+}
+
+// Returns { ok:true } when the body may be persisted, or
+// { ok:false, reason } when it is an HTML / app-shell / non-attachment page.
+// Reasons: 'app_shell_html_response', 'non_attachment_html_response',
+// 'unexpected_html_response'.
+function classifyDownloadedBody(buffer, contentType) {
+  const buf = Buffer.isBuffer(buffer) ? buffer : Buffer.from(buffer || '');
+  // Genuine binary attachments win outright — their magic bytes are
+  // unambiguous and can never be confused with an HTML page.
+  if (hasBinaryAttachmentMagic(buf)) return { ok: true };
+
+  const sample = buf.slice(0, 64 * 1024).toString('utf8');
+  const head = sample.slice(0, 4096);
+
+  // App shell: SourceDeck's own UI/CSS text. Two distinct markers avoids
+  // false positives on a solicitation that merely mentions "SourceDeck".
+  let shellHits = 0;
+  for (let i = 0; i < APP_SHELL_MARKERS.length; i += 1) {
+    if (sample.indexOf(APP_SHELL_MARKERS[i]) >= 0) {
+      shellHits += 1;
+      if (shellHits >= 2) return { ok: false, reason: 'app_shell_html_response' };
+    }
+  }
+
+  const ct = String(contentType || '').toLowerCase();
+  const htmlContentType = /text\/html|application\/xhtml\+xml/.test(ct);
+  // Sniff for a real HTML document. We deliberately do NOT treat a lone
+  // `<?xml` / element tag as HTML — valid .xml attachments (and Office
+  // document XML) must pass through untouched.
+  const looksLikeHtml =
+    /<!doctype\s+html/i.test(head) ||
+    /<html[\s>]/i.test(head) ||
+    (/<head[\s>]/i.test(sample) && /<body[\s>]/i.test(sample)) ||
+    (/<meta\b[^>]*\b(?:charset|http-equiv)/i.test(head) && /<\/html\s*>/i.test(sample));
+
+  if (htmlContentType || looksLikeHtml) {
+    if (NON_ATTACHMENT_HTML_RE.test(sample)) return { ok: false, reason: 'non_attachment_html_response' };
+    return { ok: false, reason: 'unexpected_html_response' };
+  }
+  return { ok: true };
+}
+
 function safeSegment(s) {
   return String(s || 'unknown')
     .replace(/[^a-zA-Z0-9._-]+/g, '-')
@@ -132,6 +213,11 @@ async function fetchWithKey(fetchFn, getApiKey, safeUrl) {
     if (!resp || !resp.ok) return { ok: false, reason: 'http_error', status, sourceUrlSafe: safeUrl };
     const buffer = await responseBuffer(resp);
     if (buffer.length > MAX_FILE_BYTES) return { ok: false, reason: 'file_too_large', sourceUrlSafe: safeUrl };
+    // Gate the body before any caller can write it to an attachment, add it
+    // to a ZIP entry, or save it as the description. HTML / app-shell / login
+    // / error pages are rejected here so they never reach disk.
+    const verdict = classifyDownloadedBody(buffer, contentType);
+    if (!verdict.ok) return { ok: false, reason: verdict.reason, status, contentType, sourceUrlSafe: safeUrl };
     return { ok: true, status, contentType, disposition, buffer, sourceUrlSafe: safeUrl };
   } catch (e) {
     return { ok: false, reason: 'fetch_failed', errorSafe: redact(e && e.message), sourceUrlSafe: safeUrl };
@@ -427,6 +513,8 @@ module.exports = {
   _stripApiKey: stripApiKey,
   _redact: redact,
   _collectResourceLinks: collectResourceLinks,
+  _classifyDownloadedBody: classifyDownloadedBody,
+  _hasBinaryAttachmentMagic: hasBinaryAttachmentMagic,
   _createZip: createZip,
   _extractZip: extractZip,
   _crc32: crc32
