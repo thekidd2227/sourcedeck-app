@@ -19736,6 +19736,16 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (n < 1024 * 1024) return (Math.round(n / 102.4) / 10) + ' KB';
     return (Math.round(n / 1048.576) / 1000) + ' MB';
   }
+  // Phase 25AG — build the right-side viewer body via DOM construction
+  // so file-derived text is always assigned via textContent. The previous
+  // implementation escaped via esc() before assembling an innerHTML
+  // string; that was functionally safe but kept the surface available
+  // for accidents. The new path:
+  //   - never assigns file text to innerHTML directly
+  //   - clears the body via .replaceChildren() and appends elements
+  //   - displays fallback / blocked / truncated states with explicit copy
+  //   - guards against missing/corrupt files by clearing busy state in
+  //     a finally block so the loading shimmer never gets stuck
   window.gcACPreviewFile = async function(id, idx){
     var busyEl = window.sdSetActionBusy ? window.sdSetActionBusy(document.activeElement, 'Loading preview...') : null;
     var viewer = document.getElementById('sd-right-file-viewer');
@@ -19743,58 +19753,152 @@ document.addEventListener('DOMContentLoaded',()=>{
     var metaEl  = document.getElementById('sd-right-file-viewer-meta');
     var bodyEl  = document.getElementById('sd-right-file-viewer-body');
     if (!viewer || !titleEl || !metaEl || !bodyEl) { if (window.sdClearActionBusy) window.sdClearActionBusy(busyEl); return; }
-    var sm = getSM(id);
-    var f = sm && sm.package && sm.package.files && sm.package.files[idx];
-    if (!f){ titleEl.textContent = 'Attachment not found'; metaEl.textContent = ''; bodyEl.innerHTML = ''; window.sdRightFileViewerOpen(); return; }
-    viewer.setAttribute('data-current-pursuit-id', id);
-    viewer.setAttribute('data-current-file-index', String(idx));
-    titleEl.textContent = f.fileName || 'attachment';
-    var metaBits = [];
-    metaBits.push('Status: ' + (f.status || 'unknown'));
-    if (typeof f.sizeBytes === 'number') metaBits.push(_fmtBytes(f.sizeBytes));
-    if (f.source) metaBits.push('Source: ' + f.source);
-    metaEl.textContent = metaBits.join(' · ');
-    window.sdRightFileViewerOpen();
-    bodyEl.innerHTML = '<div style="padding:10px;color:var(--muted);font-size:11px">Loading preview…</div>';
-    // Resolve the local file path. The renderer never builds host-side
-    // paths itself; the IPC handler validates that the path is inside the
-    // canonical solicitations root and refuses anything else.
-    var filePath = f.localPath || f.path || '';
-    var preview = null;
-    if (filePath && window.sd && window.sd.govcon && typeof window.sd.govcon.previewPackageFile === 'function'){
-      try { preview = await window.sd.govcon.previewPackageFile({ filePath: filePath }); } catch (e) { preview = null; }
+    function makeEl(tag, styleStr, text){
+      var el = document.createElement(tag);
+      if (styleStr) el.setAttribute('style', styleStr);
+      if (text != null) el.textContent = String(text);
+      return el;
     }
-    var lines = [];
-    if (preview && preview.ok && preview.kind === 'text'){
-      lines.push('<div style="font-size:9.5px;color:var(--muted);margin-bottom:6px">Text · ' + _fmtBytes(preview.sizeBytes || 0) + '</div>');
-      lines.push('<pre style="margin:0;font-size:10.5px;color:var(--text);white-space:pre-wrap;word-break:break-word;line-height:1.55;max-height:560px;overflow:auto;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,0.02)">' + esc(String(preview.text || '')) + '</pre>');
-    } else if (preview && preview.ok && preview.kind === 'image'){
-      lines.push('<div style="font-size:9.5px;color:var(--muted);margin-bottom:6px">Image · ' + _fmtBytes(preview.sizeBytes || 0) + '</div>');
-      lines.push('<div style="border:1px solid var(--border);border-radius:8px;padding:10px;background:rgba(255,255,255,0.02);text-align:center"><img src="' + esc(preview.dataUrl || '') + '" alt="' + esc(f.fileName || 'image') + '" style="max-width:100%;max-height:560px;object-fit:contain"></div>');
-    } else if (preview && preview.ok && preview.kind === 'pdf'){
-      lines.push('<div style="font-size:9.5px;color:var(--muted);margin-bottom:6px">PDF · ' + _fmtBytes(preview.sizeBytes || 0) + '</div>');
-      lines.push('<object data="' + esc(preview.dataUrl || '') + '" type="application/pdf" style="width:100%;height:560px;border:1px solid var(--border);border-radius:8px"><div style="padding:10px;color:var(--muted);font-size:11px">PDF preview not available inline. Use Open Local File.</div></object>');
-    } else {
-      // Either an unsupported type, an oversized file, or an extraction-
-      // only fallback. Fall back to the per-file extracted text snippet
-      // when present so DOCX/XLSX still surface something useful.
-      var snippet = '';
-      if (typeof f.text === 'string' && f.text.length) snippet = String(f.text).slice(0, 4000);
-      else if (typeof f.extractedText === 'string' && f.extractedText.length) snippet = String(f.extractedText).slice(0, 4000);
-      var reason = preview && preview.reason ? preview.reason : (f.extractionStatus || 'metadata-only');
-      if (snippet){
-        lines.push('<div style="font-size:9.5px;color:var(--muted);margin-bottom:6px">Extracted text · inline preview not available for this file type · Use Open Local File for the original</div>');
-        lines.push('<pre style="margin:0;font-size:10.5px;color:var(--text);white-space:pre-wrap;word-break:break-word;line-height:1.55;max-height:520px;overflow:auto;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,0.02)">' + esc(snippet) + '</pre>');
-      } else {
-        var msg = 'Inline preview is not available for this file type yet (' + esc(reason) + '). Use Open Local File to view the original.';
-        if (reason === 'too_large') msg = 'File is too large to preview inline. Use Open Local File.';
-        if (reason === 'unsupported_type' && /\.(docx?|xlsx?)$/i.test(f.fileName || '')) msg = 'Office preview not available yet. Use Open Local File.';
-        if (reason === 'unsupported_type' && /\.pdf$/i.test(f.fileName || '')) msg = 'PDF preview not available yet. Use Open Local File.';
-        lines.push('<div style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,0.02);color:var(--muted);font-size:11px;line-height:1.55">' + msg + '</div>');
+    function clearBody(){
+      while (bodyEl.firstChild) bodyEl.removeChild(bodyEl.firstChild);
+    }
+    function setLoading(){
+      clearBody();
+      bodyEl.appendChild(makeEl('div', 'padding:10px;color:var(--muted);font-size:11px', 'Loading preview…'));
+    }
+    function setFallback(message){
+      clearBody();
+      bodyEl.appendChild(makeEl('div', 'padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,0.02);color:var(--muted);font-size:11px;line-height:1.55', message));
+    }
+    try {
+      var sm = getSM(id);
+      var f = sm && sm.package && sm.package.files && sm.package.files[idx];
+      if (!f){
+        titleEl.textContent = 'Attachment not found';
+        metaEl.textContent = '';
+        clearBody();
+        window.sdRightFileViewerOpen();
+        return;
       }
+      viewer.setAttribute('data-current-pursuit-id', id);
+      viewer.setAttribute('data-current-file-index', String(idx));
+      titleEl.textContent = f.fileName || 'attachment';
+      var metaBits = [];
+      metaBits.push('Status: ' + (f.status || 'unknown'));
+      if (typeof f.sizeBytes === 'number') metaBits.push(_fmtBytes(f.sizeBytes));
+      if (f.source) metaBits.push('Source: ' + f.source);
+      metaEl.textContent = metaBits.join(' · ');
+      window.sdRightFileViewerOpen();
+      setLoading();
+
+      // Resolve the local file path. The renderer never builds host-side
+      // paths itself; the IPC handler validates that the path is inside
+      // the canonical solicitations root and refuses anything else.
+      var filePath = f.localPath || f.path || '';
+      var preview = null;
+      if (filePath && window.sd && window.sd.govcon && typeof window.sd.govcon.previewPackageFile === 'function'){
+        try { preview = await window.sd.govcon.previewPackageFile({ filePath: filePath }); } catch (e) { preview = null; }
+      }
+
+      if (preview && preview.ok && preview.kind === 'text'){
+        clearBody();
+        var sizeBits = ['Text', _fmtBytes(preview.sizeBytes || 0)];
+        if (preview.truncated) sizeBits.push('preview truncated');
+        bodyEl.appendChild(makeEl('div', 'font-size:9.5px;color:var(--muted);margin-bottom:6px', sizeBits.join(' · ')));
+        var preEl = makeEl('pre', 'margin:0;font-size:10.5px;color:var(--text);white-space:pre-wrap;word-break:break-word;line-height:1.55;max-height:560px;overflow:auto;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,0.02)');
+        // Critical safety boundary: file content goes through
+        // textContent, never innerHTML. The Phase 25AG app-shell
+        // detector also runs main-side, but defending here keeps the
+        // renderer safe even if a future code path skips the IPC guard.
+        preEl.textContent = String(preview.text || '');
+        bodyEl.appendChild(preEl);
+        if (preview.truncated){
+          bodyEl.appendChild(makeEl('div', 'margin-top:6px;font-size:9.5px;color:var(--muted);font-style:italic',
+            (preview.message || 'Preview truncated for performance. Open Local File to view the full document.')));
+        }
+        return;
+      }
+      if (preview && preview.ok && preview.kind === 'image'){
+        clearBody();
+        bodyEl.appendChild(makeEl('div', 'font-size:9.5px;color:var(--muted);margin-bottom:6px', 'Image · ' + _fmtBytes(preview.sizeBytes || 0)));
+        var wrap = makeEl('div', 'border:1px solid var(--border);border-radius:8px;padding:10px;background:rgba(255,255,255,0.02);text-align:center');
+        var img = document.createElement('img');
+        img.src = String(preview.dataUrl || '');
+        img.alt = String(f.fileName || 'image');
+        img.setAttribute('style', 'max-width:100%;max-height:560px;object-fit:contain');
+        wrap.appendChild(img);
+        bodyEl.appendChild(wrap);
+        return;
+      }
+      if (preview && preview.ok && preview.kind === 'pdf'){
+        clearBody();
+        bodyEl.appendChild(makeEl('div', 'font-size:9.5px;color:var(--muted);margin-bottom:6px', 'PDF · ' + _fmtBytes(preview.sizeBytes || 0)));
+        var obj = document.createElement('object');
+        obj.setAttribute('type', 'application/pdf');
+        obj.setAttribute('data', String(preview.dataUrl || ''));
+        obj.setAttribute('style', 'width:100%;height:560px;border:1px solid var(--border);border-radius:8px');
+        obj.appendChild(makeEl('div', 'padding:10px;color:var(--muted);font-size:11px', 'PDF preview not available inline. Use Open Local File.'));
+        bodyEl.appendChild(obj);
+        return;
+      }
+      // Fallback / unsupported / blocked / missing. The IPC layer is the
+      // canonical source of truth for the reason; the renderer maps each
+      // known reason to specific copy. We never render the raw HTML/text
+      // payload for any of these — that's the whole point of Phase 25AG.
+      var reason = (preview && preview.reason) || (f.extractionStatus || 'metadata-only');
+      var name = String(f.fileName || '');
+      var fallbackMsg;
+      if (reason === 'html_not_previewable'){
+        fallbackMsg = (preview && preview.message) ||
+          'HTML / web pages are blocked from inline preview because SAM.gov can return portal or error pages. Use Open Local File or re-download the package.';
+      } else if (reason === 'app_shell_preview_blocked'){
+        fallbackMsg = (preview && preview.message) ||
+          'Preview blocked: selected content appears to be SourceDeck app shell, not a solicitation attachment. Re-download the package or open the original file locally.';
+      } else if (reason === 'too_large'){
+        fallbackMsg = 'File is too large to preview inline. Use Open Local File.';
+      } else if (reason === 'file_unreadable' || reason === 'not_a_file' || reason === 'read_failed' || reason === 'invalid_file_path' || reason === 'remote_url_refused' || reason === 'no_file_path'){
+        fallbackMsg = 'Preview unavailable for this file. Re-download the package or use Open Local File.';
+      } else if (reason === 'unsupported_type' && /\.(docx?|xlsx?)$/i.test(name)){
+        fallbackMsg = 'Office preview is not available inline. Use Open Local File.';
+      } else if (reason === 'unsupported_type' && /\.pdf$/i.test(name)){
+        fallbackMsg = 'PDF preview is not available inline. Use Open Local File.';
+      } else {
+        fallbackMsg = 'Inline preview is not available for this file type. Use Open Local File to view the original.';
+      }
+
+      // For unsupported / metadata-only fallbacks ONLY, surface a bounded
+      // snippet of the per-file extracted text if SourceDeck already has
+      // one. Blocked / oversized / unreadable cases never get a snippet
+      // because we cannot trust the content.
+      var snippet = '';
+      var allowSnippet = (reason === 'unsupported_type' || reason === 'metadata-only');
+      if (allowSnippet){
+        if (typeof f.text === 'string' && f.text.length) snippet = String(f.text).slice(0, 4000);
+        else if (typeof f.extractedText === 'string' && f.extractedText.length) snippet = String(f.extractedText).slice(0, 4000);
+        // Apply the same app-shell guard locally — never surface
+        // SourceDeck UI text as an extraction snippet.
+        if (snippet && /SourceDeck GovCon Pipeline|\.cmd-flow|\.cmd-pill|cc-lcc-grid/.test(snippet)){
+          snippet = '';
+        }
+      }
+
+      clearBody();
+      if (snippet){
+        bodyEl.appendChild(makeEl('div', 'font-size:9.5px;color:var(--muted);margin-bottom:6px',
+          'Draft preview from extracted text — verify against the original document.'));
+        var snipPre = makeEl('pre', 'margin:0;font-size:10.5px;color:var(--text);white-space:pre-wrap;word-break:break-word;line-height:1.55;max-height:520px;overflow:auto;padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:rgba(255,255,255,0.02)');
+        snipPre.textContent = snippet;
+        bodyEl.appendChild(snipPre);
+      } else {
+        setFallback(fallbackMsg);
+      }
+    } catch (e) {
+      // Defensive: a missing/corrupt package or unexpected IPC failure
+      // must not leave the busy state stuck or expose a stack trace.
+      setFallback('Preview failed. Re-download the package or use Open Local File.');
+    } finally {
+      if (window.sdClearActionBusy) window.sdClearActionBusy(busyEl);
     }
-    bodyEl.innerHTML = lines.join('');
-    if (window.sdClearActionBusy) window.sdClearActionBusy(busyEl);
   };
   // Phase 25AC item 4 — let the user pick an external location to save a
   // COPY of the local solicitation package zip. The canonical SourceDeck

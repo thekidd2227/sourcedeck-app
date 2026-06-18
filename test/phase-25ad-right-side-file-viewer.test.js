@@ -100,10 +100,13 @@ test('gcACPreviewFile renders kind:text, kind:image, kind:pdf, kind:fallback bra
   assert.ok(/preview\.kind === 'text'/.test(HTML),  'text branch missing');
   assert.ok(/preview\.kind === 'image'/.test(HTML), 'image branch missing');
   assert.ok(/preview\.kind === 'pdf'/.test(HTML),   'pdf branch missing');
-  // The fallback message exists for unsupported types.
-  assert.ok(/Inline preview is not available for this file type yet/.test(HTML),
+  // The fallback message exists for unsupported types. Phase 25AG
+  // dropped the "yet" hedge ("not available for this file type yet"
+  // → "not available for this file type") and unified the Office
+  // fallback copy.
+  assert.ok(/Inline preview is not available for this file type\b/.test(HTML),
     'fallback message for unsupported file types missing');
-  assert.ok(/Office preview not available yet\. Use Open Local File\./.test(HTML),
+  assert.ok(/Office preview (not available yet|is not available inline)\. Use Open Local File\./.test(HTML),
     'Office fallback copy missing');
 });
 

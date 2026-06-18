@@ -380,19 +380,77 @@ ipcMain.handle('govcon:save-package-copy', async (_event, payload) => {
 // right-side in-app viewer can render it without opening a separate window.
 // Path is validated against the canonical solicitations root; anything
 // outside is refused. Returns one of:
-//   { ok:true, kind:'text', text, sizeBytes, fileName, mimeType }
+//   { ok:true, kind:'text',  text, sizeBytes, fileName, mimeType, truncated, charCount, limitation }
 //   { ok:true, kind:'image', dataUrl, sizeBytes, fileName, mimeType }
 //   { ok:true, kind:'pdf',   dataUrl, sizeBytes, fileName, mimeType }
-//   { ok:true, kind:'fallback', reason, sizeBytes, fileName }
+//   { ok:true, kind:'fallback', reason, sizeBytes, fileName, extension, canOpenLocalFile, message }
 // The renderer only ever sees the bytes of the chosen file; no other host
 // filesystem access is exposed.
+//
+// Phase 25AG hardening:
+//   - .html / .htm are intentionally NOT in TEXT_EXT. SAM.gov sometimes
+//     returns portal pages, login pages, error pages, or app-shell HTML
+//     under a downloaded package. The viewer must never preview HTML as
+//     inline text — that's how SourceDeck's own UI text ended up in the
+//     right-side viewer and froze the renderer.
+//   - Text previews are capped at MAX_TEXT_PREVIEW_CHARS to keep large
+//     description.txt files from freezing the renderer.
+//   - An app-shell detector (looksLikeSourceDeckAppShellPreview) refuses
+//     to return text that smells like SourceDeck's own UI even when it
+//     lands in a .txt file (e.g. SAM redirected a description fetch to
+//     the host app's index).
+//   - Path safety resolves realpath for both the requested target and
+//     the approved solicitations root so symlinks / hardlinks can't
+//     leak files outside the package store.
+function looksLikeSourceDeckAppShellPreview(text){
+  if (typeof text !== 'string' || text.length === 0) return false;
+  const sample = text.slice(0, 64 * 1024);
+  const markers = [
+    'SourceDeck GovCon Pipeline',
+    'GovCon Find Opportunities',
+    'Operating Hub',
+    '.cmd-flow',
+    '.cmd-pill',
+    '.cc-lcc-grid',
+    'tab-govcon',
+    'tab-dashboard',
+    'SourceDeck does not auto-send'
+  ];
+  let hits = 0;
+  for (let i = 0; i < markers.length; i++){
+    if (sample.indexOf(markers[i]) >= 0){
+      hits++;
+      if (hits >= 2) return true;
+    }
+  }
+  return false;
+}
+
 ipcMain.handle('govcon:preview-package-file', async (_event, payload) => {
   payload = payload || {};
   const filePath = String(payload.filePath || '');
   if (!filePath) return { ok: false, reason: 'no_file_path' };
-  const root = path.join(app.getPath('userData'), 'govcon', 'solicitations');
-  const target = path.resolve(filePath);
-  const rel = path.relative(root, target);
+  // Reject obvious remote / URL-shaped paths up front — the renderer
+  // must never hand us a URL it built from a SAM record. The IPC layer
+  // is the boundary; anything that even smells like a URL is refused.
+  if (/^[a-z][a-z0-9+.-]*:\/\//i.test(filePath)) {
+    return { ok: false, reason: 'remote_url_refused' };
+  }
+  // Resolve realpath on the approved solicitations root + the requested
+  // target so symlinks / aliases can't be used to leak files outside
+  // the package store.
+  let approvedRoot;
+  let target;
+  try {
+    const rootRaw = path.join(app.getPath('userData'), 'govcon', 'solicitations');
+    try { approvedRoot = await fs.promises.realpath(rootRaw); }
+    catch (_) { approvedRoot = path.resolve(rootRaw); }
+    try { target = await fs.promises.realpath(filePath); }
+    catch (_) { target = path.resolve(filePath); }
+  } catch (_) {
+    return { ok: false, reason: 'invalid_file_path' };
+  }
+  const rel = path.relative(approvedRoot, target);
   if (!target || rel.startsWith('..') || path.isAbsolute(rel)) {
     return { ok: false, reason: 'invalid_file_path' };
   }
@@ -400,13 +458,41 @@ ipcMain.handle('govcon:preview-package-file', async (_event, payload) => {
   try { stat = await fs.promises.stat(target); }
   catch (_) { return { ok: false, reason: 'file_unreadable' }; }
   if (!stat.isFile()) return { ok: false, reason: 'not_a_file' };
-  const MAX_BYTES = 8 * 1024 * 1024;
+  const MAX_BYTES = 8 * 1024 * 1024;          // hard cap — never read past this
+  const MAX_TEXT_PREVIEW_CHARS = 200000;       // soft cap — truncate text for inline render
   const fileName = path.basename(target);
   const ext = path.extname(target).toLowerCase();
   if (stat.size > MAX_BYTES) {
-    return { ok: true, kind: 'fallback', reason: 'too_large', sizeBytes: stat.size, fileName };
+    return {
+      ok: true,
+      kind: 'fallback',
+      reason: 'too_large',
+      sizeBytes: stat.size,
+      fileName,
+      extension: ext,
+      canOpenLocalFile: true,
+      message: 'File is too large to preview inline. Use Open Local File to view it.'
+    };
   }
-  const TEXT_EXT = ['.txt', '.csv', '.json', '.xml', '.html', '.htm', '.md', '.rtf', '.log'];
+  // Phase 25AG — HTML / HTM is intentionally blocked from inline text
+  // preview even when the file lives under the approved package root.
+  // SAM.gov / linked resources often return portal pages or error pages
+  // as HTML; previewing them as text leaks UI/HTML markup into the
+  // right-side viewer and (when the HTML is the host app shell) freezes
+  // the renderer.
+  if (ext === '.html' || ext === '.htm') {
+    return {
+      ok: true,
+      kind: 'fallback',
+      reason: 'html_not_previewable',
+      sizeBytes: stat.size,
+      fileName,
+      extension: ext,
+      canOpenLocalFile: true,
+      message: 'HTML / web pages are blocked from inline preview because SAM.gov can return portal or error pages. Use Open Local File or re-download the package.'
+    };
+  }
+  const TEXT_EXT = ['.txt', '.csv', '.json', '.xml', '.md', '.rtf', '.log'];
   const IMAGE_EXT = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'];
   const PDF_EXT = ['.pdf'];
   const IMAGE_MIME = {
@@ -419,19 +505,61 @@ ipcMain.handle('govcon:preview-package-file', async (_event, payload) => {
   };
   try {
     if (TEXT_EXT.indexOf(ext) >= 0) {
-      const text = await fs.promises.readFile(target, 'utf8');
-      return { ok: true, kind: 'text', text, sizeBytes: stat.size, fileName, mimeType: 'text/plain' };
+      const raw = await fs.promises.readFile(target, 'utf8');
+      // App-shell guard — even a text file can contain SourceDeck's own
+      // UI / CSS dump if a SAM link redirected to the host app. Refuse to
+      // surface that as preview.
+      if (looksLikeSourceDeckAppShellPreview(raw)) {
+        return {
+          ok: true,
+          kind: 'fallback',
+          reason: 'app_shell_preview_blocked',
+          sizeBytes: stat.size,
+          fileName,
+          extension: ext,
+          canOpenLocalFile: true,
+          message: 'Preview blocked: selected content appears to be SourceDeck app shell, not a solicitation attachment. Re-download the package or open the original file locally.'
+        };
+      }
+      const charCount = raw.length;
+      const truncated = charCount > MAX_TEXT_PREVIEW_CHARS;
+      const text = truncated ? raw.slice(0, MAX_TEXT_PREVIEW_CHARS) : raw;
+      const payloadOut = {
+        ok: true,
+        kind: 'text',
+        text,
+        sizeBytes: stat.size,
+        fileName,
+        extension: ext,
+        mimeType: 'text/plain',
+        charCount,
+        truncated
+      };
+      if (truncated) {
+        payloadOut.limitation = 'truncated_for_preview';
+        payloadOut.message = 'Preview truncated for performance. Open Local File to view the full document.';
+      }
+      return payloadOut;
     }
     if (IMAGE_EXT.indexOf(ext) >= 0) {
       const buf = await fs.promises.readFile(target);
       const mime = IMAGE_MIME[ext] || 'application/octet-stream';
-      return { ok: true, kind: 'image', dataUrl: 'data:' + mime + ';base64,' + buf.toString('base64'), sizeBytes: stat.size, fileName, mimeType: mime };
+      return { ok: true, kind: 'image', dataUrl: 'data:' + mime + ';base64,' + buf.toString('base64'), sizeBytes: stat.size, fileName, extension: ext, mimeType: mime };
     }
     if (PDF_EXT.indexOf(ext) >= 0) {
       const buf = await fs.promises.readFile(target);
-      return { ok: true, kind: 'pdf', dataUrl: 'data:application/pdf;base64,' + buf.toString('base64'), sizeBytes: stat.size, fileName, mimeType: 'application/pdf' };
+      return { ok: true, kind: 'pdf', dataUrl: 'data:application/pdf;base64,' + buf.toString('base64'), sizeBytes: stat.size, fileName, extension: ext, mimeType: 'application/pdf' };
     }
-    return { ok: true, kind: 'fallback', reason: 'unsupported_type', sizeBytes: stat.size, fileName };
+    return {
+      ok: true,
+      kind: 'fallback',
+      reason: 'unsupported_type',
+      sizeBytes: stat.size,
+      fileName,
+      extension: ext,
+      canOpenLocalFile: true,
+      message: 'Inline preview is not available for this file type. Use Open Local File to view the original.'
+    };
   } catch (e) {
     return { ok: false, reason: 'read_failed' };
   }
