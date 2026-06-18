@@ -376,62 +376,113 @@ ipcMain.handle('govcon:save-package-copy', async (_event, payload) => {
   }
 });
 
-// Phase 25AD — read a downloaded solicitation package file from disk so the
-// right-side in-app viewer can render it without opening a separate window.
-// Path is validated against the canonical solicitations root; anything
-// outside is refused. Returns one of:
-//   { ok:true, kind:'text', text, sizeBytes, fileName, mimeType }
-//   { ok:true, kind:'image', dataUrl, sizeBytes, fileName, mimeType }
-//   { ok:true, kind:'pdf',   dataUrl, sizeBytes, fileName, mimeType }
-//   { ok:true, kind:'fallback', reason, sizeBytes, fileName }
-// The renderer only ever sees the bytes of the chosen file; no other host
-// filesystem access is exposed.
+// Phase 25AD / 25AG — read a downloaded solicitation package file from disk so
+// the right-side in-app viewer can render it without opening a separate window.
+//
+// Phase 25AG hardening (P0 wrong-file/freeze repair). The path is validated
+// against the canonical solicitations root AND realpath-resolved so a symlink
+// inside the package root can never escape to an app-shell/repo file
+// (sourcedeck.html, package.json, .env, dist/…). Text is hard-capped at
+// PREVIEW_TEXT_LIMIT_BYTES and truncated rather than dumped, and any content
+// carrying SourceDeck app-shell markers is blocked. Standardized payload:
+//   { ok:true, previewKind, fileName, extension, sizeBytes, text, truncated,
+//     limitation, canOpenLocalFile, dataUrl?, mimeType?, kind? }
+// previewKind ∈ text | image | pdf | pdf-fallback | office-fallback |
+//              zip-list | unsupported | blocked
+// `kind` is kept for backward compatibility with the existing renderer.
+// On rejection: { ok:false, reason } — never an uncaught throw.
+// The pure guard is reached via appApi (createAppApi) so main.js keeps the
+// architecture boundary and never imports services/govcon/* directly.
 ipcMain.handle('govcon:preview-package-file', async (_event, payload) => {
   payload = payload || {};
-  const filePath = String(payload.filePath || '');
-  if (!filePath) return { ok: false, reason: 'no_file_path' };
-  const root = path.join(app.getPath('userData'), 'govcon', 'solicitations');
-  const target = path.resolve(filePath);
-  const rel = path.relative(root, target);
-  if (!target || rel.startsWith('..') || path.isAbsolute(rel)) {
-    return { ok: false, reason: 'invalid_file_path' };
+  const previewGuard = appApi.govcon.packages.previewGuard;
+  const root = previewGuard.solicitationsRoot(app.getPath('userData'));
+
+  // 1) Lexical gate: reject empty input, remote/file:// URLs, and any path
+  //    that resolves outside the canonical solicitations root.
+  const gate = previewGuard.assertSafePreviewRequest({ filePath: payload.filePath, root });
+  if (!gate.ok) {
+    return { ok: false, reason: 'invalid_file_path', detail: gate.reason, limitation: previewGuard.OUTSIDE_ROOT_MESSAGE };
   }
+  const target = gate.target;
+  const ext = gate.extension;
+
+  // 2) Stat + realpath gate: the resolved real path of both the root and the
+  //    target must keep the target strictly inside the real root.
   let stat = null;
   try { stat = await fs.promises.stat(target); }
   catch (_) { return { ok: false, reason: 'file_unreadable' }; }
   if (!stat.isFile()) return { ok: false, reason: 'not_a_file' };
-  const MAX_BYTES = 8 * 1024 * 1024;
-  const fileName = path.basename(target);
-  const ext = path.extname(target).toLowerCase();
-  if (stat.size > MAX_BYTES) {
-    return { ok: true, kind: 'fallback', reason: 'too_large', sizeBytes: stat.size, fileName };
+
+  let realRoot = root;
+  let realTarget = target;
+  try { realRoot = await fs.promises.realpath(root); } catch (_) { /* root may not exist yet */ }
+  try { realTarget = await fs.promises.realpath(target); }
+  catch (_) { return { ok: false, reason: 'file_unreadable' }; }
+  if (!previewGuard.isRealpathInsideRoot(realRoot, realTarget)) {
+    return { ok: false, reason: 'invalid_file_path', detail: 'symlink_escape', limitation: previewGuard.OUTSIDE_ROOT_MESSAGE };
   }
-  const TEXT_EXT = ['.txt', '.csv', '.json', '.xml', '.html', '.htm', '.md', '.rtf', '.log'];
-  const IMAGE_EXT = ['.png', '.jpg', '.jpeg', '.webp', '.gif', '.bmp'];
-  const PDF_EXT = ['.pdf'];
-  const IMAGE_MIME = {
-    '.png':  'image/png',
-    '.jpg':  'image/jpeg',
-    '.jpeg': 'image/jpeg',
-    '.webp': 'image/webp',
-    '.gif':  'image/gif',
-    '.bmp':  'image/bmp'
-  };
+
+  const fileName = path.basename(realTarget);
+  const previewKind = previewGuard.classifyPreviewKind(ext);
+  const base = { ok: true, fileName, extension: ext, sizeBytes: stat.size, canOpenLocalFile: true };
+
+  // 3) Hard size gate: never read multi-MB files into memory for inline view.
+  if (stat.size > previewGuard.MAX_READ_BYTES) {
+    return Object.assign({}, base, {
+      previewKind: previewKind === 'image' || previewKind === 'pdf' ? 'pdf-fallback' : 'unsupported',
+      kind: 'fallback', reason: 'too_large',
+      text: '', truncated: false,
+      limitation: 'File is too large to preview inline. Open Local File to view the full document.'
+    });
+  }
+
   try {
-    if (TEXT_EXT.indexOf(ext) >= 0) {
-      const text = await fs.promises.readFile(target, 'utf8');
-      return { ok: true, kind: 'text', text, sizeBytes: stat.size, fileName, mimeType: 'text/plain' };
+    if (previewKind === 'text') {
+      const raw = await fs.promises.readFile(realTarget, 'utf8');
+      // 4) App-shell guard — never render the SourceDeck shell as an attachment.
+      if (previewGuard.containsAppShell(raw)) {
+        return Object.assign({}, base, {
+          previewKind: 'blocked', kind: 'blocked', reason: 'app_shell',
+          text: '', truncated: false,
+          limitation: previewGuard.APP_SHELL_BLOCK_MESSAGE
+        });
+      }
+      // 5) Size cap — truncate rather than dump.
+      const capped = previewGuard.truncateText(raw);
+      return Object.assign({}, base, {
+        previewKind: 'text', kind: 'text', mimeType: 'text/plain',
+        text: capped.text, truncated: capped.truncated,
+        limitation: capped.truncated ? previewGuard.TRUNCATED_MESSAGE : ''
+      });
     }
-    if (IMAGE_EXT.indexOf(ext) >= 0) {
-      const buf = await fs.promises.readFile(target);
-      const mime = IMAGE_MIME[ext] || 'application/octet-stream';
-      return { ok: true, kind: 'image', dataUrl: 'data:' + mime + ';base64,' + buf.toString('base64'), sizeBytes: stat.size, fileName, mimeType: mime };
+    if (previewKind === 'image') {
+      const buf = await fs.promises.readFile(realTarget);
+      const mime = previewGuard.imageMimeForExt(ext);
+      return Object.assign({}, base, {
+        previewKind: 'image', kind: 'image', mimeType: mime,
+        dataUrl: 'data:' + mime + ';base64,' + buf.toString('base64'),
+        text: '', truncated: false, limitation: ''
+      });
     }
-    if (PDF_EXT.indexOf(ext) >= 0) {
-      const buf = await fs.promises.readFile(target);
-      return { ok: true, kind: 'pdf', dataUrl: 'data:application/pdf;base64,' + buf.toString('base64'), sizeBytes: stat.size, fileName, mimeType: 'application/pdf' };
+    if (previewKind === 'pdf') {
+      const buf = await fs.promises.readFile(realTarget);
+      return Object.assign({}, base, {
+        previewKind: 'pdf', kind: 'pdf', mimeType: 'application/pdf',
+        dataUrl: 'data:application/pdf;base64,' + buf.toString('base64'),
+        text: '', truncated: false, limitation: ''
+      });
     }
-    return { ok: true, kind: 'fallback', reason: 'unsupported_type', sizeBytes: stat.size, fileName };
+    // office-fallback / zip-list / unsupported — no raw binary dump.
+    return Object.assign({}, base, {
+      previewKind, kind: 'fallback', reason: 'unsupported_type',
+      text: '', truncated: false,
+      limitation: previewKind === 'office-fallback'
+        ? 'Office preview not available inline. Open Local File to view the original.'
+        : (previewKind === 'zip-list'
+            ? 'Archive preview not available inline. Open Local File to view the contents.'
+            : 'Inline preview is not available for this file type. Open Local File to view the original.')
+    });
   } catch (e) {
     return { ok: false, reason: 'read_failed' };
   }
