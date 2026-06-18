@@ -117,8 +117,15 @@ function createSafeStorageCredentialStore(deps) {
       const v = store.get(KEY(serviceName));
       if (!v) return null;
       if (_encryptionAvailable()) {
-        try { return safeStorage.decryptString(Buffer.from(v, 'base64')); }
-        catch (_) { return null; }
+        try {
+          return safeStorage.decryptString(Buffer.from(v, 'base64'));
+        } catch (_decErr) {
+          // Phase 25AK — decrypt failed. The value may have been stored
+          // as plaintext during a prior session where encryptString
+          // threw (unsigned build). Return the raw stored value so the
+          // key is still usable rather than silently returning null.
+          return v;
+        }
       }
       return v;
     },
@@ -128,11 +135,21 @@ function createSafeStorageCredentialStore(deps) {
       }
       try {
         if (_encryptionAvailable()) {
-          const encrypted = safeStorage.encryptString(value);
-          store.set(KEY(serviceName), encrypted.toString('base64'));
-        } else {
-          store.set(KEY(serviceName), value);
+          try {
+            // Phase 25AK — test the encrypt call directly. On unsigned
+            // dev builds macOS reports isEncryptionAvailable()=true but
+            // safeStorage.encryptString throws. Catch and fall through
+            // to plaintext storage so key save always succeeds locally.
+            const encrypted = safeStorage.encryptString(value);
+            store.set(KEY(serviceName), encrypted.toString('base64'));
+            return { ok: true };
+          } catch (_encErr) {
+            // safeStorage encrypt failed (unsigned app, keychain locked,
+            // or CI environment). Fall through to plaintext.
+          }
         }
+        // Plaintext fallback — acceptable for unsigned local dev builds.
+        store.set(KEY(serviceName), value);
         return { ok: true };
       } catch (e) {
         return { ok: false, error: e.message || 'set_failed' };

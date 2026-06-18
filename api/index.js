@@ -51,6 +51,7 @@ const sam             = require('../services/sam');
 const samSourceFetchSvc = require('../services/govcon/sam-source-fetch');
 const samPackageDownloadSvc = require('../services/govcon/sam-package-download');
 const solicitationPackageExtractSvc = require('../services/govcon/solicitation-package-extract');
+const packageFileValidator = require('../services/govcon/package-file-validator');
 const compliance      = require('../services/compliance');
 const stakeholders    = require('../services/stakeholders');
 const capture         = require('../services/capture');
@@ -230,8 +231,18 @@ function createAppApi(opts) {
           }
           return result;
         },
+        sanitizePackageManifest: async (input) => {
+          input = input || {};
+          const manifest = input.manifest || input;
+          await packageFileValidator.sanitizeManifestPaths(manifest, userDataPath);
+          return input;
+        },
         extractSolicitationPackage: (input) =>
           solicitationPackageExtractSvc.extractSolicitationPackage(input || {}),
+        validatePackageFiles: (input) => {
+          input = input || {};
+          return packageFileValidator.validatePackageFiles(input.manifest || input, userDataPath);
+        },
         explainSolicitationPackage: async (input) => {
           const extraction = input && input.sections ? input : await solicitationPackageExtractSvc.extractSolicitationPackage(input || {});
           return solicitationPackageExtractSvc.plainEnglish(extraction);
