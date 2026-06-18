@@ -95,13 +95,13 @@ test('gcACPreviewFile requests the file through the credential boundary', () => 
     'gcACPreviewFile must call window.sd.govcon.previewPackageFile');
 });
 
-test('gcACPreviewFile renders kind:text, kind:image, kind:pdf, kind:fallback branches', () => {
-  // Each branch shows up as a literal kind check in the renderer.
-  assert.ok(/preview\.kind === 'text'/.test(HTML),  'text branch missing');
-  assert.ok(/preview\.kind === 'image'/.test(HTML), 'image branch missing');
-  assert.ok(/preview\.kind === 'pdf'/.test(HTML),   'pdf branch missing');
+test('gcACPreviewFile renders text, image, pdf, and fallback branches', () => {
+  // Phase 25AG — branches now key off the resolved previewKind (kind local).
+  assert.ok(/kind === 'text'/.test(HTML),  'text branch missing');
+  assert.ok(/kind === 'image'/.test(HTML), 'image branch missing');
+  assert.ok(/kind === 'pdf'/.test(HTML),   'pdf branch missing');
   // The fallback message exists for unsupported types.
-  assert.ok(/Inline preview is not available for this file type yet/.test(HTML),
+  assert.ok(/Inline preview is not available for this file type/.test(HTML),
     'fallback message for unsupported file types missing');
   assert.ok(/Office preview not available yet\. Use Open Local File\./.test(HTML),
     'Office fallback copy missing');

@@ -51,6 +51,10 @@ const sam             = require('../services/sam');
 const samSourceFetchSvc = require('../services/govcon/sam-source-fetch');
 const samPackageDownloadSvc = require('../services/govcon/sam-package-download');
 const solicitationPackageExtractSvc = require('../services/govcon/solicitation-package-extract');
+// Phase 25AG — pure preview safety guard. Exposed through appApi so main.js
+// (which performs the Electron-side fs/realpath reads) never imports
+// services/govcon/* directly, preserving the architecture boundary.
+const solicitationPreviewGuard = require('../services/govcon/solicitation-preview-guard');
 const compliance      = require('../services/compliance');
 const stakeholders    = require('../services/stakeholders');
 const capture         = require('../services/capture');
@@ -236,7 +240,9 @@ function createAppApi(opts) {
           const extraction = input && input.sections ? input : await solicitationPackageExtractSvc.extractSolicitationPackage(input || {});
           return solicitationPackageExtractSvc.plainEnglish(extraction);
         },
-        acceptedUploadTypes: () => Promise.resolve(solicitationPackageExtractSvc.acceptedUploadTypes())
+        acceptedUploadTypes: () => Promise.resolve(solicitationPackageExtractSvc.acceptedUploadTypes()),
+        // Phase 25AG — pure preview safety guard for the right-side file viewer.
+        previewGuard: solicitationPreviewGuard
       },
       opportunities: {
         list:      ()      => Promise.resolve(opportunities.list()),
