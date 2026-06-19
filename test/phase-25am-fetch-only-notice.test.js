@@ -14,16 +14,18 @@ function assert(c, m){ if(!c){ console.error('  ✗ ' + m); process.exitCode = 1
 
 console.log('Phase 25AM · Fetch-only SAM.gov notice architecture');
 
-// ── The retired services and IPC handlers are gone ──────────────────
+// ── The retired REMOTE services are gone ────────────────────────────
+// Phase 25AN note: the remote downloader (sam-package-download.js) and the
+// remote source-body fetcher (sam-source-fetch.js) stay retired. The local
+// extraction engine (solicitation-package-extract.js, sam-body-classifier.js,
+// package-file-validator.js) is restored as an UPLOAD/IMPORT-ONLY service
+// (no remote fetching) and is therefore expected to exist on disk again.
 [
   'services/govcon/sam-package-download.js',
-  'services/govcon/solicitation-package-extract.js',
-  'services/govcon/sam-body-classifier.js',
-  'services/govcon/sam-source-fetch.js',
-  'services/govcon/package-file-validator.js'
+  'services/govcon/sam-source-fetch.js'
 ].forEach(p => {
   assert(!fs.existsSync(path.join(__dirname, '..', p)),
-    'Retired service is removed from disk: ' + p);
+    'Retired REMOTE service is removed from disk: ' + p);
 });
 
 const mainSrc    = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');

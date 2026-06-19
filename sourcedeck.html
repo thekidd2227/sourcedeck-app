@@ -18237,8 +18237,10 @@ document.addEventListener('DOMContentLoaded',()=>{
         '<td>' +
           '<div style="display:flex;flex-direction:column;gap:3px;min-width:200px">' +
             '<button class="btn btn-ghost" data-gc-saved-action="view-details" onclick="gcW25ViewDetails(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">👁 View Details</button>' +
-            '<button class="btn btn-ghost" data-gc-saved-action="open-notice" onclick="gcW25OpenNotice(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">↗ Open SAM.gov Notice</button>' +
-            '<button class="btn btn-gold" data-gc-saved-action="download-package" onclick="gcABDownloadPackage(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">⬇ Download Solicitation Package</button>' +
+            // Phase 25AN — one browser-open action (Fetch) + local import
+            // (Extract). The duplicate browser-open button is removed.
+            '<button class="btn btn-gold" data-gc-saved-action="fetch-notice" onclick="gcABDownloadPackage(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">⬇ Fetch SAM.gov Notice</button>' +
+            '<button class="btn btn-ghost" data-gc-saved-action="extract-downloaded" data-gc-extract-btn="' + rid + '" onclick="gcExtractDownloadedSolicitation(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">⬆ Extract Downloaded Solicitation</button>' +
             '<button class="btn btn-ghost" data-gc-saved-action="view-attachments" onclick="gcW25ViewAttachments(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--gold2)">📎 View Attachments (' + esc(attic) + ')</button>' +
             '<button class="btn btn-ghost" data-gc-saved-action="refresh-source" onclick="gcW25RefreshSource(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">↻ Refresh Source Details</button>' +
             '<button class="btn btn-ghost" data-gc-saved-action="send-to-solicitation-center" onclick="gcW25SendToWorkspace(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--green,#30d158)">→ Send Package to Solicitation Center</button>' +
@@ -19495,11 +19497,18 @@ document.addEventListener('DOMContentLoaded',()=>{
     fetchBtn.setAttribute('type', 'button');
     fetchBtn.setAttribute('onclick', "gcABDownloadPackage('" + String(o.id || '').replace(/'/g, "\\'") + "')");
     actions.appendChild(fetchBtn);
-    var openBtn = makeEl('button', 'padding:4px 10px;font-size:10.5px', '↗ Open in SAM.gov');
-    openBtn.className = 'btn btn-ghost';
-    openBtn.setAttribute('type', 'button');
-    openBtn.setAttribute('onclick', "gcW25OpenNotice('" + String(o.id || '').replace(/'/g, "\\'") + "')");
-    actions.appendChild(openBtn);
+    // Phase 25AN — second action is local import, NOT a duplicate browser
+    // open. The Fetch button above already opens the notice in the browser;
+    // a second duplicate browser-open button duplicated it and is removed. The
+    // user downloads files from SAM.gov in their browser, returns here, and
+    // clicks Extract Downloaded Solicitation to import + extract them locally.
+    var extractBtn = makeEl('button', 'padding:4px 10px;font-size:10.5px',
+      (o.solicitationImportStatus === 'extracted') ? '✓ Review in Solicitation Center' : '⬆ Extract Downloaded Solicitation');
+    extractBtn.className = 'btn btn-ghost';
+    extractBtn.setAttribute('type', 'button');
+    extractBtn.setAttribute('data-gc-extract-btn', String(o.id || ''));
+    extractBtn.setAttribute('onclick', "gcExtractDownloadedSolicitation('" + String(o.id || '').replace(/'/g, "\\'") + "')");
+    actions.appendChild(extractBtn);
     hostEl.appendChild(actions);
     // Resource links — render as buttons that open in the system browser.
     // We render the URL itself as text via textContent so no app-shell
@@ -19649,6 +19658,16 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (!u || !/^https?:\/\//i.test(u) || /\[object/i.test(u)){ toast((label || 'Source') + ' link unavailable. Refresh Source Details.', 'warn'); return false; }
     if (/(api_key|apikey)=/i.test(u)){ toast('Refused to open — API key would leak.', 'warn'); return false; }
     toast('Opening ' + (label || 'SAM.gov notice') + '…', 'info');
+    // Phase 25AN — for sam.gov URLs prefer the narrow, key-stripping
+    // open-external-safe handler. It never touches the SourceDeck window, so
+    // SourceDeck stays open and operable after the browser opens.
+    try {
+      if (/^https:\/\/(?:[a-z0-9-]+\.)*sam\.gov(?:[:/]|$)/i.test(u)
+          && window.sd && window.sd.govcon && typeof window.sd.govcon.openExternalSafe === 'function'){
+        var rs = await window.sd.govcon.openExternalSafe(u);
+        if (rs && rs.ok) return true;
+      }
+    } catch (e) {}
     try {
       if (window.sd && typeof window.sd.openExternal === 'function'){
         var r = await window.sd.openExternal(u);
@@ -19661,12 +19680,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     catch (e) { toast('Open unavailable. Safe link: ' + u, 'warn'); }
     return false;
   };
+  // Phase 25AN — the standalone duplicate browser-open button
+  // was removed (it duplicated Fetch SAM.gov Notice). gcW25OpenNotice now
+  // delegates to the single Fetch action so any remaining dynamic caller keeps
+  // working without a second browser-open control.
   window.gcW25OpenNotice = async function(id){
-    var o = await resolve(id); if (!o) { if (window.sdClearActionBusy) window.sdClearActionBusy(busyEl); return; }
-    var url = o.uiLink || o.sourceUrl || (o.noticeId ? 'https://sam.gov/opp/' + encodeURIComponent(o.noticeId) + '/view' : '');
-    if (!url){ toast('SAM.gov source link was not included for this record. Try Refresh Source Details.', 'warn'); return; }
-    if (o.uiLink) toast('A SAM.gov login/role may be required to view this notice.', 'info');
-    await window.gcOpenExternal(url, 'SAM.gov notice');
+    if (typeof window.gcABDownloadPackage === 'function') return window.gcABDownloadPackage(id);
   };
   // Phase 25AH — toast copy for each safe rejection reason the source
   // fetch service can return. Keys are stable codes; values are the
@@ -19876,6 +19895,140 @@ document.addEventListener('DOMContentLoaded',()=>{
       if (window.sdClearActionBusy) window.sdClearActionBusy(busyEl);
     }
   };
+  // ── Phase 25AN — local solicitation import + extraction workflow ───────
+  // The user downloaded files from SAM.gov in their browser, returns to
+  // SourceDeck, and clicks Extract Downloaded Solicitation. A native multi-
+  // file picker opens (main process); selected files are copied into
+  // SourceDeck userData, extracted locally, and mapped into Solicitation
+  // Center. SourceDeck never minimizes, hides, or blurs — it stays operable.
+
+  // Map a normalized extraction contract into the Solicitation Center state
+  // and render it. The summary panel is built from structured metadata only
+  // (never raw fullText). Section/alias arrays flow through renderPanels'
+  // app-shell render guard (Phase 25AL).
+  window.gcSolLoadExtractionResult = function(result){
+    if (!result || !result.ok) return false;
+    var md = result.metadata || {};
+    var imp = result.import || {};
+    var sLines = [];
+    if (md.title) sLines.push(md.title);
+    var idBits = [];
+    if (md.solicitationNumber) idBits.push('Sol ' + md.solicitationNumber);
+    if (md.noticeId) idBits.push('Notice ' + md.noticeId);
+    if (md.noticeType) idBits.push(md.noticeType);
+    if (idBits.length) sLines.push(idBits.join(' · '));
+    var agBits = [md.agency, md.subAgency, md.office].filter(Boolean);
+    if (agBits.length) sLines.push(agBits.join(' — '));
+    var clsBits = [];
+    if (md.setAside) clsBits.push('Set-aside: ' + md.setAside);
+    if (md.naics) clsBits.push('NAICS ' + md.naics);
+    if (md.classificationCode) clsBits.push('PSC ' + md.classificationCode);
+    if (clsBits.length) sLines.push(clsBits.join(' · '));
+    if (md.postedDate) sLines.push('Posted: ' + md.postedDate);
+    if (md.responseDeadline) sLines.push('Response due: ' + md.responseDeadline);
+    if (md.placeOfPerformance) sLines.push('Place of performance: ' + (typeof md.placeOfPerformance === 'string' ? md.placeOfPerformance : (function(){ try { return JSON.stringify(md.placeOfPerformance); } catch (e) { return ''; } })()));
+    if (md.periodOfPerformance) sLines.push('Period of performance: ' + md.periodOfPerformance);
+    if (Array.isArray(md.pointOfContact) && md.pointOfContact.length){
+      var pocs = md.pointOfContact.map(function(p){ return (p && (p.fullName || p.name || p.email)) || ''; }).filter(Boolean);
+      if (pocs.length) sLines.push('POC: ' + pocs.join('; '));
+    }
+    sLines.push('Imported ' + (imp.sourceFileCount || 0) + ' file(s) · ' + (imp.successfulFileCount || 0) + ' extracted'
+      + (result.warnings && result.warnings.length ? ' · ' + result.warnings.length + ' warning(s)' : ''));
+    var summary = sLines.filter(Boolean).join('\n');
+
+    var sec = result.sections || {};
+    function secArr(letter){
+      var s = sec[letter];
+      if (s && s.found && s.text) return [{ text: s.text, sourceFile: s.sourceFile || '', sourceLocation: s.sourceLocation || '' }];
+      return [];
+    }
+    var cPws = secArr('C').concat(secArr('F'));
+    var state = {
+      summary: summary,
+      sections: {
+        sectionL: secArr('L').length ? secArr('L') : (result.instructionsToOfferors || []),
+        sectionM: secArr('M').length ? secArr('M') : (result.evaluationCriteria || []),
+        pws: cPws.length ? cPws : (result.pwsSowRequirements || []),
+        forms: result.requiredFormsAttachments || [],
+        deadlines: result.deadlines || [],
+        risks: result.risksDealKillers || []
+      },
+      matrix: result.complianceMatrix || [],
+      solId: imp.opportunityId || '',
+      real: true,
+      // Slim, sanitized snapshot — no fullText, no sourceBlocks, no binaries.
+      packageExtraction: {
+        metadata: md,
+        complianceMatrixStarter: result.complianceMatrix || [],
+        import: imp
+      }
+    };
+    try { localStorage.setItem('sd.govcon.solWorkspace.v1', JSON.stringify(state)); } catch (e) {}
+    try { if (state.solId) localStorage.setItem('sd.govcon.activeSolicitation.v1', state.solId); } catch (e) {}
+    try { if (typeof window.gcSolRender === 'function') window.gcSolRender(); } catch (e) {}
+    return true;
+  };
+
+  // "Review in Solicitation Center" — navigate without re-extracting.
+  window.gcReviewInSolicitationCenter = function(id){
+    try { if (typeof window.gcV25SelectSolicitation === 'function') window.gcV25SelectSolicitation(id); } catch (e) {}
+    try { if (typeof window.gcTabSwitch === 'function') window.gcTabSwitch('solicitation'); } catch (e) {}
+  };
+
+  window.gcExtractDownloadedSolicitation = async function(id){
+    var opportunity = await resolve(id);
+    if (!opportunity){ toast('Opportunity not found.', 'warn'); return; }
+    if (!(window.sd && window.sd.govcon && typeof window.sd.govcon.selectAndExtractSolicitation === 'function')){
+      toast('Local solicitation import requires the SourceDeck desktop app.', 'warn'); return;
+    }
+    var oid = String(opportunity.id || '');
+    var btn = document.querySelector('[data-gc-extract-btn="' + oid.replace(/"/g, '\\"') + '"]');
+    var prevLabel = btn ? btn.textContent : '';
+    if (btn){ btn.textContent = '⏳ Extracting…'; btn.disabled = true; }
+    var result = null;
+    try {
+      result = await window.sd.govcon.selectAndExtractSolicitation({
+        opportunityId: opportunity.id,
+        noticeId: opportunity.noticeId,
+        solicitationNumber: opportunity.solicitationNumber,
+        title: opportunity.title,
+        agency: opportunity.agency
+      });
+    } catch (e) { result = { ok: false, reason: 'ipc_error' }; }
+    if (btn) btn.disabled = false;
+    // User cancelled the picker — no state change at all.
+    if (!result || result.cancelled){
+      if (btn) btn.textContent = prevLabel || '⬆ Extract Downloaded Solicitation';
+      return;
+    }
+    if (!result.ok){
+      if (btn) btn.textContent = prevLabel || '⬆ Extract Downloaded Solicitation';
+      toast('Solicitation extraction failed' + (result.reason ? ' (' + result.reason + ')' : '') + '. Review the file warnings.', 'warn');
+      return;
+    }
+    // Navigate first (resets panels for the selection), then load the
+    // extraction so it renders last and wins.
+    try { if (typeof window.gcV25SelectSolicitation === 'function') window.gcV25SelectSolicitation(opportunity.id); } catch (e) {}
+    try { if (typeof window.gcTabSwitch === 'function') window.gcTabSwitch('solicitation'); } catch (e) {}
+    window.gcSolLoadExtractionResult(result);
+    // Persist a safe structured status on the opportunity row (no raw text).
+    try {
+      if (window.sd.govcon.opportunities && window.sd.govcon.opportunities.patch){
+        await window.sd.govcon.opportunities.patch(opportunity.id, {
+          solicitationImportStatus: 'extracted',
+          solicitationImportedAt: (result.import && result.import.importedAt) || new Date().toISOString(),
+          solicitationImportedFileCount: (result.import && result.import.sourceFileCount) || 0,
+          solicitationExtractionWarningCount: (result.warnings && result.warnings.length) || 0
+        });
+      }
+    } catch (e) {}
+    if (btn){
+      btn.textContent = '✓ Review in Solicitation Center';
+      btn.setAttribute('onclick', "gcReviewInSolicitationCenter('" + oid.replace(/'/g, "\\'") + "')");
+    }
+    toast('Solicitation extracted and loaded into Solicitation Center.', 'ok');
+  };
+
   window.gcABOpenLocalPackageFolder = async function(id){
     var sm = getSM(id);
     var p = sm && sm.package && sm.package.packagePath;

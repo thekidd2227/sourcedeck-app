@@ -30,21 +30,29 @@ test('openExternal IPC bridge is wired (preload + main) and refuses key URLs', (
   assert.ok(/shell\.openExternal/.test(MAIN), 'uses shell.openExternal');
 });
 
-test('Open SAM.gov Notice exists on saved pursuits + search rows', () => {
-  assert.ok(/gcW25OpenNotice\(/.test(HTML), 'saved pursuit open-notice');
+test('single browser-open (Fetch) on saved pursuits + Open SAM.gov Source on search rows', () => {
+  // Phase 25AN — the duplicate "Open SAM.gov Notice" button is removed. The
+  // saved-pursuit row keeps one browser-open action (Fetch SAM.gov Notice →
+  // gcABDownloadPackage) plus the local Extract action. The SAM SEARCH rows
+  // still expose "Open SAM.gov Source" (a different surface).
+  assert.ok(/gcABDownloadPackage\(/.test(HTML), 'saved pursuit Fetch SAM.gov Notice action');
+  assert.ok(/gcExtractDownloadedSolicitation\(/.test(HTML), 'saved pursuit Extract Downloaded Solicitation action');
   assert.ok(/gcTabSamOpenSource\(/.test(HTML), 'search row open-source');
-  assert.ok(/Open SAM\.gov Notice/.test(HTML), 'Open SAM.gov Notice label');
+  assert.ok(!/Open in SAM\.gov|Open SAM\.gov Notice/.test(HTML), 'duplicate open-notice button removed');
 });
 
-test('saved pursuit View Source / open handler is id-keyed, not out-of-scope', () => {
+test('saved pursuit Fetch / Extract handlers are id-keyed, not out-of-scope', () => {
   // The old bug: onclick="if(o.sourceUrl)..." referenced an out-of-scope `o`.
   assert.ok(!/onclick="if\(o\.sourceUrl\)/.test(HTML), 'no out-of-scope o reference');
-  assert.ok(/gcW25OpenNotice\(\\?'/.test(HTML) || /gcW25OpenNotice\('/.test(HTML), 'open handler takes an id');
+  assert.ok(/gcABDownloadPackage\(\\?'/.test(HTML) || /gcABDownloadPackage\('/.test(HTML), 'Fetch handler takes an id');
+  assert.ok(/gcExtractDownloadedSolicitation\(\\?'/.test(HTML) || /gcExtractDownloadedSolicitation\('/.test(HTML), 'Extract handler takes an id');
 });
 
-test('open handlers route through gcOpenExternal (no silent fail)', () => {
-  const notice = HTML.slice(HTML.indexOf('window.gcW25OpenNotice = async function'), HTML.indexOf('window.gcW25OpenNotice = async function') + 700);
-  assert.ok(/gcOpenExternal/.test(notice), 'open notice uses robust opener');
+test('browser-open action routes through gcOpenExternal (no silent fail)', () => {
+  // Fetch SAM.gov Notice (gcABDownloadPackage) is the single browser-open and
+  // routes through the robust gcOpenExternal helper.
+  const fetchFn = HTML.slice(HTML.indexOf('window.gcABDownloadPackage = async function'), HTML.indexOf('window.gcABDownloadPackage = async function') + 900);
+  assert.ok(/gcOpenExternal/.test(fetchFn), 'Fetch uses robust opener');
 });
 
 test('no api_key-bearing URL is ever opened', () => {

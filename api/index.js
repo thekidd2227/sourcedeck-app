@@ -54,6 +54,8 @@ const sam             = require('../services/sam');
 // to shell.openExternal so the user downloads attachments from their own
 // browser. SourceDeck no longer touches solicitation bytes.
 const samNoticeFetchSvc = require('../services/govcon/sam-notice-fetch');
+// Phase 25AN — local upload/import + extraction (no remote downloading).
+const solicitationImport = require('../services/govcon/solicitation-import');
 const compliance      = require('../services/compliance');
 const stakeholders    = require('../services/stakeholders');
 const capture         = require('../services/capture');
@@ -184,6 +186,14 @@ function createAppApi(opts) {
         // Returns no file bytes. The renderer hands resource URLs to
         // shell.openExternal so the user downloads files themselves.
         fetchNotice: (payload) => samNoticeFetch.fetchNotice(payload || {})
+      },
+      // Phase 25AN — local solicitation import + extraction. The renderer
+      // collects user-selected local file paths (via the native picker in
+      // main.js) and hands them here. This validates, copies into userData,
+      // extracts locally, and returns the normalized contract. No network,
+      // no Downloads-folder scanning, no remote attachment fetching.
+      solicitationImport: {
+        import: (payload) => solicitationImport.importAndExtract(payload || {})
       },
       index: {
         status:   () => Promise.resolve(govconIndex.status()),
