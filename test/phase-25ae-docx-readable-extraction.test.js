@@ -4,7 +4,9 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 const extract = require('../services/govcon/solicitation-package-extract');
-const zip = require('../services/govcon/sam-package-download');
+// Phase 25AN — the remote downloader was retired; build the test DOCX with the
+// local stored-zip fixture helper instead of the deleted downloader's _createZip.
+const fx = require('./fixtures-25af');
 
 (async () => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'sd-25ae-docx-'));
@@ -17,7 +19,7 @@ const zip = require('../services/govcon/sam-package-download');
     <w:p><w:r><w:t>SECTION M Evaluation Factors</w:t></w:r></w:p>
     <w:p><w:r><w:t>The Government will evaluate past performance.</w:t></w:r></w:p>
   </w:body></w:document>`;
-  await zip._createZip(docxPath, [{ name: 'word/document.xml', data: Buffer.from(xml, 'utf8') }]);
+  fs.writeFileSync(docxPath, fx.buildStoredZip([{ name: 'word/document.xml', data: Buffer.from(xml, 'utf8') }]));
   const result = await extract.extractSolicitationPackage({
     files: [{ fileName: 'solicitation.docx', localPath: docxPath, status: 'downloaded' }],
     packagePath: dir

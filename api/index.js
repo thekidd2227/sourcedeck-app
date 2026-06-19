@@ -48,10 +48,14 @@ const capabilityExtractor = require('../services/govcon/capability-statement-ext
 const premiumContent = require('../services/govcon/premium-content-agent');
 const watsonxReadiness = require('../services/ai/watsonx-readiness');
 const sam             = require('../services/sam');
-const samSourceFetchSvc = require('../services/govcon/sam-source-fetch');
-const samPackageDownloadSvc = require('../services/govcon/sam-package-download');
-const solicitationPackageExtractSvc = require('../services/govcon/solicitation-package-extract');
-const packageFileValidator = require('../services/govcon/package-file-validator');
+// Phase 25AM — the entire Phase 25AB–25AL package download/preview/
+// extraction chain is gone. The new fetch-only architecture is a single
+// service that returns structured JSON; the renderer hands resource URLs
+// to shell.openExternal so the user downloads attachments from their own
+// browser. SourceDeck no longer touches solicitation bytes.
+const samNoticeFetchSvc = require('../services/govcon/sam-notice-fetch');
+// Phase 25AN — local upload/import + extraction (no remote downloading).
+const solicitationImport = require('../services/govcon/solicitation-import');
 const compliance      = require('../services/compliance');
 const stakeholders    = require('../services/stakeholders');
 const capture         = require('../services/capture');
@@ -98,22 +102,12 @@ function createAppApi(opts) {
     getApiKey: async () => credentials.get('sam-gov'),
     now
   });
-  // Phase 25W — SAM.gov source-material fetch (description/resource links).
-  const samSourceFetch  = samSourceFetchSvc.createSamSourceFetchService({
+  // Phase 25AM — fetch-only SAM.gov notice service. Returns structured
+  // metadata + api_key-stripped resource URLs. Never writes to disk.
+  const samNoticeFetch = samNoticeFetchSvc.createSamNoticeFetchService({
     fetch: fetchFn,
     getApiKey: async () => credentials.get('sam-gov')
   });
-  // Phase 25AB — selected-opportunity solicitation package download.
-  // Stores attachments under Electron userData only. The renderer receives a
-  // sanitized manifest summary and never receives keyed SAM.gov URLs.
-  const samPackageDownload = userDataPath
-    ? samPackageDownloadSvc.createSamPackageDownloadService({
-        fetch: fetchFn,
-        getApiKey: async () => credentials.get('sam-gov'),
-        userDataPath,
-        now
-      })
-    : null;
   const airtableSvc     = airtable.createAirtableService({ credentials, fetchFn, audit });
   const apolloSvc       = apollo.createApolloService({ credentials, fetchFn, audit });
   const openaiSvc       = openaiProvider.createOpenaiProvider({ credentials, fetchFn, audit });
@@ -187,10 +181,19 @@ function createAppApi(opts) {
       },
       sam: {
         search: (filters)  => samSearch.search(filters || {}),
-        // Phase 25W — fetch a SAM.gov description link / resource URL through
-        // the credential boundary. The api key is appended only inside the
-        // service (main process) and never returned to the renderer.
-        fetchSource: (payload) => samSourceFetch.fetchSource(payload || {})
+        // Phase 25AM — fetch a SAM.gov notice's structured metadata
+        // (title, agency, dates, NAICS, POC, sanitized resource URLs).
+        // Returns no file bytes. The renderer hands resource URLs to
+        // shell.openExternal so the user downloads files themselves.
+        fetchNotice: (payload) => samNoticeFetch.fetchNotice(payload || {})
+      },
+      // Phase 25AN — local solicitation import + extraction. The renderer
+      // collects user-selected local file paths (via the native picker in
+      // main.js) and hands them here. This validates, copies into userData,
+      // extracts locally, and returns the normalized contract. No network,
+      // no Downloads-folder scanning, no remote attachment fetching.
+      solicitationImport: {
+        import: (payload) => solicitationImport.importAndExtract(payload || {})
       },
       index: {
         status:   () => Promise.resolve(govconIndex.status()),
@@ -203,52 +206,16 @@ function createAppApi(opts) {
         clear:    () => Promise.resolve(govconIndex.clear()),
         shouldRunOnStart: () => Promise.resolve(govconIndex.shouldRunOnStart())
       },
-      packages: {
-        downloadSolicitationPackage: async (input) => {
-          if (!samPackageDownload) return { ok: false, reason: 'user_data_path_unavailable' };
-          input = input || {};
-          let opp = input.opportunity || input;
-          const id = input.id || input.noticeId || input.opportunityId || opp.id || '';
-          if ((!opp || !opp.resourceLinks) && id) {
-            const stored = opportunities.get(id);
-            if (stored) opp = stored;
-          }
-          const result = await samPackageDownload.downloadPackage(opp || {});
-          if (result && result.ok && id) {
-            try {
-              opportunities.patch(id, {
-                solicitationPackage: {
-                  downloadedAt: result.downloadedAt,
-                  downloadedCount: result.downloadedCount,
-                  failedCount: result.failedCount,
-                  resourceCount: result.resourceCount,
-                  packagePath: result.packagePath,
-                  localZipPath: result.localZipPath,
-                  files: result.files
-                }
-              });
-            } catch (e) {}
-          }
-          return result;
-        },
-        sanitizePackageManifest: async (input) => {
-          input = input || {};
-          const manifest = input.manifest || input;
-          await packageFileValidator.sanitizeManifestPaths(manifest, userDataPath);
-          return input;
-        },
-        extractSolicitationPackage: (input) =>
-          solicitationPackageExtractSvc.extractSolicitationPackage(input || {}),
-        validatePackageFiles: (input) => {
-          input = input || {};
-          return packageFileValidator.validatePackageFiles(input.manifest || input, userDataPath);
-        },
-        explainSolicitationPackage: async (input) => {
-          const extraction = input && input.sections ? input : await solicitationPackageExtractSvc.extractSolicitationPackage(input || {});
-          return solicitationPackageExtractSvc.plainEnglish(extraction);
-        },
-        acceptedUploadTypes: () => Promise.resolve(solicitationPackageExtractSvc.acceptedUploadTypes())
-      },
+      // Phase 25AM — the packages.* surface (downloadSolicitationPackage,
+      // extractSolicitationPackage, validatePackageFiles, preview,
+      // sanitize, save-copy, open-local-folder, acceptedUploadTypes) is
+      // retired. SourceDeck no longer downloads, extracts, or previews
+      // SAM.gov package bytes. Use api.govcon.sam.fetchNotice(payload)
+      // for structured metadata; the renderer opens resource URLs via
+      // shell.openExternal so the user fetches files from their own
+      // browser. Solicitation Center / Extract Requirements / Compliance
+      // Matrix features remain available — they now consume files only
+      // through the Upload Solicitation path.
       opportunities: {
         list:      ()      => Promise.resolve(opportunities.list()),
         get:       (id)    => Promise.resolve(opportunities.get(id)),

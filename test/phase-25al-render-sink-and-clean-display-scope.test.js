@@ -222,40 +222,32 @@ function run() {
       assert(exHTML.indexOf('Plain-English package explanation') >= 0, 'explain path renders its summary');
       console.log('  ✓ gcSolExplainPlainEnglish reaches cleanDisplayText and renders (no ReferenceError)');
 
-      // ---- gcABExtractPackageToCenter no ReferenceError + clean render --
+      // ---- Phase 25AM/25AN — the old download→extract path is retired -----
+      // gcABExtractPackageToCenter was the highest-risk contamination path
+      // (read on-disk downloaded file → contaminate state.summary → render).
+      // Phase 25AM retired it to a no-op; Phase 25AN replaces it with the
+      // user-selected local import path (gcExtractDownloadedSolicitation).
+      // Confirm the retired path is a clean no-op that renders nothing.
       const extract = makeSandbox({});
       extract.window._w25LooksLikeBadSource = appShellDetector;
-      extract.window.gcW25GetSourceMaterials = () => ({ package: { files: [{ id: 'f1', localPath: '/pkg/description.txt', fileName: 'description.txt', status: 'downloaded' }] } });
-      extract.window.sd = { govcon: {
-        validatePackageFiles: async () => ({ ok: true, results: [{ id: 'f1', index: 0, ok: true }] }),
-        extractSolicitationPackage: async () => ({
-          fullText: 'Janitorial services for the Salisbury VA Medical Center. Offeror shall submit a quote.',
-          sections: { L: { found: true, text: 'Offeror shall submit a technical quote per Section L.' } },
-          metadata: { title: 'Janitorial services for the Salisbury VAMC' },
-          complianceMatrixStarter: []
-        })
-      } };
       loadRenderers(extract);
       let extractThrew = null;
       return Promise.resolve()
         .then(() => extract.window.gcABExtractPackageToCenter('sam:valid'))
-        .then(ex => {
-          assert(ex && ex.metadata, 'gcABExtractPackageToCenter returns the extraction result');
-          const sumHTML = extract.els['gc-sol-summary'].innerHTML;
-          assert(sumHTML.indexOf('Janitorial services for the Salisbury VAMC') >= 0, 'clean extraction renders the title');
-          assert(sumHTML.indexOf(BLOCK_MSG) < 0, 'clean extraction is not blocked');
+        .then(ret => {
+          assert(ret === null, 'retired gcABExtractPackageToCenter returns null (no download-based extraction)');
         })
         .catch(err => { extractThrew = err; })
         .then(() => {
           assert(!(extractThrew && /cleanDisplayText is not defined/.test(String(extractThrew))),
-            'gcABExtractPackageToCenter must not throw ReferenceError for cleanDisplayText');
+            'retired gcABExtractPackageToCenter must not throw ReferenceError for cleanDisplayText');
           assert(!extractThrew, `gcABExtractPackageToCenter threw unexpectedly: ${extractThrew}`);
-          console.log('  ✓ gcABExtractPackageToCenter runs end-to-end (no ReferenceError, clean render)');
+          console.log('  ✓ retired download→extract path is a clean no-op (contamination path closed)');
 
-          // ---- Source-cache-clear wiring remains intact -----------------
+          // ---- Render-sink guard + state key remain intact ---------------
           assert(html.includes('window.sdClearSourceCache = function()'), 'sdClearSourceCache still present');
-          assert(html.includes("'sd.govcon.solWorkspace.v1'"), 'solWorkspace cache key still cleared');
-          console.log('  ✓ source-cache-clear wiring intact (Phase 25AK behavior preserved)');
+          assert(html.includes("'sd.govcon.solWorkspace.v1'"), 'solWorkspace state key still in use');
+          console.log('  ✓ render-sink guard + Solicitation Center state key intact');
 
           console.log('\nAll Phase 25AL assertions passed.\n');
         });

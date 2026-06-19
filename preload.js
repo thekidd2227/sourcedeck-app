@@ -47,9 +47,17 @@ contextBridge.exposeInMainWorld('sd', {
       generate: (request) => ipcRenderer.invoke('govcon:content-generate', request)
     },
     samSearch:           (filters)  => ipcRenderer.invoke('govcon:sam-search', filters),
-    // Phase 25W — fetch a SAM.gov description/resource link through the
-    // credential boundary. The renderer never holds or sees the api key.
-    samFetchSource:      (payload)  => ipcRenderer.invoke('govcon:sam-fetch-source', payload),
+    // Phase 25AM — fetch SAM.gov notice metadata only. Returns structured
+    // fields + api_key-stripped resource URLs. No file bytes. The renderer
+    // hands resource URLs to the open-external IPC so the user downloads
+    // attachments from their own browser.
+    samFetchNotice:      (payload)  => ipcRenderer.invoke('govcon:sam-fetch-notice', payload),
+    // Phase 25AN — open a sam.gov URL in the default browser (narrow, key-
+    // stripped, never touches the SourceDeck window).
+    openExternalSafe:    (url)      => ipcRenderer.invoke('govcon:open-external-safe', url),
+    // Phase 25AN — native multi-file picker → local import + extraction of
+    // user-downloaded solicitation files. Returns the normalized contract.
+    selectAndExtractSolicitation: (payload) => ipcRenderer.invoke('govcon:select-and-extract-solicitation', payload),
     index: {
       status:      ()        => ipcRenderer.invoke('govcon:index-status'),
       getSettings: ()        => ipcRenderer.invoke('govcon:index-settings-get'),
@@ -58,21 +66,11 @@ contextBridge.exposeInMainWorld('sd', {
       runNow:      (input)   => ipcRenderer.invoke('govcon:index-run-now', input),
       clear:       ()        => ipcRenderer.invoke('govcon:index-clear')
     },
-    downloadSolicitationPackage: (payload) => ipcRenderer.invoke('govcon:download-solicitation-package', payload),
-    extractSolicitationPackage:  (payload) => ipcRenderer.invoke('govcon:extract-solicitation-package', payload),
-    validatePackageFiles:        (payload) => ipcRenderer.invoke('govcon:validate-package-files', payload),
+    // Phase 25AM — getUserDataPath remains for the diagnostic build-
+    // fingerprint readout in Help / About. The download / extract /
+    // preview / validate / save-copy / open-folder bridge methods are
+    // gone; nothing else routes through the package code path.
     getUserDataPath:             ()        => ipcRenderer.invoke('govcon:get-user-data-path'),
-    explainSolicitationPackage:  (payload) => ipcRenderer.invoke('govcon:explain-solicitation-package', payload),
-    openSolicitationPackageFolder: (packagePath) => ipcRenderer.invoke('govcon:open-solicitation-package-folder', packagePath),
-    // Phase 25AC item 4 — copy the canonical solicitation package ZIP to
-    // a user-chosen external location. Canonical SourceDeck userData
-    // package stays untouched.
-    savePackageCopy: (payload) => ipcRenderer.invoke('govcon:save-package-copy', payload),
-    // Phase 25AD — read a downloaded package file from disk so the
-    // right-side in-app viewer can render it without opening a separate
-    // window. Path is validated against the canonical solicitations root
-    // in the main process; anything outside is refused.
-    previewPackageFile: (payload) => ipcRenderer.invoke('govcon:preview-package-file', payload),
     complianceMatrix:    (payload)  => ipcRenderer.invoke('govcon:compliance-matrix', payload),
     evaluatePreRfp:      (payload)  => ipcRenderer.invoke('govcon:pre-rfp-evaluate', payload),
     pastPerformance: {

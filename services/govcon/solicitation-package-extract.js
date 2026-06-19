@@ -4,7 +4,10 @@ const fs = require('fs');
 const fsp = fs.promises;
 const path = require('path');
 const zlib = require('zlib');
-const { _extractZip, _classifyDownloadedBody } = require('./sam-package-download');
+// Phase 25AN — decoupled from the retired remote downloader. The ZIP and
+// content-classification helpers now live in solicitation-file-utils.js, a
+// pure local-filesystem utility module with no network access.
+const { _extractZip, _classifyDownloadedBody } = require('./solicitation-file-utils');
 
 const SECTION_DEFS = [
   ['A', 'Part I', 'The Schedule', 'Solicitation/Contract Form'],
