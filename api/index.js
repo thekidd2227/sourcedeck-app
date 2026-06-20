@@ -169,11 +169,11 @@ function createAppApi(opts) {
         }
       },
       sam: {
-        search: (filters)  => samSearch.search(filters || {})
-        // Automatic SAM.gov notice/attachment-link retrieval is permanently
-        // removed. SourceDeck never retrieves notice metadata, attachment
-        // links, or resource URLs. The renderer opens only the canonical
-        // opportunity page and imports files via the manual upload picker.
+        search: (filters)  => samSearch.search(filters || {}),
+        // Explicit, user-commanded link metadata fetch. This returns sanitized
+        // URLs only; it never downloads remote files and never exposes the
+        // SAM.gov credential to the renderer.
+        fetchLinks: (input) => samSearch.fetchLinks(input || {})
       },
       // Phase 25AN — local solicitation import + extraction. The renderer
       // collects user-selected local file paths (via the native picker in

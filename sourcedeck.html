@@ -18453,6 +18453,7 @@ document.addEventListener('DOMContentLoaded',()=>{
             // SAM.gov Listing, canonical page only) + manual local import
             // (Upload Solicitation Files). No automatic notice/attachment retrieval.
             '<button class="btn btn-gold" data-gc-saved-action="open-official-listing" onclick="gcOpenOfficialSamListing(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">↗ Open Official SAM.gov Listing</button>' +
+            '<button class="btn btn-ghost" data-gc-saved-action="fetch-links" data-gc-fetch-links-btn="' + rid + '" onclick="gcFetchSamLinks(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--gold2)">🔗 Fetch Links</button>' +
             '<button class="btn btn-ghost" data-gc-saved-action="upload-solicitation-files" data-gc-extract-btn="' + rid + '" onclick="gcUploadSolicitationFiles(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">⬆ Upload Solicitation Files</button>' +
             // Phase 25AD — lifecycle controls. Unpursue moves the row back to
             // saved/watchlist. Delete removes the saved pursuit row from the
@@ -19681,6 +19682,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     openBtn.setAttribute('type', 'button');
     openBtn.setAttribute('onclick', "gcOpenOfficialSamListing('" + String(o.id || '').replace(/'/g, "\\'") + "')");
     actions.appendChild(openBtn);
+    var fetchLinksBtn = makeEl('button', 'padding:4px 10px;font-size:10.5px;color:var(--gold2)', '🔗 Fetch Links');
+    fetchLinksBtn.className = 'btn btn-ghost';
+    fetchLinksBtn.setAttribute('type', 'button');
+    fetchLinksBtn.setAttribute('data-gc-fetch-links-btn', String(o.id || ''));
+    fetchLinksBtn.setAttribute('onclick', "gcFetchSamLinks('" + String(o.id || '').replace(/'/g, "\'") + "')");
+    actions.appendChild(fetchLinksBtn);
     var extractBtn = makeEl('button', 'padding:4px 10px;font-size:10.5px',
       (o.solicitationImportStatus === 'extracted') ? '✓ Review in Solicitation Center' : '⬆ Upload Solicitation Files');
     extractBtn.className = 'btn btn-ghost';
@@ -19689,6 +19696,26 @@ document.addEventListener('DOMContentLoaded',()=>{
     extractBtn.setAttribute('onclick', "gcUploadSolicitationFiles('" + String(o.id || '').replace(/'/g, "\\'") + "')");
     actions.appendChild(extractBtn);
     hostEl.appendChild(actions);
+    var linkSet = Array.isArray(o.samLinkReferences) ? o.samLinkReferences : [];
+    var linkWrap = makeEl('div', 'margin-top:10px');
+    linkWrap.appendChild(makeEl('div', 'font-weight:600;font-size:11px;color:var(--text);margin-bottom:3px', 'Fetched SAM.gov links'));
+    if (linkSet.length){
+      linkSet.slice(0, 20).forEach(function(l){
+        var row = makeEl('div', 'display:flex;gap:6px;align-items:center;margin-bottom:4px;font-size:10px;color:var(--sub)');
+        var label = makeEl('span', 'min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1', (l.label || l.fileName || l.url || 'SAM.gov link'));
+        row.appendChild(label);
+        var open = makeEl('button', 'padding:2px 7px;font-size:9.5px', 'Open');
+        open.className = 'btn btn-ghost';
+        open.setAttribute('type', 'button');
+        open.onclick = function(){ window.gcOpenExternal(l.url, 'SAM.gov link'); };
+        row.appendChild(open);
+        linkWrap.appendChild(row);
+      });
+      if (o.samLinksFetchedAt) linkWrap.appendChild(makeEl('div', 'font-size:9px;color:var(--muted);margin-top:4px', 'Fetched ' + String(o.samLinksFetchedAt) + ' · metadata only, no downloads.'));
+    } else {
+      linkWrap.appendChild(makeEl('div', 'font-size:10px;color:var(--muted)', 'No fetched links stored yet. Use Fetch Links after saving a pursuit.'));
+    }
+    hostEl.appendChild(linkWrap);
     // Point of contact — text only.
     if (Array.isArray(o.pointOfContact) && o.pointOfContact.length){
       var pwrap = makeEl('div', 'margin-top:10px');
@@ -19703,7 +19730,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       hostEl.appendChild(pwrap);
     }
     // Safety footer (no retrieval, no file storage, no automated submission).
-    hostEl.appendChild(makeEl('div', 'margin-top:10px;font-size:9.5px;color:var(--muted);line-height:1.5', 'SourceDeck does not retrieve SAM.gov files or attachment links. Open the official listing to get attachments from your browser, then use Upload Solicitation Files to import them locally.'));
+    hostEl.appendChild(makeEl('div', 'margin-top:10px;font-size:9.5px;color:var(--muted);line-height:1.5', 'Fetch Links collects SAM.gov link metadata only. SourceDeck does not download remote solicitation files, does not store credentialed URLs, and still uses Upload Solicitation Files for local extraction.'));
   }
   window.gcW25RenderSourcePanel = renderSourcePanel;
 
@@ -19809,6 +19836,37 @@ document.addEventListener('DOMContentLoaded',()=>{
     catch (e) { toast('Open unavailable. Safe link: ' + u, 'warn'); }
     return false;
   };
+  window.gcFetchSamLinks = async function(id){
+    var o = await resolve(id);
+    if (!o){ toast('Saved pursuit not found.', 'warn'); return; }
+    if (!(window.sd && window.sd.govcon && typeof window.sd.govcon.fetchLinks === 'function')){
+      toast('Fetch Links requires the SourceDeck desktop app.', 'warn'); return;
+    }
+    var btn = document.querySelector('[data-gc-fetch-links-btn="' + String(o.id || '').replace(/"/g, '\"') + '"]');
+    var prev = btn ? btn.textContent : '';
+    if (btn){ btn.disabled = true; btn.textContent = 'Fetching links…'; }
+    try {
+      var result = await window.sd.govcon.fetchLinks({
+        noticeId: o.noticeId || '',
+        solicitationNumber: o.solicitationNumber || '',
+        postedDate: o.postedDate || o.publishDate || '',
+        title: o.title || ''
+      });
+      if (!result || !result.ok){ toast('Fetch Links failed: ' + ((result && result.reason) || 'unknown'), 'warn'); return; }
+      var patch = Object.assign({}, o, {
+        samLinkReferences: Array.isArray(result.links) ? result.links : [],
+        samLinksFetchedAt: result.fetchedAt || new Date().toISOString(),
+        samLinksFetchNote: result.note || 'Link metadata only; no remote file download.'
+      });
+      if (window.sd.govcon.opportunities && typeof window.sd.govcon.opportunities.upsert === 'function') await window.sd.govcon.opportunities.upsert(patch);
+      try { if (window.gcW25SavedMap && window.gcW25SavedMap[id]) Object.assign(window.gcW25SavedMap[id], patch); } catch (e) {}
+      var panel = document.querySelector('[data-gc-saved-source-panel="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]');
+      if (panel) renderSourcePanel(panel, patch, 'saved');
+      toast('Fetched ' + ((result.links && result.links.length) || 0) + ' SAM.gov link(s). No files downloaded.', 'ok');
+    } catch (e){ toast('Fetch Links failed locally.', 'warn'); }
+    finally { if (btn){ btn.disabled = false; btn.textContent = prev || '🔗 Fetch Links'; } }
+  };
+
   // Removal phase — automatic SAM.gov notice/package/attachment retrieval is
   // permanently removed. All retired browser-open / description-fetch /
   // resource-import functions are deleted. The only browser action is

@@ -20,5 +20,6 @@ module.exports = {
   dedupe:                  impl.dedupe,
   applyTargeting:          impl.applyTargeting,
   buildSamHumanUrl:        impl.buildSamHumanUrl,
+  collectSamLinkReferences: impl.collectSamLinkReferences,
   NOTICE_TYPE_TO_GROUP:    impl.NOTICE_TYPE_TO_GROUP
 };

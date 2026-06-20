@@ -150,8 +150,10 @@ function isHumanSamPortalUrl(url) {
   const host = u.host.toLowerCase();
   const pathname = u.pathname.toLowerCase();
   // The human portal hosts (sam.gov / www.sam.gov / beta.sam.gov) serve
-  // notice and search HTML. The download API lives on api.sam.gov, which is
-  // a legitimate attachment source and must be preserved.
+  // notice and search HTML, but SAM may also return resource endpoints under
+  // /api/... on sam.gov itself. Preserve those metadata links; only discard
+  // human navigation pages.
+  if (/^\/api\//.test(pathname)) return false;
   if (host === 'sam.gov' || host === 'www.sam.gov' || host === 'beta.sam.gov') return true;
   if (/(^|\/)search(\/|$)/.test(pathname)) return true;
   if (/\/opp\/[^/]+\/view(\/|$)/.test(pathname)) return true;
@@ -160,6 +162,100 @@ function isHumanSamPortalUrl(url) {
 
 // Dedupe by noticeId then by solicitationNumber.
 // Earlier-listed records win when there's a clash.
+function stripCredentialQuery(url) {
+  let s = '';
+  if (!url) return '';
+  if (typeof url === 'string') s = url.trim();
+  else if (Array.isArray(url)) {
+    for (const item of url) { const v = stripCredentialQuery(item); if (v) return v; }
+    return '';
+  } else if (typeof url === 'object') {
+    return stripCredentialQuery(url.href || url.url || url.link || url.uri || '');
+  } else s = String(url || '').trim();
+  if (!s || /\[object\s+\w+\]/i.test(s)) return '';
+  s = s.replace(/([?&])(api_key|apikey)=[^&#]*/gi, '$1');
+  s = s.replace(/[?&]+$/, '');
+  s = s.replace(/\?&/, '?');
+  return s;
+}
+
+function safeHttpUrl(url) {
+  const s = stripCredentialQuery(url);
+  if (!/^https?:\/\//i.test(s)) return '';
+  if (/(api_key|apikey)=/i.test(s)) return '';
+  return s;
+}
+
+function hostOf(url) {
+  try { return new URL(url).host.toLowerCase(); } catch (_) { return ''; }
+}
+
+function filenameOf(url) {
+  try {
+    const u = new URL(url);
+    const parts = u.pathname.split('/').filter(Boolean);
+    return decodeURIComponent(parts[parts.length - 1] || u.host).slice(0, 160);
+  } catch (_) { return String(url || '').slice(0, 160); }
+}
+
+function addLink(out, seen, rawUrl, label, sourceField) {
+  const url = safeHttpUrl(rawUrl);
+  if (!url) return;
+  const key = url.toLowerCase();
+  if (seen.has(key)) return;
+  seen.add(key);
+  out.push(Object.freeze({
+    id: 'sam-link-' + out.length,
+    label: String(label || filenameOf(url) || 'SAM.gov link').slice(0, 180),
+    url,
+    host: hostOf(url),
+    fileName: filenameOf(url),
+    sourceField: String(sourceField || 'unknown').slice(0, 80),
+    requiresManualBrowserDownload: true
+  }));
+}
+
+function collectSamLinkReferences(rec) {
+  rec = rec || {};
+  const out = [];
+  const seen = new Set();
+  function visit(value, field, fallbackLabel) {
+    if (!value) return;
+    if (typeof value === 'string') { addLink(out, seen, value, fallbackLabel, field); return; }
+    if (Array.isArray(value)) { value.forEach((v, i) => visit(v, field + '[' + i + ']', fallbackLabel)); return; }
+    if (typeof value === 'object') {
+      const label = value.label || value.name || value.title || value.rel || fallbackLabel;
+      addLink(out, seen, value.href || value.url || value.link || value.uri || value.downloadUrl, label, field);
+      if (value.resources) visit(value.resources, field + '.resources', label);
+      if (value.links) visit(value.links, field + '.links', label);
+    }
+  }
+  visit(rec.resourceLinks, 'resourceLinks', 'SAM.gov resource');
+  visit(rec.resources, 'resources', 'SAM.gov resource');
+  visit(rec.attachments, 'attachments', 'SAM.gov attachment');
+  visit(rec.additionalInfoLink, 'additionalInfoLink', 'Additional information');
+  visit(rec.links, 'links', 'SAM.gov link');
+  visit(rec.descriptionLink || rec.descriptionUrl || rec.description, 'description', 'Description');
+  return out.filter(link => link.url && !isHumanSamPortalUrl(link.url));
+}
+
+function dateWindowForLinkFetch(input, nowMs) {
+  input = input || {};
+  const nowD = new Date(nowMs || Date.now());
+  const posted = Date.parse(String(input.postedDate || input.publishDate || input.datePosted || ''));
+  let fromD;
+  let toD;
+  if (isFinite(posted)) {
+    fromD = new Date(posted - 7 * 86400000);
+    toD = new Date(Math.min(nowD.getTime(), posted + 370 * 86400000));
+    if (toD < fromD) toD = nowD;
+  } else {
+    fromD = new Date(nowD.getTime() - 365 * 86400000);
+    toD = nowD;
+  }
+  return { from: fromD, to: toD };
+}
+
 function dedupe(records) {
   const out = [];
   const seenNotice = new Set();
@@ -343,7 +439,58 @@ function createSamSearchService(deps) {
     };
   }
 
-  return { search };
+
+  async function fetchLinks(input) {
+    input = input || {};
+    const apiKey = await getApiKey();
+    if (!apiKey) return { ok: false, usedApi: false, reason: 'missing_sam_api_key', links: [] };
+    if (!fetchFn) return { ok: false, usedApi: false, reason: 'no_fetch_available', links: [] };
+    const noticeId = String(input.noticeId || '').trim().slice(0, 100);
+    const solnum = String(input.solicitationNumber || input.solnum || '').trim().slice(0, 100);
+    if (!noticeId && !solnum) return { ok: false, usedApi: false, reason: 'missing_notice_or_solicitation_number', links: [] };
+
+    const params = new URLSearchParams();
+    params.set('api_key', apiKey);
+    params.set('limit', '10');
+    const dw = dateWindowForLinkFetch(input, now());
+    params.set('postedFrom', mmddyyyy(dw.from));
+    params.set('postedTo', mmddyyyy(dw.to));
+    if (noticeId) params.set('noticeid', noticeId);
+    if (solnum) params.set('solnum', solnum);
+
+    let resp;
+    try { resp = await fetchFn(SAM_API_BASE + '?' + params.toString(), { method: 'GET' }); }
+    catch (e) { return { ok: false, usedApi: true, reason: 'fetch_failed', error: e.message, links: [] }; }
+    if (!resp.ok) {
+      let detail = '';
+      try { detail = (await resp.text()).slice(0, 200); } catch (_) {}
+      return { ok: false, usedApi: true, reason: 'http_' + resp.status, detail, links: [] };
+    }
+    let body;
+    try { body = await resp.json(); } catch (_) { return { ok: false, usedApi: true, reason: 'invalid_json', links: [] }; }
+    const rawList = Array.isArray(body.opportunitiesData) ? body.opportunitiesData
+                  : Array.isArray(body.opportunities)     ? body.opportunities
+                  : Array.isArray(body.data)              ? body.data : [];
+    const match = rawList.find(r => {
+      const rNotice = String((r && (r.noticeId || r.id || r.notice_id)) || '').trim();
+      const rSol = String((r && (r.solicitationNumber || r.solnbr)) || '').trim();
+      return (noticeId && rNotice === noticeId) || (solnum && rSol === solnum);
+    }) || rawList[0] || null;
+    const links = collectSamLinkReferences(match);
+    return {
+      ok: true,
+      usedApi: true,
+      recordMatched: !!match,
+      totalRecords: body.totalRecords || body.total || rawList.length || 0,
+      fetchedAt: new Date(now()).toISOString(),
+      links,
+      noticeId: match ? (match.noticeId || match.id || noticeId || null) : (noticeId || null),
+      solicitationNumber: match ? (match.solicitationNumber || match.solnbr || solnum || null) : (solnum || null),
+      note: 'Link metadata only. SourceDeck does not download remote solicitation files or expose SAM.gov credentials to the renderer.'
+    };
+  }
+
+  return { search, fetchLinks };
 }
 
 function mmddyyyy(d) {
@@ -359,5 +506,6 @@ module.exports = {
   dedupe,
   applyTargeting,
   buildSamHumanUrl,
+  collectSamLinkReferences,
   NOTICE_TYPE_TO_GROUP
 };
