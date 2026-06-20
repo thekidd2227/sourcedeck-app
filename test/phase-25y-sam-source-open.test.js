@@ -35,8 +35,7 @@ test('single browser-open (Fetch) on saved pursuits + Open SAM.gov Source on sea
   // saved-pursuit row keeps one browser-open action (Fetch SAM.gov Notice →
   // gcABDownloadPackage) plus the local Extract action. The SAM SEARCH rows
   // still expose "Open SAM.gov Source" (a different surface).
-  assert.ok(/gcABDownloadPackage\(/.test(HTML), 'saved pursuit Fetch SAM.gov Notice action');
-  assert.ok(/gcExtractDownloadedSolicitation\(/.test(HTML), 'saved pursuit Extract Downloaded Solicitation action');
+  assert.ok(/gcSavedOpenOnSam\(/.test(HTML), 'saved pursuit Open on SAM.gov action');
   assert.ok(/gcTabSamOpenSource\(/.test(HTML), 'search row open-source');
   assert.ok(!/Open in SAM\.gov|Open SAM\.gov Notice/.test(HTML), 'duplicate open-notice button removed');
 });
@@ -44,15 +43,14 @@ test('single browser-open (Fetch) on saved pursuits + Open SAM.gov Source on sea
 test('saved pursuit Fetch / Extract handlers are id-keyed, not out-of-scope', () => {
   // The old bug: onclick="if(o.sourceUrl)..." referenced an out-of-scope `o`.
   assert.ok(!/onclick="if\(o\.sourceUrl\)/.test(HTML), 'no out-of-scope o reference');
-  assert.ok(/gcABDownloadPackage\(\\?'/.test(HTML) || /gcABDownloadPackage\('/.test(HTML), 'Fetch handler takes an id');
-  assert.ok(/gcExtractDownloadedSolicitation\(\\?'/.test(HTML) || /gcExtractDownloadedSolicitation\('/.test(HTML), 'Extract handler takes an id');
+  assert.ok(/gcSavedOpenOnSam\(\\?'/.test(HTML) || /gcSavedOpenOnSam\('/.test(HTML), 'Open-on-SAM handler takes an id');
 });
 
 test('browser-open action routes through gcOpenExternal (no silent fail)', () => {
   // Fetch SAM.gov Notice (gcABDownloadPackage) is the single browser-open and
   // routes through the robust gcOpenExternal helper.
-  const fetchFn = HTML.slice(HTML.indexOf('window.gcABDownloadPackage = async function'), HTML.indexOf('window.gcABDownloadPackage = async function') + 900);
-  assert.ok(/gcOpenExternal/.test(fetchFn), 'Fetch uses robust opener');
+  const openFn = HTML.slice(HTML.indexOf('window.gcSavedOpenOnSam = async function'), HTML.indexOf('window.gcSavedOpenOnSam = async function') + 900);
+  assert.ok(/gcOpenExternal/.test(openFn), 'Open-on-SAM uses robust opener');
 });
 
 test('no api_key-bearing URL is ever opened', () => {

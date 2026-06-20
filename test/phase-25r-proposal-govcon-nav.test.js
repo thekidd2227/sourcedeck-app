@@ -41,10 +41,9 @@ test('no "Section-by-section"/"Human approval gate" subtitle in the pane', () =>
 });
 
 // ── Task 3: GovCon sub-tabs + Audit Log relocation ─────────────────────
-test('GovCon renders the 9 specified sub-tabs', () => {
-  ['find-opportunities','saved-pursuits','solicitation','vendors','pricing','past-performance','prime-partners','far-reference','contract-awards']
+test('GovCon renders the 8 specified sub-tabs', () => {
+  ['find-opportunities','saved-pursuits','vendors','pricing','past-performance','prime-partners','far-reference','contract-awards']
     .forEach(function(t){ assert.ok(new RegExp('data-gc-tab="' + t + '"').test(HTML), 'GovCon sub-tab missing: ' + t); });
-  assert.ok(/data-gc-tab="solicitation"[\s\S]{0,400}Solicitation Center/.test(HTML), '"Solicitation Center" label');
   assert.ok(/data-gc-tab="contract-awards"[\s\S]{0,400}Federal Procurement Data/.test(HTML), '"Federal Procurement Data" label');
 });
 test('Audit Log is NOT a GovCon tab', () => {

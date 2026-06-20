@@ -41,7 +41,7 @@ test('tablet form controls prevent iPad focus zoom', () => {
 });
 
 test('wide solicitation and vendor tables use contained touch scrolling', () => {
-  assert.match(html, /\.tbl-wrap,.gc-vqr-table-wrap,.gc-sol-matrix\{[\s\S]*?overscroll-behavior-inline:contain/);
+  assert.match(html, /\.tbl-wrap,.gc-vqr-table-wrap\{[\s\S]*?overscroll-behavior-inline:contain/);
 });
 
 test('collapsed tablet navigation includes touch-safe sub-navigation pills', () => {

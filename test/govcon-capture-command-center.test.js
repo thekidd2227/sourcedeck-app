@@ -69,7 +69,6 @@ test('Manual opportunity intake form + fields exist', () => {
   assert.ok(/Add to Capture Board/.test(HTML), 'Add to Capture Board action missing');
   assert.ok(/Run Bid\/No-Bid Review/.test(HTML), 'Run Bid/No-Bid Review action missing');
   assert.ok(/Extract Deadlines/.test(HTML), 'Extract Deadlines action missing');
-  assert.ok(/Prepare Solicitation Center/.test(HTML), 'Prepare Solicitation Center action missing');
   assert.ok(/Manual intake only/.test(HTML), 'Manual intake only safety copy missing');
 });
 

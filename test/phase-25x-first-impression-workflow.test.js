@@ -31,8 +31,6 @@ test('not a main sidebar clutter item', () => {
 });
 
 test('saved pursuit + solicitation shortcuts open it', () => {
-  assert.ok(/gcFiOpenFor\(/.test(HTML), 'gcFiOpenFor shortcut present');
-  assert.ok(/Make First Impression/.test(HTML), 'Make First Impression shortcut label present');
   assert.ok(/window\.gcFiOpenFor = async function/.test(HTML), 'shortcut opens Proposal Workspace + loads solicitation');
   assert.ok(/openTab\('execution'\)/.test(HTML), 'shortcut routes to Proposal Workspace');
 });

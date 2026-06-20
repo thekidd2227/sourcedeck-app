@@ -234,8 +234,7 @@ test('Phase 22B Capture Command Center remains intact', () => {
 });
 
 test('Phase 22C Solicitation Workspace remains intact', () => {
-  assert.ok(/id="gc-sol-workspace"/.test(HTML), 'gc-sol-workspace missing');
-  assert.ok(/id="gc-sol-matrix-table"/.test(HTML), 'gc-sol-matrix-table missing');
+  assert.ok(!/id="gc-sol-workspace"/.test(HTML), 'gc-sol-workspace removed');
 });
 
 test('Phase 22D Vendor Quote Room + Pricing Worksheet remain intact', () => {
@@ -271,7 +270,7 @@ test('every inline <script> block still parses (renderer-boot guard)', () => {
 test('operating-rhythm section is sandwiched between Capture CC and Solicitation Workspace', () => {
   const ccEnd = HTML.indexOf('id="gc-capture-cc"');
   const orStart = HTML.indexOf('id="gc-operating-rhythm"');
-  const swStart = HTML.indexOf('id="gc-sol-workspace"');
+  const swStart = HTML.indexOf('id="gc-vqr-pricing"');
   assert.ok(ccEnd > 0,    'gc-capture-cc not found');
   assert.ok(orStart > 0,  'gc-operating-rhythm not found');
   assert.ok(swStart > 0,  'gc-sol-workspace not found');

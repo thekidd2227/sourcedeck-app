@@ -49,7 +49,6 @@ test('Phase 25N — required GovCon tab buttons map to the canonical sections', 
   const REQUIRED_TAB_BUTTONS = [
     // Phase 25R — Solicitation renamed "Solicitation Center"; Audit Log moved
     // to Settings (no longer a GovCon tab).
-    { label: 'Solicitation Center',  tab: 'solicitation' },
     // Phase 25V — Vendors + Pricing split into two focused tabs.
     { label: 'Vendors',              tab: 'vendors' },
     { label: 'Pricing',              tab: 'pricing' },
@@ -73,7 +72,6 @@ test('GovCon section nav pill targets exist as <section> elements in the pane', 
   const REQUIRED_TARGETS = [
     'gc-capture-cc',
     'gc-operating-rhythm',
-    'gc-sol-workspace',
     'gc-vqr-pricing',
     'gc-pp-cs-pp',
     'gc-sub-gate',

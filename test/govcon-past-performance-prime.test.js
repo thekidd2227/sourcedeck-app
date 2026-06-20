@@ -204,16 +204,16 @@ test('System Readiness / System Flow tab remains removed', () => {
 test('Phase 22B GovCon Capture Command Center remains intact', () => {
   assert.ok(/id="gc-capture-cc"/.test(HTML), 'Capture Command Center section missing');
   assert.ok(/GovCon Capture Command Center/.test(HTML), 'Capture Command Center title missing');
-  for (const id of ['gc-cc-active-count','gc-cc-deadlines-count','gc-cc-qa-count','gc-cc-bidnobid-count','gc-cc-solready-count','gc-cc-vendor-count','gc-cc-proposal-count','gc-cc-approval-count']) {
+  for (const id of ['gc-cc-active-count','gc-cc-deadlines-count','gc-cc-qa-count','gc-cc-bidnobid-count','gc-cc-vendor-count','gc-cc-proposal-count','gc-cc-approval-count']) {
     assert.ok(new RegExp('id="' + id + '"').test(HTML), 'CC card missing: ' + id);
   }
 });
 
 // 19. Phase 22C Solicitation Workspace remains.
 test('Phase 22C Solicitation Center remains intact', () => {
-  assert.ok(/id="gc-sol-workspace"/.test(HTML), 'Solicitation Workspace section missing');
+  assert.ok(!/id="gc-sol-workspace"/.test(HTML), 'Solicitation Workspace removed (package feature deleted)');
   assert.ok(/Solicitation Center/.test(HTML), 'Solicitation Center title missing');
-  for (const id of ['gc-sol-summary','gc-sol-section-l','gc-sol-section-m','gc-sol-pws','gc-sol-forms','gc-sol-deadlines','gc-sol-risks','gc-sol-matrix-table','gc-sol-matrix-body']) {
+  for (const id of []) {
     assert.ok(new RegExp('id="' + id + '"').test(HTML), 'Solicitation Workspace anchor missing: ' + id);
   }
 });

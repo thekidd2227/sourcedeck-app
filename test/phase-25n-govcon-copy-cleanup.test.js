@@ -48,7 +48,7 @@ allowedSafety.forEach(function(s){
 });
 
 // ── Find Opportunities empty-state copy matches the contract ────────
-assert(/Search SAM\.gov, upload a solicitation, or download a saved SAM\.gov package to begin\./.test(html),
+assert(/Search SAM\.gov or upload a solicitation to begin\./.test(html),
   'Phase 25N empty-state copy is present');
 
 // ── No raw API key copy / no stale 2026-06-04 timestamp in Find tab ─

@@ -31,7 +31,6 @@ const required = [
   // Phase 25R — "Solicitation" renamed "Solicitation Center"; Audit Log moved
   // out of GovCon to Settings → Audit Log; Contract Awards relabeled
   // "Federal Procurement Data" (tab id retained).
-  { tab: 'solicitation',         label: 'Solicitation Center'   },
   // Phase 25V — Scope tab removed (lives in Proposal Workspace intake);
   // Vendors + Pricing split into two focused tabs; Prime Partners promoted
   // to its own GovCon tab.
@@ -65,9 +64,7 @@ assert(/data-gc-find-action="search-sam"/.test(html),
   'Search SAM.gov action is tagged');
 assert(/data-gc-find-action="upload-solicitation"/.test(html),
   'Upload Solicitation action is tagged');
-assert(/data-gc-find-action="download-package"/.test(html),
-  'Download SAM.gov Package action is tagged');
-assert(/Search SAM\.gov, upload a solicitation, or download a saved SAM\.gov package to begin\./.test(html),
+assert(/Search SAM\.gov or upload a solicitation to begin\./.test(html),
   'Find Opportunities empty-state copy is present');
 
 // ── SAM.gov key presence-only status on the tab ─────────────────────
@@ -98,7 +95,6 @@ try {
   var pages = [
     { tab: 'find-opportunities', d: '' },
     { tab: 'saved-pursuits',     d: '' },
-    { tab: 'solicitation',       d: '' },
     { tab: 'hidden-internal',    d: '' }
   ];
   var sandbox = {
