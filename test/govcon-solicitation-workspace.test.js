@@ -42,11 +42,13 @@ test('Solicitation Center section exists', () => {
   assert.ok(/data-section="govcon-solicitation-workspace"/.test(HTML), 'data-section anchor missing');
 });
 
-// 2. Package/upload intake + linked opportunity selector exists.
-test('Package/upload intake + linked opportunity selector exist', () => {
+// 2. Package/upload intake exists; linked opportunity selector is intentionally removed.
+test('Package/upload intake exists and linked opportunity selector is removed', () => {
   assert.ok(!/Download Solicitation Package|Download SAM\.gov Package/.test(HTML), 'package download action must be removed');
-  assert.ok(/id="gc-sol-opp-select"/.test(HTML), 'gc-sol-opp-select missing');
-  assert.ok(/Upload Solicitation/.test(HTML), 'upload solicitation action missing');
+  assert.ok(!/id="gc-sol-opp-select"/.test(HTML), 'gc-sol-opp-select should remain removed from Solicitation Center');
+  assert.ok(/id="gc-sol-summary-upload-btn"/.test(HTML), 'Solicitation Summary upload action missing');
+  assert.ok(/data-gc-tab="solicitation-attachments"/.test(HTML), 'Solicitation Attachments tab button missing');
+  assert.ok(/data-gc-tab-page="solicitation-attachments"/.test(HTML), 'Solicitation Attachments tab page missing');
 });
 
 // 3. Section L panel exists.
@@ -102,7 +104,7 @@ test('Compliance Matrix has all 11 spec columns', () => {
 // 9. Empty states exist and contain no fake solicitation data.
 test('empty states present and no fake solicitation / agency / deadlines', () => {
   // Required empty-state copies
-  assert.ok(/No solicitation loaded yet\. Use Upload Solicitation Files to import documents from your computer\./.test(HTML),
+  assert.ok(/No solicitation loaded yet\. Use Upload Solicitation Files to import multiple documents from your computer\. Extracted results will appear here automatically\./.test(HTML),
     'Summary empty state missing');
   assert.ok(/No compliance requirements extracted yet\. Run extraction on a readable package or manually map requirements\./.test(HTML),
     'Matrix empty state missing');

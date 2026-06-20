@@ -2433,6 +2433,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <button type="button" class="gc-tab-btn active" role="tab" aria-selected="true" data-gc-tab="find-opportunities" onclick="gcTabSwitch('find-opportunities')" style="padding:6px 12px;border-radius:6px;background:rgba(176,138,60,0.14);border:1px solid rgba(176,138,60,0.45);color:var(--text);cursor:pointer">Find Opportunities</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="saved-pursuits" onclick="gcTabSwitch('saved-pursuits')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Saved Pursuits</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="solicitation" onclick="gcTabSwitch('solicitation')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Solicitation Center</button>
+            <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="solicitation-attachments" onclick="gcTabSwitch('solicitation-attachments')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Attachments</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="vendors" onclick="gcTabSwitch('vendors')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Vendors</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="pricing" onclick="gcTabSwitch('pricing')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Pricing</button>
             <button type="button" class="gc-tab-btn" role="tab" aria-selected="false" data-gc-tab="past-performance" onclick="gcTabSwitch('past-performance')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer">Past Performance</button>
@@ -3302,12 +3303,6 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <!-- Intake -->
           <div class="gc-sol-intake" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">
             <div style="display:grid;grid-template-columns:1fr;gap:10px">
-              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:3px">
-                <span>Linked opportunity (optional)</span>
-                <select class="select" id="gc-sol-opp-select">
-                  <option value="">— Not linked —</option>
-                </select>
-              </label>
               <div style="display:flex;gap:8px;flex-wrap:wrap">
                 <button type="button" class="btn btn-gold" id="gc-sol-extract-btn" data-sd-action-id="sol-extract" onclick="gcSolExtract()">Extract Requirements</button>
                 <button type="button" class="btn btn-ghost" id="gc-sol-explain-btn" data-sd-action-id="sol-explain" onclick="gcSolExplainPlainEnglish()">Explain Package in Plain English</button>
@@ -3316,29 +3311,20 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 <button type="button" class="btn btn-ghost" onclick="gcSolMarkReviewed()">Mark Requirement Reviewed</button>
                 <button type="button" class="btn btn-ghost" onclick="gcSolExportPlaceholder()">Export Matrix Placeholder</button>
                 <!-- Phase 25X — shortcut into Make the Right First Impression. -->
-                <button type="button" class="btn btn-ghost" onclick="gcFiOpenFor((document.getElementById('gc-sol-opp-select')||{}).value||'')" style="color:var(--gold2)">✦ Make First Impression</button>
+                <button type="button" class="btn btn-ghost" onclick="gcFiOpenFor((localStorage.getItem('sd.govcon.activeSolicitation.v1')||''))" style="color:var(--gold2)">✦ Make First Impression</button>
               </div>
               <div style="font-size:10px;color:var(--muted);line-height:1.55">Package or upload extraction only. SourceDeck does not submit bids, contact anyone, or upload to any portal. All outputs require human review and verification against the source document.</div>
-            </div>
-          </div>
-
-          <!-- Phase 25AB — Attachments panel for the linked saved pursuit.
-               Populated when a saved pursuit is selected: SAM.gov description
-               fetch, resource links/attachments, point of contact, metadata.
-               Extract Requirements runs against uploaded solicitation text where
-               available. Local intake only — no upload, no send. -->
-          <div class="gc-sol-panel" id="gc-sol-source-materials" data-gc-sol-source-materials="true" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">
-            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Attachments</div>
-            <div id="gc-sol-source-materials-body" data-gc-sol-source-materials-body="true">
-              <div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation selected yet. Select a saved pursuit, or use Upload Solicitation Files to import documents.</div>
             </div>
           </div>
 
           <!-- Output panels -->
           <div class="gc-sol-panels" style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
             <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
-              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Solicitation Summary</div>
-              <div id="gc-sol-summary"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation loaded yet. Use Upload Solicitation Files to import documents from your computer.</div></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
+                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text)">Solicitation Summary</div>
+                <button type="button" class="btn btn-gold" id="gc-sol-summary-upload-btn" onclick="gcSolUploadActive()">⬆ Upload Solicitation Files</button>
+              </div>
+              <div id="gc-sol-summary"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation loaded yet. Use Upload Solicitation Files to import multiple documents from your computer. Extracted results will appear here automatically.</div></div>
             </div>
             <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
               <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Section L — Instructions to Offerors</div>
@@ -3396,6 +3382,24 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 
           <!-- Phase 25V — concise safety footer (replaced heavy bottom panel). -->
           <div class="gc-sol-human-review gc-safety-footer" style="margin-top:10px;font-size:10px;color:var(--muted);line-height:1.5">Draft-only workspace. SourceDeck does not submit, upload, or send external messages.</div>
+        </section>
+
+        <!-- Phase 25AO — Attachments moved out of the Solicitation Summary body.
+             This is a first-class Solicitation Center sub-tab in the GovCon tab rail;
+             it preserves the same saved-pursuit source panel behavior, Fetch Links
+             metadata-only flow, and manual multi-file upload action. -->
+        <section id="gc-sol-attachments-workspace" class="gc-sol-workspace" data-section="govcon-solicitation-attachments" data-gc-tab-page="solicitation-attachments" style="display:none;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
+          <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Solicitation Attachments</div>
+            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Open official listing · Fetch link metadata · Upload local solicitation files</div>
+            <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">Attachments are managed separately from extracted solicitation sections. SourceDeck does not download remote solicitation files; upload local files after downloading them from the official listing.</div>
+          </div>
+          <div class="gc-sol-panel" id="gc-sol-source-materials" data-gc-sol-source-materials="true" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">
+            <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Attachments</div>
+            <div id="gc-sol-source-materials-body" data-gc-sol-source-materials-body="true">
+              <div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation selected yet. Save/select a pursuit, then use Open Official SAM.gov Listing, Fetch Links, or Upload Solicitation Files.</div>
+            </div>
+          </div>
         </section>
         <!-- ═══════════════════════════════════════════════════════════════
              PHASE 22D — Vendor Quote Room + Pricing Worksheet
@@ -14990,7 +14994,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     renderMatrix(state.matrix);
   }
   function activeSolId(){
-    try { return localStorage.getItem('sd.govcon.activeSolicitation.v1') || (($('gc-sol-opp-select') || {}).value || ''); } catch (e) { return (($('gc-sol-opp-select') || {}).value || ''); }
+    try { return localStorage.getItem('sd.govcon.activeSolicitation.v1') || ''; } catch (e) { return ''; }
   }
   function mapPackageExtraction(ex){
     ex = ex || {};
@@ -15153,7 +15157,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       state.real = true; // produced from real source text, not demo seed
       saveState(state);
       renderPanels(state);
-      if (window.toast) try { window.toast('Draft extraction complete. Verify every row against the source document. Human review required.', 'ok'); } catch (e) {}
+      try { if (typeof window.gcTabSwitch === 'function') window.gcTabSwitch('solicitation'); } catch (e) {}
+      if (window.toast) try { window.toast('Solicitation extracted. Opened Solicitation Center summary so you can review the extracted sections.', 'ok'); } catch (e) {}
     } finally {
       if (window.sdClearActionBusy) window.sdClearActionBusy('sol-extract');
     }
@@ -17677,12 +17682,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     var rec = newRecord('Upload', { fileName: inv.map(function(x){ return x.safeStoredFileName; }).join(', '), title: inv.length + ' solicitation document' + (inv.length === 1 ? '' : 's') });
     rec.rawText = '';
     rec.status = result.import && result.import.partialSuccess ? 'partial-success-review-required' : 'extracted-review-required';
-    rec.extractionLog = { at: new Date().toISOString(), source: 'canonical-main-process-import', rawTextChars: 0, fieldsPopulated: (result.complianceMatrix || []).length, note: 'Extraction processed — review required.' };
+    rec.extractionLog = { at: new Date().toISOString(), source: 'canonical-main-process-import', rawTextChars: 0, fieldsPopulated: (result.complianceMatrix || []).length, note: 'Extraction processed — open Solicitation Summary to review extracted results.' };
     rec.packageExtraction = result;
     _state.records.push(rec);
     _state.activeId = rec.id;
     saveState().then(renderSelector);
-    if (window.toast) window.toast('Extraction processed — review required.', result.import && result.import.partialSuccess ? 'warn' : 'ok');
+    if (window.toast) window.toast('Extraction processed — opening Solicitation Summary.', result.import && result.import.partialSuccess ? 'warn' : 'ok');
   };
   window.pwSolTogglePasteArea = function(){
     if (window.toast) try { window.toast('Text paste intake is deprecated. Upload a solicitation or use a downloaded SAM.gov package.', 'info'); } catch (e) {}
@@ -17710,7 +17715,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     if (rec.packageExtraction){
       if (typeof window.gcSolLoadExtractionResult === 'function') window.gcSolLoadExtractionResult(rec.packageExtraction);
-      if (window.toast) try { window.toast('Extraction processed — review required.', 'ok'); } catch (e) {}
+      if (window.toast) try { window.toast('Extraction processed — opening Solicitation Summary.', 'ok'); } catch (e) {}
       return;
     }
     if (pasted.trim() && !rec.rawText){ rec.rawText = pasted; }
@@ -19466,7 +19471,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     persistWorkingTo(prev);
     setActiveSolRaw(id);
     loadWorkingFrom(id);
-    ['gc-vendors-sol-select','gc-pricing-sol-select','gc-ppf-sol-select','gc-sol-opp-select'].forEach(function(sid){
+    ['gc-vendors-sol-select','gc-pricing-sol-select','gc-ppf-sol-select'].forEach(function(sid){
       var el = $(sid); if (el){ try { el.value = id; } catch (e) {} }
     });
     var opp = pursuitMap[id];
@@ -19530,7 +19535,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Tab hook invoked by gcTabSwitch for the relevant tabs.
   window.gcV25SolHook = function(tabId){
     var map = {
-      'solicitation':   { sel: 'gc-sol-opp-select',     empty: null,                  general: '— Not linked —',                          render: null },
+      'solicitation':   { sel: null,                    empty: null,                  general: '— Active solicitation —',                 render: null },
+      'solicitation-attachments': { sel: null,            empty: null,                  general: '— Active solicitation —',                 render: null },
       'vendors':        { sel: 'gc-vendors-sol-select', empty: 'gc-vendors-sol-empty', general: '— No solicitation selected (general vendor list) —', render: window.gcVqrRender },
       'pricing':        { sel: 'gc-pricing-sol-select', empty: 'gc-pricing-sol-empty', general: '— No solicitation selected (general pricing) —',     render: window.gcPricingRecalc },
       'prime-partners': { sel: 'gc-ppf-sol-select',     empty: 'gc-ppf-sol-empty',     general: '— No solicitation selected (general prime list) —', render: window.gcPpfRender }
@@ -19540,24 +19546,15 @@ document.addEventListener('DOMContentLoaded',()=>{
     savedPursuits().then(function(list){
       pursuitMap = {};
       for (var i = 0; i < list.length; i++){ pursuitMap[list[i].id] = list[i]; }
-      fillSelect(cfg.sel, list, cfg.general);
+      if (cfg.sel) fillSelect(cfg.sel, list, cfg.general);
       if (cfg.empty){ var e = $(cfg.empty); if (e) e.style.display = list.length ? 'none' : ''; }
       if (typeof cfg.render === 'function'){ try { cfg.render(); } catch (e2) {} }
       // On the Solicitation tab, attach a change handler (once) that loads
       // the selected pursuit's metadata into the summary panel.
-      if (tabId === 'solicitation'){
-        var ss = $('gc-sol-opp-select');
-        if (ss && !ss.getAttribute('data-v25-wired')){
-          ss.setAttribute('data-v25-wired', '1');
-          ss.addEventListener('change', function(){
-            window.gcV25SelectSolicitation(ss.value);
-            var opp = pursuitMap[ss.value];
-            if (opp) gcV25RenderSolMeta(opp);
-            try { if (typeof window.gcW25RenderWorkspaceSource === 'function') window.gcW25RenderWorkspaceSource(ss.value); } catch (e) {}
-          });
-        }
-        var cur = activeSol(); if (cur){ try { ss.value = cur; } catch (e3) {} if (pursuitMap[cur]) gcV25RenderSolMeta(pursuitMap[cur]); }
-        // Phase 25AB — render the attachments panel for the active sol.
+      if (tabId === 'solicitation' || tabId === 'solicitation-attachments'){
+        var cur = activeSol();
+        if (tabId === 'solicitation' && cur && pursuitMap[cur]) gcV25RenderSolMeta(pursuitMap[cur]);
+        // Phase 25AO — render the dedicated Attachments sub-tab from the same active solicitation.
         try { if (typeof window.gcW25RenderWorkspaceSource === 'function') window.gcW25RenderWorkspaceSource(cur); } catch (e4) {}
       }
     });
@@ -19960,6 +19957,13 @@ document.addEventListener('DOMContentLoaded',()=>{
     try { if (typeof window.gcTabSwitch === 'function') window.gcTabSwitch('solicitation'); } catch (e) {}
   };
 
+  window.gcSolUploadActive = function(){
+    var id = '';
+    try { id = localStorage.getItem('sd.govcon.activeSolicitation.v1') || ''; } catch (e) {}
+    if (!id){ try { toast('Save or select a pursuit first, then upload solicitation files into Solicitation Summary.', 'info'); } catch (e2) {} return; }
+    return window.gcUploadSolicitationFiles(id);
+  };
+
   window.gcUploadSolicitationFiles = async function(id){
     var opportunity = await resolve(id);
     if (!opportunity){ toast('Opportunity not found.', 'warn'); return; }
@@ -20011,7 +20015,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       btn.textContent = '✓ Review in Solicitation Center';
       btn.setAttribute('onclick', "gcReviewInSolicitationCenter('" + oid.replace(/'/g, "\\'") + "')");
     }
-    toast('Solicitation extracted and loaded into Solicitation Center.', 'ok');
+    toast('Solicitation extracted. Opened Solicitation Center summary so you can review the extracted sections.', 'ok');
   };
 
   // Phase 25AD — Right-side attached file viewer populator. Populates
