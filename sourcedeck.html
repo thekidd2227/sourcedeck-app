@@ -14762,6 +14762,41 @@ document.addEventListener('DOMContentLoaded',()=>{
     return out;
   }
   if (typeof window !== 'undefined') { window.sdSolRenderGuard = _sal25SafeText; window.sdSolRenderGuardList = _sal25SafeList; }
+  // Phase 25AM2 — shared render-time boundary for ALL renderers (Solicitation
+  // Center, Proposal Workspace, Vendor Quote Room, previews, exports, child
+  // windows). PR #151 added Vendor Quote Room sinks (renderCoverage/
+  // renderCandidates) that painted persisted workflow/solicitation state through
+  // the weak local safeText() — which strips only angle brackets and therefore
+  // still dumped `.cmd-flow`, `.cmd-pill`, `.cc-lcc-grid`, SourceDeck nav labels,
+  // and CSS-rule text. This single helper screens any dynamic field with the
+  // strong shared app-shell detector and substitutes the canonical block message.
+  // It reuses the Phase 25AL detector + diagnostics, never throws, never freezes
+  // the UI, and never stores the raw blocked payload.
+  var SD_SHIELD_MSG = 'SourceDeck blocked application UI text from being rendered as solicitation or vendor content. Clear contaminated workspace data and re-import the solicitation.';
+  function _sdRenderShield(text, context){
+    var s = (text == null) ? '' : String(text);
+    if (s && _sal25IsAppShell(s)) { _sal25RecordBlock(s, context || 'render'); return SD_SHIELD_MSG; }
+    return s;
+  }
+  function _sdRenderShieldList(items, context){
+    if (!Array.isArray(items)) return items;
+    var blocked = false, out = [];
+    for (var i = 0; i < items.length; i++) {
+      var t = items[i];
+      var str = (t && typeof t === 'object') ? (t.item || t.fileName || t.text || t.label || '') : t;
+      if (typeof str === 'string' && str && _sal25IsAppShell(str)) { _sal25RecordBlock(str, context || 'render'); blocked = true; continue; }
+      out.push(t);
+    }
+    if (blocked && !out.length) out.push(SD_SHIELD_MSG);
+    else if (blocked) out.unshift(SD_SHIELD_MSG);
+    return out;
+  }
+  if (typeof window !== 'undefined') {
+    window.sdRenderShield = _sdRenderShield;
+    window.sdRenderShieldList = _sdRenderShieldList;
+    window.sdRenderShieldIsAppShell = _sal25IsAppShell;
+    window.sdRenderShieldMsg = SD_SHIELD_MSG;
+  }
   function loadState(){
     try {
       var raw = window.localStorage && window.localStorage.getItem(STORAGE_KEY);
@@ -15252,6 +15287,45 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
   function $(id){ return document.getElementById(id); }
   function safeText(s){ return String(s == null ? '' : s).replace(/[<>]/g, ''); }
+  // Phase 25AM2 — strong app-shell boundary for the Vendor Quote Room sinks.
+  // safeText() only strips angle brackets; it does NOT block app-shell/UI/CSS
+  // text (nav labels, .cmd-flow/.cmd-pill/.cc-lcc-grid, CSS rules). shield()
+  // routes a value through the shared detector (with a local fallback so it is
+  // never bypassed), and cell() shields THEN escapes for innerHTML. A single
+  // contaminated field becomes the block message; clean cells/rows pass through.
+  var VQR_BLOCK_MSG = 'SourceDeck blocked application UI text from being rendered as solicitation or vendor content. Clear contaminated workspace data and re-import the solicitation.';
+  function _vqrIsAppShell(s){
+    if (typeof s !== 'string' || !s) return false;
+    try { if (typeof window.sdRenderShieldIsAppShell === 'function') return !!window.sdRenderShieldIsAppShell(s); } catch (e) {}
+    try { if (typeof window._w25LooksLikeBadSource === 'function') return !!window._w25LooksLikeBadSource(s); } catch (e) {}
+    var strong = ['SourceDeck GovCon Pipeline', '.cc-ribbon', '.cmd-pill', '.cmd-flow', '.cc-lcc-grid', 'tab-govcon', 'tab-dashboard', 'SourceDeck does not auto-send', 'sourcedeck.html'];
+    var sample = s.slice(0, 64 * 1024);
+    for (var i = 0; i < strong.length; i++) { if (sample.indexOf(strong[i]) >= 0) return true; }
+    // Weak markers: any two co-occurring app-shell nav labels are conclusive.
+    var weak = ['Operating Hub Dashboard', 'GovCon Find Opportunities', 'Solicitation Center', 'Response Desk', 'Revenue Path', 'Generated Leads', 'Social Access Points'];
+    var hits = 0;
+    for (var w = 0; w < weak.length; w++) { if (sample.indexOf(weak[w]) >= 0) { hits++; if (hits >= 2) return true; } }
+    return false;
+  }
+  function shield(s, ctx){
+    try { if (typeof window.sdRenderShield === 'function') return window.sdRenderShield(s, ctx || 'vqr'); } catch (e) {}
+    var str = (s == null) ? '' : String(s);
+    return (str && _vqrIsAppShell(str)) ? VQR_BLOCK_MSG : str;
+  }
+  function cell(s){ return safeText(shield(s)); }
+  // Row-level guard: a contaminated app-shell dump is distributed across a row's
+  // fields, where any single field may hold only one weak nav label that does not
+  // trip the 2-hit detector alone. Concatenating the row's text reconstructs the
+  // dump so the whole row is blocked as one safe message instead of leaking
+  // scattered nav labels / CSS-rule fragments.
+  function rowBad(parts){
+    try {
+      var blob = [];
+      for (var i = 0; i < parts.length; i++) { if (typeof parts[i] === 'string' && parts[i]) blob.push(parts[i]); }
+      return _vqrIsAppShell(blob.join('\n'));
+    } catch (e) { return false; }
+  }
+  function blockRow(colspan){ return '<tr><td colspan="' + colspan + '">' + safeText(VQR_BLOCK_MSG) + '</td></tr>'; }
   function fmtUSD(n){
     n = Number(n) || 0;
     return '$' + n.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ',');
@@ -15294,14 +15368,15 @@ document.addEventListener('DOMContentLoaded',()=>{
         for (var j = 0; j < arr.length; j++) {
           var o = arr[j];
           var flags = credentialFlags(o);
+          if (rowBad([o.category, o.vendor, o.contact, o.email, o.phone, o.status, o.riskNotes])) { rows.push(blockRow(8)); continue; }
           rows.push('<tr style="border-top:1px solid var(--border2,rgba(255,255,255,0.05));font-family:\'Instrument Sans\',sans-serif">'
-            + '<td style="padding:7px 6px;color:var(--text)">' + safeText(o.category) + '</td>'
-            + '<td style="padding:7px 6px;color:var(--text)">' + safeText(o.vendor) + '</td>'
-            + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(o.contact) + (o.email ? ' · ' + safeText(o.email) : '') + (o.phone ? ' · ' + safeText(o.phone) : '') + '</td>'
+            + '<td style="padding:7px 6px;color:var(--text)">' + cell(o.category) + '</td>'
+            + '<td style="padding:7px 6px;color:var(--text)">' + cell(o.vendor) + '</td>'
+            + '<td style="padding:7px 6px;color:var(--sub)">' + cell(o.contact) + (o.email ? ' · ' + cell(o.email) : '') + (o.phone ? ' · ' + cell(o.phone) : '') + '</td>'
             + '<td style="padding:7px 6px;color:var(--text);font-family:\'Azeret Mono\',monospace">' + (o.amount ? fmtUSD(o.amount) : '—') + '</td>'
-            + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(o.status) + '</td>'
-            + '<td style="padding:7px 6px;color:var(--sub);font-size:10px">' + (flags.on.length ? safeText(flags.on.join(', ')) : '—') + (flags.off.length ? ' · <span style="color:var(--muted)">missing: ' + safeText(flags.off.join(', ')) + '</span>' : '') + '</td>'
-            + '<td style="padding:7px 6px;color:var(--muted)">' + safeText(o.riskNotes) + '</td>'
+            + '<td style="padding:7px 6px;color:var(--sub)">' + cell(o.status) + '</td>'
+            + '<td style="padding:7px 6px;color:var(--sub);font-size:10px">' + (flags.on.length ? cell(flags.on.join(', ')) : '—') + (flags.off.length ? ' · <span style="color:var(--muted)">missing: ' + cell(flags.off.join(', ')) + '</span>' : '') + '</td>'
+            + '<td style="padding:7px 6px;color:var(--muted)">' + cell(o.riskNotes) + '</td>'
             + '<td style="padding:7px 6px;white-space:nowrap"><button type="button" class="btn btn-ghost" style="padding:2px 7px;font-size:10px" onclick="gcVqrEdit(' + j + ')">Edit</button> <button type="button" class="btn btn-ghost" style="padding:2px 7px;font-size:10px;color:var(--red)" onclick="gcVqrDelete(' + j + ')">Delete</button></td>'
             + '</tr>');
         }
@@ -15363,11 +15438,12 @@ document.addEventListener('DOMContentLoaded',()=>{
       var q = received[k];
       var lo = lowest[String(q.category || '').toLowerCase()];
       var d = Number(q.amount) - (lo == null ? Number(q.amount) : lo);
+      if (rowBad([q.category, q.vendor, q.status])) { rows.push(blockRow(5)); continue; }
       rows.push('<tr style="border-top:1px solid var(--border2,rgba(255,255,255,0.05))">'
-        + '<td style="padding:7px 6px;color:var(--text)">' + safeText(q.category) + '</td>'
-        + '<td style="padding:7px 6px;color:var(--text)">' + safeText(q.vendor) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--text)">' + cell(q.category) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--text)">' + cell(q.vendor) + '</td>'
         + '<td style="padding:7px 6px;color:var(--text);font-family:\'Azeret Mono\',monospace">' + fmtUSD(q.amount) + '</td>'
-        + '<td style="padding:7px 6px;color:var(--sub)">' + safeText(q.status) + '</td>'
+        + '<td style="padding:7px 6px;color:var(--sub)">' + cell(q.status) + '</td>'
         + '<td style="padding:7px 6px;color:' + (d > 0 ? 'var(--red,#8B1A2E)' : 'var(--green,#1E7A4E)') + ';font-family:\'Azeret Mono\',monospace">' + (d > 0 ? '+' : '') + fmtUSD(d) + '</td>'
         + '</tr>');
     }
@@ -15498,17 +15574,49 @@ document.addEventListener('DOMContentLoaded',()=>{
   function renderCoverage(rows){
     var body = $('gc-vqr-scope-coverage'); if (!body) return;
     if (!rows || !rows.length){ body.innerHTML = '<tr><td colspan="8">No source-backed requirements are available. Extract and review the solicitation first.</td></tr>'; return; }
-    body.innerHTML = rows.map(function(r){ return '<tr><td>' + safeText(r.task) + '</td><td>' + safeText(r.sourceCitation) + '</td><td>' + safeText(r.requiredSubcontractorType) + '</td><td>' + safeText(r.assignedVendor) + '</td><td>' + safeText(r.backupVendor) + '</td><td>' + safeText(r.coverageStatus) + '</td><td>' + safeText(r.riskLevel) + '</td><td>' + safeText(r.notes) + '</td></tr>'; }).join('');
+    body.innerHTML = rows.map(function(r){ if (rowBad([r.task, r.sourceCitation, r.requiredSubcontractorType, r.assignedVendor, r.backupVendor, r.coverageStatus, r.riskLevel, r.notes])) return blockRow(8); return '<tr><td>' + cell(r.task) + '</td><td>' + cell(r.sourceCitation) + '</td><td>' + cell(r.requiredSubcontractorType) + '</td><td>' + cell(r.assignedVendor) + '</td><td>' + cell(r.backupVendor) + '</td><td>' + cell(r.coverageStatus) + '</td><td>' + cell(r.riskLevel) + '</td><td>' + cell(r.notes) + '</td></tr>'; }).join('');
   }
   function renderCandidates(rows){
     var body = $('gc-vqr-vendor-candidates'); if (!body) return;
     if (!rows || !rows.length){ body.innerHTML = '<tr><td colspan="9">No verified provider results. SourceDeck will not invent vendors or contacts.</td></tr>'; return; }
-    body.innerHTML = rows.map(function(v){ return '<tr><td>' + safeText(v.legalBusinessName) + '<br>' + safeText(v.website) + '</td><td>' + safeText(v.serviceLocation) + ' / ' + safeText(v.distanceMiles == null ? 'distance unverified' : v.distanceMiles + ' miles') + '</td><td>' + safeText((v.capabilities || []).join(', ')) + '</td><td>' + safeText((v.certifications || []).concat(v.licenses || []).join(', ')) + '</td><td>' + safeText(v.contactName) + ' ' + safeText(v.email || v.phone) + '</td><td>' + safeText(v.emailVerificationStatus) + '</td><td>' + safeText((v.mappedTaskIds || []).join(', ')) + '</td><td>' + safeText(v.score && v.score.total) + ' / evidence retained</td><td>' + safeText(v.qualificationStatus) + '</td></tr>'; }).join('');
+    body.innerHTML = rows.map(function(v){ if (rowBad([v.legalBusinessName, v.website, v.serviceLocation, (v.capabilities || []).join(' '), (v.certifications || []).concat(v.licenses || []).join(' '), v.contactName, v.email, v.phone, v.emailVerificationStatus, v.qualificationStatus])) return blockRow(9); return '<tr><td>' + cell(v.legalBusinessName) + '<br>' + cell(v.website) + '</td><td>' + cell(v.serviceLocation) + ' / ' + cell(v.distanceMiles == null ? 'distance unverified' : v.distanceMiles + ' miles') + '</td><td>' + cell((v.capabilities || []).join(', ')) + '</td><td>' + cell((v.certifications || []).concat(v.licenses || []).join(', ')) + '</td><td>' + cell(v.contactName) + ' ' + cell(v.email || v.phone) + '</td><td>' + cell(v.emailVerificationStatus) + '</td><td>' + cell((v.mappedTaskIds || []).join(', ')) + '</td><td>' + cell(v.score && v.score.total) + ' / evidence retained</td><td>' + cell(v.qualificationStatus) + '</td></tr>'; }).join('');
+  }
+  // Phase 25AM2 — strip app-shell text from action-plan requirements before they
+  // are persisted. A contaminated Solicitation Center matrix must not be allowed
+  // to generate or persist Vendor Quote Room action-plan tasks. Contaminated
+  // text fields are nulled (the requirement row is kept, never the raw UI text)
+  // and a quarantine flag is recorded so the operator knows to re-import.
+  var _VQR_REQ_TEXT_FIELDS = ['task', 'sourceCitation', 'requiredSubcontractorType', 'assignedVendor', 'backupVendor', 'coverageStatus', 'riskLevel', 'notes'];
+  var _VQR_VENDOR_TEXT_FIELDS = ['legalBusinessName', 'website', 'serviceLocation', 'contactName', 'email', 'phone', 'emailVerificationStatus', 'qualificationStatus'];
+  function _vqrScrubRecord(rec, fields, sink){
+    if (!rec || typeof rec !== 'object') return false;
+    var hit = false;
+    for (var i = 0; i < fields.length; i++) {
+      var f = fields[i];
+      if (typeof rec[f] === 'string' && _vqrIsAppShell(rec[f])) { rec[f] = ''; hit = true; if (sink) sink.push(f); }
+    }
+    if (Array.isArray(rec.capabilities)) {
+      var before = rec.capabilities.length;
+      rec.capabilities = rec.capabilities.filter(function(x){ return !(typeof x === 'string' && _vqrIsAppShell(x)); });
+      if (rec.capabilities.length !== before) { hit = true; if (sink) sink.push('capabilities'); }
+    }
+    return hit;
+  }
+  function _vqrScrubReqs(reqs, sink){
+    if (!Array.isArray(reqs)) return false;
+    var hit = false;
+    for (var i = 0; i < reqs.length; i++) { if (_vqrScrubRecord(reqs[i], _VQR_REQ_TEXT_FIELDS, sink)) hit = true; }
+    return hit;
+  }
+  function _vqrScrubActionPlan(plan){
+    if (plan && typeof plan === 'object') { _vqrScrubReqs(plan.requirements, null); }
+    return plan;
   }
   window.gcVqrAnalyzeNeeds = async function(){
     var api = workflowApi(); if (!api){ if (window.toast) window.toast('Vendor workflow requires the SourceDeck desktop app.', 'warn'); return; }
     var sol = solicitationState();
     var result = await api.analyze({ complianceMatrix: sol.matrix || [], metadata: sol.packageExtraction && sol.packageExtraction.metadata || {} });
+    result = _vqrScrubActionPlan(result) || result;
     var st = loadWorkflow(); st.actionPlan = result; saveWorkflow(st); renderCoverage(result.requirements || []);
     if (window.toast) window.toast((result.requirements || []).length ? 'Subcontracting needs mapped. Review unresolved coverage gaps.' : 'No source-backed tasks found. Extract the solicitation first.', (result.requirements || []).length ? 'ok' : 'warn');
   };
@@ -15545,7 +15653,38 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.gcVqrCompareQuotes = function(){ var el = $('gc-vqr-vendor-comparison'); if (el && el.scrollIntoView) el.scrollIntoView({ behavior:'smooth', block:'center' }); };
   window.gcVqrRender = renderVqr;
   window.gcPricingRender = renderPricing;
-  function renderAll(){ renderVqr(); renderPricing(); }
+  // Phase 25AM2 — load-time state quarantine. Scrubs app-shell text out of the
+  // persisted Vendor Quote Room workflow (sd.govcon.vendorQuoteWorkflow.v1) and
+  // the manual quote rows BEFORE the first render, so contaminated state created
+  // by an earlier build never reaches a render sink. Only contaminated text
+  // fields are removed; valid metadata, vendor records, pricing (separate key),
+  // credentials, saved pursuits, company profile, and past performance are all
+  // preserved. The raw blocked payload is never retained. Never throws.
+  window.gcVqrQuarantineState = function(){
+    var report = { workflow: [], quotes: 0 };
+    try {
+      var st = loadWorkflow();
+      if (st && typeof st === 'object') {
+        var changed = false;
+        if (st.actionPlan && _vqrScrubReqs(st.actionPlan.requirements, report.workflow)) changed = true;
+        if (Array.isArray(st.vendors)) { for (var i = 0; i < st.vendors.length; i++) { if (_vqrScrubRecord(st.vendors[i], _VQR_VENDOR_TEXT_FIELDS, report.workflow)) changed = true; } }
+        if (Array.isArray(st.drafts)) { for (var d = 0; d < st.drafts.length; d++) { if (_vqrScrubRecord(st.drafts[d], ['subject', 'body', 'vendor', 'to'], report.workflow)) changed = true; } }
+        if (changed) {
+          st.quarantine = { at: (function(){ try { return new Date().toISOString(); } catch (e) { return ''; } })(), reason: 'app_shell_text', fields: report.workflow.slice(0, 50) };
+          saveWorkflow(st);
+        }
+      }
+    } catch (e) {}
+    try {
+      var arr = loadQuotes(), qchanged = false;
+      if (Array.isArray(arr)) {
+        for (var q = 0; q < arr.length; q++) { if (_vqrScrubRecord(arr[q], ['category', 'vendor', 'contact', 'email', 'phone', 'status', 'riskNotes', 'certNotes'], null)) { qchanged = true; report.quotes++; } }
+        if (qchanged) saveQuotes(arr);
+      }
+    } catch (e) {}
+    return report;
+  };
+  function renderAll(){ try { window.gcVqrQuarantineState(); } catch (e) {} renderVqr(); renderPricing(); }
   window.gcVendorPricingRender = renderAll;
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', renderAll);
