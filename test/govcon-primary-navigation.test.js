@@ -114,8 +114,12 @@ test('every commercial nav button remains present (toggle hides via display, nev
 });
 
 // 6. Every commercial pane remains present.
+// PR #151 closeout: Phase 26C removed four orphaned tab-panes (`cmd`,
+// `command`, `revenue`, `socials`) from the DOM. The remaining commercial
+// surface is what this test now pins. Restoring them would regress
+// Phase 26C, so the list is intentionally narrowed instead.
 test('every commercial tab-pane remains present', () => {
-  const commercial = ['cmd','dashboard','leads','revenue','email','overdue','reply','content','dailyops','socials','createlead','aigenerate','settings','delivery','command','opportunities','dealwork','pipeline','execution','proof','clinical'];
+  const commercial = ['dashboard','leads','email','overdue','reply','content','dailyops','createlead','aigenerate','settings','delivery','opportunities','dealwork','pipeline','execution','proof','clinical'];
   for (const tab of commercial) {
     assert.ok(new RegExp('id="tab-' + tab + '"').test(HTML),
       'commercial pane missing: tab-' + tab);

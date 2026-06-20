@@ -112,7 +112,11 @@ assert(/window\.gcToggleAllTools\s*=\s*function/.test(html),
   'gcToggleAllTools no-op stub preserved for legacy callers');
 
 // ── Every commercial pane preserved (Phase 23C reachability) ─────────
-const commercialPanes = ['cmd','dashboard','leads','revenue','email','overdue','reply','content','dailyops','socials','createlead','aigenerate','settings','delivery','command','opportunities','dealwork','pipeline','execution','proof','clinical'];
+// PR #151 closeout: Phase 26C removed four orphaned tab-panes
+// (`cmd`, `command`, `revenue`, `socials`) from the DOM. The remaining
+// commercial surface is what this test now pins. Restoring them would
+// regress Phase 26C, so the list is intentionally narrowed.
+const commercialPanes = ['dashboard','leads','email','overdue','reply','content','dailyops','createlead','aigenerate','settings','delivery','opportunities','dealwork','pipeline','execution','proof','clinical'];
 commercialPanes.forEach(function(p){
   assert(new RegExp('id="tab-' + p + '"').test(html),
     'commercial tab-pane preserved: tab-' + p);
