@@ -1,0 +1,42 @@
+{
+  "probe": "CDP injection of contaminated sd.govcon.vendorQuoteWorkflow.v1, then drive the real renderCoverage()/renderCandidates() via gcVqrMapVendors()/gcVqrReviewCandidates()",
+  "target": "file://…/SourceDeck.app/Contents/Resources/app.asar/sourcedeck.html (main page, title \"SourceDeck\", single page target — no child window)",
+  "domNodes": ["tbody#gc-vqr-scope-coverage", "tbody#gc-vqr-vendor-candidates"],
+  "storageKey": "sd.govcon.vendorQuoteWorkflow.v1",
+  "contaminatedFieldPaths": [
+    "actionPlan.requirements[].task",
+    "actionPlan.requirements[].notes",
+    "vendors[].legalBusinessName",
+    "vendors[].website",
+    "vendors[].capabilities",
+    "vendors[].contactName",
+    "vendors[].serviceLocation"
+  ],
+  "broken": {
+    "label": "BROKEN-installed-e11fa87",
+    "quarantine": "absent",
+    "coverageInnerTextSample": "SourceDeck GovCon Pipeline Operating Hub Dashboard GovCon Find Opportunities Solicitation Center Response Desk Revenue Path Generated Leads .cmd-flow{display:fl",
+    "coverageLeaks": ["SourceDeck GovCon Pipeline","Operating Hub Dashboard","GovCon Find Opportunities","Solicitation Center","Response Desk","Revenue Path","Generated Leads",".cmd-flow",".cmd-pill",".cc-lcc-grid"],
+    "candidateLeaks": ["SourceDeck GovCon Pipeline","Operating Hub Dashboard","GovCon Find Opportunities","Solicitation Center","Response Desk","Revenue Path","Generated Leads",".cmd-flow",".cmd-pill",".cc-lcc-grid"],
+    "hasBlockMsg": false,
+    "screenshot": "broken-vqr-installed-e11fa87.png"
+  },
+  "fixed": {
+    "label": "FIXED-installed",
+    "quarantineScrubbedFields": ["task","notes","legalBusinessName","website","capabilities"],
+    "coverageInnerTextSample": "PWS 3.1janitorialunassignedhighProvide HVAC maintenance per PWS 3.4PWS 3.4HVACcoveredlowclean",
+    "coverageLeaks": [],
+    "candidateLeaks": [],
+    "candidatesHasBlockMsg": true,
+    "coverageKeepsValid": true,
+    "candidatesKeepValid": true,
+    "screenshot": "fixed-vqr-installed.png"
+  },
+  "asar": {
+    "installedBefore": "e11fa87 build — _w25LooksLikeBadSource=20, sdSolRenderGuard=1, renderCoverage=6, renderCandidates=2, sdRenderShield=0, cell=0, rowBad=0, gcVqrQuarantineState=0",
+    "freshFixed": "sdRenderShield=8, cell=1, rowBad=5, gcVqrQuarantineState=2, blockMsg=2",
+    "installedAfterSha256": "1e38ef734d64fa0e2a30623444ec15d93f53a143b685093ddd8ec553879aac19",
+    "freshSha256": "1e38ef734d64fa0e2a30623444ec15d93f53a143b685093ddd8ec553879aac19",
+    "match": true
+  }
+}
