@@ -23,8 +23,8 @@ assert(/data-dash-start-action="search-sam"/.test(html),
   'Start-a-pursuit card has Search SAM.gov action');
 assert(/data-dash-start-action="upload-solicitation"/.test(html),
   'Start-a-pursuit card has Upload Solicitation action');
-assert(/data-dash-start-action="download-package"/.test(html),
-  'Start-a-pursuit card has Download SAM.gov Package action');
+assert(!/data-dash-start-action="download-package"/.test(html),
+  'Start-a-pursuit card no longer offers automatic package download');
 
 // ── Dashboard pane-title remains concise ("Dashboard") ──────────────
 assert(/<div class="pane-title"><span class="brief-head">Dashboard<\/span><\/div>/.test(html),

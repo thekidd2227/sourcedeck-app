@@ -1,11 +1,13 @@
 'use strict';
 
-// Phase 25AN — Browser handoff + local solicitation import and extraction.
+// Phase 25AN (updated by the download-removal phase) — Open Official SAM.gov
+// Listing + local solicitation import and extraction.
 //
-// Verifies the full revised workflow:
-//   Fetch SAM.gov Notice → opens the notice in the browser, SourceDeck stays
-//   visible. The user downloads files in their browser, returns, and clicks
-//   Extract Downloaded Solicitation → native multi-file picker → copy into
+// Verifies the revised workflow after automatic SAM.gov download/retrieval was
+// permanently removed:
+//   Open Official SAM.gov Listing → opens the canonical opportunity page (no
+//   retrieval). The user downloads files in their own browser, returns, and
+//   clicks Upload Solicitation Files → native multi-file picker → copy into
 //   userData → local extraction → map into Solicitation Center → navigate.
 //
 // 40 assertions (see README header in the task). Static checks cover the
@@ -124,29 +126,29 @@ async function run() {
   check('3b. renderer never hides/minimizes/blurs the window', !/\.minimize\(\)|mainWindow\.hide\(|window\.blur\(|setSkipTaskbar/.test(html));
 
   // ──────────────────────────────────────────────────────────────────────
-  // Static: two-button source panel
+  // Static: two-button source panel (Open Official SAM.gov Listing + Upload)
   // ──────────────────────────────────────────────────────────────────────
-  // The source panel builds a Fetch button (browser open) immediately followed
-  // by the Extract button (local import — NOT a browser open), and the old
-  // gcW25OpenNotice button is no longer wired anywhere.
-  check('4. exactly one browser-opening button in the source panel (Fetch + Extract, no duplicate open)',
-    /'⬇ Fetch SAM\.gov Notice'[\s\S]{0,800}Extract Downloaded Solicitation[\s\S]{0,300}gcExtractDownloadedSolicitation/.test(html)
-    && !/onclick="gcW25OpenNotice|onclick=\\'gcW25OpenNotice|gcW25OpenNotice\(\\'/.test(html));
-  check('5. "Open in SAM.gov" button label is absent', html.indexOf('Open in SAM.gov') < 0 && html.indexOf('Open SAM.gov Notice') < 0);
-  check('6. "Fetch SAM.gov Notice" remains', html.indexOf('Fetch SAM.gov Notice') >= 0);
-  check('7. "Extract Downloaded Solicitation" exists', html.indexOf('Extract Downloaded Solicitation') >= 0);
+  // Removal phase — the source panel offers Open Official SAM.gov Listing
+  // (canonical page only) + Upload Solicitation Files (local import). No
+  // download/fetch buttons remain.
+  check('4. source panel offers Open Official SAM.gov Listing + Upload Solicitation Files',
+    /Open Official SAM\.gov Listing[\s\S]{0,900}Upload Solicitation Files[\s\S]{0,300}gcUploadSolicitationFiles/.test(html));
+  check('5. "Open in SAM.gov" / "Open SAM.gov Notice" labels are absent', html.indexOf('Open in SAM.gov') < 0 && html.indexOf('Open SAM.gov Notice') < 0);
+  check('6. "Fetch SAM.gov Notice" is removed', html.indexOf('Fetch SAM.gov Notice') < 0);
+  check('7. "Extract Downloaded Solicitation" is removed; "Upload Solicitation Files" exists',
+    html.indexOf('Extract Downloaded Solicitation') < 0 && html.indexOf('Upload Solicitation Files') >= 0);
 
   // ──────────────────────────────────────────────────────────────────────
-  // Static: Fetch behavior
+  // Static: Open Official SAM.gov Listing behavior (canonical page, no fetch)
   // ──────────────────────────────────────────────────────────────────────
-  const fetchFn = extractFn(html, 'window.gcABDownloadPackage = async function(id)');
-  check('8. Fetch opens the canonical SAM.gov notice (sam.gov/opp/<id>/view)', /sam\.gov\/opp\/'\s*\+\s*encodeURIComponent\(noticeId\)\s*\+\s*'\/view/.test(fetchFn));
+  const openListingFn = extractFn(html, 'window.gcOpenOfficialSamListing = async function(id)');
+  check('8. Open Listing opens the canonical SAM.gov page (sam.gov/opp/<id>/view)', /sam\.gov\/opp\/'\s*\+\s*encodeURIComponent\(noticeId\)\s*\+\s*'\/view/.test(openListingFn));
   const openExt = extractFn(html, 'window.gcOpenExternal = async function(url, label)');
   const openSafeHandler = mainJs.slice(mainJs.indexOf("'govcon:open-external-safe'"), mainJs.indexOf("'govcon:select-and-extract-solicitation'"));
-  check('9. Fetch strips/refuses API keys (renderer refuses keyed URLs; handler deletes any api-key param)',
+  check('9. Open Listing strips/refuses API keys (renderer refuses keyed URLs; handler deletes any api-key param)',
     /api[_-]?key|apikey/i.test(openExt) && /api\[_-\]\?key/.test(openSafeHandler) && /searchParams\.delete\(k\)/.test(openSafeHandler));
-  check('10. Fetch may update structured metadata (samFetchNotice + opportunities.patch)',
-    /samFetchNotice/.test(fetchFn) && /opportunities\.patch/.test(fetchFn));
+  check('10. Open Listing performs NO automatic retrieval (no samFetchNotice, no resource-link fetch)',
+    !/samFetchNotice/.test(openListingFn) && !/resourceLinks/.test(openListingFn) && html.indexOf('samFetchNotice') < 0);
 
   // ──────────────────────────────────────────────────────────────────────
   // Static: native picker wiring + cancellation
@@ -158,17 +160,17 @@ async function run() {
   check('11b. picker filters to approved formats only',
     /extensions:\s*\[\s*'pdf',\s*'docx',\s*'xlsx',\s*'csv',\s*'txt',\s*'xml',\s*'zip'\s*\]/.test(mainJs));
 
-  // Renderer: gcExtractDownloadedSolicitation — cancellation, navigation, button
+  // Renderer: gcUploadSolicitationFiles — cancellation, navigation, button
   {
     // Slice between anchors — the function contains regex literals (e.g. /"/g)
     // that a brace/quote tokenizer would mis-parse.
-    const _s = html.indexOf('window.gcExtractDownloadedSolicitation = async function(id)');
-    const _e = html.indexOf('window.gcABOpenLocalPackageFolder = async function(id)', _s);
-    assert(_s >= 0 && _e > _s, 'gcExtractDownloadedSolicitation anchors not found');
+    const _s = html.indexOf('window.gcUploadSolicitationFiles = async function(id)');
+    const _e = html.indexOf('window.gcACPreviewFile = async function(_id, _idx)', _s);
+    assert(_s >= 0 && _e > _s, 'gcUploadSolicitationFiles anchors not found');
     const extractFnSrc = html.slice(_s, _e);
     function driveExtract(pickerResult) {
       const calls = { select: 0, tabSwitch: null, load: 0, patched: null };
-      const btn = makeElement('btn'); btn.textContent = '⬆ Extract Downloaded Solicitation';
+      const btn = makeElement('btn'); btn.textContent = '⬆ Upload Solicitation Files';
       const ctx = {
         window: {
           sd: { govcon: {
@@ -185,12 +187,12 @@ async function run() {
       };
       vm.createContext(ctx);
       vm.runInContext(extractFnSrc, ctx);
-      return ctx.window.gcExtractDownloadedSolicitation('sam:test').then(() => ({ calls, btn }));
+      return ctx.window.gcUploadSolicitationFiles('sam:test').then(() => ({ calls, btn }));
     }
     const cancelled = await driveExtract({ ok: false, cancelled: true });
     check('12. user cancellation makes no state change (no load, no nav, no patch)',
       cancelled.calls.load === 0 && cancelled.calls.select === 0 && cancelled.calls.tabSwitch === null && cancelled.calls.patched === null
-      && cancelled.btn.textContent.indexOf('Extract Downloaded Solicitation') >= 0);
+      && cancelled.btn.textContent.indexOf('Upload Solicitation Files') >= 0);
 
     const ok = await driveExtract({ ok: true, import: { importedAt: 'X', sourceFileCount: 2 }, warnings: [], metadata: {}, sections: {} });
     check('39. successful extraction navigates to Solicitation Center', ok.calls.select >= 1 && ok.calls.tabSwitch === 'solicitation' && ok.calls.load === 1);

@@ -233,7 +233,6 @@ function normalizeOpportunity(input, batchId) {
     sourceUrlSafe: stripKey(input.sourceUrlSafe || input.sourceUrl || input.samUrl || input.uiLink || ''),
     uiLink: stripKey(input.uiLink || input.samUrl || ''),
     descriptionLink: stripKey(input.descriptionLink || (/^https?:\/\//i.test(String(input.description || '')) ? input.description : '')),
-    resourceLinksJson: safeJson((input.resourceLinks || []).map(stripKey)),
     pointOfContactJson: safeJson(input.pointOfContact || []),
     awardJson: safeJson(input.award || null),
     descriptionText: clean(input.descriptionText || (input.description && !/^https?:\/\//i.test(String(input.description)) ? input.description : ''), 5000),

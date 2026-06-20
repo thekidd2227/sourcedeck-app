@@ -40,7 +40,7 @@ const APP_SHELL_MARKERS = [
   'SourceDeck GovCon Pipeline', 'Operating Hub Dashboard', 'GovCon Find Opportunities',
   '.cmd-flow', '.cmd-pill', '.cc-lcc-grid', 'Revenue Path', 'Generated Leads'
 ];
-const BLOCK_MSG = 'SourceDeck blocked app UI text from being rendered as solicitation content. Clear source cache and re-download the package.';
+const BLOCK_MSG = 'SourceDeck blocked app UI text from being rendered as solicitation content. Clear source cache and re-upload the solicitation files.';
 
 // A faithful stand-in for the shared app-shell detector (mirrors the production
 // _w25StrongAppShellTextMarkers / _w25AppShellTextMarkers logic).

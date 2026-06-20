@@ -103,7 +103,8 @@ function normalizeSamRecord(rec, nowMs) {
     descriptionLink:    rec.descriptionLink || rec.descriptionUrl || null,
     officeAddress:      rec.officeAddress || rec.address || null,
     samUrl:             rec.uiLink || rec.link || rec.url || null,
-    resourceLinks:      normalizeResources(rec.resourceLinks || rec.resources || rec.attachments),
+    // Removal phase — attachment/resource links are no longer normalized,
+    // returned, or stored. SourceDeck never retrieves solicitation attachments.
     _source:            'sam.gov',
     _normalizedAt:      new Date(nowMs || Date.now()).toISOString()
   });
@@ -155,32 +156,6 @@ function isHumanSamPortalUrl(url) {
   if (/(^|\/)search(\/|$)/.test(pathname)) return true;
   if (/\/opp\/[^/]+\/view(\/|$)/.test(pathname)) return true;
   return false;
-}
-
-function normalizeResources(v) {
-  const arr = Array.isArray(v) ? v : v ? [v] : [];
-  const out = [];
-  const seen = new Set();
-  for (const r of arr) {
-    let url = null;
-    let label = null;
-    if (typeof r === 'string') {
-      url = r;
-    } else if (r && typeof r === 'object') {
-      // Only URL-like attachment/download fields — never a plain label.
-      url = r.url || r.href || r.link || r.uri || r.downloadUrl || r.resourceUrl || null;
-      label = r.name || r.title || r.label || null;
-    }
-    if (typeof url !== 'string') continue;
-    url = url.trim();
-    if (!/^https?:\/\//i.test(url)) continue;       // must be an http(s) resource
-    if (isHumanSamPortalUrl(url)) continue;         // skip SAM notice/search portal links
-    const key = url.toLowerCase();
-    if (seen.has(key)) continue;
-    seen.add(key);
-    out.push({ label: label || url, url });
-  }
-  return out;
 }
 
 // Dedupe by noticeId then by solicitationNumber.

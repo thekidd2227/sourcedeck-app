@@ -8,8 +8,9 @@
 //
 // Phase 25S contract:
 //   1. _samStripApiKey removes any api_key=… segment from a URL.
-//   2. _samSafeUrl prefers uiLink, then a non-api resourceLinks[0],
-//      then builds https://sam.gov/opp/{noticeId}/view from noticeId.
+//   2. _samSafeUrl prefers uiLink, then builds
+//      https://sam.gov/opp/{noticeId}/view from noticeId. (Removal phase:
+//      attachment/resource links are never consulted.)
 //   3. gcTabSamOpenSource refuses to open URLs that still carry
 //      api_key after stripping.
 //   4. The renderer never includes api_key in any DOM output.
@@ -91,13 +92,14 @@ try {
   assert(url1 === 'https://sam.gov/opp/abc/view',
     'uiLink preferred when present');
 
+  // Removal phase — attachment/resource links are no longer consulted. When
+  // uiLink is missing, _samSafeUrl builds the canonical sam.gov/opp/{id}/view.
   var url2 = sandbox.window._samSafeUrl({
     uiLink: '',
-    resourceLinks: ['https://sam.gov/files/x.pdf'],
     noticeId: 'abc'
   });
-  assert(url2 === 'https://sam.gov/files/x.pdf',
-    'resourceLinks[0] used when uiLink missing');
+  assert(url2 === 'https://sam.gov/opp/abc/view',
+    'noticeId fallback builds canonical URL (resourceLinks no longer used)');
 
   var url3 = sandbox.window._samSafeUrl({ noticeId: 'NID-12345' });
   assert(url3 === 'https://sam.gov/opp/NID-12345/view',

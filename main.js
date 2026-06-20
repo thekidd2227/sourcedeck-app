@@ -310,15 +310,6 @@ ipcMain.handle('govcon:sam-search', async (_event, filters) => {
   return appApi.govcon.sam.search(sanitizeSamFilters(filters));
 });
 
-// Phase 25AM — fetch-only SAM.gov notice metadata. Returns structured
-// JSON (title, agency, NAICS, set-aside, dates, POC, sanitized resource
-// URLs). No file bytes. No disk writes. The renderer hands resource URLs
-// to shell.openExternal so the user downloads files from their own
-// browser.
-ipcMain.handle('govcon:sam-fetch-notice', async (_event, payload) => {
-  return appApi.govcon.sam.fetchNotice(payload || {});
-});
-
 // Phase 25AN — open a SAM.gov URL in the user's default browser. Narrow,
 // sam.gov-only, strips any credential query param. This handler MUST NOT
 // touch the SourceDeck window — SourceDeck stays open, visible, operable.
@@ -355,7 +346,7 @@ ipcMain.handle('govcon:select-and-extract-solicitation', async (_event, payload)
   let selection;
   try {
     selection = await dialog.showOpenDialog({
-      title: 'Select downloaded solicitation files',
+      title: 'Select solicitation files to upload',
       properties: ['openFile', 'multiSelections'],
       filters: [
         { name: 'Solicitation files', extensions: ['pdf', 'docx', 'xlsx', 'csv', 'txt', 'xml', 'zip'] }

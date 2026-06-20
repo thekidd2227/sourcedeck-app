@@ -44,7 +44,7 @@ test('Solicitation Center section exists', () => {
 
 // 2. Package/upload intake + linked opportunity selector exists.
 test('Package/upload intake + linked opportunity selector exist', () => {
-  assert.ok(/Download Solicitation Package/.test(HTML), 'package download action missing');
+  assert.ok(!/Download Solicitation Package|Download SAM\.gov Package/.test(HTML), 'package download action must be removed');
   assert.ok(/id="gc-sol-opp-select"/.test(HTML), 'gc-sol-opp-select missing');
   assert.ok(/Upload Solicitation/.test(HTML), 'upload solicitation action missing');
 });
@@ -102,7 +102,7 @@ test('Compliance Matrix has all 11 spec columns', () => {
 // 9. Empty states exist and contain no fake solicitation data.
 test('empty states present and no fake solicitation / agency / deadlines', () => {
   // Required empty-state copies
-  assert.ok(/No solicitation package loaded yet\. Download a SAM\.gov package or upload a solicitation file\./.test(HTML),
+  assert.ok(/No solicitation loaded yet\. Use Upload Solicitation Files to import documents from your computer\./.test(HTML),
     'Summary empty state missing');
   assert.ok(/No compliance requirements extracted yet\. Run extraction on a readable package or manually map requirements\./.test(HTML),
     'Matrix empty state missing');
