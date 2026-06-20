@@ -64,7 +64,7 @@ assert(!/id="pw-sol-paste-text"/.test(html),
   'Paste textarea is removed from runtime intake');
 
 // ── Empty-state copy ─────────────────────────────────────────────────
-assert(/No solicitation selected\. Search SAM\.gov, download a package, or upload a solicitation to begin\./.test(html),
+assert(/No solicitation selected\. Search SAM\.gov or upload a solicitation to begin\./.test(html),
   'Empty state copy matches the Phase 25M spec');
 
 // ── 6 FAR-aligned categories registered in the renderer ─────────────
@@ -99,7 +99,7 @@ assert(/Phase 25M — Solicitation Intake/.test(html),
 // ── Dashboard "Start a pursuit" card routes here ─────────────────────
 assert(/data-dash-card="start-pursuit"/.test(html),
   'Dashboard "Start a pursuit" card exists');
-const startActions = ['search-sam','upload-solicitation','download-package'];
+const startActions = ['search-sam','upload-solicitation'];
 startActions.forEach(function(a){
   const re = new RegExp('data-dash-start-action="' + a + '"');
   assert(re.test(html),

@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, shell, safeStorage, dialog } = require('electron');
+const { app, BrowserWindow, ipcMain, shell, safeStorage } = require('electron');
 const fs = require('fs');
 const path = require('path');
 const Store = require('electron-store');
@@ -304,77 +304,6 @@ ipcMain.handle('govcon:content-generate', (_e, request) => appApi.govcon.content
 
 ipcMain.handle('govcon:sam-search', async (_event, filters) => {
   return appApi.govcon.sam.search(sanitizeSamFilters(filters));
-});
-
-// Phase 25AM — fetch-only SAM.gov notice metadata. Returns structured
-// JSON (title, agency, NAICS, set-aside, dates, POC, sanitized resource
-// URLs). No file bytes. No disk writes. The renderer hands resource URLs
-// to shell.openExternal so the user downloads files from their own
-// browser.
-ipcMain.handle('govcon:sam-fetch-notice', async (_event, payload) => {
-  return appApi.govcon.sam.fetchNotice(payload || {});
-});
-
-// Phase 25AN — open a SAM.gov URL in the user's default browser. Narrow,
-// sam.gov-only, strips any credential query param. This handler MUST NOT
-// touch the SourceDeck window — SourceDeck stays open, visible, operable.
-ipcMain.handle('govcon:open-external-safe', async (_event, rawUrl) => {
-  try {
-    const parsed = new URL(String(rawUrl || ''));
-    if (parsed.protocol !== 'https:') {
-      return { ok: false, reason: 'invalid_protocol' };
-    }
-    const host = parsed.hostname.toLowerCase();
-    if (host !== 'sam.gov' && !host.endsWith('.sam.gov')) {
-      return { ok: false, reason: 'invalid_host' };
-    }
-    // Strip any credential query param before opening. The pattern avoids the
-    // literal token so the SAM sanitizer audit's whole-file scan stays clean.
-    for (const k of Array.from(parsed.searchParams.keys())) {
-      if (/^api[_-]?key$/i.test(k)) parsed.searchParams.delete(k);
-    }
-    await shell.openExternal(parsed.toString());
-    return { ok: true };
-  } catch (_) {
-    return { ok: false, reason: 'open_failed' };
-  }
-});
-
-// Phase 25AN — native multi-file picker → local import + extraction. Opens a
-// file picker for the user's already-downloaded solicitation files, validates
-// and copies them into SourceDeck-controlled userData, extracts locally, and
-// returns the normalized contract. Cancellation returns { ok:false,
-// cancelled:true } and changes no state. This handler MUST NOT touch the
-// SourceDeck BrowserWindow.
-ipcMain.handle('govcon:select-and-extract-solicitation', async (_event, payload) => {
-  payload = payload || {};
-  let selection;
-  try {
-    selection = await dialog.showOpenDialog({
-      title: 'Select downloaded solicitation files',
-      properties: ['openFile', 'multiSelections'],
-      filters: [
-        { name: 'Solicitation files', extensions: ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'csv', 'txt', 'zip'] }
-      ]
-    });
-  } catch (_) {
-    return { ok: false, reason: 'dialog_failed' };
-  }
-  if (!selection || selection.canceled || !Array.isArray(selection.filePaths) || !selection.filePaths.length) {
-    return { ok: false, cancelled: true };
-  }
-  return appApi.govcon.solicitationImport.import({
-    filePaths: selection.filePaths,
-    opportunity: {
-      id: payload.opportunityId,
-      opportunityId: payload.opportunityId,
-      noticeId: payload.noticeId,
-      solicitationNumber: payload.solicitationNumber,
-      title: payload.title,
-      agency: payload.agency
-    },
-    userDataPath: app.getPath('userData')
-  });
 });
 
 ipcMain.handle('govcon:index-status',       () => appApi.govcon.index.status());

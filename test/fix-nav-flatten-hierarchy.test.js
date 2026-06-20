@@ -71,11 +71,10 @@ test('.nav-btn-sub sidebar sub-button class exists', () => {
 });
 
 // 2. The 10 required GovCon sidebar sub-buttons exist (correct labels + routing).
-test('Sidebar GovCon sub-nav has all 10 required sub-buttons', () => {
+test('Sidebar GovCon sub-nav has all 9 required sub-buttons', () => {
   const REQUIRED = [
     { key: 'find-opportunities',   label: 'Find Opportunities' },
     { key: 'saved-pursuits',       label: 'Saved Pursuits' },
-    { key: 'solicitation',         label: 'Solicitation Center' },
     { key: 'vendors',              label: 'Vendors' },
     { key: 'pricing',              label: 'Pricing' },
     { key: 'past-performance',     label: 'Past Performance' },
@@ -146,9 +145,9 @@ test('Sidebar Proposal Workspace sub-nav has all 12 required sub-buttons', () =>
 test('Sidebar sub-buttons open the parent tab before switching sub-tab', () => {
   // For GovCon — every sub-button must call openTab('govcon') before gcTabSwitch.
   const gcMatches = GOVCON_SECTION.match(/data-nav-sub="gc-[^"]+"/g) || [];
-  assert.strictEqual(gcMatches.length, 10,
-    'expected exactly 10 GovCon sub-buttons; found ' + gcMatches.length);
-  assert.ok((GOVCON_SECTION.match(/openTab\('govcon'\)/g) || []).length >= 10,
+  assert.strictEqual(gcMatches.length, 9,
+    'expected exactly 9 GovCon sub-buttons; found ' + gcMatches.length);
+  assert.ok((GOVCON_SECTION.match(/openTab\('govcon'\)/g) || []).length >= 9,
     'every GovCon sidebar sub-button must call openTab(\'govcon\') first');
   // For Proposal Workspace — every sub-button must call openTab('execution').
   const pwMatches = EXEC_SECTION.match(/data-nav-sub="pw-[^"]+"/g) || [];

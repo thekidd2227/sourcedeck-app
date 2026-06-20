@@ -229,11 +229,10 @@ test('Step 10 — Quick Setup Tour with feature walkthrough', () => {
 
 // 21. Quick Setup Tour covers all required features.
 // Phase 25V — Stakeholder Graph retired, so it is no longer a tour feature.
-test('Quick Setup Tour covers all 14 required features (data-tour-feature markers)', () => {
+test('Quick Setup Tour covers all 13 required features (data-tour-feature markers)', () => {
   const required = [
     'capture-command-center',
     'operating-rhythm',
-    'solicitation-workspace',
     'compliance-matrix',
     'vendor-quote-room',
     'pricing-worksheet',

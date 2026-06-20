@@ -59,7 +59,7 @@ test('run / plan / copy / paste controls exist, no auto-run', () => {
 test('output table + actions exist', () => {
   assert.ok(/id="gc-wi-results"/.test(FIND), 'results container');
   assert.ok(/function renderResults\(/.test(HTML), 'results renderer');
-  for (const a of ['gcWiOpenSource','gcWiSave','gcWiSendToWorkspace','gcWiCheckSam','gcWiAddNote']) {
+  for (const a of ['gcWiOpenSource','gcWiSave','gcWiCheckSam','gcWiAddNote']) {
     assert.ok(HTML.indexOf(a) >= 0, 'missing action: ' + a);
   }
 });

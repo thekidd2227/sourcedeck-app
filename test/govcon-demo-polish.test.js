@@ -55,12 +55,11 @@ test('Demo Mode banner + label exist', () => {
 test('every sample row builder includes SAMPLE / Demo only / Replace labels', () => {
   // Pull the inline-script content where the sample builders live.
   const scripts = [...HTML.matchAll(/<script(?![^>]*\bsrc=)[^>]*>([\s\S]*?)<\/script>/gi)].map(m => m[1]);
-  const demoBlock = scripts.find(s => /buildSampleCaptureBoard|buildSampleSolWorkspace|buildSampleVendorQuotes|buildSamplePastPerformance|buildSamplePrimePartners/.test(s));
+  const demoBlock = scripts.find(s => /buildSampleCaptureBoard|buildSampleVendorQuotes|buildSamplePastPerformance|buildSamplePrimePartners/.test(s));
   assert.ok(demoBlock, 'Phase 23A demo-mode inline script not found');
   // Every builder must include the SAMPLE label and at least one of {Demo only, Replace before proposal use}.
   for (const builder of [
     /buildSampleCaptureBoard\s*\(\)\s*\{[\s\S]*?^\s*\}/m,
-    /buildSampleSolWorkspace\s*\(\)\s*\{[\s\S]*?^\s*\}/m,
     /buildSampleVendorQuotes\s*\(\)\s*\{[\s\S]*?^\s*\}/m,
     /buildSamplePastPerformance\s*\(\)\s*\{[\s\S]*?^\s*\}/m,
     /buildSamplePrimePartners\s*\(\)\s*\{[\s\S]*?^\s*\}/m
@@ -123,9 +122,8 @@ test('stale "Solicitation Workspace placeholder — Phase 22C ships the full sur
 });
 
 // 8. Solicitation Workspace current copy exists.
-test('current Solicitation Center open copy exists', () => {
-  assert.ok(/Open the Solicitation Center below to extract instructions, requirements, deadlines, risks, and a compliance matrix\./.test(HTML),
-    'updated "Open the Solicitation Center below…" copy missing');
+test('Solicitation Center copy is removed', () => {
+  assert.ok(!/Open the Solicitation Center below/.test(HTML), 'removed Solicitation Center copy still present');
 });
 
 // 9. Submission readiness empty state is not misleading.
@@ -219,15 +217,15 @@ test('System Readiness / System Flow tab remains removed', () => {
 // 19. Phase 22B Capture Command Center remains.
 test('Phase 22B Capture Command Center remains intact', () => {
   assert.ok(/id="gc-capture-cc"/.test(HTML), 'Capture Command Center section missing');
-  for (const id of ['gc-cc-active-count','gc-cc-deadlines-count','gc-cc-qa-count','gc-cc-bidnobid-count','gc-cc-solready-count','gc-cc-vendor-count','gc-cc-proposal-count','gc-cc-approval-count']) {
+  for (const id of ['gc-cc-active-count','gc-cc-deadlines-count','gc-cc-qa-count','gc-cc-bidnobid-count','gc-cc-vendor-count','gc-cc-proposal-count','gc-cc-approval-count']) {
     assert.ok(new RegExp('id="' + id + '"').test(HTML), 'CC card missing: ' + id);
   }
 });
 
 // 20. Phase 22C Solicitation Workspace remains.
 test('Phase 22C Solicitation Workspace remains intact', () => {
-  assert.ok(/id="gc-sol-workspace"/.test(HTML), 'Solicitation Workspace section missing');
-  for (const id of ['gc-sol-summary','gc-sol-section-l','gc-sol-section-m','gc-sol-pws','gc-sol-forms','gc-sol-deadlines','gc-sol-risks','gc-sol-matrix-table','gc-sol-matrix-body']) {
+  assert.ok(!/id="gc-sol-workspace"/.test(HTML), 'Solicitation Workspace removed');
+  for (const id of []) {
     assert.ok(new RegExp('id="' + id + '"').test(HTML), 'Solicitation Workspace anchor missing: ' + id);
   }
 });
