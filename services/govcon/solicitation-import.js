@@ -19,6 +19,10 @@ const crypto = require('crypto');
 
 const fileUtils = require('./solicitation-file-utils');
 const { extractSolicitationPackage, acceptedUploadTypes, SECTION_DEFS } = require('./solicitation-package-extract');
+const {
+  MAX_SOLICITATION_DOCUMENTS,
+  SOLICITATION_LIMIT_MESSAGE
+} = require('./solicitation-constants');
 
 const MAX_FILE_BYTES = 64 * 1024 * 1024; // 64 MB per-file hard cap
 const ACCEPTED = new Set(acceptedUploadTypes());
@@ -41,6 +45,22 @@ function emptySection(letter) {
     found: false, confidence: 'none', source: '', sourceFile: '', sourceLocation: '',
     text: '', plainEnglishSummary: ''
   };
+}
+
+function classifyDocument(fileName, text) {
+  const s = (String(fileName || '') + ' ' + String(text || '').slice(0, 4000)).toLowerCase();
+  if (/amendment|sf\s*30/.test(s)) return 'amendment';
+  if (/performance work statement|\bpws\b/.test(s)) return 'PWS';
+  if (/statement of work|\bsow\b/.test(s)) return 'SOW';
+  if (/statement of objectives|\bsoo\b/.test(s)) return 'SOO';
+  if (/clin|pricing|price schedule/.test(s)) return 'pricing schedule';
+  if (/evaluation factor|section m/.test(s)) return 'evaluation criteria';
+  if (/instructions? to offerors?|section l/.test(s)) return 'proposal instructions';
+  if (/wage determination/.test(s)) return 'wage determination';
+  if (/far\s+\d|dfars|clauses?/.test(s)) return 'clauses';
+  if (/specification/.test(s)) return 'specifications';
+  if (/solicitation|request for (?:proposal|quote)/.test(s)) return 'primary solicitation';
+  return 'attachment';
 }
 
 // Normalize an extractor result (ex) into the Phase 25AN contract.
@@ -161,6 +181,39 @@ async function importAndExtract(payload) {
   if (!userDataPath) return { ok: false, reason: 'no_user_data_path', warnings: [] };
   if (!filePaths.length) return { ok: false, reason: 'no_files_selected', warnings: [] };
 
+  // Transactional, read-only preflight. Limit rejection happens before mkdir,
+  // copy, extraction or any persistence mutation.
+  const preflightWarnings = [];
+  let logicalDocumentCount = 0;
+  for (const fp of filePaths) {
+    const ext = fileUtils.fileExtension(fp);
+    if (ext === '.zip') {
+      let inventory;
+      try { inventory = await fileUtils.inspectZipEntries(fp); }
+      catch (err) {
+        return { ok: false, reason: err && err.message || 'malformed_archive', warnings: [], stateChanged: false };
+      }
+      logicalDocumentCount += inventory.logicalDocumentCount;
+      preflightWarnings.push.apply(preflightWarnings, inventory.rejected.map(r => ({ fileName: r.fileName, code: r.reason })));
+    } else if (ACCEPTED.has(ext)) {
+      logicalDocumentCount += 1;
+    } else {
+      preflightWarnings.push({ fileName: path.basename(fp), code: 'rejected_unsupported_type' });
+    }
+    if (logicalDocumentCount > MAX_SOLICITATION_DOCUMENTS) {
+      return {
+        ok: false,
+        reason: 'document_limit_exceeded',
+        message: SOLICITATION_LIMIT_MESSAGE,
+        maxDocuments: MAX_SOLICITATION_DOCUMENTS,
+        logicalDocumentCount,
+        warnings: preflightWarnings,
+        stateChanged: false
+      };
+    }
+  }
+  if (!logicalDocumentCount) return { ok: false, reason: 'no_valid_files', warnings: preflightWarnings, stateChanged: false };
+
   const ts = String(payload.timestamp || new Date().toISOString().replace(/[:.]/g, '-'));
   const noticeSeg = safeSegment(opportunity.noticeId || opportunity.solicitationNumber || opportunity.id || 'notice');
   const root = path.join(userDataPath, 'govcon', 'imported-solicitations', noticeSeg, ts);
@@ -172,7 +225,7 @@ async function importAndExtract(payload) {
   const usedNames = new Set();
   const manifestRows = [];
   const fileRecords = [];
-  const warnings = [];
+  const warnings = preflightWarnings.slice();
   for (const fp of filePaths) {
     let res;
     try { res = await ingestFile(fp, originalDir, usedNames); }
@@ -193,16 +246,22 @@ async function importAndExtract(payload) {
   catch (err) { return { ok: false, reason: 'extraction_failed', warnings, importedFileCount: manifestRows.length }; }
 
   const exFiles = (ex && ex.files) || [];
-  const successfulFileCount = exFiles.filter(f => f && (f.extractionStatus === 'text')).length;
-  const partialFileCount = exFiles.filter(f => f && f.extractionStatus === 'partial').length;
-  const failedFileCount = exFiles.filter(f => f && (f.extractionStatus === 'failed' || f.extractionStatus === 'rejected')).length;
+  function flatten(rows) {
+    const out = [];
+    (rows || []).forEach(f => Array.isArray(f.children) ? out.push.apply(out, flatten(f.children)) : out.push(f));
+    return out;
+  }
+  const logicalFiles = flatten(exFiles);
+  const successfulFileCount = logicalFiles.filter(f => f && (f.extractionStatus === 'text')).length;
+  const partialFileCount = logicalFiles.filter(f => f && f.extractionStatus === 'partial').length;
+  const failedFileCount = logicalFiles.filter(f => f && !['text', 'partial'].includes(f.extractionStatus)).length;
 
   const importedAt = new Date().toISOString();
   const importInfo = {
     noticeId: opportunity.noticeId || (ex.metadata && ex.metadata.noticeId) || '',
     opportunityId: opportunity.id || opportunity.opportunityId || '',
     importedAt,
-    sourceFileCount: manifestRows.length,
+    sourceFileCount: logicalDocumentCount,
     successfulFileCount,
     partialFileCount,
     failedFileCount
@@ -233,7 +292,38 @@ async function importAndExtract(payload) {
   try { await fsp.writeFile(path.join(root, 'import-manifest.json'), JSON.stringify(safeManifest, null, 2)); }
   catch (_) { /* manifest write is best-effort; extraction already succeeded */ }
 
-  contract.import.rootPath = root;
+  contract.import.extractionMessage = 'Extraction processed — review required.';
+  contract.import.partialSuccess = successfulFileCount + partialFileCount > 0 && failedFileCount > 0;
+  contract.import.batchStatus = contract.import.partialSuccess ? 'partial_success' : 'review_required';
+  contract.documentInventory = logicalFiles.map((f, index) => ({
+    sourceDocumentId: 'SRC-' + String(index + 1).padStart(3, '0'),
+    originalFileName: f.fileName,
+    safeStoredFileName: f.fileName,
+    extension: f.extension,
+    detectedMimeType: fileUtils.detectMimeType(f.fileName),
+    sizeBytes: Number(f.sizeBytes || 0),
+    sha256: (fileRecords.find(r => r.fileName === f.fileName) || {}).hash || '',
+    pageCount: Number(f.pages || 0),
+    sheetCount: Array.isArray(f.sheets) ? f.sheets.length : 0,
+    extractionStatus: f.extractionStatus === 'text' ? 'extracted' : f.extractionStatus === 'partial' ? 'extracted_with_warnings' : (/scanned|image-only/i.test(f.limitation || '') ? 'ocr_required' : (f.extractionStatus || 'failed')),
+    extractedCharacterCount: String(f.text || '').length,
+    parserUsed: String(f.extension || '').replace('.', '').toUpperCase() + ' local parser',
+    ocrStatus: /scanned|image-only/i.test(f.limitation || '') ? 'required_unavailable' : 'not_required',
+    warnings: f.warnings || [],
+    failureReason: ['text', 'partial'].includes(f.extractionStatus) ? '' : (f.limitation || ''),
+    internalStorageId: 'SRC-' + String(index + 1).padStart(3, '0'),
+    sourceReferenceMap: [],
+    documentClassification: classifyDocument(f.fileName, f.text),
+    amendmentNumber: ((String(f.text || '').match(/amendment\s+(?:no\.?\s*)?([A-Z0-9-]+)/i) || [])[1] || '')
+  }));
+  const idsByFile = new Map(contract.documentInventory.map(d => [d.safeStoredFileName, d.sourceDocumentId]));
+  contract.sourceBlocks = (contract.sourceBlocks || []).map(block => Object.assign({}, block, {
+    sourceDocumentId: idsByFile.get(String(block.fileName || '').split(' › ')[0]) || '',
+    exactSourceExcerpt: String(block.text || '').slice(0, 1000),
+    extractionMethod: 'local deterministic parser',
+    confidence: 'review_required',
+    reviewerStatus: 'not_reviewed'
+  }));
   return contract;
 }
 
@@ -241,6 +331,8 @@ module.exports = {
   importAndExtract,
   buildContract,
   MAX_FILE_BYTES,
+  MAX_SOLICITATION_DOCUMENTS,
+  SOLICITATION_LIMIT_MESSAGE,
   _ingestFile: ingestFile,
   _safeSegment: safeSegment
 };

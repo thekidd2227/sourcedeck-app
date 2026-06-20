@@ -56,6 +56,7 @@ const sam             = require('../services/sam');
 const samNoticeFetchSvc = require('../services/govcon/sam-notice-fetch');
 // Phase 25AN — local upload/import + extraction (no remote downloading).
 const solicitationImport = require('../services/govcon/solicitation-import');
+const vendorQuoteWorkflow = require('../services/govcon/vendor-quote-workflow');
 const compliance      = require('../services/compliance');
 const stakeholders    = require('../services/stakeholders');
 const capture         = require('../services/capture');
@@ -193,7 +194,22 @@ function createAppApi(opts) {
       // extracts locally, and returns the normalized contract. No network,
       // no Downloads-folder scanning, no remote attachment fetching.
       solicitationImport: {
-        import: (payload) => solicitationImport.importAndExtract(payload || {})
+        import: (payload) => solicitationImport.importAndExtract(payload || {}),
+        limits: Object.freeze({
+          maxDocuments: solicitationImport.MAX_SOLICITATION_DOCUMENTS,
+          message: solicitationImport.SOLICITATION_LIMIT_MESSAGE
+        })
+      },
+      vendorQuoteWorkflow: {
+        analyze: (payload) => Promise.resolve(vendorQuoteWorkflow.analyzeSubcontractingNeeds(payload || {})),
+        searchStrategy: (payload) => Promise.resolve(vendorQuoteWorkflow.generateSearchStrategy(payload || {})),
+        rankCandidates: (payload) => Promise.resolve(vendorQuoteWorkflow.compileAndRankVendors(payload || {})),
+        draftOutreach: (payload) => Promise.resolve(vendorQuoteWorkflow.draftVendorEmails(payload || {})),
+        sendApproved: (payload) => {
+          if (!opts.vendorOutreachTestMode) return Promise.resolve({ ok: false, reason: 'configured_email_provider_required', sent: [] });
+          const mockProvider = { send: async message => ({ messageId: 'mock-' + require('crypto').createHash('sha256').update(JSON.stringify(message)).digest('hex').slice(0, 16) }) };
+          return vendorQuoteWorkflow.sendApproved(payload || {}, mockProvider);
+        }
       },
       index: {
         status:   () => Promise.resolve(govconIndex.status()),

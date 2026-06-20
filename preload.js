@@ -57,7 +57,16 @@ contextBridge.exposeInMainWorld('sd', {
     openExternalSafe:    (url)      => ipcRenderer.invoke('govcon:open-external-safe', url),
     // Phase 25AN — native multi-file picker → local import + extraction of
     // user-downloaded solicitation files. Returns the normalized contract.
-    selectAndExtractSolicitation: (payload) => ipcRenderer.invoke('govcon:select-and-extract-solicitation', payload),
+    maxSolicitationDocuments: 5,
+    solicitationDocumentLimitMessage: 'Select up to 5 solicitation documents per upload.',
+    selectAndExtractSolicitation: (payload) => ipcRenderer.invoke('govcon:select-and-extract-solicitation', payload || {}),
+    vendorQuoteWorkflow: {
+      analyze: (payload) => ipcRenderer.invoke('govcon:vendor-quote-analyze', payload || {}),
+      searchStrategy: (payload) => ipcRenderer.invoke('govcon:vendor-search-strategy', payload || {}),
+      rankCandidates: (payload) => ipcRenderer.invoke('govcon:vendor-rank-candidates', payload || {}),
+      draftOutreach: (payload) => ipcRenderer.invoke('govcon:vendor-draft-outreach', payload || {}),
+      sendApproved: (payload) => ipcRenderer.invoke('govcon:vendor-send-approved', payload || {})
+    },
     index: {
       status:      ()        => ipcRenderer.invoke('govcon:index-status'),
       getSettings: ()        => ipcRenderer.invoke('govcon:index-settings-get'),
