@@ -1,0 +1,11 @@
+'use strict';
+const assert = require('assert');
+const w = require('../services/govcon/vendor-quote-workflow');
+const strategy = w.generateSearchStrategy({ placeOfPerformance:'Richmond, VA 23219', capability:'commercial HVAC preventive maintenance', naics:'238220', certification:'licensed' });
+assert.equal(strategy.ok, true); assert.ok(strategy.queries.length >= 8 && strategy.queries.length <= 10); assert.equal(strategy.radiusMiles, 50);
+const fixtures = Array.from({ length:8 }, (_, i) => ({ id:`v${i}`, legalBusinessName:`Verified Vendor ${i}`, website:`https://vendor${i}.example`, serviceLocation:'Richmond, VA', distanceMiles:i+1, capabilities:['HVAC preventive maintenance'], mappedTaskIds:['C-1'], licenses:['Virginia HVAC license'], email:`quotes${i}@vendor${i}.example`, contactStatus:i < 4 ? 'verified' : 'unverified', sourceUrls:[`https://vendor${i}.example/services`,`https://license.example/v${i}`], sourceLastChecked:'2026-06-20' }));
+fixtures.push(Object.assign({}, fixtures[0], { id:'duplicate', sourceUrls:['https://directory.example/vendor0'] }));
+const ranked = w.compileAndRankVendors({ providerResults:fixtures, requirements:[{ id:'C-1', task:'HVAC preventive maintenance' }] });
+assert.equal(ranked.foundCount, 8); assert.equal(ranked.vendors.length, 8); assert.ok(ranked.vendors.every(v => v.sourceUrls.length && v.score.evidence));
+assert.ok(ranked.vendors.every(v => ['verified','unverified'].includes(v.emailVerificationStatus))); assert.ok(!ranked.vendors.some(v => /invented/i.test(v.email)));
+console.log('vendor-search-strategy: ok');

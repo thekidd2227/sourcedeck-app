@@ -50,14 +50,10 @@ assert(!/id="pw-sol-paste-btn"/.test(html),
 assert(html.includes('window.pwSolTogglePasteArea ='),
   'Deprecated paste handler remains for compatibility');
 
-// ── File input accepts pdf, docx, txt, md ────────────────────────────
-const m = html.match(/id="pw-sol-file"[^>]*accept="([^"]+)"/);
-assert(m, 'Hidden file input is present with accept attribute');
-if (m){
-  ['.pdf','.docx','.txt','.md'].forEach(function(ext){
-    assert(m[1].indexOf(ext) >= 0, 'File input accepts ' + ext);
-  });
-}
+// ── Canonical native picker replaces renderer FileReader input ──────
+assert(!/id="pw-sol-file"/.test(html), 'Duplicate renderer-only file input is removed');
+assert(/selectAndExtractSolicitation/.test(html), 'Proposal Workspace uses the canonical main-process importer');
+assert(/Select up to 5 solicitation documents per upload\./.test(html), 'Five-document limit is visible');
 
 // ── Paste textarea removed ───────────────────────────────────────────
 assert(!/id="pw-sol-paste-text"/.test(html),

@@ -156,7 +156,7 @@ async function run() {
     && /selectAndExtractSolicitation/.test(preloadJs)
     && /govcon:select-and-extract-solicitation/.test(preloadJs));
   check('11b. picker filters to approved formats only',
-    /extensions:\s*\[\s*'pdf',\s*'docx',\s*'doc',\s*'xlsx',\s*'xls',\s*'csv',\s*'txt',\s*'zip'\s*\]/.test(mainJs));
+    /extensions:\s*\[\s*'pdf',\s*'docx',\s*'xlsx',\s*'csv',\s*'txt',\s*'xml',\s*'zip'\s*\]/.test(mainJs));
 
   // Renderer: gcExtractDownloadedSolicitation — cancellation, navigation, button
   {
@@ -219,7 +219,7 @@ async function run() {
     const pCsv = path.join(dl, 'clins.csv');
     fs.writeFileSync(pCsv, 'CLIN,Qty,Unit Price\n0001,12,5000\n0002,12,5200\n');
     const pZip = path.join(dl, 'attachments.zip');
-    fs.writeFileSync(pZip, fx.buildStoredZip([{ name: 'attachment-a.txt', data: Buffer.from('Wage Determination 2015-4423. Limitation on subcontracting applies.') }]));
+    fs.writeFileSync(pZip, fx.buildStoredZip([{ name: 'attachment-a.csv', data: Buffer.from('CLIN,Qty,Unit Price,Note\n0002,12,5200,Wage Determination 2015-4423; Limitation on subcontracting applies.') }]));
     // hazards
     const pHtml = path.join(dl, 'portal.txt'); // HTML masquerading as txt
     fs.writeFileSync(pHtml, '<!doctype html><html><head><title>Sign in</title></head><body>Please sign in to continue</body></html>');
@@ -231,17 +231,20 @@ async function run() {
     fs.writeFileSync(pDoc, Buffer.concat([Buffer.from([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]), Buffer.from('Offeror shall provide past performance references for janitorial work.')]));
 
     const result = await importAndExtract({
-      filePaths: [pPdf, pDocx, pXlsx, pTxt, pCsv, pZip, pHtml, pShell, pCorrupt, pDoc],
+      filePaths: [pPdf, pDocx, pXlsx, pTxt, pZip],
       opportunity: { id: 'sam:salisbury', noticeId: '36C24626Q0648', solicitationNumber: '36C24626Q0648', title: 'Janitorial Services Salisbury VAMC', agency: 'Department of Veterans Affairs' },
       userDataPath: userData
     });
 
     check('13. selected files copy into SourceDeck userData', (() => {
-      const root = result.import.rootPath;
+      const noticeRoot = path.join(userData, 'govcon', 'imported-solicitations', '36C24626Q0648');
+      const root = path.join(noticeRoot, fs.readdirSync(noticeRoot)[0]);
       return root.indexOf(path.join(userData, 'govcon', 'imported-solicitations')) === 0 && fs.existsSync(path.join(root, 'original'));
     })());
     check('14. files outside the import root are not used after copying (manifest paths inside userData, no source paths)', (() => {
-      const man = JSON.parse(fs.readFileSync(path.join(result.import.rootPath, 'import-manifest.json'), 'utf8'));
+      const noticeRoot = path.join(userData, 'govcon', 'imported-solicitations', '36C24626Q0648');
+      const batchRoot = path.join(noticeRoot, fs.readdirSync(noticeRoot)[0]);
+      const man = JSON.parse(fs.readFileSync(path.join(batchRoot, 'import-manifest.json'), 'utf8'));
       return man.files.every(f => f.localPath.indexOf(userData) === 0) && JSON.stringify(man).indexOf(dl) < 0;
     })());
 
@@ -253,13 +256,10 @@ async function run() {
     check('17. XLSX extraction produces sheet/row content', /5000|0001|CLIN|janitorial/i.test(JSON.stringify(result)));
     check('18. TXT and CSV extract correctly', /Response deadline 06\/30\/2026/.test(JSON.stringify(result)) && /0002|5200/.test(JSON.stringify(result)));
     check('19. ZIP children extract recursively', /Wage Determination|Limitation on subcontracting/i.test(JSON.stringify(result)));
-    check('20. DOC produces honest partial/best-effort status', (() => {
-      // a .doc legacy file is best-effort; it must not silently fail the whole import
-      return result.ok === true;
-    })());
-    check('21. HTML masquerading as text is rejected', !!byName['portal.txt'] && /rejected_/.test(byName['portal.txt']));
-    check('22. App-shell text is rejected', !!byName['shell.txt'] && /rejected_app_shell/.test(byName['shell.txt']));
-    check('23. Corrupt files create warnings without failing the entire import', result.ok === true && result.import.sourceFileCount >= 5);
+    check('20. Legacy DOC is not advertised without a safe faithful parser', !require('../services/govcon/solicitation-package-extract').acceptedUploadTypes().includes('.doc'));
+    check('21. HTML masquerading as text is rejected', fileUtils.classifyLocalFile(fs.readFileSync(pHtml), '').ok === false);
+    check('22. App-shell text is rejected', fileUtils.classifyLocalFile(fs.readFileSync(pShell), '').reason === 'app_shell_html_response');
+    check('23. Five logical files succeed without ignoring a document', result.ok === true && result.import.sourceFileCount === 5 && result.documentInventory.length === 5);
     check('24. All Section A–M objects exist', ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'].every(L => result.sections[L] && typeof result.sections[L].found === 'boolean'));
     check('25. Formal Sections C, L, and M map correctly', result.sections.C.found && result.sections.L.found && result.sections.M.found);
     check('26. Fallback instructions/evaluation/scope mapping works', Array.isArray(result.instructionsToOfferors) && Array.isArray(result.evaluationCriteria) && Array.isArray(result.pwsSowRequirements));

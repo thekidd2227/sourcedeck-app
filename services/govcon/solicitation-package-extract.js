@@ -8,6 +8,10 @@ const zlib = require('zlib');
 // content-classification helpers now live in solicitation-file-utils.js, a
 // pure local-filesystem utility module with no network access.
 const { _extractZip, _classifyDownloadedBody } = require('./solicitation-file-utils');
+const {
+  MAX_SOLICITATION_DOCUMENTS,
+  SUPPORTED_SOLICITATION_EXTENSIONS
+} = require('./solicitation-constants');
 
 const SECTION_DEFS = [
   ['A', 'Part I', 'The Schedule', 'Solicitation/Contract Form'],
@@ -31,7 +35,7 @@ const SECTION_DEFS = [
 // workspace. HTML is handled by a dedicated reject branch in extractFileText.
 const TEXT_EXT = new Set(['.txt', '.csv', '.md', '.json', '.xml', '.rtf']);
 const HTML_REJECT_LIMITATION = 'HTML / web page excluded from extraction — not a solicitation attachment (portal, login, error, or app-shell page).';
-const ACCEPTED_UPLOAD_EXT = new Set(['.pdf', '.docx', '.doc', '.xlsx', '.xls', '.csv', '.txt', '.zip']);
+const ACCEPTED_UPLOAD_EXT = new Set(SUPPORTED_SOLICITATION_EXTENSIONS);
 
 // Phase 25AF — extraction status vocabulary.
 //   'text'          full readable text extracted
@@ -458,12 +462,30 @@ async function extractFileText(file, tmpRoot) {
     const buf = await fsp.readFile(file.localPath);
     const { text, pages, warnings } = extractPdfText(buf);
     const status = text ? (warnings.length ? 'partial' : 'text') : 'metadata-only';
+    const scannedMessage = 'This PDF appears to be scanned and requires OCR.';
     return fileResult(file, {
       extractionStatus: status,
       text,
       pages,
-      warnings: text ? warnings : (warnings.length ? warnings : [STORED_LIMITATION]),
-      limitation: text ? (warnings[0] || '') : (warnings[0] || STORED_LIMITATION)
+      warnings: text ? warnings : [scannedMessage],
+      limitation: text ? (warnings[0] || '') : scannedMessage
+    });
+  }
+
+  if (ext === '.xml' && file.localPath) {
+    const xml = await fsp.readFile(file.localPath, 'utf8');
+    if (/<!DOCTYPE|<!ENTITY|SYSTEM\s+["']|PUBLIC\s+["']/i.test(xml)) {
+      return fileResult(file, {
+        status: 'rejected', extractionStatus: 'rejected', text: '',
+        limitation: 'XML external entities, DTDs, remote schemas and stylesheets are disabled.',
+        warnings: ['Unsafe XML rejected (XXE protection).']
+      });
+    }
+    const text = cleanExtractedText(xml.replace(/<\?xml[^>]*\?>/gi, '').replace(/<\?xml-stylesheet[^>]*\?>/gi, ''));
+    return fileResult(file, {
+      extractionStatus: text ? 'text' : 'metadata-only', text,
+      limitation: text ? '' : 'No readable XML data found.',
+      warnings: text ? [] : ['No readable XML data found.']
     });
   }
 
@@ -828,6 +850,16 @@ function complianceMatrixStarter(sections, metadata) {
       sourceLocation: sourceLocation || '',
       requirementText: text.slice(0, 700),
       requirement: text.slice(0, 700),
+      normalizedRequirement: text.slice(0, 700),
+      exactSourceText: text.slice(0, 700),
+      sourceDocument: fileName || '',
+      pageNumber: '',
+      worksheetCell: sourceLocation || '',
+      paragraphHeading: sourceSection || source,
+      amendmentNumber: '',
+      extractionMethod: 'local deterministic parser',
+      confidence: source.indexOf('inferred') >= 0 ? 'medium' : 'high',
+      reviewerStatus: 'not_reviewed',
       mandatory: /\b(shall|must|required|mandatory|submit|provide|include)\b/i.test(text) ? 'Mandatory' : 'Optional / verify',
       mandatoryOptional: /\b(shall|must|required|mandatory|submit|provide|include)\b/i.test(text) ? 'Mandatory' : 'Optional',
       proposalSection: proposalSection(source, text),
@@ -835,6 +867,10 @@ function complianceMatrixStarter(sections, metadata) {
       evidenceNeeded: evidenceNeeded(text),
       evidence: evidenceNeeded(text),
       status: 'Draft - not reviewed',
+      reviewStatus: 'not_reviewed',
+      responseLocation: proposalSection(source, text),
+      applicableClause: /\b(?:FAR|DFARS)\s+\d{2}\.\d+/i.test(text) ? (text.match(/\b(?:FAR|DFARS)\s+\d{2}\.\d+(?:-\d+)?/i) || [''])[0] : '',
+      deadline: /\b(?:due|deadline|no later than)\b/i.test(text) ? text.slice(0, 300) : '',
       risk: riskFlag(text),
       riskFlag: riskFlag(text),
       notes: 'Verify against source package.'
@@ -911,6 +947,9 @@ function buildAliases(sections, metadata, files) {
 async function extractSolicitationPackage(input) {
   const manifest = await normalizeManifest(input);
   const files = await collectPackageFiles(manifest);
+  if (files.length > MAX_SOLICITATION_DOCUMENTS) {
+    return { ok: false, status: 'failed', reason: 'document_limit_exceeded', files: [], warnings: [] };
+  }
   if (!files.length) {
     return {
       ok: false,

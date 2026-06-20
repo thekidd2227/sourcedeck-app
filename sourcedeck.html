@@ -3438,6 +3438,28 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               <div class="gc-dd-last-updated-row" style="margin-top:4px"><span class="gc-dd-last-updated" data-gc-dd-section="vendor-pricing" style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);background:var(--panel3,#0E2040);border:1px solid var(--border);padding:3px 8px;border-radius:10px">Last updated: Not yet</span></div>
             </div>
 
+            <div id="gc-vqr-workflow-controls" style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:14px">
+              <button type="button" class="btn btn-gold" onclick="gcVqrAnalyzeNeeds()">Analyze Subcontracting Needs</button>
+              <button type="button" class="btn btn-ghost" onclick="gcVqrGenerateSearchStrategy()">Generate Local Search Strategy</button>
+              <button type="button" class="btn btn-ghost" onclick="gcVqrFindVendors()">Find Vendors</button>
+              <button type="button" class="btn btn-ghost" onclick="gcVqrReviewCandidates()">Review Vendor Candidates</button>
+              <button type="button" class="btn btn-ghost" onclick="gcVqrMapVendors()">Map Vendors to Scope</button>
+              <button type="button" class="btn btn-ghost" onclick="gcVqrDraftOutreach()">Draft Quote Request Emails</button>
+              <button type="button" class="btn btn-ghost" onclick="gcVqrReviewOutreach()">Review Outreach</button>
+              <button type="button" class="btn btn-ghost" onclick="gcVqrSendApproved()">Send Approved Outreach</button>
+              <button type="button" class="btn btn-ghost" onclick="gcVqrImportResponses()">Import Vendor Responses</button>
+              <button type="button" class="btn btn-ghost" onclick="gcVqrRecordQuote()">Record Quote</button>
+              <button type="button" class="btn btn-ghost" onclick="gcVqrCompareQuotes()">Compare Quotes</button>
+            </div>
+
+            <div id="gc-vqr-operational-workspace" style="display:grid;grid-template-columns:1fr;gap:10px;margin-bottom:14px">
+              <details open style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px"><summary style="cursor:pointer;font-weight:600">Scope Coverage</summary><div style="overflow-x:auto"><table style="width:100%;min-width:900px;font-size:10px"><thead><tr><th>Requirement/task</th><th>Source citation</th><th>Subcontractor type</th><th>Assigned vendor</th><th>Backup vendor</th><th>Coverage status</th><th>Risk</th><th>Notes</th></tr></thead><tbody id="gc-vqr-scope-coverage"><tr><td colspan="8">Run Analyze Subcontracting Needs. Unresolved coverage remains visible.</td></tr></tbody></table></div></details>
+              <details style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px"><summary style="cursor:pointer;font-weight:600">Vendor Candidates</summary><div style="overflow-x:auto"><table style="width:100%;min-width:900px;font-size:10px"><thead><tr><th>Company</th><th>Location/distance</th><th>Capability match</th><th>Certifications/licenses</th><th>Contact</th><th>Email verification</th><th>Matched tasks</th><th>Score/evidence</th><th>Status</th></tr></thead><tbody id="gc-vqr-vendor-candidates"><tr><td colspan="9">No source-backed candidates yet. Find Vendors never sends email.</td></tr></tbody></table></div></details>
+              <details style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px"><summary style="cursor:pointer;font-weight:600">Outreach Queue</summary><div id="gc-vqr-outreach-queue" style="font-size:10px;color:var(--muted)">Statuses: not drafted · draft ready · needs review · approved · scheduled · sent · delivery failed · responded · declined · follow-up due · quote requested · quote received. Drafting is not approval; sending requires final confirmation.</div></details>
+              <details style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px"><summary style="cursor:pointer;font-weight:600">Quote Tracker</summary><div style="overflow-x:auto"><table style="width:100%;min-width:900px;font-size:10px"><thead><tr><th>Vendor</th><th>Quote requested</th><th>Quote due</th><th>Quote received</th><th>Quote amount</th><th>Assumptions/exclusions</th><th>Validity</th><th>Mobilization/availability</th><th>Documents</th><th>Qualification</th><th>Comparison</th></tr></thead><tbody id="gc-vqr-quote-tracker"><tr><td colspan="11">No quote records yet.</td></tr></tbody></table></div></details>
+              <details style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px"><summary style="cursor:pointer;font-weight:600">Vendor Comparison</summary><div id="gc-vqr-vendor-comparison" style="font-size:10px;color:var(--muted)">Compare coverage, price, qualifications, past performance, risk, availability, responsiveness, quote completeness, and evaluation-factor support. Cheapest is not automatically recommended.</div></details>
+            </div>
+
             <!-- 3 stat cards -->
             <div class="gc-vqr-grid" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:10px;margin-bottom:14px">
               <div class="gc-vqr-card" data-vqr="needs" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:10px 12px">
@@ -4631,7 +4653,7 @@ npm run sam:sprint           # or: node scripts/sam-opportunity-sprint.js</code>
               <div style="font-family:'Syne',sans-serif;font-weight:700;font-size:14px;color:var(--text)">Choose a solicitation to work on</div>
               <div style="font-size:11px;color:var(--muted);line-height:1.55;margin-top:4px">Select a downloaded SAM.gov package, choose an opportunity saved from SAM.gov, or upload a solicitation file locally. Extraction is local · no portal upload · no email send · no bid submission.</div>
             </div>
-            <input type="file" id="pw-sol-file" accept=".pdf,.docx,.doc,.xlsx,.xls,.csv,.txt,.zip,.md,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/plain,text/markdown,text/csv,application/zip" style="display:none" onchange="pwSolOnFileChosen(event)">
+            <span id="pw-sol-upload-limit" style="font-size:10px;color:var(--muted)">Select up to 5 solicitation documents per upload.</span>
           </div>
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:10px">
             <div class="form-group" style="margin:0">
@@ -15468,6 +15490,59 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (window.toast) try { window.toast('Vendor quote row added. SourceDeck does not send vendor outreach.', 'ok'); } catch (e) {}
     return false;
   };
+  var VQW_KEY = 'sd.govcon.vendorQuoteWorkflow.v1';
+  function loadWorkflow(){ try { return JSON.parse(localStorage.getItem(VQW_KEY) || '{}') || {}; } catch (e) { return {}; } }
+  function saveWorkflow(st){ try { localStorage.setItem(VQW_KEY, JSON.stringify(st || {})); } catch (e) {} }
+  function solicitationState(){ try { return JSON.parse(localStorage.getItem('sd.govcon.solWorkspace.v1') || '{}') || {}; } catch (e) { return {}; } }
+  function workflowApi(){ return window.sd && window.sd.govcon && window.sd.govcon.vendorQuoteWorkflow; }
+  function renderCoverage(rows){
+    var body = $('gc-vqr-scope-coverage'); if (!body) return;
+    if (!rows || !rows.length){ body.innerHTML = '<tr><td colspan="8">No source-backed requirements are available. Extract and review the solicitation first.</td></tr>'; return; }
+    body.innerHTML = rows.map(function(r){ return '<tr><td>' + safeText(r.task) + '</td><td>' + safeText(r.sourceCitation) + '</td><td>' + safeText(r.requiredSubcontractorType) + '</td><td>' + safeText(r.assignedVendor) + '</td><td>' + safeText(r.backupVendor) + '</td><td>' + safeText(r.coverageStatus) + '</td><td>' + safeText(r.riskLevel) + '</td><td>' + safeText(r.notes) + '</td></tr>'; }).join('');
+  }
+  function renderCandidates(rows){
+    var body = $('gc-vqr-vendor-candidates'); if (!body) return;
+    if (!rows || !rows.length){ body.innerHTML = '<tr><td colspan="9">No verified provider results. SourceDeck will not invent vendors or contacts.</td></tr>'; return; }
+    body.innerHTML = rows.map(function(v){ return '<tr><td>' + safeText(v.legalBusinessName) + '<br>' + safeText(v.website) + '</td><td>' + safeText(v.serviceLocation) + ' / ' + safeText(v.distanceMiles == null ? 'distance unverified' : v.distanceMiles + ' miles') + '</td><td>' + safeText((v.capabilities || []).join(', ')) + '</td><td>' + safeText((v.certifications || []).concat(v.licenses || []).join(', ')) + '</td><td>' + safeText(v.contactName) + ' ' + safeText(v.email || v.phone) + '</td><td>' + safeText(v.emailVerificationStatus) + '</td><td>' + safeText((v.mappedTaskIds || []).join(', ')) + '</td><td>' + safeText(v.score && v.score.total) + ' / evidence retained</td><td>' + safeText(v.qualificationStatus) + '</td></tr>'; }).join('');
+  }
+  window.gcVqrAnalyzeNeeds = async function(){
+    var api = workflowApi(); if (!api){ if (window.toast) window.toast('Vendor workflow requires the SourceDeck desktop app.', 'warn'); return; }
+    var sol = solicitationState();
+    var result = await api.analyze({ complianceMatrix: sol.matrix || [], metadata: sol.packageExtraction && sol.packageExtraction.metadata || {} });
+    var st = loadWorkflow(); st.actionPlan = result; saveWorkflow(st); renderCoverage(result.requirements || []);
+    if (window.toast) window.toast((result.requirements || []).length ? 'Subcontracting needs mapped. Review unresolved coverage gaps.' : 'No source-backed tasks found. Extract the solicitation first.', (result.requirements || []).length ? 'ok' : 'warn');
+  };
+  window.gcVqrGenerateSearchStrategy = async function(){
+    var api = workflowApi(); if (!api) return;
+    var st = loadWorkflow(), sol = solicitationState(), md = sol.packageExtraction && sol.packageExtraction.metadata || {};
+    var result = await api.searchStrategy({ placeOfPerformance: md.placeOfPerformance, metadata: md, requirements: st.actionPlan && st.actionPlan.requirements || [] });
+    st.searchStrategy = result; saveWorkflow(st);
+    if (window.toast) window.toast(result.ok ? result.queries.join('\n') : 'Confirm a city, state, ZIP code, or address before vendor search.', result.ok ? 'info' : 'warn');
+  };
+  window.gcVqrFindVendors = function(){ if (window.toast) window.toast('Use a configured public-search/contact provider to find vendors. No provider is configured in this build; no companies or contacts were invented, and no email was sent.', 'warn'); };
+  window.gcVqrReviewCandidates = function(){ var st = loadWorkflow(); renderCandidates(st.vendors || []); };
+  window.gcVqrMapVendors = function(){ var st = loadWorkflow(); renderCoverage(st.actionPlan && st.actionPlan.requirements || []); if (window.toast) window.toast('Vendor-to-task map opened. Unassigned requirements remain visible.', 'info'); };
+  window.gcVqrDraftOutreach = function(){ if (window.toast) window.toast('Select source-backed candidates and confirm sender identity plus a quote deadline before drafting. Draft generation never approves or sends.', 'info'); };
+  window.gcVqrReviewOutreach = function(){ var el = $('gc-vqr-outreach-queue'); if (el && el.scrollIntoView) el.scrollIntoView({ behavior:'smooth', block:'center' }); };
+  window.gcVqrSendApproved = async function(){
+    var st = loadWorkflow(), drafts = st.drafts || [], approved = drafts.filter(function(d){ return d.approved === true && d.status === 'approved'; });
+    if (!approved.length){ if (window.toast) window.toast('No approved drafts. Review and approve vendor outreach individually first.', 'warn'); return; }
+    var expected = 'Send ' + approved.length + ' approved vendor outreach emails';
+    var confirmation = window.prompt('Final confirmation required. Type exactly:\n' + expected, '');
+    if (confirmation !== expected){ if (window.toast) window.toast('Send cancelled. Exact confirmation was not provided.', 'warn'); return; }
+    var api = workflowApi();
+    if (!(api && typeof api.sendApproved === 'function')){ if (window.toast) window.toast('Sending is blocked: no secure email provider is configured.', 'warn'); return; }
+    var result = await api.sendApproved({ drafts:drafts, confirmation:confirmation, sentDraftIds:st.sentDraftIds || [] });
+    if (!result || !result.ok){ if (window.toast) window.toast('Sending is blocked: no secure email provider is configured for this runtime.', 'warn'); return; }
+    st.sentDraftIds = result.sentDraftIds || st.sentDraftIds || [];
+    st.sendResults = result.sent || [];
+    st.drafts = drafts.map(function(d){ var hit = st.sendResults.find(function(x){ return x.draftId === d.id; }); return hit && hit.status === 'sent' ? Object.assign({}, d, { status:'sent', sentAt:new Date().toISOString() }) : d; });
+    saveWorkflow(st);
+    if (window.toast) window.toast(result.sent.filter(function(x){ return x.status === 'sent'; }).length + ' approved test outreach message(s) recorded.', 'ok');
+  };
+  window.gcVqrImportResponses = function(){ if (window.toast) window.toast('Import responses for review; SourceDeck never auto-accepts quotes or selects a vendor.', 'info'); };
+  window.gcVqrRecordQuote = function(){ var form = $('gc-vqr-intake-form'); if (form && form.closest){ var d = form.closest('details'); if (d) d.open = true; } };
+  window.gcVqrCompareQuotes = function(){ var el = $('gc-vqr-vendor-comparison'); if (el && el.scrollIntoView) el.scrollIntoView({ behavior:'smooth', block:'center' }); };
   window.gcVqrRender = renderVqr;
   window.gcPricingRender = renderPricing;
   function renderAll(){ renderVqr(); renderPricing(); }
@@ -17446,35 +17521,31 @@ document.addEventListener('DOMContentLoaded',()=>{
   }
 
   // ── Public actions ────────────────────────────────────────────────
-  window.pwSolOpenFilePicker = function(){
-    var p = $('pw-sol-file'); if (p) p.click();
-  };
-  window.pwSolOnFileChosen = function(ev){
-    var f = ev && ev.target && ev.target.files && ev.target.files[0]; if (!f) return;
-    var name = (f.name || '').toLowerCase();
-    var mime = (f.type || '').toLowerCase();
-    var isText = /\.txt$|\.md$|\.csv$/.test(name) || /^text\//.test(mime) || mime === 'text/markdown' || mime === 'text/csv';
-    var rec = newRecord('Upload', { fileName: f.name, title: f.name });
-    if (isText){
-      var r = new FileReader();
-      r.onload = function(){
-        rec.rawText = String(r.result || '');
-        _state.records.push(rec);
-        _state.activeId = rec.id;
-        saveState().then(renderSelector);
-        if (window.toast) try { window.toast('Solicitation loaded locally · click Extract Key Details', 'ok'); } catch (e) {}
-      };
-      r.readAsText(f);
-    } else {
-      // Phase 25AB — store unsupported/binary uploads without fake extraction.
-      rec.rawText = '';
-      rec.status = 'stored-text-extraction-unavailable';
-      rec.limitation = 'Stored, text extraction not available yet';
-      _state.records.push(rec);
-      _state.activeId = rec.id;
-      saveState().then(renderSelector);
-      if (window.toast) try { window.toast('File stored locally. Text extraction is not available yet for this type.', 'info'); } catch (e) {}
+  window.pwSolOpenFilePicker = async function(){
+    if (!(window.sd && window.sd.govcon && typeof window.sd.govcon.selectAndExtractSolicitation === 'function')){
+      if (window.toast) window.toast('Local solicitation import requires the SourceDeck desktop app.', 'warn');
+      return;
     }
+    var result;
+    try { result = await window.sd.govcon.selectAndExtractSolicitation({}); }
+    catch (e) { result = { ok: false, reason: 'ipc_error' }; }
+    if (!result || result.cancelled) return;
+    if (!result.ok){
+      var msg = result.message || (result.reason === 'document_limit_exceeded' ? 'Select up to 5 solicitation documents per upload.' : 'Solicitation extraction failed. Review each file warning.');
+      if (window.toast) window.toast(msg, 'warn');
+      return;
+    }
+    if (typeof window.gcSolLoadExtractionResult === 'function') window.gcSolLoadExtractionResult(result);
+    var inv = result.documentInventory || [];
+    var rec = newRecord('Upload', { fileName: inv.map(function(x){ return x.safeStoredFileName; }).join(', '), title: inv.length + ' solicitation document' + (inv.length === 1 ? '' : 's') });
+    rec.rawText = '';
+    rec.status = result.import && result.import.partialSuccess ? 'partial-success-review-required' : 'extracted-review-required';
+    rec.extractionLog = { at: new Date().toISOString(), source: 'canonical-main-process-import', rawTextChars: 0, fieldsPopulated: (result.complianceMatrix || []).length, note: 'Extraction processed — review required.' };
+    rec.packageExtraction = result;
+    _state.records.push(rec);
+    _state.activeId = rec.id;
+    saveState().then(renderSelector);
+    if (window.toast) window.toast('Extraction processed — review required.', result.import && result.import.partialSuccess ? 'warn' : 'ok');
   };
   window.pwSolTogglePasteArea = function(){
     if (window.toast) try { window.toast('Text paste intake is deprecated. Upload a solicitation or use a downloaded SAM.gov package.', 'info'); } catch (e) {}
@@ -17498,6 +17569,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     var rec = activeRecord();
     if (!rec || /^sam:/.test(rec.id)){
       if (window.toast) try { window.toast('Select an uploaded solicitation or downloaded package first.', 'warn'); } catch (e) {}
+      return;
+    }
+    if (rec.packageExtraction){
+      if (typeof window.gcSolLoadExtractionResult === 'function') window.gcSolLoadExtractionResult(rec.packageExtraction);
+      if (window.toast) try { window.toast('Extraction processed — review required.', 'ok'); } catch (e) {}
       return;
     }
     if (pasted.trim() && !rec.rawText){ rec.rawText = pasted; }

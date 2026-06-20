@@ -40,7 +40,8 @@ const appApi = createAppApi({
   credentials,
   audit,
   fetchFn: typeof fetch === 'function' ? fetch : null,
-  userDataPath: app.getPath('userData')
+  userDataPath: app.getPath('userData'),
+  vendorOutreachTestMode: process.env.SOURCEDECK_VENDOR_OUTREACH_TEST_MODE === 'true'
 });
 
 // ─── First-run privacy scrub ──────────────────────────────────────────
@@ -124,7 +125,9 @@ app.whenReady().then(() => {
 
   if (app.isPackaged) {
     setTimeout(() => {
-      autoUpdater.checkForUpdatesAndNotify();
+      // Directory/test packages do not include app-update.yml. Treat that as
+      // an unavailable update channel, not an unhandled runtime exception.
+      void autoUpdater.checkForUpdatesAndNotify().catch(() => {});
     }, 5000);
   }
 
@@ -144,6 +147,7 @@ app.on('window-all-closed', () => {
 // Auto-updater: silent download, prompt on ready
 autoUpdater.autoDownload = true;
 autoUpdater.autoInstallOnAppQuit = true;
+autoUpdater.on('error', () => { /* update channel unavailable; app remains usable */ });
 
 autoUpdater.on('update-downloaded', () => {
   if (mainWindow) {
@@ -354,7 +358,7 @@ ipcMain.handle('govcon:select-and-extract-solicitation', async (_event, payload)
       title: 'Select downloaded solicitation files',
       properties: ['openFile', 'multiSelections'],
       filters: [
-        { name: 'Solicitation files', extensions: ['pdf', 'docx', 'doc', 'xlsx', 'xls', 'csv', 'txt', 'zip'] }
+        { name: 'Solicitation files', extensions: ['pdf', 'docx', 'xlsx', 'csv', 'txt', 'xml', 'zip'] }
       ]
     });
   } catch (_) {
@@ -362,6 +366,10 @@ ipcMain.handle('govcon:select-and-extract-solicitation', async (_event, payload)
   }
   if (!selection || selection.canceled || !Array.isArray(selection.filePaths) || !selection.filePaths.length) {
     return { ok: false, cancelled: true };
+  }
+  const limits = appApi.govcon.solicitationImport.limits;
+  if (selection.filePaths.length > limits.maxDocuments) {
+    return { ok: false, reason: 'document_limit_exceeded', message: limits.message, stateChanged: false };
   }
   return appApi.govcon.solicitationImport.import({
     filePaths: selection.filePaths,
@@ -376,6 +384,11 @@ ipcMain.handle('govcon:select-and-extract-solicitation', async (_event, payload)
     userDataPath: app.getPath('userData')
   });
 });
+ipcMain.handle('govcon:vendor-quote-analyze', (_event, payload) => appApi.govcon.vendorQuoteWorkflow.analyze(payload || {}));
+ipcMain.handle('govcon:vendor-search-strategy', (_event, payload) => appApi.govcon.vendorQuoteWorkflow.searchStrategy(payload || {}));
+ipcMain.handle('govcon:vendor-rank-candidates', (_event, payload) => appApi.govcon.vendorQuoteWorkflow.rankCandidates(payload || {}));
+ipcMain.handle('govcon:vendor-draft-outreach', (_event, payload) => appApi.govcon.vendorQuoteWorkflow.draftOutreach(payload || {}));
+ipcMain.handle('govcon:vendor-send-approved', (_event, payload) => appApi.govcon.vendorQuoteWorkflow.sendApproved(payload || {}));
 
 ipcMain.handle('govcon:index-status',       () => appApi.govcon.index.status());
 ipcMain.handle('govcon:index-settings-get', () => appApi.govcon.index.settings.get());

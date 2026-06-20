@@ -15,6 +15,7 @@
 const fsp = require('fs').promises;
 const path = require('path');
 const zlib = require('zlib');
+const { SUPPORTED_SOLICITATION_EXTENSIONS } = require('./solicitation-constants');
 
 // ── App-shell / non-attachment HTML markers (mirrors sam-body-classifier) ──
 const APP_SHELL_MARKERS = [
@@ -188,9 +189,44 @@ async function extractZipSafely(zipPath, outDir) {
   return extracted;
 }
 
+// Read-only ZIP inventory used before any import directory or persistence is
+// created. It intentionally counts only supported logical solicitation
+// documents; nested ZIPs, executables, symlinks and unsafe names are rejected.
+async function inspectZipEntries(zipPath) {
+  const buf = await fsp.readFile(zipPath);
+  const supported = [];
+  const rejected = [];
+  let off = 0;
+  let totalUncompressed = 0;
+  while (off + 30 <= buf.length && buf.readUInt32LE(off) === 0x04034b50) {
+    if (supported.length + rejected.length >= MAX_ZIP_ENTRIES) throw new Error('zip_file_count_exceeded');
+    const flags = buf.readUInt16LE(off + 6);
+    const method = buf.readUInt16LE(off + 8);
+    const compressedSize = buf.readUInt32LE(off + 18);
+    const fileSize = buf.readUInt32LE(off + 22);
+    const nameLen = buf.readUInt16LE(off + 26);
+    const extraLen = buf.readUInt16LE(off + 28);
+    const name = buf.slice(off + 30, off + 30 + nameLen).toString('utf8').replace(/\\/g, '/');
+    const dataStart = off + 30 + nameLen + extraLen;
+    if (flags & 0x08) throw new Error('zip_data_descriptor_unsupported');
+    off = dataStart + compressedSize;
+    if (!name || name.endsWith('/')) continue;
+    if (name.includes('..') || path.isAbsolute(name) || name.includes('\0')) throw new Error('unsafe_package_path');
+    if (method !== 0 && method !== 8) throw new Error('zip_compression_unsupported');
+    totalUncompressed += fileSize;
+    if (totalUncompressed > MAX_ZIP_TOTAL_UNCOMPRESSED) throw new Error('zip_decompression_limit_exceeded');
+    const ext = fileExtension(name);
+    if (ext === '.zip') rejected.push({ fileName: name, reason: 'nested_archive_rejected' });
+    else if (SUPPORTED_SOLICITATION_EXTENSIONS.includes(ext)) supported.push({ fileName: name, extension: ext, sizeBytes: fileSize });
+    else rejected.push({ fileName: name, reason: 'unsupported_or_executable' });
+  }
+  return { supported, rejected, logicalDocumentCount: supported.length };
+}
+
 module.exports = {
   // Spec (Phase 25AN Step 5) surface
   extractZipSafely,
+  inspectZipEntries,
   classifyLocalFile,
   validateFilePath,
   sanitizeFileName,
