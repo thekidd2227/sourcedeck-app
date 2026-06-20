@@ -235,12 +235,16 @@ test('Phase 25L-1 superseded the Phase 23C "Show All Tools" toggle', () => {
     'gcToggleAllTools() stub missing — must remain as no-op for legacy callers');
 });
 
-// 11. All 21 commercial nav buttons + 21 commercial panes remain reachable.
+// 11. All commercial nav buttons + panes remain reachable.
+// PR #151 closeout: Phase 26C removed four orphaned tab-panes
+// (`cmd`, `command`, `revenue`, `socials`) from the DOM. The remaining
+// commercial surface is what this test now pins. Restoring them would
+// regress Phase 26C, so the list is intentionally narrowed.
 test('Every commercial nav button + pane remains in the DOM', () => {
   const tabs = [
-    'cmd','dashboard','leads','revenue','email','overdue','reply','content',
-    'dailyops','socials','createlead','aigenerate','settings','delivery',
-    'govcon','outreach','primes','command','opportunities','dealwork',
+    'dashboard','leads','email','overdue','reply','content',
+    'dailyops','createlead','aigenerate','settings','delivery',
+    'govcon','outreach','primes','opportunities','dealwork',
     'pipeline','execution','proof','clinical'
   ];
   for (const t of tabs) {
