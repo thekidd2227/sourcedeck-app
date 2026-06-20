@@ -50,7 +50,7 @@ test('Extract Requirements is enabled only when source text/material exists', ()
 });
 
 test('empty Attachments state guides the user to package/upload flow', () => {
-  assert.ok(/No solicitation package selected yet\. Select a saved pursuit, download its SAM\.gov package, or upload a solicitation package\./.test(HTML),
+  assert.ok(/No solicitation selected yet\. Select a saved pursuit, or use Upload Solicitation Files to import documents\./.test(HTML),
     'empty package guidance present');
 });
 

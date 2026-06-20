@@ -1,98 +1,129 @@
 'use strict';
 
-// Removal phase — permanently remove the automatic SAM.gov solicitation
-// download / attachment-link-retrieval feature, while preserving SAM.gov
-// search, saved pursuits, Open Official SAM.gov Listing (canonical page only),
-// and manual local file upload + extraction.
-//
-// Proves:
-//   1. No automatic retrieval remains in the backend (IPC / preload / api /
-//      service) — govcon:sam-fetch-notice, samFetchNotice, fetchNotice, and
-//      services/govcon/sam-notice-fetch.js are gone.
-//   2. No download/fetch/extract-downloaded/send-package buttons remain in the
-//      renderer, and no user-facing button label uses Download/Fetch/Downloaded.
-//   3. Open Official SAM.gov Listing exists and opens ONLY the canonical page
-//      (no samFetchNotice, no resource-link retrieval).
-//   4. Manual upload is preserved and labeled exactly "Upload Solicitation
-//      Files"; the local picker + extraction service stay wired.
-//   5. Preserved surfaces remain: SAM.gov search, open-external-safe,
-//      select-and-extract-solicitation, importAndExtract.
+// Eradication test — the automatic SAM.gov solicitation download /
+// attachment-link-retrieval feature must be COMPLETELY gone from shipped
+// production source (renderer + main + preload + api + services). This test
+// scans the actual source text (so it catches comments, aliases, and no-op
+// stubs — not just labels) and fails if any forbidden remnant survives. It
+// also proves the manual upload + canonical-listing workflow is intact and that
+// every inline renderer <script> still parses.
 
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
+const vm = require('vm');
 
 const ROOT = path.join(__dirname, '..');
-const html = fs.readFileSync(path.join(ROOT, 'sourcedeck.html'), 'utf8');
-const mainJs = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
-const preloadJs = fs.readFileSync(path.join(ROOT, 'preload.js'), 'utf8');
-const apiJs = fs.readFileSync(path.join(ROOT, 'api', 'index.js'), 'utf8');
+
+// ── Collect shipped production source (never tests/docs/node_modules/dist) ──
+function listJs(dir) {
+  const out = [];
+  for (const ent of fs.readdirSync(dir, { withFileTypes: true })) {
+    if (ent.name === 'node_modules' || ent.name === 'dist' || ent.name === '.git') continue;
+    const p = path.join(dir, ent.name);
+    if (ent.isDirectory()) out.push(...listJs(p));
+    else if (ent.name.endsWith('.js')) out.push(p);
+  }
+  return out;
+}
+const PROD_FILES = [
+  path.join(ROOT, 'sourcedeck.html'),
+  path.join(ROOT, 'main.js'),
+  path.join(ROOT, 'preload.js'),
+  ...listJs(path.join(ROOT, 'api')),
+  ...listJs(path.join(ROOT, 'services'))
+];
+const SOURCES = PROD_FILES.map(f => ({ file: path.relative(ROOT, f), text: fs.readFileSync(f, 'utf8') }));
+const HTML = fs.readFileSync(path.join(ROOT, 'sourcedeck.html'), 'utf8');
+const MAIN = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
+const PRELOAD = fs.readFileSync(path.join(ROOT, 'preload.js'), 'utf8');
 
 let passed = 0;
 function check(label, cond) { assert.ok(cond, label); passed += 1; console.log('  ✓ ' + label); }
 
-function extractFn(source, anchor) {
-  const start = source.indexOf(anchor);
-  assert(start >= 0, 'function not found: ' + anchor);
-  const brace = source.indexOf('{', start);
-  let depth = 0, quote = '', esc = false;
-  for (let i = brace; i < source.length; i += 1) {
-    const ch = source[i];
-    if (quote) { if (esc) esc = false; else if (ch === '\\') esc = true; else if (ch === quote) quote = ''; continue; }
-    if (ch === '"' || ch === "'" || ch === '`') { quote = ch; continue; }
-    if (ch === '{') depth += 1;
-    else if (ch === '}') { depth -= 1; if (depth === 0) return source.slice(start, source.indexOf(';', i) + 1); }
+console.log('\n=== Eradicate SAM.gov download / attachment-link retrieval ===\n');
+
+// ── 1. Forbidden remnants must NOT appear anywhere in production source ──
+const FORBIDDEN = [
+  'govcon:sam-fetch-notice', 'samFetchNotice', 'sam-notice-fetch', 'fetchNotice',
+  'Download SAM.gov Package', 'Download Solicitation Package', 'Fetch SAM.gov Notice',
+  'Extract Downloaded Solicitation', 'View Attachments', 'Refresh Source Details',
+  'Send Package to Solicitation Center',
+  'gcABDownloadPackage', 'gcTabSamDownloadPackage', 'gcW25ViewAttachments',
+  'gcW25RefreshSource', 'gcW25SendToWorkspace', 'gcW25UseInWorkspace',
+  'gcW25FetchDescription', 'gcW25OpenResource', 'gcW25ImportResource', 'gcW25OpenNotice',
+  'gcExtractDownloadedSolicitation', 'gcABViewAttachment', 'gcABOpenLocalPackageFolder',
+  'gcACSaveLocalCopy', 'gcABExtractAttachment',
+  'resourceLinks', 'packageManifest',
+  // User-facing copy that tells the user SourceDeck downloads/fetches packages.
+  'download a saved SAM.gov package', 'download a package', 'download its SAM.gov package',
+  'Download a SAM.gov package', 'Download the solicitation package', 'downloaded package',
+  're-download',
+  'data-gc-find-action="download-package"', 'data-dash-start-action="download-package"',
+  'data-gc-sam-fresh-action="download-package"',
+  'data-gc-saved-action="fetch-notice"', 'data-gc-saved-action="extract-downloaded"',
+  'data-gc-saved-action="view-attachments"', 'data-gc-saved-action="refresh-source"',
+  'data-gc-saved-action="send-to-solicitation-center"'
+];
+const violations = [];
+for (const tok of FORBIDDEN) {
+  for (const s of SOURCES) {
+    if (s.text.indexOf(tok) >= 0) violations.push(tok + '  →  ' + s.file);
   }
-  throw new Error('unterminated: ' + anchor);
+}
+check('no forbidden download/retrieval remnant in production source\n     ' + (violations.join('\n     ') || '(none)'),
+  violations.length === 0);
+
+// ── 2. Backend retrieval wiring removed; api loads ──────────────────────
+check('main.js: no govcon:sam-fetch-notice IPC handler', MAIN.indexOf("ipcMain.handle('govcon:sam-fetch-notice'") < 0);
+check('preload.js: no samFetchNotice bridge', !/samFetchNotice\s*:/.test(PRELOAD));
+check('services/govcon/sam-notice-fetch.js is deleted', !fs.existsSync(path.join(ROOT, 'services', 'govcon', 'sam-notice-fetch.js')));
+check('api/index.js loads without the deleted service', (() => { delete require.cache[require.resolve('../api/index.js')]; require('../api/index.js'); return true; })());
+
+// ── 3. No retired automatic-download function is left as an alias / no-op ──
+const RETIRED_FNS = [
+  'gcABDownloadPackage', 'gcTabSamDownloadPackage', 'gcW25ViewAttachments', 'gcW25RefreshSource',
+  'gcW25SendToWorkspace', 'gcW25UseInWorkspace', 'gcW25OpenNotice', 'gcW25FetchDescription',
+  'gcW25OpenResource', 'gcW25ImportResource', 'gcABViewAttachment', 'gcABOpenLocalPackageFolder',
+  'gcACSaveLocalCopy', 'gcABExtractAttachment', 'gcExtractDownloadedSolicitation'
+];
+for (const fn of RETIRED_FNS) {
+  check('retired function fully deleted (no definition): ' + fn,
+    HTML.indexOf('window.' + fn + ' =') < 0 && HTML.indexOf('function ' + fn + '(') < 0);
 }
 
-console.log('\n=== Removal — SAM.gov solicitation download / attachment retrieval ===\n');
+// ── 4. Preserved: canonical-listing + manual upload + search + pursuits ──
+check('Open Official SAM.gov Listing button exists', HTML.indexOf('Open Official SAM.gov Listing') >= 0);
+check('gcOpenOfficialSamListing exists and is canonical-only', (() => {
+  const i = HTML.indexOf('window.gcOpenOfficialSamListing = async function');
+  if (i < 0) return false;
+  const body = HTML.slice(i, i + 700);
+  return /sam\.gov\/opp\/'\s*\+\s*encodeURIComponent\(noticeId\)/.test(body) && body.indexOf('samFetchNotice') < 0 && body.indexOf('resourceLinks') < 0;
+})());
+check('manual-upload label is exactly "Upload Solicitation Files"', HTML.indexOf('Upload Solicitation Files') >= 0);
+check('gcUploadSolicitationFiles exists and uses the native picker', (() => {
+  const i = HTML.indexOf('window.gcUploadSolicitationFiles = async function');
+  if (i < 0) return false;
+  return /selectAndExtractSolicitation/.test(HTML.slice(i, i + 1600));
+})());
+check('SAM.gov search IPC + bridge preserved', MAIN.indexOf("ipcMain.handle('govcon:sam-search'") >= 0 && /samSearch\s*:/.test(PRELOAD));
+check('saved pursuits preserved (View Details / Mark Pursue / Unpursue / Archive / Delete)',
+  /gcW25ViewDetails/.test(HTML) && /gcTabSamMarkPursue/.test(HTML) && /gcW25Unpursue/.test(HTML) && /gcTabSamArchive/.test(HTML) && /gcW25DeleteSavedPursuit/.test(HTML));
+check('open-external-safe + select-and-extract IPC/bridge preserved',
+  MAIN.indexOf("ipcMain.handle('govcon:open-external-safe'") >= 0
+  && MAIN.indexOf("ipcMain.handle('govcon:select-and-extract-solicitation'") >= 0
+  && /openExternalSafe\s*:/.test(PRELOAD) && /selectAndExtractSolicitation\s*:/.test(PRELOAD));
+check('five-document upload limit remains', /maxSolicitationDocuments:\s*5/.test(PRELOAD));
+check('local import + extraction services preserved', fs.existsSync(path.join(ROOT, 'services', 'govcon', 'solicitation-import.js')) && fs.existsSync(path.join(ROOT, 'services', 'govcon', 'solicitation-package-extract.js')));
 
-// ── 1. Backend retrieval removed ───────────────────────────────────────
-check('1a. main.js has no govcon:sam-fetch-notice IPC handler', mainJs.indexOf("ipcMain.handle('govcon:sam-fetch-notice'") < 0);
-check('1b. preload.js exposes no samFetchNotice bridge', !/samFetchNotice\s*:/.test(preloadJs));
-check('1c. api/index.js exposes no sam.fetchNotice', !/fetchNotice\s*:/.test(apiJs) && apiJs.indexOf("require('../services/govcon/sam-notice-fetch')") < 0);
-check('1d. sam-notice-fetch.js service is deleted', !fs.existsSync(path.join(ROOT, 'services', 'govcon', 'sam-notice-fetch.js')));
-check('1e. renderer never calls samFetchNotice', html.indexOf('samFetchNotice') < 0);
+// ── 5. Every inline renderer <script> still parses ──────────────────────
+const blocks = HTML.match(/<script>[\s\S]*?<\/script>/g) || [];
+let parsedBlocks = 0;
+for (let i = 0; i < blocks.length; i++) {
+  const code = blocks[i].replace(/^<script>/, '').replace(/<\/script>$/, '');
+  try { new vm.Script(code, { filename: 'block-' + i + '.js' }); parsedBlocks += 1; }
+  catch (e) { assert.fail('inline <script> block ' + i + ' failed to parse: ' + e.message); }
+}
+check('every inline renderer <script> parses (' + parsedBlocks + ' blocks)', parsedBlocks === blocks.length && parsedBlocks > 0);
 
-// ── 2. Renderer download/fetch buttons removed ─────────────────────────
-check('2a. no "Download Solicitation Package" / "Download SAM.gov Package" buttons',
-  html.indexOf('Download Solicitation Package') < 0 && html.indexOf('Download SAM.gov Package') < 0);
-check('2b. no "Fetch SAM.gov Notice" button', html.indexOf('Fetch SAM.gov Notice') < 0);
-check('2c. no "Extract Downloaded Solicitation" button', html.indexOf('Extract Downloaded Solicitation') < 0);
-check('2d. no "Send Package to Solicitation Center" button', html.indexOf('Send Package to Solicitation Center') < 0);
-check('2e. removed data-actions are gone',
-  !/data-(?:dash-start|gc-find|gc-sam-fresh)-action="download-package"/.test(html)
-  && !/data-gc-saved-action="(?:fetch-notice|extract-downloaded|send-to-solicitation-center|view-attachments|refresh-source)"/.test(html));
-
-// User-facing button labels must not use the forbidden words.
-const buttonLabels = (html.match(/>[^<>]*<\/button>/g) || []).map(s => s.slice(1, -9));
-const forbidden = /\b(Download|Fetch|Downloaded)\b/;
-const offending = buttonLabels.filter(l => forbidden.test(l) && /(SAM|Solicitation|Package|Notice|Attachment)/i.test(l));
-check('2f. no manual/solicitation button label uses Download/Fetch/Downloaded', offending.length === 0);
-
-// ── 3. Open Official SAM.gov Listing is canonical-only ─────────────────
-check('3a. Open Official SAM.gov Listing button exists', html.indexOf('Open Official SAM.gov Listing') >= 0);
-const openFn = extractFn(html, 'window.gcOpenOfficialSamListing = async function(id)');
-check('3b. opens canonical sam.gov/opp/<id>/view', /sam\.gov\/opp\/'\s*\+\s*encodeURIComponent\(noticeId\)/.test(openFn));
-check('3c. performs NO retrieval (no samFetchNotice, no resourceLinks)', !/samFetchNotice/.test(openFn) && !/resourceLinks/.test(openFn));
-check('3d. routes through the safe external opener', /gcOpenExternal/.test(openFn));
-
-// ── 4. Manual upload preserved + exact label ───────────────────────────
-check('4a. manual-upload label is exactly "Upload Solicitation Files"', html.indexOf('Upload Solicitation Files') >= 0);
-check('4b. upload handler gcUploadSolicitationFiles exists', /window\.gcUploadSolicitationFiles\s*=\s*async function/.test(html));
-const uploadFn = extractFn(html, 'window.gcUploadSolicitationFiles = async function(id)');
-check('4c. upload uses the native local picker (selectAndExtractSolicitation)', /selectAndExtractSolicitation/.test(uploadFn));
-
-// ── 5. Preserved surfaces remain ───────────────────────────────────────
-check('5a. SAM.gov search IPC preserved', mainJs.indexOf("ipcMain.handle('govcon:sam-search'") >= 0 && /samSearch\s*:/.test(preloadJs));
-check('5b. open-external-safe IPC + bridge preserved', mainJs.indexOf("ipcMain.handle('govcon:open-external-safe'") >= 0 && /openExternalSafe\s*:/.test(preloadJs));
-check('5c. select-and-extract-solicitation IPC + bridge preserved',
-  mainJs.indexOf("ipcMain.handle('govcon:select-and-extract-solicitation'") >= 0 && /selectAndExtractSolicitation\s*:/.test(preloadJs));
-check('5d. local import + extraction service preserved',
-  fs.existsSync(path.join(ROOT, 'services', 'govcon', 'solicitation-import.js'))
-  && fs.existsSync(path.join(ROOT, 'services', 'govcon', 'solicitation-package-extract.js'))
-  && /importAndExtract/.test(apiJs));
-check('5e. api still loads with the retrieval service removed', (() => { delete require.cache[require.resolve('../api/index.js')]; require('../api/index.js'); return true; })());
-
-console.log('\nAll removal assertions passed (' + passed + ' checks).\n');
+console.log('\n=== PASS — ' + passed + ' checks ===\n');

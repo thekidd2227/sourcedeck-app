@@ -47,12 +47,7 @@ contextBridge.exposeInMainWorld('sd', {
       generate: (request) => ipcRenderer.invoke('govcon:content-generate', request)
     },
     samSearch:           (filters)  => ipcRenderer.invoke('govcon:sam-search', filters),
-    // Phase 25AM — fetch SAM.gov notice metadata only. Returns structured
-    // fields + api_key-stripped resource URLs. No file bytes. The renderer
-    // hands resource URLs to the open-external IPC so the user downloads
-    // attachments from their own browser.
-    samFetchNotice:      (payload)  => ipcRenderer.invoke('govcon:sam-fetch-notice', payload),
-    // Phase 25AN — open a sam.gov URL in the default browser (narrow, key-
+    // Open a sam.gov URL in the default browser (narrow, key-
     // stripped, never touches the SourceDeck window).
     openExternalSafe:    (url)      => ipcRenderer.invoke('govcon:open-external-safe', url),
     // Phase 25AN — native multi-file picker → local import + extraction of

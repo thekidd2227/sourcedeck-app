@@ -32,7 +32,7 @@ test('selecting a pursuit clears foreign/demo extraction', () => {
 
 test('Solicitation Center shows attachments status + needs message', () => {
   assert.ok(/id="gc-sol-source-materials"/.test(HTML), 'source materials panel');
-  assert.ok(/No solicitation package selected yet/.test(HTML), 'package-needed guidance');
+  assert.ok(/No solicitation selected yet/.test(HTML), 'package-needed guidance');
 });
 
 test('extraction output covers the required sections', () => {

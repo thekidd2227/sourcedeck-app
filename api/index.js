@@ -48,13 +48,7 @@ const capabilityExtractor = require('../services/govcon/capability-statement-ext
 const premiumContent = require('../services/govcon/premium-content-agent');
 const watsonxReadiness = require('../services/ai/watsonx-readiness');
 const sam             = require('../services/sam');
-// Phase 25AM — the entire Phase 25AB–25AL package download/preview/
-// extraction chain is gone. The new fetch-only architecture is a single
-// service that returns structured JSON; the renderer hands resource URLs
-// to shell.openExternal so the user downloads attachments from their own
-// browser. SourceDeck no longer touches solicitation bytes.
-const samNoticeFetchSvc = require('../services/govcon/sam-notice-fetch');
-// Phase 25AN — local upload/import + extraction (no remote downloading).
+// Local upload/import + extraction only (no remote downloading or retrieval).
 const solicitationImport = require('../services/govcon/solicitation-import');
 const vendorQuoteWorkflow = require('../services/govcon/vendor-quote-workflow');
 const compliance      = require('../services/compliance');
@@ -102,12 +96,6 @@ function createAppApi(opts) {
     fetch: fetchFn,
     getApiKey: async () => credentials.get('sam-gov'),
     now
-  });
-  // Phase 25AM — fetch-only SAM.gov notice service. Returns structured
-  // metadata + api_key-stripped resource URLs. Never writes to disk.
-  const samNoticeFetch = samNoticeFetchSvc.createSamNoticeFetchService({
-    fetch: fetchFn,
-    getApiKey: async () => credentials.get('sam-gov')
   });
   const airtableSvc     = airtable.createAirtableService({ credentials, fetchFn, audit });
   const apolloSvc       = apollo.createApolloService({ credentials, fetchFn, audit });
@@ -181,12 +169,11 @@ function createAppApi(opts) {
         }
       },
       sam: {
-        search: (filters)  => samSearch.search(filters || {}),
-        // Phase 25AM — fetch a SAM.gov notice's structured metadata
-        // (title, agency, dates, NAICS, POC, sanitized resource URLs).
-        // Returns no file bytes. The renderer hands resource URLs to
-        // shell.openExternal so the user downloads files themselves.
-        fetchNotice: (payload) => samNoticeFetch.fetchNotice(payload || {})
+        search: (filters)  => samSearch.search(filters || {})
+        // Automatic SAM.gov notice/attachment-link retrieval is permanently
+        // removed. SourceDeck never retrieves notice metadata, attachment
+        // links, or resource URLs. The renderer opens only the canonical
+        // opportunity page and imports files via the manual upload picker.
       },
       // Phase 25AN — local solicitation import + extraction. The renderer
       // collects user-selected local file paths (via the native picker in
@@ -222,16 +209,12 @@ function createAppApi(opts) {
         clear:    () => Promise.resolve(govconIndex.clear()),
         shouldRunOnStart: () => Promise.resolve(govconIndex.shouldRunOnStart())
       },
-      // Phase 25AM — the packages.* surface (downloadSolicitationPackage,
-      // extractSolicitationPackage, validatePackageFiles, preview,
-      // sanitize, save-copy, open-local-folder, acceptedUploadTypes) is
-      // retired. SourceDeck no longer downloads, extracts, or previews
-      // SAM.gov package bytes. Use api.govcon.sam.fetchNotice(payload)
-      // for structured metadata; the renderer opens resource URLs via
-      // shell.openExternal so the user fetches files from their own
-      // browser. Solicitation Center / Extract Requirements / Compliance
-      // Matrix features remain available — they now consume files only
-      // through the Upload Solicitation path.
+      // The packages.* surface and the automatic notice/attachment-link
+      // retrieval are permanently removed. SourceDeck never downloads, fetches,
+      // or retrieves SAM.gov package bytes, notice metadata, or attachment /
+      // resource links. Solicitation Center / Extract Requirements / Compliance
+      // Matrix remain available — they consume files only through the manual
+      // Upload Solicitation Files path.
       opportunities: {
         list:      ()      => Promise.resolve(opportunities.list()),
         get:       (id)    => Promise.resolve(opportunities.get(id)),
