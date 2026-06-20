@@ -47,6 +47,8 @@ contextBridge.exposeInMainWorld('sd', {
       generate: (request) => ipcRenderer.invoke('govcon:content-generate', request)
     },
     samSearch:           (filters)  => ipcRenderer.invoke('govcon:sam-search', filters),
+    // Explicit user action: fetch sanitized SAM.gov link metadata only.
+    fetchLinks:          (input)    => ipcRenderer.invoke('govcon:sam-fetch-links', input || {}),
     // Open a sam.gov URL in the default browser (narrow, key-
     // stripped, never touches the SourceDeck window).
     openExternalSafe:    (url)      => ipcRenderer.invoke('govcon:open-external-safe', url),

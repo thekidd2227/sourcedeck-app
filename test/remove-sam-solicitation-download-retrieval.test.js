@@ -54,7 +54,7 @@ const FORBIDDEN = [
   'gcW25FetchDescription', 'gcW25OpenResource', 'gcW25ImportResource', 'gcW25OpenNotice',
   'gcExtractDownloadedSolicitation', 'gcABViewAttachment', 'gcABOpenLocalPackageFolder',
   'gcACSaveLocalCopy', 'gcABExtractAttachment',
-  'resourceLinks', 'packageManifest',
+  'packageManifest',
   // User-facing copy that tells the user SourceDeck downloads/fetches packages.
   'download a saved SAM.gov package', 'download a package', 'download its SAM.gov package',
   'Download a SAM.gov package', 'Download the solicitation package', 'downloaded package',
@@ -107,6 +107,11 @@ check('gcUploadSolicitationFiles exists and uses the native picker', (() => {
   return /selectAndExtractSolicitation/.test(HTML.slice(i, i + 1600));
 })());
 check('SAM.gov search IPC + bridge preserved', MAIN.indexOf("ipcMain.handle('govcon:sam-search'") >= 0 && /samSearch\s*:/.test(PRELOAD));
+check('explicit Fetch Links bridge preserved as metadata-only path',
+  MAIN.indexOf("ipcMain.handle('govcon:sam-fetch-links'") >= 0
+  && /fetchLinks\s*:/.test(PRELOAD)
+  && HTML.indexOf('data-gc-saved-action="fetch-links"') >= 0
+  && HTML.indexOf('No files downloaded') >= 0);
 check('saved pursuits preserved (View Details / Mark Pursue / Unpursue / Archive / Delete)',
   /gcW25ViewDetails/.test(HTML) && /gcTabSamMarkPursue/.test(HTML) && /gcW25Unpursue/.test(HTML) && /gcTabSamArchive/.test(HTML) && /gcW25DeleteSavedPursuit/.test(HTML));
 check('open-external-safe + select-and-extract IPC/bridge preserved',

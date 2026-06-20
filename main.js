@@ -309,6 +309,9 @@ ipcMain.handle('govcon:content-generate', (_e, request) => appApi.govcon.content
 ipcMain.handle('govcon:sam-search', async (_event, filters) => {
   return appApi.govcon.sam.search(sanitizeSamFilters(filters));
 });
+ipcMain.handle('govcon:sam-fetch-links', async (_event, input) => {
+  return appApi.govcon.sam.fetchLinks(sanitizeSamLinkFetchInput(input));
+});
 
 // Phase 25AN — open a SAM.gov URL in the user's default browser. Narrow,
 // sam.gov-only, strips any credential query param. This handler MUST NOT
@@ -532,6 +535,17 @@ function sanitizeOutreachDraftInput(input) {
   return {
     id: typeof input.id === 'string' ? input.id.slice(0, 200) : '',
     dailyDraftLimit: typeof input.dailyDraftLimit === 'number' ? Math.max(1, Math.min(200, input.dailyDraftLimit | 0)) : 25
+  };
+}
+
+function sanitizeSamLinkFetchInput(input) {
+  input = input || {};
+  return {
+    noticeId: typeof input.noticeId === 'string' ? input.noticeId.trim().slice(0, 100) : '',
+    solicitationNumber: typeof input.solicitationNumber === 'string' ? input.solicitationNumber.trim().slice(0, 100) : '',
+    postedDate: typeof input.postedDate === 'string' ? input.postedDate.trim().slice(0, 40) : '',
+    publishDate: typeof input.publishDate === 'string' ? input.publishDate.trim().slice(0, 40) : '',
+    title: typeof input.title === 'string' ? input.title.trim().slice(0, 180) : ''
   };
 }
 
