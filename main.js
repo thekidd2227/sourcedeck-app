@@ -18,6 +18,7 @@ const { validateUpload }                              = require('./services/secu
 // docs/architecture-web-first-roadmap.md.
 const { createAppApi }                       = require('./api');
 const { createSafeStorageCredentialStore }   = require('./services/settings/credentials');
+const { createLicenseService }               = require('./services/licensing/license-service');
 
 const store = new Store({ name: 'sourcedeck-data' });
 
@@ -27,6 +28,18 @@ const store = new Store({ name: 'sourcedeck-data' });
 const cfg     = loadConfig();
 const audit   = createAuditLog(store);
 const context = createContext(store);
+const licensing = createLicenseService({
+  store,
+  safeStorage,
+  fetchFn: typeof fetch === 'function' ? fetch : null,
+  appInfo: {
+    appName: app.getName ? app.getName() : 'SourceDeck',
+    appVersion: app.getVersion ? app.getVersion() : 'unknown',
+    platform: process.platform,
+    arch: process.arch,
+    userDataPath: app.getPath('userData')
+  }
+});
 
 // Credential adapter -- safeStorage-backed, same `keys.{service}` namespace
 // the existing IPC has used since the IBM-readiness layer landed.
@@ -289,6 +302,12 @@ ipcMain.handle('storage-test-put', async (_event, text) => {
 });
 
 ipcMain.handle('audit-summary', () => audit.summary());
+
+// ─── Customer license IPC (presence/status only; key never leaves main) ─
+ipcMain.handle('license:status', () => licensing.status());
+ipcMain.handle('license:activate', (_event, input) => licensing.activate(input || {}));
+ipcMain.handle('license:validate', () => licensing.validate());
+ipcMain.handle('license:deactivate', () => licensing.deactivate());
 
 // ─── GovCon IPC (now via createAppApi) ───────────────────────────────
 // IPC channel names + payload shapes are unchanged so the renderer

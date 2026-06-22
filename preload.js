@@ -154,6 +154,14 @@ contextBridge.exposeInMainWorld('sd', {
     remove: (service)        => ipcRenderer.invoke('credentials:remove', { service })
   },
 
+  // ── SourceDeck customer licensing (key is submitted to main, never read back) ─
+  license: {
+    status:     ()             => ipcRenderer.invoke('license:status'),
+    activate:   (licenseKey)   => ipcRenderer.invoke('license:activate', { licenseKey }),
+    validate:   ()             => ipcRenderer.invoke('license:validate'),
+    deactivate: ()             => ipcRenderer.invoke('license:deactivate')
+  },
+
   // ── Airtable (Authorization header is built outside renderer) ─────
   airtable: {
     listRecords:  (input) => ipcRenderer.invoke('airtable:list',   input),

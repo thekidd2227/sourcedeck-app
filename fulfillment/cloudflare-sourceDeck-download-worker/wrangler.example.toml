@@ -1,0 +1,23 @@
+name = "sourcedeck-secure-download"
+main = "worker.js"
+compatibility_date = "2026-06-22"
+
+# Copy this file to wrangler.toml during deployment and fill real account/routes
+# outside git. Do not commit production secrets or account-specific identifiers.
+
+# account_id = "<cloudflare-account-id>"
+# route = "download.sourcedeck.com/*"
+
+[vars]
+SOURCEDECK_PRODUCT_ID = "<lemonsqueezy-product-id>"
+SOURCEDECK_VARIANT_IDS = "<solo-variant-id>,<team-variant-id>"
+SOURCEDECK_CURRENT_MAC_DMG_KEY = "releases/mac/SourceDeck-<version>.dmg"
+SOURCEDECK_CURRENT_MAC_SHA256 = "<artifact-sha256>"
+
+[[r2_buckets]]
+binding = "SOURCEDECK_RELEASES"
+bucket_name = "sourcedeck-releases"
+
+# Set secrets with Wrangler or Cloudflare dashboard:
+# wrangler secret put LEMONSQUEEZY_WEBHOOK_SECRET
+# wrangler secret put DOWNLOAD_SIGNING_SECRET

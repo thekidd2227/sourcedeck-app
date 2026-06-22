@@ -12,13 +12,18 @@ const fs = require('node:fs');
 const path = require('node:path');
 
 const REQUIRED_DOCS = [
-  'docs/distribution/sourceDeck-professional-paid-distribution-runbook.md'
+  'docs/distribution/sourceDeck-professional-paid-distribution-runbook.md',
+  'docs/distribution/lemon-squeezy-secure-fulfillment-plan.md',
+  'docs/distribution/apple-developer-id-release-candidate-runbook.md',
+  'fulfillment/cloudflare-sourceDeck-download-worker/README.md'
 ];
 
 const REQUIRED_REPO_FILES = [
   'package.json',
   'build/entitlements.mac.plist',
-  'build/icon.icns'
+  'build/icon.icns',
+  'fulfillment/cloudflare-sourceDeck-download-worker/worker.js',
+  'fulfillment/cloudflare-sourceDeck-download-worker/wrangler.example.toml'
 ];
 
 const OPTIONAL_SECRET_GROUPS = [
@@ -41,7 +46,8 @@ const OPTIONAL_SECRET_GROUPS = [
       'LEMONSQUEEZY_STORE_ID',
       'LEMONSQUEEZY_PRODUCT_ID',
       'LEMONSQUEEZY_VARIANT_ID',
-      'LEMONSQUEEZY_WEBHOOK_SECRET'
+      'LEMONSQUEEZY_WEBHOOK_SECRET',
+      'DOWNLOAD_SIGNING_SECRET'
     ],
     requiredForStrict: true
   },

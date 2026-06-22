@@ -39,7 +39,8 @@
     "release:check": "node scripts/release-check.js",
     "distribution:check": "node scripts/distribution-readiness.js",
     "distribution:check:json": "node scripts/distribution-readiness.js --json",
-    "distribution:check:strict": "node scripts/distribution-readiness.js --strict"
+    "distribution:check:strict": "node scripts/distribution-readiness.js --strict",
+    "license:check": "node test/license-service.test.js"
   },
   "dependencies": {
     "aws4": "^1.13.2",

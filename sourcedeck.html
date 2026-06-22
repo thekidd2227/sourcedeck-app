@@ -1883,6 +1883,29 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
       <div class="pane-body">
         <div id="settings-workspace-readiness-banner" class="workspace-readiness" hidden></div>
 
+        <div class="card mb-14" id="settings-license-activation" data-settings-license-activation="true">
+          <div class="sl">SourceDeck License</div>
+          <div style="display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:14px;align-items:start">
+            <div>
+              <div style="font-size:12px;line-height:1.6;color:var(--sub);margin-bottom:10px">
+                Activate SourceDeck after purchase using the license key delivered by Lemon Squeezy. The key is sent only to the main process for activation and is stored encrypted on this Mac when secure storage is available.
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:9px">
+                <input class="input" id="s-license-key" type="password" placeholder="Paste SourceDeck license key" autocomplete="off" style="min-width:280px;flex:1">
+                <button type="button" class="btn btn-gold" id="s-license-activate" onclick="sdLicenseActivate()" style="font-size:11px;padding:6px 11px">Activate</button>
+                <button type="button" class="btn btn-ghost" id="s-license-validate" onclick="sdLicenseValidate()" style="font-size:11px;padding:6px 11px">Validate</button>
+                <button type="button" class="btn btn-ghost" id="s-license-deactivate" onclick="sdLicenseDeactivate()" style="font-size:11px;padding:6px 11px;color:var(--warn)">Deactivate</button>
+              </div>
+              <div id="s-license-message" style="font-size:10.5px;color:var(--muted);line-height:1.55">License status loading…</div>
+            </div>
+            <div style="border:1px solid var(--border);background:rgba(255,255,255,0.035);border-radius:8px;padding:10px 12px">
+              <div style="font:700 9px/1 'Azeret Mono',monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-bottom:7px">Activation Status</div>
+              <div id="s-license-status" style="font:700 11px/1.4 'Azeret Mono',monospace;color:var(--gold2);text-transform:uppercase;letter-spacing:0.08em">Checking</div>
+              <div id="s-license-detail" style="font-size:10px;color:var(--muted);line-height:1.5;margin-top:7px">Commercial distribution is prepared for Lemon Squeezy license keys.</div>
+            </div>
+          </div>
+        </div>
+
         <!-- Phase 25R — Audit Log relocated here from GovCon. Same content,
              no functional change to logging. -->
         <div class="card mb-14" id="settings-audit-log" data-settings-audit-log="true">
@@ -5943,6 +5966,77 @@ function loadSettings(){
         CLAUDE_KEY = '<anthropic_credential_present>';
       }
     }).catch(()=>{});
+  }
+  sdLicenseRefreshStatus();
+}
+
+function sdLicenseRenderStatus(status){
+  const statusEl = document.getElementById('s-license-status');
+  const detailEl = document.getElementById('s-license-detail');
+  const messageEl = document.getElementById('s-license-message');
+  const envelope = status && typeof status === 'object' ? status : {};
+  const normalized = envelope.status && typeof envelope.status === 'object' ? envelope.status : envelope;
+  const state = normalized.state || normalized.status || (normalized.activated || normalized.valid ? 'active' : 'unlicensed');
+  const label = state === 'active' ? 'Active' : state === 'inactive' ? 'Inactive' : state === 'deactivated' ? 'Deactivated' : state === 'offline_grace' ? 'Offline Grace' : state === 'error' ? 'Error' : 'Unlicensed';
+  if (statusEl) statusEl.textContent = label;
+  if (detailEl) {
+    const pieces = [];
+    if (normalized.customerName) pieces.push('Customer: ' + normalized.customerName);
+    if (normalized.productName) pieces.push('Product: ' + normalized.productName);
+    if (normalized.expiresAt) pieces.push('Expires: ' + normalized.expiresAt);
+    if (normalized.offline) pieces.push('Offline status from encrypted local license record.');
+    detailEl.textContent = pieces.length ? pieces.join(' · ') : 'No active SourceDeck customer license is stored on this Mac.';
+  }
+  if (messageEl) messageEl.textContent = envelope.message || normalized.message || (state === 'active' ? 'SourceDeck is activated on this Mac.' : 'Paste the customer license key delivered after purchase to activate SourceDeck.');
+}
+
+async function sdLicenseRefreshStatus(){
+  try {
+    if (!window.sd || !window.sd.license || typeof window.sd.license.status !== 'function') {
+      sdLicenseRenderStatus({ status:'unlicensed', message:'License service is not available in this build.' });
+      return;
+    }
+    const status = await window.sd.license.status();
+    sdLicenseRenderStatus(status);
+  } catch (err) {
+    sdLicenseRenderStatus({ status:'error', message:'Could not read license status.' });
+  }
+}
+
+async function sdLicenseActivate(){
+  const input = document.getElementById('s-license-key');
+  const key = input && input.value ? input.value.trim() : '';
+  if (!key) { toast('License key required','err'); return; }
+  try {
+    const result = await window.sd.license.activate(key);
+    if (input) input.value = '';
+    sdLicenseRenderStatus(result);
+    toast(result && result.ok ? 'SourceDeck license activated' : 'License activation failed', result && result.ok ? 'ok' : 'err');
+  } catch (err) {
+    sdLicenseRenderStatus({ status:'error', message:'License activation failed. Check the key and internet connection.' });
+    toast('License activation failed','err');
+  }
+}
+
+async function sdLicenseValidate(){
+  try {
+    const result = await window.sd.license.validate();
+    sdLicenseRenderStatus(result);
+    toast(result && result.ok ? 'License validated' : 'License validation failed', result && result.ok ? 'ok' : 'err');
+  } catch (err) {
+    sdLicenseRenderStatus({ status:'error', message:'License validation failed. Check internet access and try again.' });
+    toast('License validation failed','err');
+  }
+}
+
+async function sdLicenseDeactivate(){
+  try {
+    const result = await window.sd.license.deactivate();
+    sdLicenseRenderStatus(result);
+    toast(result && result.ok ? 'License deactivated' : 'License deactivation failed', result && result.ok ? 'ok' : 'err');
+  } catch (err) {
+    sdLicenseRenderStatus({ status:'error', message:'License deactivation failed.' });
+    toast('License deactivation failed','err');
   }
 }
 
