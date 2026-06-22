@@ -18454,12 +18454,11 @@ document.addEventListener('DOMContentLoaded',()=>{
         '<td>' +
           '<div style="display:flex;flex-direction:column;gap:3px;min-width:200px">' +
             '<button class="btn btn-ghost" data-gc-saved-action="view-details" onclick="gcW25ViewDetails(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">👁 View Details</button>' +
-            // Removal phase — one canonical browser-open action (Open Official
-            // SAM.gov Listing, canonical page only) + manual local import
-            // (Upload Solicitation Files). No automatic notice/attachment retrieval.
+            // Discovery phase — one canonical browser-open action (Open Official
+            // SAM.gov Listing, canonical page only) + metadata-only Fetch Links.
+            // Solicitation file upload is owned by Solicitation Center.
             '<button class="btn btn-gold" data-gc-saved-action="open-official-listing" onclick="gcOpenOfficialSamListing(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">↗ Open Official SAM.gov Listing</button>' +
             '<button class="btn btn-ghost" data-gc-saved-action="fetch-links" data-gc-fetch-links-btn="' + rid + '" onclick="gcFetchSamLinks(\'' + rid + '\')" style="padding:3px 7px;font-size:10px;color:var(--gold2)">🔗 Fetch Links</button>' +
-            '<button class="btn btn-ghost" data-gc-saved-action="upload-solicitation-files" data-gc-extract-btn="' + rid + '" onclick="gcUploadSolicitationFiles(\'' + rid + '\')" style="padding:3px 7px;font-size:10px">⬆ Upload Solicitation Files</button>' +
             // Phase 25AD — lifecycle controls. Unpursue moves the row back to
             // saved/watchlist. Delete removes the saved pursuit row from the
             // local store after user confirmation.
@@ -19670,9 +19669,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     hdr.appendChild(makeEl('div', 'font-size:10px;color:var(--muted)', line));
     if (o.placeOfPerformance) hdr.appendChild(makeEl('div', 'font-size:10px;color:var(--muted)', 'Place of performance: ' + String(o.placeOfPerformance)));
     hostEl.appendChild(hdr);
-    // Action row — Open Official SAM.gov Listing + manual Upload Solicitation
-    // Files. No automatic notice/attachment retrieval and no resource-link list
-    // (that retrieval surface is permanently removed).
+    // Action row — discovery only. Open Official SAM.gov Listing + metadata-only
+    // Fetch Links remain here; local solicitation upload is owned exclusively by
+    // Solicitation Center.
     var actions = makeEl('div', 'display:flex;gap:6px;flex-wrap:wrap;margin-top:8px');
     var openBtn = makeEl('button', 'padding:4px 10px;font-size:10.5px', '↗ Open Official SAM.gov Listing');
     openBtn.className = 'btn btn-gold';
@@ -19685,13 +19684,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     fetchLinksBtn.setAttribute('data-gc-fetch-links-btn', String(o.id || ''));
     fetchLinksBtn.setAttribute('onclick', "gcFetchSamLinks('" + String(o.id || '').replace(/'/g, "\'") + "')");
     actions.appendChild(fetchLinksBtn);
-    var extractBtn = makeEl('button', 'padding:4px 10px;font-size:10.5px',
-      (o.solicitationImportStatus === 'extracted') ? '✓ Review in Solicitation Center' : '⬆ Upload Solicitation Files');
-    extractBtn.className = 'btn btn-ghost';
-    extractBtn.setAttribute('type', 'button');
-    extractBtn.setAttribute('data-gc-extract-btn', String(o.id || ''));
-    extractBtn.setAttribute('onclick', "gcUploadSolicitationFiles('" + String(o.id || '').replace(/'/g, "\\'") + "')");
-    actions.appendChild(extractBtn);
     hostEl.appendChild(actions);
     var linkSet = Array.isArray(o.samLinkReferences) ? o.samLinkReferences : [];
     var linkWrap = makeEl('div', 'margin-top:10px');
@@ -19958,30 +19950,42 @@ document.addEventListener('DOMContentLoaded',()=>{
   };
 
   window.gcSolUploadActive = function(){
+    // Solicitation Center owns local solicitation upload. It must work for a
+    // standalone local package even when no SAM.gov saved pursuit is selected.
     var id = '';
     try { id = localStorage.getItem('sd.govcon.activeSolicitation.v1') || ''; } catch (e) {}
-    if (!id){ try { toast('Save or select a pursuit first, then upload solicitation files into Solicitation Summary.', 'info'); } catch (e2) {} return; }
-    return window.gcUploadSolicitationFiles(id);
+    return window.gcUploadSolicitationFiles(id, { origin: 'solicitation-center' });
   };
 
-  window.gcUploadSolicitationFiles = async function(id){
-    var opportunity = await resolve(id);
-    if (!opportunity){ toast('Opportunity not found.', 'warn'); return; }
+  window.gcUploadSolicitationFiles = async function(id, opts){
+    opts = opts || {};
+    id = id || '';
+    var opportunity = id ? await resolve(id) : null;
+    if (id && !opportunity && opts.origin !== 'solicitation-center'){
+      toast('Saved pursuit not found. Open Solicitation Center and upload the files again.', 'warn'); return;
+    }
+    if (id && !opportunity && opts.origin === 'solicitation-center'){
+      id = '';
+    }
+    if (!opportunity){
+      opportunity = { id: '', noticeId: '', solicitationNumber: '', title: 'Local solicitation upload', agency: '', uiLink: '' };
+    }
     if (!(window.sd && window.sd.govcon && typeof window.sd.govcon.selectAndExtractSolicitation === 'function')){
       toast('Local solicitation import requires the SourceDeck desktop app.', 'warn'); return;
     }
     var oid = String(opportunity.id || '');
-    var btn = document.querySelector('[data-gc-extract-btn="' + oid.replace(/"/g, '\\"') + '"]');
+    var btn = document.getElementById('gc-sol-summary-upload-btn');
     var prevLabel = btn ? btn.textContent : '';
     if (btn){ btn.textContent = '⏳ Extracting…'; btn.disabled = true; }
     var result = null;
     try {
       result = await window.sd.govcon.selectAndExtractSolicitation({
-        opportunityId: opportunity.id,
-        noticeId: opportunity.noticeId,
-        solicitationNumber: opportunity.solicitationNumber,
-        title: opportunity.title,
-        agency: opportunity.agency
+        opportunityId: opportunity.id || '',
+        noticeId: opportunity.noticeId || '',
+        solicitationNumber: opportunity.solicitationNumber || '',
+        title: opportunity.title || '',
+        agency: opportunity.agency || opportunity.department || '',
+        uiLink: opportunity.uiLink || opportunity.sourceUrl || ''
       });
     } catch (e) { result = { ok: false, reason: 'ipc_error' }; }
     if (btn) btn.disabled = false;
@@ -19995,24 +19999,28 @@ document.addEventListener('DOMContentLoaded',()=>{
       toast('Solicitation extraction failed' + (result.reason ? ' (' + result.reason + ')' : '') + '. Review the file warnings.', 'warn');
       return;
     }
-    // Navigate first (resets panels for the selection), then load the
-    // extraction so it renders last and wins.
-    try { if (typeof window.gcV25SelectSolicitation === 'function') window.gcV25SelectSolicitation(opportunity.id); } catch (e) {}
+    // For linked saved pursuits, keep the active pursuit context. For local-only
+    // uploads, do not force a saved-pursuit id; the extracted state renders in
+    // Solicitation Summary on its own.
+    try { if (opportunity.id && typeof window.gcV25SelectSolicitation === 'function') window.gcV25SelectSolicitation(opportunity.id); } catch (e) {}
     try { if (typeof window.gcTabSwitch === 'function') window.gcTabSwitch('solicitation'); } catch (e) {}
     window.gcSolLoadExtractionResult(result);
-    // Persist a safe structured status on the opportunity row (no raw text).
-    try {
-      if (window.sd.govcon.opportunities && window.sd.govcon.opportunities.patch){
-        await window.sd.govcon.opportunities.patch(opportunity.id, {
-          solicitationImportStatus: 'extracted',
-          solicitationImportedAt: (result.import && result.import.importedAt) || new Date().toISOString(),
-          solicitationImportedFileCount: (result.import && result.import.sourceFileCount) || 0,
-          solicitationExtractionWarningCount: (result.warnings && result.warnings.length) || 0
-        });
-      }
-    } catch (e) {}
+    // Persist a safe structured status only when this upload is linked to a
+    // saved opportunity row. Standalone local uploads remain local workspace state.
+    if (opportunity.id) {
+      try {
+        if (window.sd.govcon.opportunities && window.sd.govcon.opportunities.patch){
+          await window.sd.govcon.opportunities.patch(opportunity.id, {
+            solicitationImportStatus: 'extracted',
+            solicitationImportedAt: (result.import && result.import.importedAt) || new Date().toISOString(),
+            solicitationImportedFileCount: (result.import && result.import.sourceFileCount) || 0,
+            solicitationExtractionWarningCount: (result.warnings && result.warnings.length) || 0
+          });
+        }
+      } catch (e) {}
+    }
     if (btn){
-      btn.textContent = '✓ Review in Solicitation Center';
+      btn.textContent = '✓ Review Summary';
       btn.setAttribute('onclick', "gcReviewInSolicitationCenter('" + oid.replace(/'/g, "\\'") + "')");
     }
     toast('Solicitation extracted. Opened Solicitation Center summary so you can review the extracted sections.', 'ok');
