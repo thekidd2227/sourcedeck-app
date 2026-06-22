@@ -31,21 +31,20 @@ test('openExternal IPC bridge is wired (preload + main) and refuses key URLs', (
 });
 
 test('Open Official SAM.gov Listing on saved pursuits + search rows; no download/fetch retrieval', () => {
-  // Removal phase — automatic notice/package/attachment retrieval is gone. The
-  // saved-pursuit row keeps one canonical browser-open (Open Official SAM.gov
-  // Listing → gcOpenOfficialSamListing) plus the manual Upload Solicitation
-  // Files action. SAM SEARCH rows expose the same canonical open.
+  // Removal phase — automatic notice/package/attachment retrieval is gone. Find
+  // Opportunities/Saved Pursuits are discovery-only: canonical browser-open plus
+  // metadata-only Fetch Links. Local upload is owned by Solicitation Center.
   assert.ok(/gcOpenOfficialSamListing\(/.test(HTML), 'saved pursuit Open Official SAM.gov Listing action');
-  assert.ok(/gcUploadSolicitationFiles\(/.test(HTML), 'saved pursuit Upload Solicitation Files action');
   assert.ok(/gcTabSamOpenSource\(/.test(HTML), 'search row open-listing');
+  assert.ok(!/data-gc-saved-action="upload-solicitation-files"|data-gc-extract-btn/.test(HTML), 'no upload action in discovery surfaces');
   assert.ok(!/Open in SAM\.gov|Open SAM\.gov Notice|Fetch SAM\.gov Notice|Download SAM\.gov Package|Download Solicitation Package|Extract Downloaded Solicitation|Send Package to Solicitation/.test(HTML),
     'no download/fetch/extract-downloaded/send-package buttons remain');
 });
 
-test('saved pursuit open / upload handlers are id-keyed, not out-of-scope', () => {
+test('saved pursuit open handlers are id-keyed; upload handler is Solicitation Center-owned', () => {
   assert.ok(!/onclick="if\(o\.sourceUrl\)/.test(HTML), 'no out-of-scope o reference');
   assert.ok(/gcOpenOfficialSamListing\(\\?'/.test(HTML) || /gcOpenOfficialSamListing\('/.test(HTML), 'Open Listing handler takes an id');
-  assert.ok(/gcUploadSolicitationFiles\(\\?'/.test(HTML) || /gcUploadSolicitationFiles\('/.test(HTML), 'Upload handler takes an id');
+  assert.ok(/window\.gcUploadSolicitationFiles = async function\(id, opts\)/.test(HTML), 'upload handler remains available to Solicitation Center');
 });
 
 test('canonical browser-open routes through gcOpenExternal (no silent fail)', () => {

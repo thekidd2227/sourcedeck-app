@@ -126,13 +126,14 @@ async function run() {
   check('3b. renderer never hides/minimizes/blurs the window', !/\.minimize\(\)|mainWindow\.hide\(|window\.blur\(|setSkipTaskbar/.test(html));
 
   // ──────────────────────────────────────────────────────────────────────
-  // Static: two-button source panel (Open Official SAM.gov Listing + Upload)
+  // Static: SAM source panel is discovery-only; upload lives in Solicitation Center.
   // ──────────────────────────────────────────────────────────────────────
-  // Removal phase — the source panel offers Open Official SAM.gov Listing
-  // (canonical page only) + Upload Solicitation Files (local import). No
-  // download/fetch buttons remain.
-  check('4. source panel offers Open Official SAM.gov Listing + Upload Solicitation Files',
-    /Open Official SAM\.gov Listing[\s\S]{0,900}Upload Solicitation Files[\s\S]{0,300}gcUploadSolicitationFiles/.test(html));
+  // Removal phase — the source panel offers Open Official SAM.gov Listing and
+  // metadata-only Fetch Links. Local solicitation upload is owned exclusively
+  // by Solicitation Center.
+  check('4. source panel does not expose Upload Solicitation Files',
+    !/data-gc-saved-action="upload-solicitation-files"/.test(html)
+    && !/data-gc-extract-btn/.test(html));
   check('5. "Open in SAM.gov" / "Open SAM.gov Notice" labels are absent', html.indexOf('Open in SAM.gov') < 0 && html.indexOf('Open SAM.gov Notice') < 0);
   check('6. "Fetch SAM.gov Notice" is removed', html.indexOf('Fetch SAM.gov Notice') < 0);
   check('7. "Extract Downloaded Solicitation" is removed; "Upload Solicitation Files" exists',
@@ -164,7 +165,7 @@ async function run() {
   {
     // Slice between anchors — the function contains regex literals (e.g. /"/g)
     // that a brace/quote tokenizer would mis-parse.
-    const _s = html.indexOf('window.gcUploadSolicitationFiles = async function(id)');
+    const _s = html.indexOf('window.gcUploadSolicitationFiles = async function(id, opts)');
     const _e = html.indexOf('window.gcACPreviewFile = async function(_id, _idx)', _s);
     assert(_s >= 0 && _e > _s, 'gcUploadSolicitationFiles anchors not found');
     const extractFnSrc = html.slice(_s, _e);
@@ -181,7 +182,7 @@ async function run() {
           gcTabSwitch: (t) => { calls.tabSwitch = t; },
           gcSolLoadExtractionResult: () => { calls.load += 1; return true; }
         },
-        document: { querySelector: () => btn },
+        document: { querySelector: () => btn, getElementById: () => btn },
         resolve: async (id) => ({ id, noticeId: 'N1', title: 'Janitorial', agency: 'VA' }),
         toast: () => {}, JSON, Date, console
       };
@@ -196,7 +197,7 @@ async function run() {
 
     const ok = await driveExtract({ ok: true, import: { importedAt: 'X', sourceFileCount: 2 }, warnings: [], metadata: {}, sections: {} });
     check('39. successful extraction navigates to Solicitation Center', ok.calls.select >= 1 && ok.calls.tabSwitch === 'solicitation' && ok.calls.load === 1);
-    check('40. button changes to "Review in Solicitation Center" after success', ok.btn.textContent.indexOf('Review in Solicitation Center') >= 0);
+    check('40. button changes to "Review Summary" after success', ok.btn.textContent.indexOf('Review Summary') >= 0);
     check('40b. success persists safe structured import status (no raw text)',
       ok.calls.patched && ok.calls.patched.solicitationImportStatus === 'extracted'
       && !/text|fullText|rawText|sections/.test(JSON.stringify(ok.calls.patched)));
