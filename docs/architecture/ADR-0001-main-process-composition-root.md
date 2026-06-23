@@ -1,7 +1,7 @@
 # ADR-0001 — Main-process composition root
 
-- **Status:** Accepted (Phase 1)
-- **Date:** 2026-06-23
+- **Status:** Accepted (Phase 1 ✅ shipped · Phase 2 ✅ shipped)
+- **Date:** 2026-06-23 (Phase 1) · 2026-06-23 (Phase 2)
 - **Repo:** `thekidd2227/sourcedeck-app`
 - **Authors:** Refactor working group
 
@@ -101,25 +101,53 @@ dependencies, owns the singleton window reference, exposes
 `runScrub`/`createWindow`/`getMainWindow`/`triggerUpdateCheck`, and
 leaves IPC registration alone.
 
-### Phase 2 (planned, not in this patch)
+### Phase 2 (shipped 2026-06-23)
 
-- Migrate core IPC handlers (storage-key, get-key, delete-key,
-  store-get, store-set, ai-provider-status, storage-provider-status,
-  context-get, context-set, guard-sensitive-action, validate-upload,
-  ai-generate, storage-test-put, audit-summary, license:*) into
-  `app/main/ipc/register-core-ipc.js`.
-- Migrate feature IPC handlers (govcon:*, audit:list, credentials:*,
-  airtable:*, enrichment:*, ai:*, open-external,
-  govcon:open-external-safe, govcon:select-and-extract-solicitation)
-  into `app/main/ipc/register-feature-ipc.js`.
-- Move sanitizers (`sanitizeOutreachConfig`, `sanitizeOutreachDraftInput`,
-  `sanitizeSamFilters`) into `app/main/ipc/sanitizers.js`.
-- Update the 11 static-analysis tests to read from the new module
-  locations as the source of truth. **The assertions are about layout,
-  not behavior**; rewriting them is a layout edit, not a contract
-  change.
-- The renderer stays untouched. Every channel name + argument /
-  return contract is preserved byte-for-byte.
+Phase 2 completed the strangler migration:
+
+- **18 core IPC handlers** migrated into
+  `app/main/ipc/register-core-ipc.js`: `store-key`, `get-key`,
+  `delete-key`, `store-get`, `store-set`, `ai-provider-status`,
+  `storage-provider-status`, `context-get`, `context-set`,
+  `guard-sensitive-action`, `validate-upload`, `ai-generate`,
+  `storage-test-put`, `audit-summary`, `license:status`,
+  `license:activate`, `license:validate`, `license:deactivate`.
+- **78 feature IPC handlers** migrated into
+  `app/main/ipc/register-feature-ipc.js`: `govcon:*` (62 channels),
+  `open-external`, `audit:list`, `credentials:*` (3), `airtable:*` (4),
+  `enrichment:*` (4), `ai:*` (4).
+- **Five argument sanitizers** moved into `app/main/ipc/sanitizers.js`:
+  `sanitizeOutreachConfig`, `sanitizeOutreachDraftInput`,
+  `sanitizeSamLinkFetchInput`, `sanitizeSamFilters`, and the module-scope
+  `normalizeSamSetAsideCode` helper.
+- **Stale static-analysis tests updated** to read from the new module
+  locations (no behavioral assertions changed):
+  `credential-boundary.test.js`,
+  `govcon-core.test.js`,
+  `chartnav-integration.test.js`,
+  `govcon-operating-profile-completeness.test.js`,
+  `phase-25aa-sam-filter-params.test.js`,
+  `phase-25ab-uploaded-rfp-rfq-support.test.js`,
+  `phase-25an-browser-handoff-local-extraction.test.js`,
+  `phase-25u-sam-naics-query-builder.test.js`,
+  `phase-25x-open-sam-source-links.test.js`,
+  `phase-25y-sam-source-open.test.js`,
+  `renderer-airtable-migration.test.js`,
+  `renderer-apollo-migration.test.js`.
+- **New IPC inventory test**
+  `test/architecture-ipc-channel-inventory.test.js` runs both registrars
+  against a fake `ipcMain.handle` recorder and asserts the full sorted
+  channel set deep-equals the canonical pre-Phase-2 96-channel inventory.
+  Any future commit that adds, drops, or renames an IPC channel without
+  updating the canonical list will fail this test.
+- **`main.js` is now ~150 lines**, contains zero `ipcMain.handle(...)`
+  calls, and no sanitizer bodies. It owns: service-layer construction,
+  the `scrubStoredData` wrapper that keeps the first-run-safety symbol
+  in place, the `createWindow` delegate, and the Electron app lifecycle
+  (`whenReady` / `activate` / `window-all-closed`).
+- **The renderer was untouched.** `preload.js` is byte-for-byte
+  identical to its pre-Phase-2 state; every IPC channel name + argument
+  shape + return shape is preserved exactly.
 
 ## Renderer contract
 

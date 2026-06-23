@@ -136,11 +136,12 @@ test('preload exposes window.sd.enrichment.searchCompanies', () => {
 });
 
 test('main.js enrichment handlers route through appApi (regression)', () => {
-  const main = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
+  // Phase 2: enrichment IPC handlers live in app/main/ipc/register-feature-ipc.js.
+  const feature = fs.readFileSync(path.join(ROOT, 'app/main/ipc/register-feature-ipc.js'), 'utf8');
   for (const ch of ['enrichment:enrich-org', 'enrichment:search-people',
                     'enrichment:search-orgs', 'enrichment:search-companies']) {
     const re = new RegExp(`ipcMain\\.handle\\('${ch.replace(/[\.\-:]/g, '\\$&')}'\\s*,[\\s\\S]{0,200}?appApi\\.enrichment\\.`);
-    assert.ok(re.test(main), `IPC handler "${ch}" must route through appApi.enrichment.*`);
+    assert.ok(re.test(feature), `IPC handler "${ch}" must route through appApi.enrichment.*`);
   }
 });
 

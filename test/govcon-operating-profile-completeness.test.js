@@ -33,7 +33,11 @@ function memStore() {
 const ROOT = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(ROOT, 'sourcedeck.html'), 'utf8');
 const preload = fs.readFileSync(path.join(ROOT, 'preload.js'), 'utf8');
-const mainJs = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
+// Phase 2: IPC handlers live in app/main/ipc/register-feature-ipc.js.
+// We concat main.js + the registrar so layout-aware assertions still work
+// even after the migration.
+const mainJs = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8')
+  + '\n' + fs.readFileSync(path.join(ROOT, 'app/main/ipc/register-feature-ipc.js'), 'utf8');
 const apiJs  = fs.readFileSync(path.join(ROOT, 'api', 'index.js'), 'utf8');
 
 (async () => {

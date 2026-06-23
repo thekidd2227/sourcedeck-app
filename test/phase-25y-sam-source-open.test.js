@@ -8,7 +8,9 @@ const fs = require('fs');
 const path = require('path');
 const ROOT = path.resolve(__dirname, '..');
 const HTML = fs.readFileSync(path.join(ROOT, 'sourcedeck.html'), 'utf8');
-const MAIN = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
+// Phase 2: IPC handlers moved to app/main/ipc/register-feature-ipc.js.
+const MAIN = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8')
+  + '\n' + fs.readFileSync(path.join(ROOT, 'app/main/ipc/register-feature-ipc.js'), 'utf8');
 const PRELOAD = fs.readFileSync(path.join(ROOT, 'preload.js'), 'utf8');
 let passed = 0, failed = 0;
 function test(n, fn){ try { fn(); passed++; console.log('  ✅ ' + n); } catch (e) { failed++; console.log('  ❌ ' + n + ': ' + e.message); } }
