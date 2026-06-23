@@ -756,6 +756,46 @@ function uniqueLines(lines, limit) {
   return out;
 }
 
+function expandFormCandidates(line) {
+  const clean = cleanExtractedText(line).replace(/\s+/g, ' ').trim();
+  if (!clean) return [];
+  const matches = [];
+  const patterns = [
+    /\bSF\s*\d{1,4}[A-Z]?(?:\s+(?:cover page|required|signed|completed|form|certification|representation)){0,8}/gi,
+    /\bDD\s*Form\s*\d{1,4}[A-Z]?(?:\s+(?:required|signed|completed|form)){0,8}/gi,
+    /\bOF\s*\d{1,4}[A-Z]?(?:\s+(?:required|signed|completed|form)){0,8}/gi,
+    /\bPast Performance Questionnaire(?:\s+required)?/gi,
+    /\bAttachment\s+[A-Z0-9-]+(?:\s+(?:Wage Determination|Pricing Sheet|QASP|PWS|SOW|required|mandatory)){0,8}/gi,
+    /\bExhibit\s+[A-Z0-9-]+(?:\s+(?:required|mandatory|pricing|technical|schedule)){0,8}/gi,
+    /\bAppendix\s+[A-Z0-9-]+(?:\s+(?:required|mandatory|pricing|technical|schedule)){0,8}/gi,
+    /\b(?:QASP|wage determination|pricing sheet|price schedule|certification|representation|solicitation provisions?|contract clauses?)\b[^.;\n]{0,120}/gi
+  ];
+  for (const re of patterns) {
+    const found = clean.match(re);
+    if (found) matches.push(...found);
+  }
+  return matches.length ? matches : [clean];
+}
+
+function uniqueFormItems(lines, limit) {
+  const seen = new Set();
+  const out = [];
+  for (const line of lines || []) {
+    for (const candidate of expandFormCandidates(line)) {
+      const clean = cleanExtractedText(candidate).replace(/\s+/g, ' ').trim();
+      if (!clean || looksLikeRawMarkup(clean) || clean.length < 3 || clean.length > 220) continue;
+      if (/^Section\s+J\b|This file contains structured document markup/i.test(clean)) continue;
+      if (!/\b(SF\s*\d{1,4}[A-Z]?|DD\s*Form|OF\s*\d+|Attachment\s+[A-Z0-9]+|Exhibit\s+[A-Z0-9]+|Appendix\s+[A-Z0-9]+|QASP|wage determination|pricing sheet|price schedule|amendment|certification|representation|solicitation provisions?|contract clauses?)\b/i.test(clean)) continue;
+      const key = clean.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      out.push(clean);
+      if (limit && out.length >= limit) return out;
+    }
+  }
+  return out;
+}
+
 function formItemsFromText(text, files) {
   const lines = findLines(text, /\b(SF\s*33|SF\s*1449|SF\s*18|representation|certification|Attachment|Exhibit|QASP|wage determination|pricing sheet|amendment|technical exhibit)\b/i, 40);
   const fileItems = (files || []).map(f => {
@@ -764,7 +804,7 @@ function formItemsFromText(text, files) {
     if (/\b(SF|QASP|wage|pricing|price|attachment|exhibit|amendment|PWS|SOW|determination|certification|representation)\b/i.test(name)) return name;
     return '';
   });
-  return uniqueLines(lines.concat(fileItems), 40);
+  return uniqueFormItems(lines.concat(fileItems), 40);
 }
 
 function extractMetadata(text, manifest, files) {
@@ -924,11 +964,15 @@ function buildAliases(sections, metadata, files) {
   const seenForm = new Set();
   function pushForm(text, sourceFile) {
     const clean = cleanExtractedText(text || '').replace(/\s+/g, ' ').trim();
-    if (!clean || seenForm.has(clean.toLowerCase())) return;
+    if (!clean || clean.length > 220 || seenForm.has(clean.toLowerCase())) return;
+    if (/^Section\s+J\b|This file contains structured document markup/i.test(clean)) return;
+    if (!/\b(SF\s*\d{1,4}[A-Z]?|DD\s*Form|OF\s*\d+|Attachment\s+[A-Z0-9]+|Exhibit\s+[A-Z0-9]+|Appendix\s+[A-Z0-9]+|QASP|wage determination|pricing sheet|price schedule|amendment|certification|representation|solicitation provisions?|contract clauses?)\b/i.test(clean)) return;
     seenForm.add(clean.toLowerCase());
     requiredFormsAttachments.push({ text: clean, sourceFile: sourceFile || '' });
   }
-  if (sections.J && sections.J.found) pushForm(sections.J.text, sections.J.sourceFile);
+  // Phase 25AP — never push the entire Section J body into the forms alias.
+  // metadata.requiredForms and form fallback buckets provide compact, auditable
+  // form/attachment names without dumping raw solicitation text into the panel.
   for (const form of metadata.requiredForms || []) pushForm(form, 'package manifest or extracted text');
   for (const item of (buckets.forms || [])) pushForm(item.text, item.sourceFile);
   for (const f of files || []) {

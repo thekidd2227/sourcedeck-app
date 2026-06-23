@@ -3326,7 +3326,14 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <!-- Intake -->
           <div class="gc-sol-intake" style="background:var(--panel3,#0E2040);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px">
             <div style="display:grid;grid-template-columns:1fr;gap:10px">
+              <label style="font-size:10.5px;color:var(--sub);display:flex;flex-direction:column;gap:4px;max-width:520px">
+                Linked saved pursuit
+                <select class="input" id="gc-sol-opp-select" onchange="gcSolSelect(this.value)" style="font-size:11px;min-height:34px">
+                  <option value="">— Not linked —</option>
+                </select>
+              </label>
               <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <button type="button" class="btn btn-gold" id="gc-sol-summary-upload-btn" onclick="gcSolUploadActive()">⬆ Upload Solicitation Files</button>
                 <button type="button" class="btn btn-gold" id="gc-sol-extract-btn" data-sd-action-id="sol-extract" onclick="gcSolExtract()">Extract Requirements</button>
                 <button type="button" class="btn btn-ghost" id="gc-sol-explain-btn" data-sd-action-id="sol-explain" onclick="gcSolExplainPlainEnglish()">Explain Package in Plain English</button>
                 <button type="button" class="btn btn-ghost" id="gc-sol-matrix-btn" data-sd-action-id="sol-matrix" onclick="gcSolBuildMatrix()">Build Compliance Matrix</button>
@@ -3343,10 +3350,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
           <!-- Output panels -->
           <div class="gc-sol-panels" style="display:grid;grid-template-columns:1fr;gap:12px;margin-bottom:14px">
             <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
-              <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:6px">
-                <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text)">Solicitation Summary</div>
-                <button type="button" class="btn btn-gold" id="gc-sol-summary-upload-btn" onclick="gcSolUploadActive()">⬆ Upload Solicitation Files</button>
-              </div>
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Solicitation Summary</div>
               <div id="gc-sol-summary"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation loaded yet. Use Upload Solicitation Files to import multiple documents from your computer. Extracted results will appear here automatically.</div></div>
             </div>
             <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
@@ -15214,10 +15218,32 @@ document.addEventListener('DOMContentLoaded',()=>{
     if (window.sdSetActionBusy) window.sdSetActionBusy('sol-extract', 'Extracting...');
     var activeId = activeSolId();
     try {
-      var pkg = null;
-      try { if (typeof window.gcABGetPackageSummary === 'function') pkg = window.gcABGetPackageSummary(activeId); } catch (e) {}
-      if (pkg && window.gcABExtractPackageToCenter){
-        await window.gcABExtractPackageToCenter(activeId);
+      // Phase 25AP — local upload extraction is now the only supported source.
+      // Do not call the retired package extractor gcABExtractPackageToCenter: it
+      // returns null by design and made Extract Requirements appear broken after
+      // a local upload. If the
+      // upload pipeline has already populated Solicitation Center state, simply
+      // re-render that trusted local extraction and keep the operator in review.
+      // Linked-source fallback still calls gcW25CollectSourceText() below for
+      // existing saved-pursuit notes, but uploaded files remain the primary path.
+      // Empty-state guidance: Download a solicitation package or upload a supported solicitation file before extraction.
+      // Linked-source fallback ultimately runs extractFromText(text) on the combined local text.
+      var currentState = loadState();
+      var currentSections = (currentState && currentState.sections) || {};
+      var hasUploadedExtraction = !!(currentState && currentState.real && (
+        (currentSections.sectionL && currentSections.sectionL.length) ||
+        (currentSections.sectionM && currentSections.sectionM.length) ||
+        (currentSections.pws && currentSections.pws.length) ||
+        (currentSections.forms && currentSections.forms.length) ||
+        (currentSections.deadlines && currentSections.deadlines.length) ||
+        (currentSections.risks && currentSections.risks.length) ||
+        (currentState.matrix && currentState.matrix.length)
+      ));
+      if (hasUploadedExtraction) {
+        renderPanels(currentState);
+        renderMatrix(currentState.matrix || []);
+        try { if (typeof window.gcTabSwitch === 'function') window.gcTabSwitch('solicitation'); } catch (e0) {}
+        if (window.toast) try { window.toast('Uploaded solicitation extraction is loaded. Review each draft section against the source documents.', 'ok'); } catch (e1) {}
         return;
       }
       var pasted = '';
@@ -15306,22 +15332,40 @@ document.addEventListener('DOMContentLoaded',()=>{
     var id = activeSolId();
     try {
       var state = loadState();
+      var sections = (state && state.sections) || {};
       var ex = state.packageExtraction || null;
-      if (!ex && window.gcABExtractPackageToCenter) ex = await window.gcABExtractPackageToCenter(id);
+      if (!ex && state && state.real) {
+        ex = { metadata: {}, sections: sections, complianceMatrixStarter: state.matrix || [] };
+      }
       if (!ex){
-        if (window.toast) try { window.toast('Download and extract a solicitation package first.', 'info'); } catch (e) {}
+        if (window.toast) try { window.toast('Upload Solicitation Files first, then explain the extracted package.', 'info'); } catch (e) {}
         return;
       }
       var plain = null;
       try {
         if (window.sd && window.sd.govcon && window.sd.govcon.explainSolicitationPackage) plain = await window.sd.govcon.explainSolicitationPackage(ex);
       } catch (e2) {}
-      if (!plain || !plain.sections){ if (window.toast) try { window.toast('Plain-English explanation unavailable.', 'warn'); } catch (e3) {} return; }
       var lines = [];
-      Object.keys(plain.sections).forEach(function(k){
-        var s = plain.sections[k];
-        lines.push('Section ' + k + ': ' + s.means + ' What to do: ' + s.mustDo);
-      });
+      if (plain && plain.sections) {
+        Object.keys(plain.sections).forEach(function(k){
+          var s = plain.sections[k];
+          lines.push('Section ' + k + ': ' + s.means + ' What to do: ' + s.mustDo);
+        });
+      } else {
+        function itemText(item){ return cleanDisplayText((item && (item.text || item.label || item.fileName)) || item || ''); }
+        function first(arr){ return Array.isArray(arr) && arr.length ? itemText(arr[0]) : ''; }
+        if (state.summary) lines.push('Package snapshot: ' + cleanDisplayText(state.summary).split('\n').slice(0, 4).join(' '));
+        if (first(sections.sectionL)) lines.push('Instructions to offerors: follow the submission rules, formatting, volumes, due dates, and required response contents identified in Section L.');
+        if (first(sections.sectionM)) lines.push('Evaluation criteria: shape the response around the factors and evidence the buyer says it will score.');
+        if (first(sections.pws)) lines.push('Work requirement: build the technical response around the PWS/SOW tasks, deliverables, schedule, and performance standards.');
+        if (Array.isArray(sections.forms) && sections.forms.length) lines.push('Required forms and attachments: prepare and verify these before submission — ' + sections.forms.map(itemText).filter(Boolean).slice(0, 8).join('; ') + '.');
+        if (Array.isArray(sections.deadlines) && sections.deadlines.length) lines.push('Deadlines: calendar each due date immediately and assign an owner for submission readiness.');
+        if (Array.isArray(sections.risks) && sections.risks.length) lines.push('Risk checks: review mandatory language, certifications, site visits, insurance/security requirements, and any ambiguous terms before bid/no-bid.');
+        if (!lines.length) {
+          if (window.toast) try { window.toast('Upload Solicitation Files first, then explain the extracted package.', 'info'); } catch (e3) {}
+          return;
+        }
+      }
       setHTML('gc-sol-summary', '<div style="font-size:11px;color:var(--text);line-height:1.55"><strong>Plain-English package explanation.</strong><br>' + safeText(_sal25SafeText(cleanDisplayText(lines.join('\n\n')), 'explain')).replace(/\n/g, '<br>') + '<br><br><em>Not legal advice. Verify against source documents.</em></div>');
       if (window.toast) try { window.toast('Plain-English explanation created. Verify against the source package.', 'ok'); } catch (e4) {}
     } finally {
@@ -20010,6 +20054,45 @@ document.addEventListener('DOMContentLoaded',()=>{
       if (s && s.found && s.text) return [{ text: s.text, sourceFile: s.sourceFile || '', sourceLocation: s.sourceLocation || '' }];
       return [];
     }
+    // Phase 25AP — Required Forms must render only compact form/attachment
+    // identifiers, never a raw Section J body, binary text, or bulk document
+    // content. The main-process extractor already returns normalized metadata,
+    // but this renderer-side gate prevents contaminated aliases from reaching
+    // the Solicitation Center forms panel.
+    function cleanRequiredForms(result, md){
+      var out = [];
+      var seen = {};
+      function pick(item){
+        if (!item) return '';
+        if (typeof item === 'string') return item;
+        return item.item || item.fileName || item.label || item.name || item.text || '';
+      }
+      function source(item){ return item && typeof item === 'object' ? (item.sourceFile || item.source || '') : ''; }
+      function okFormText(s){
+        s = cleanDisplayText(s).replace(/\s+/g, ' ').trim();
+        if (!s || s.length < 3 || s.length > 220) return '';
+        if (typeof window._w25LooksLikeBadSource === 'function' && window._w25LooksLikeBadSource(s)) return '';
+        if (/This file contains structured document markup|^Section\s+J\b/i.test(s)) return '';
+        if (!/\b(SF[-\s]?\d{1,4}[A-Z]?|DD[-\s]?Form|OF[-\s]?\d+|Attachment\s+[A-Z0-9]+|Exhibit\s+[A-Z0-9]+|Appendix\s+[A-Z0-9]+|QASP|wage determination|pricing sheet|price schedule|amendment|certification|representation|solicitation provisions?|contract clauses?)\b/i.test(s)) return '';
+        return s;
+      }
+      function add(item){
+        var s = okFormText(pick(item));
+        if (!s) {
+          var src = okFormText(source(item));
+          if (src) s = src;
+        }
+        if (!s) return;
+        var k = s.toLowerCase();
+        if (seen[k]) return;
+        seen[k] = true;
+        out.push(s);
+      }
+      (md.requiredForms || []).forEach(add);
+      ((md.attachmentsIndex || [])).forEach(function(a){ add(a && (a.fileName || a.label || a.name)); });
+      (result.requiredFormsAttachments || []).forEach(add);
+      return out.slice(0, 40);
+    }
     var cPws = secArr('C').concat(secArr('F'));
     var state = {
       summary: summary,
@@ -20017,7 +20100,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         sectionL: secArr('L').length ? secArr('L') : (result.instructionsToOfferors || []),
         sectionM: secArr('M').length ? secArr('M') : (result.evaluationCriteria || []),
         pws: cPws.length ? cPws : (result.pwsSowRequirements || []),
-        forms: result.requiredFormsAttachments || [],
+        forms: cleanRequiredForms(result, md),
         deadlines: result.deadlines || [],
         risks: result.risksDealKillers || []
       },
