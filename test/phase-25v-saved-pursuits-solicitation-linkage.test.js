@@ -39,7 +39,12 @@ test('Solicitation Workspace selector linked to saved pursuits', () => {
     'saved pursuits read from sd.govcon.opportunities.list');
   assert.ok(/function savedPursuits\(\)/.test(HTML) || /savedPursuits\(\)/.test(HTML),
     'savedPursuits() helper present');
-  assert.ok(/gcV25SolHook/.test(HTML), 'tab hook wires saved pursuits into selectors');
+  assert.ok(/'solicitation'\s*:\s*\{[^}]*sel:\s*'gc-sol-opp-select'/.test(HTML),
+    'Solicitation Center hook must populate #gc-sol-opp-select');
+  assert.ok(/window\.gcSolSelect\s*=\s*function\(id\)/.test(HTML),
+    'gcSolSelect onchange handler must exist');
+  assert.ok(/onchange="gcSolSelect\(this\.value\)"/.test(HTML),
+    'selector onchange must call the defined gcSolSelect handler');
 });
 
 // 3. Selecting a pursuit loads its metadata.

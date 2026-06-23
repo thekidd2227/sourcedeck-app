@@ -19637,7 +19637,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     persistWorkingTo(prev);
     setActiveSolRaw(id);
     loadWorkingFrom(id);
-    ['gc-vendors-sol-select','gc-pricing-sol-select','gc-ppf-sol-select'].forEach(function(sid){
+    ['gc-sol-opp-select','gc-vendors-sol-select','gc-pricing-sol-select','gc-ppf-sol-select'].forEach(function(sid){
       var el = $(sid); if (el){ try { el.value = id; } catch (e) {} }
     });
     var opp = pursuitMap[id];
@@ -19701,8 +19701,8 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Tab hook invoked by gcTabSwitch for the relevant tabs.
   window.gcV25SolHook = function(tabId){
     var map = {
-      'solicitation':   { sel: null,                    empty: null,                  general: '— Active solicitation —',                 render: null },
-      'solicitation-attachments': { sel: null,            empty: null,                  general: '— Active solicitation —',                 render: null },
+      'solicitation':   { sel: 'gc-sol-opp-select',     empty: null,                  general: '— Not linked —',                         render: null },
+      'solicitation-attachments': { sel: 'gc-sol-opp-select', empty: null,              general: '— Not linked —',                         render: null },
       'vendors':        { sel: 'gc-vendors-sol-select', empty: 'gc-vendors-sol-empty', general: '— No solicitation selected (general vendor list) —', render: window.gcVqrRender },
       'pricing':        { sel: 'gc-pricing-sol-select', empty: 'gc-pricing-sol-empty', general: '— No solicitation selected (general pricing) —',     render: window.gcPricingRecalc },
       'prime-partners': { sel: 'gc-ppf-sol-select',     empty: 'gc-ppf-sol-empty',     general: '— No solicitation selected (general prime list) —', render: window.gcPpfRender }
@@ -19712,6 +19712,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     savedPursuits().then(function(list){
       pursuitMap = {};
       for (var i = 0; i < list.length; i++){ pursuitMap[list[i].id] = list[i]; }
+      try { window.gcW25Saved = list; window.gcW25SavedMap = Object.assign(window.gcW25SavedMap || {}, pursuitMap); } catch (e0) {}
       if (cfg.sel) fillSelect(cfg.sel, list, cfg.general);
       if (cfg.empty){ var e = $(cfg.empty); if (e) e.style.display = list.length ? 'none' : ''; }
       if (typeof cfg.render === 'function'){ try { cfg.render(); } catch (e2) {} }
@@ -19727,6 +19728,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   };
 
   // Selector onchange handlers referenced by the HTML.
+  window.gcSolSelect = function(id){ window.gcV25SelectSolicitation(id); };
   window.gcVendorsSolSelect = function(id){ window.gcV25SelectSolicitation(id); if (typeof window.gcVqrRender === 'function'){ try { window.gcVqrRender(); } catch (e) {} } };
   window.gcPricingSolSelect = function(id){ window.gcV25SelectSolicitation(id); if (typeof window.gcPricingRecalc === 'function'){ try { window.gcPricingRecalc(); } catch (e) {} } };
   window.gcPpfSolSelect     = function(id){ window.gcV25SelectSolicitation(id); if (typeof window.gcPpfRender === 'function'){ try { window.gcPpfRender(); } catch (e) {} } };
@@ -20579,15 +20581,21 @@ document.addEventListener('DOMContentLoaded',()=>{
     return sm;
   }
   window.gcW25CollectSourceText = function(_solId){
-    // Phase 25AM — retired. There is no sourceMaterials cache anymore.
-    // Extract Requirements feeds from uploaded files only.
-    return '';
     var id = _solId || activeSol();
     if (!id) return '';
     var sm = _w25SanitizeSourceMaterials(getSM(id), true, id);
     var bits = [];
     if (sm.description && sm.description.text && !_w25LooksLikeBadSource(sm.description.text)) bits.push(sm.description.text);
     (sm.resources || []).forEach(function(r){ if (r && r.text && !_w25LooksLikeBadSource(r.text)) bits.push(r.text); });
+    try {
+      var opp = (window.gcW25SavedMap && window.gcW25SavedMap[id]) || null;
+      if (opp){
+        ['title','agency','solicitationNumber','noticeId','naics','dueDate','placeOfPerformance','summary','notes','description'].forEach(function(k){
+          var v = opp[k];
+          if (v && typeof v !== 'object' && !_w25LooksLikeBadSource(v)) bits.push(String(v));
+        });
+      }
+    } catch (e) {}
     var combined = bits.join('\n\n');
     // Phase 25AJ — final gate: reject if the aggregated text itself
     // looks like app-shell content (e.g. multiple sources each had one
