@@ -222,6 +222,26 @@ function inflateMaybe(buf) {
   return null;
 }
 
+function looksLikeUnreadableExtractionText(text) {
+  const s = cleanExtractedText(text || '').replace(/\s+/g, ' ').trim();
+  if (!s) return false;
+  const visible = s.replace(/\s/g, '');
+  if (visible.length < 80) return false;
+  const alpha = (visible.match(/[A-Za-z]/g) || []).length;
+  const symbols = (visible.match(/[^A-Za-z0-9]/g) || []).length;
+  const words = s.match(/\b[A-Za-z]{3,}\b/g) || [];
+  const readableWords = words.filter(w => /[aeiouy]/i.test(w)).length;
+  const commonGovWords = (s.match(/\b(the|and|for|with|shall|must|section|offeror|contract(?:or)?|solicitation|proposal|requirements?|services?|performance|government|agency|attachment|form|pricing|evaluation|deadline|submit|provide)\b/gi) || []).length;
+  const hasSolicitationMarkers = /\b(SF\s*\d{1,4}|Section\s+[A-M]\b|CLIN|NAICS|solicitation|offeror|contractor|shall|required|attachment|proposal|evaluation|performance)\b/i.test(s);
+  const symbolRatio = symbols / Math.max(visible.length, 1);
+  const alphaRatio = alpha / Math.max(visible.length, 1);
+  const readableRatio = readableWords / Math.max(words.length, 1);
+  if (alphaRatio < 0.28 && symbolRatio > 0.32) return true;
+  if (symbolRatio > 0.24 && visible.length >= 120 && commonGovWords < 2 && !hasSolicitationMarkers) return true;
+  if (symbolRatio > 0.28 && words.length >= 8 && readableRatio < 0.35 && commonGovWords < 2) return true;
+  return false;
+}
+
 function extractPdfText(buffer) {
   const warnings = [];
   const latin1 = buffer.toString('latin1');
@@ -254,8 +274,12 @@ function extractPdfText(buffer) {
     const t = pdfContentToText(content);
     if (t && t.trim()) texts.push(t);
   }
-  const text = normalizePlainText(texts.join('\n'));
-  if (!text.trim()) warnings.push('No extractable text found — the PDF may be scanned/image-only.');
+  let text = normalizePlainText(texts.join('\n'));
+  if (text.trim() && looksLikeUnreadableExtractionText(text)) {
+    warnings.push('Extracted PDF text appears encoded or unreadable. Convert/export the solicitation to searchable PDF, DOCX, or TXT and upload again.');
+    text = '';
+  }
+  if (!text.trim() && !warnings.length) warnings.push('No extractable text found — the PDF may be scanned/image-only.');
   return { text, pages, warnings };
 }
 
@@ -1023,6 +1047,15 @@ async function extractSolicitationPackage(input) {
         limitation: 'Extraction error — file skipped (' + (err && err.code ? err.code : 'error') + ')',
         warnings: ['Extraction error — file skipped']
       }));
+    }
+  }
+  for (const f of extractedFiles) {
+    if (f && f.text && looksLikeUnreadableExtractionText(f.text)) {
+      const msg = 'Extracted text is unreadable/encoded and was excluded from solicitation analysis.';
+      f.text = '';
+      f.extractionStatus = f.extractionStatus === 'text' ? 'metadata-only' : f.extractionStatus;
+      f.limitation = f.limitation || msg;
+      f.warnings = Array.isArray(f.warnings) ? f.warnings.concat([msg]) : [msg];
     }
   }
   const fullText = cleanExtractedText(extractedFiles.map(f => f.text).filter(Boolean).join('\n\n'));

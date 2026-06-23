@@ -230,6 +230,10 @@ async function run() {
     fs.writeFileSync(pShell, 'SourceDeck GovCon Pipeline\nOperating Hub\n.cmd-flow{display:flex}\ntab-govcon');
     const pCorrupt = path.join(dl, 'broken.pdf'); // PDF magic but garbage body
     fs.writeFileSync(pCorrupt, Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.from([0x00, 0x01, 0x02, 0x03, 0x99])]));
+    const pEncoded = path.join(dl, 'encoded-text.pdf'); // PDF text stream that decodes to binary-looking garbage
+    const encodedGarbage = '01/1%1% 11% /1/1OI1S/ ++++ @@@@ #### $$$$ ---- (((($@ @@@ 24 $ @@@ 40 /FJ+ MiA+ MyAO-' +
+      ' 99 99 99 99 qqqq JqJqJqJq+ ?MI??EA9_1 JJq+DM+DJAD+JAD+DJAD+ ### 53274 #### 8567632 &&';
+    fs.writeFileSync(pEncoded, '%PDF-1.4\n1 0 obj << /Type /Page >> endobj\n2 0 obj << /Length ' + encodedGarbage.length + ' >>\nstream\nBT (' + encodedGarbage + ') Tj ET\nendstream\nendobj\n%%EOF\n');
     const pDoc = path.join(dl, 'legacy.doc'); // OLE magic legacy doc
     fs.writeFileSync(pDoc, Buffer.concat([Buffer.from([0xD0, 0xCF, 0x11, 0xE0, 0xA1, 0xB1, 0x1A, 0xE1]), Buffer.from('Offeror shall provide past performance references for janitorial work.')]));
 
@@ -266,6 +270,20 @@ async function run() {
     check('24. All Section A–M objects exist', ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M'].every(L => result.sections[L] && typeof result.sections[L].found === 'boolean'));
     check('25. Formal Sections C, L, and M map correctly', result.sections.C.found && result.sections.L.found && result.sections.M.found);
     check('26. Fallback instructions/evaluation/scope mapping works', Array.isArray(result.instructionsToOfferors) && Array.isArray(result.evaluationCriteria) && Array.isArray(result.pwsSowRequirements));
+
+    const encodedOnly = await importAndExtract({
+      filePaths: [pEncoded],
+      opportunity: { id: 'sam:encoded', noticeId: 'ENCODED-PDF', solicitationNumber: 'ENCODED-PDF', title: 'Encoded PDF Fixture', agency: 'Test Agency' },
+      userDataPath: userData
+    });
+    check('26b. Encoded PDF garbage is excluded from Required Forms and source text',
+      encodedOnly.ok === true
+      && encodedOnly.documentInventory[0].extractionStatus === 'ocr_required'
+      && /scanned|OCR|text extraction not available/i.test(JSON.stringify(encodedOnly.warnings || []).concat(JSON.stringify(encodedOnly.documentInventory || [])))
+      && (encodedOnly.metadata.requiredForms || []).length === 0
+      && (encodedOnly.requiredFormsAttachments || []).length === 0
+      && !/53274|8567632|JqJqJqJq|MiA/.test(JSON.stringify(encodedOnly)));
+
     check('34. Compliance rows are produced with source attribution', result.complianceMatrix.length > 0 && result.complianceMatrix.every(r => 'requirementText' in r || 'requirement' in r || 'text' in r));
     check('35. No raw Office XML anywhere in the contract', !/w:document|xmlns:w=|<w:t|word\/document\.xml/.test(JSON.stringify(result)));
     check('36. No SourceDeck app-shell text in the contract', !appShellDetector(JSON.stringify(result)));

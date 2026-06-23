@@ -3317,8 +3317,6 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
         <section id="gc-sol-workspace" class="gc-sol-workspace" data-section="govcon-solicitation-workspace" data-gc-tab-page="solicitation" style="display:none;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--r);background:linear-gradient(145deg,rgba(176,138,60,0.04),rgba(23,32,51,0.06));padding:16px 18px">
           <div style="display:flex;flex-direction:column;gap:4px;margin-bottom:12px">
             <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1.15">Solicitation Center</div>
-            <div style="font-family:'IBM Plex Mono',monospace;font-size:9.5px;text-transform:uppercase;letter-spacing:0.12em;color:var(--sub)">Section L · Section M · PWS/SOW · Required forms · Deadlines · Risks · Compliance matrix</div>
-            <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:2px">Draft extraction — verify against source document. SourceDeck does not submit bids. All outputs require human review. No outreach is drafted, sent, or queued.</div>
             <!-- Phase 23D — Last Updated indicator (local-only, advisory). -->
             <div class="gc-dd-last-updated-row" style="margin-top:4px"><span class="gc-dd-last-updated" data-gc-dd-section="sol-workspace" style="display:inline-block;font-family:'IBM Plex Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);background:var(--panel3,#0E2040);border:1px solid var(--border);padding:3px 8px;border-radius:10px">Last updated: Not yet</span></div>
           </div>
@@ -14921,6 +14919,41 @@ document.addEventListener('DOMContentLoaded',()=>{
     return '<div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">'
       + safeText(msg) + '</div>';
   }
+  function _sdLooksUnreadableExtractionText(value){
+    var s = cleanDisplayText(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+    if (!s) return false;
+    var visible = s.replace(/\s/g, '');
+    if (visible.length < 80) return false;
+    var alpha = (visible.match(/[A-Za-z]/g) || []).length;
+    var symbols = (visible.match(/[^A-Za-z0-9]/g) || []).length;
+    var words = (s.match(/\b[A-Za-z]{3,}\b/g) || []);
+    var readableWords = words.filter(function(w){ return /[aeiouy]/i.test(w); }).length;
+    var commonGovWords = (s.match(/\b(the|and|for|with|shall|must|section|offeror|contract(?:or)?|solicitation|proposal|requirements?|services?|performance|government|agency|attachment|form|pricing|evaluation|deadline|submit|provide)\b/gi) || []).length;
+    var hasSolicitationMarkers = /\b(SF\s*\d{1,4}|Section\s+[A-M]\b|CLIN|NAICS|solicitation|offeror|contractor|shall|required|attachment|proposal|evaluation|performance)\b/i.test(s);
+    var symbolRatio = symbols / Math.max(visible.length, 1);
+    var alphaRatio = alpha / Math.max(visible.length, 1);
+    var readableRatio = readableWords / Math.max(words.length, 1);
+    if (alphaRatio < 0.28 && symbolRatio > 0.32) return true;
+    if (symbolRatio > 0.24 && visible.length >= 120 && commonGovWords < 2 && !hasSolicitationMarkers) return true;
+    if (symbolRatio > 0.28 && words.length >= 8 && readableRatio < 0.35 && commonGovWords < 2) return true;
+    return false;
+  }
+  function _sdCleanRequiredFormsForDisplay(items){
+    var out = [];
+    var seen = {};
+    (Array.isArray(items) ? items : []).forEach(function(item){
+      var raw = item && typeof item === 'object' ? (item.item || item.fileName || item.text || item.label || item.name || '') : item;
+      var s = cleanDisplayText(raw).replace(/\s+/g, ' ').trim();
+      if (!s || s.length > 220 || _sdLooksUnreadableExtractionText(s)) return;
+      if (/^Section\s+J\b|This file contains structured document markup/i.test(s)) return;
+      if (!/\b(SF[-\s]?\d{1,4}[A-Z]?|DD[-\s]?Form|OF[-\s]?\d+|Attachment\s+[A-Z0-9]+|Exhibit\s+[A-Z0-9]+|Appendix\s+[A-Z0-9]+|QASP|wage determination|pricing sheet|price schedule|amendment|certification|representation|solicitation provisions?|contract clauses?)\b/i.test(s)) return;
+      var key = s.toLowerCase();
+      if (seen[key]) return;
+      seen[key] = true;
+      out.push(s);
+    });
+    return out;
+  }
   function listDiv(items, emptyMsg){
     if (!items || !items.length) return emptyDiv(emptyMsg);
     return '<ul style="margin:0;padding:0 0 0 16px;font-size:11px;color:var(--text);line-height:1.55">'
@@ -15038,7 +15071,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     setHTML('gc-sol-section-l', listDiv(_sal25SafeList(s.sectionL,  'sectionL'), 'No Section L instructions extracted yet. Verify source package.'));
     setHTML('gc-sol-section-m', listDiv(_sal25SafeList(s.sectionM,  'sectionM'), 'No Section M evaluation criteria extracted yet. Verify source package.'));
     setHTML('gc-sol-pws',       listDiv(_sal25SafeList(s.pws,       'pws'),      'No Section C/F scope requirements extracted yet. Verify source package.'));
-    setHTML('gc-sol-forms',     listDiv(_sal25SafeList(s.forms,     'forms'),    'No Section J required forms or attachments extracted yet. Verify source package.'));
+    setHTML('gc-sol-forms',     listDiv(_sdCleanRequiredFormsForDisplay(_sal25SafeList(s.forms, 'forms')), 'No Section J required forms or attachments extracted yet. Verify source package.'));
     setHTML('gc-sol-deadlines', listDiv(_sal25SafeList(s.deadlines, 'deadlines'),'No deadlines extracted yet. Verify source package.'));
     setHTML('gc-sol-risks',     listDiv(_sal25SafeList(s.risks,     'risks'),    'No risks or deal killers extracted yet. Verify source package.'));
   }
@@ -15104,19 +15137,15 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     function formList(){
       var out = [];
-      if (sections.J && sections.J.found && sections.J.text) out = out.concat([cleanDisplayText(sections.J.text)]);
+      // Never render raw Section J text in Required Forms. That section can be a
+      // long body or, for encoded PDFs, unreadable binary-looking text. Use only
+      // compact normalized form/attachment aliases from extractor metadata.
       if (ex.metadata && ex.metadata.requiredForms) out = out.concat(ex.metadata.requiredForms);
+      if (ex.requiredFormsAttachments) out = out.concat(ex.requiredFormsAttachments);
       if (ex.metadata && ex.metadata.attachmentsIndex) {
         out = out.concat(ex.metadata.attachmentsIndex.map(function(a){ return a && (a.fileName || a.label || a.name); }).filter(Boolean));
       }
-      var seen = {};
-      return out.map(cleanDisplayText).filter(function(x){
-        if (!x || /^This file contains structured document markup/.test(x)) return false;
-        var k = x.toLowerCase();
-        if (seen[k]) return false;
-        seen[k] = true;
-        return true;
-      }).slice(0, 40);
+      return _sdCleanRequiredFormsForDisplay(out).slice(0, 40);
     }
     return {
       summary: cleanDisplayText((ex.metadata && (ex.metadata.title || ex.metadata.summary)) || ex.solicitationNumber || ex.noticeId || 'Solicitation package extracted locally.'),
@@ -20062,6 +20091,29 @@ document.addEventListener('DOMContentLoaded',()=>{
     function cleanRequiredForms(result, md){
       var out = [];
       var seen = {};
+      function localCleanDisplayText(value){
+        try { if (typeof cleanDisplayText === 'function') return cleanDisplayText(value); } catch (e) {}
+        try { if (typeof window !== 'undefined' && typeof window.sdCleanDisplayText === 'function') return window.sdCleanDisplayText(value); } catch (e) {}
+        return String(value == null ? '' : value).replace(/\0/g, ' ').replace(/<[^>]+>/g, ' ').replace(/[ \t]{2,}/g, ' ').trim();
+      }
+      function looksUnreadable(value){
+        var s = localCleanDisplayText(value).replace(/\s+/g, ' ').trim();
+        if (!s) return false;
+        var visible = s.replace(/\s/g, '');
+        if (visible.length < 80) return false;
+        var alpha = (visible.match(/[A-Za-z]/g) || []).length;
+        var symbols = (visible.match(/[^A-Za-z0-9]/g) || []).length;
+        var words = (s.match(/\b[A-Za-z]{3,}\b/g) || []);
+        var readableWords = words.filter(function(w){ return /[aeiouy]/i.test(w); }).length;
+        var commonGovWords = (s.match(/\b(the|and|for|with|shall|must|section|offeror|contract(?:or)?|solicitation|proposal|requirements?|services?|performance|government|agency|attachment|form|pricing|evaluation|deadline|submit|provide)\b/gi) || []).length;
+        var hasSolicitationMarkers = /\b(SF\s*\d{1,4}|Section\s+[A-M]\b|CLIN|NAICS|solicitation|offeror|contractor|shall|required|attachment|proposal|evaluation|performance)\b/i.test(s);
+        var symbolRatio = symbols / Math.max(visible.length, 1);
+        var alphaRatio = alpha / Math.max(visible.length, 1);
+        var readableRatio = readableWords / Math.max(words.length, 1);
+        return (alphaRatio < 0.28 && symbolRatio > 0.32)
+          || (symbolRatio > 0.24 && visible.length >= 120 && commonGovWords < 2 && !hasSolicitationMarkers)
+          || (symbolRatio > 0.28 && words.length >= 8 && readableRatio < 0.35 && commonGovWords < 2);
+      }
       function pick(item){
         if (!item) return '';
         if (typeof item === 'string') return item;
@@ -20069,8 +20121,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       }
       function source(item){ return item && typeof item === 'object' ? (item.sourceFile || item.source || '') : ''; }
       function okFormText(s){
-        s = cleanDisplayText(s).replace(/\s+/g, ' ').trim();
-        if (!s || s.length < 3 || s.length > 220) return '';
+        s = localCleanDisplayText(s).replace(/\s+/g, ' ').trim();
+        if (!s || s.length < 3 || s.length > 220 || looksUnreadable(s)) return '';
         if (typeof window._w25LooksLikeBadSource === 'function' && window._w25LooksLikeBadSource(s)) return '';
         if (/This file contains structured document markup|^Section\s+J\b/i.test(s)) return '';
         if (!/\b(SF[-\s]?\d{1,4}[A-Z]?|DD[-\s]?Form|OF[-\s]?\d+|Attachment\s+[A-Z0-9]+|Exhibit\s+[A-Z0-9]+|Appendix\s+[A-Z0-9]+|QASP|wage determination|pricing sheet|price schedule|amendment|certification|representation|solicitation provisions?|contract clauses?)\b/i.test(s)) return '';
@@ -20181,7 +20233,15 @@ document.addEventListener('DOMContentLoaded',()=>{
     // Solicitation Summary on its own.
     try { if (opportunity.id && typeof window.gcV25SelectSolicitation === 'function') window.gcV25SelectSolicitation(opportunity.id); } catch (e) {}
     try { if (typeof window.gcTabSwitch === 'function') window.gcTabSwitch('solicitation'); } catch (e) {}
-    window.gcSolLoadExtractionResult(result);
+    try {
+      var loaded = window.gcSolLoadExtractionResult(result);
+      if (loaded === false) throw new Error('renderer_load_failed');
+    } catch (loadErr) {
+      if (btn){ btn.textContent = prevLabel || '⬆ Upload Solicitation Files'; btn.disabled = false; }
+      try { console.error('[Solicitation upload] Failed to render extraction result', loadErr); } catch (e) {}
+      toast('Solicitation extracted, but SourceDeck could not render the extracted sections. Restart and upload again after refresh.', 'warn');
+      return;
+    }
     // Persist a safe structured status only when this upload is linked to a
     // saved opportunity row. Standalone local uploads remain local workspace state.
     if (opportunity.id) {
