@@ -20,6 +20,16 @@ const { createAppApi }                       = require('./api');
 const { createSafeStorageCredentialStore }   = require('./services/settings/credentials');
 const { createLicenseService }               = require('./services/licensing/license-service');
 
+// ── Phase 1 main-process composition root ───────────────────────────
+// See docs/architecture/ADR-0001-main-process-composition-root.md.
+// Startup-time concerns (privacy scrub, autoUpdater, window creation)
+// have been extracted into app/main/* helpers. IPC registrations
+// remain in this file to preserve ~11 static-analysis tests that pin
+// `ipcMain.handle(...)` strings to main.js. Phase 2 will migrate the
+// IPC registrations into app/main/ipc/* and update those tests.
+const { bootstrap: createMainProcessBootstrap } = require('./app/main/bootstrap');
+const { runPrivacyScrub: _runPrivacyScrubImpl } = require('./app/main/startup/privacy-scrub');
+
 const store = new Store({ name: 'sourcedeck-data' });
 
 // Boot the IBM-readiness services. They're additive: defaults are
@@ -57,6 +67,21 @@ const appApi = createAppApi({
   vendorOutreachTestMode: process.env.SOURCEDECK_VENDOR_OUTREACH_TEST_MODE === 'true'
 });
 
+// ─── Phase 1 composition-root wiring ──────────────────────────────────
+// Privacy scrub, autoUpdater configuration, and BrowserWindow creation
+// are owned by `app/main/bootstrap.js`. main.js retains thin wrappers
+// (`scrubStoredData`, `createWindow`) so existing static-analysis tests
+// that grep main.js continue to find the expected entrypoints.
+const _mp = createMainProcessBootstrap({
+  electron: { app, BrowserWindow, ipcMain, shell, safeStorage, dialog },
+  autoUpdater,
+  store,
+  credentials,
+  appApi,
+  audit,
+  context
+});
+
 // ─── First-run privacy scrub ──────────────────────────────────────────
 // Runs before the window is created. Makes a packaged build safe even if,
 // somehow, owner-identifying state ended up on the user's machine (e.g. a
@@ -78,56 +103,27 @@ const _B64_BLOCKS = [
 ];
 const OWNER_STRING_BLOCKLIST = _B64_BLOCKS.map(s => Buffer.from(s, 'base64').toString('utf8'));
 
+// Phase 1: delegates to app/main/startup/privacy-scrub.js. The
+// behavior is byte-for-byte identical to the previous in-file
+// implementation; this wrapper keeps the symbol name + entrypoint
+// where the static-analysis tests expect to find it.
 function scrubStoredData() {
-  try {
-    const snapshot = store.store || {};
-    const json = JSON.stringify(snapshot);
-    const contaminated = OWNER_STRING_BLOCKLIST.some(s => json.includes(s));
-    if (!contaminated) return;
-    // On any contamination, drop all non-essential state. Keys (encrypted)
-    // are left intact so the user doesn't lose their own API credentials.
-    const keep = {};
-    if (snapshot.keys) keep.keys = snapshot.keys;
-    store.clear();
-    Object.keys(keep).forEach(k => store.set(k, keep[k]));
-    store.set('_privacy_scrub_applied_at', new Date().toISOString());
-  } catch (_) {
-    // Never crash boot on scrub failure.
-  }
+  _runPrivacyScrubImpl({ store, blocklist: OWNER_STRING_BLOCKLIST });
 }
 
 scrubStoredData();
 
 let mainWindow;
 
+// Phase 1: delegates window construction to
+// app/main/window/create-main-window.js via the bootstrap. The
+// BrowserWindow options, preload path, ready-to-show + closed event
+// wiring, and the setWindowOpenHandler browser-handoff are preserved
+// exactly. `mainWindow` here is kept so the existing autoUpdater
+// 'update-downloaded' branch and `app.on('activate')` re-create
+// continue to reference it unchanged.
 function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1440,
-    height: 900,
-    minWidth: 1024,
-    minHeight: 700,
-    backgroundColor: '#04040A',
-    title: 'SourceDeck',
-    titleBarStyle: process.platform === 'darwin' ? 'hiddenInset' : 'default',
-    webPreferences: {
-      preload: path.join(__dirname, 'preload.js'),
-      contextIsolation: true,
-      nodeIntegration: false
-    },
-    show: false
-  });
-
-  mainWindow.loadFile('sourcedeck.html');
-
-  mainWindow.once('ready-to-show', () => {
-    mainWindow.show();
-  });
-
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    shell.openExternal(url);
-    return { action: 'deny' };
-  });
-
+  mainWindow = _mp.createWindow();
   mainWindow.on('closed', () => {
     mainWindow = null;
   });
@@ -137,11 +133,12 @@ app.whenReady().then(() => {
   createWindow();
 
   if (app.isPackaged) {
-    setTimeout(() => {
-      // Directory/test packages do not include app-update.yml. Treat that as
-      // an unavailable update channel, not an unhandled runtime exception.
-      void autoUpdater.checkForUpdatesAndNotify().catch(() => {});
-    }, 5000);
+    // Phase 1: autoUpdater configuration + the 5 s notify-check have been
+    // moved into app/main/startup/updater.js. Behavior is unchanged:
+    // packaged builds invoke `checkForUpdatesAndNotify` once, 5 s after
+    // window create, and rejections are swallowed (directory/test
+    // packages have no app-update.yml).
+    setTimeout(() => { _mp.triggerUpdateCheck(); }, 5000);
   }
 
   app.on('activate', () => {
@@ -157,16 +154,10 @@ app.on('window-all-closed', () => {
   }
 });
 
-// Auto-updater: silent download, prompt on ready
-autoUpdater.autoDownload = true;
-autoUpdater.autoInstallOnAppQuit = true;
-autoUpdater.on('error', () => { /* update channel unavailable; app remains usable */ });
-
-autoUpdater.on('update-downloaded', () => {
-  if (mainWindow) {
-    mainWindow.webContents.send('update-ready');
-  }
-});
+// Phase 1: autoUpdater event wiring (autoDownload, autoInstallOnAppQuit,
+// 'error' swallow, 'update-downloaded' → renderer 'update-ready') is
+// owned by app/main/startup/updater.js. The bootstrap above performs
+// that configuration during composition-root setup. See ADR-0001.
 
 // IPC handlers for secure key storage
 ipcMain.handle('store-key', (event, service, key) => {
