@@ -5,7 +5,7 @@ REPO="${REPO:-$HOME/sourcedeck-app}"
 BUYER_ROOT="${BUYER_ROOT:-$HOME/Desktop/SourceDeck Buyer Trial Package}"
 BUYER_APP="${BUYER_APP:-$BUYER_ROOT/02 App/SourceDeck.app}"
 BUYER_ZIP="${BUYER_ZIP:-$HOME/Desktop/SourceDeck Buyer Trial Package.zip}"
-POLL_SECONDS="${POLL_SECONDS:-25}"
+POLL_SECONDS="${POLL_SECONDS:-30}"
 
 if [[ "$(uname -s)" != "Darwin" ]]; then
   echo "ERROR: this refresh script must be run on macOS." >&2
@@ -17,8 +17,10 @@ if [[ ! -d "$REPO/.git" ]]; then
   exit 1
 fi
 
+# Match the exact Buyer Trial main executable only — not helper processes,
+# Terminal, this script, or unrelated text containing "SourceDeck".
 app_is_running() {
-  ps ax -o command= | grep -F "$BUYER_APP/Contents/" | grep -v grep >/dev/null
+  pgrep -f "$BUYER_APP/Contents/MacOS/SourceDeck" >/dev/null 2>&1
 }
 
 wait_for_app() {
@@ -82,10 +84,19 @@ pkill -9 -f "/SourceDeck.app/Contents/" 2>/dev/null || true
 open -n "$BUYER_APP"
 
 if ! wait_for_app; then
-  echo "ERROR: refreshed application did not remain running after ${POLL_SECONDS}s" >&2
-  echo "Checked app path: $BUYER_APP/Contents/" >&2
+  echo "ERROR: SourceDeck did not start within ${POLL_SECONDS} seconds." >&2
+  echo "Expected executable:" >&2
+  echo "$BUYER_APP/Contents/MacOS/SourceDeck" >&2
+  echo >&2
+  echo "Current SourceDeck-related processes:" >&2
+  pgrep -fl SourceDeck >&2 || true
+  echo >&2
+  echo "Recent SourceDeck logs:" >&2
+  tail -n 100 /tmp/sourcedeck*.log 2>/dev/null >&2 || true
   exit 1
 fi
+
+echo "PASS: SourceDeck started successfully."
 
 echo
 echo "========================================"
