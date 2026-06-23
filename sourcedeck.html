@@ -23594,57 +23594,57 @@ document.addEventListener('DOMContentLoaded',()=>{
 // Each entry exposes the official state procurement portal + the
 // canonical local-government aggregator + an optional NASPO profile.
 const SD_STATE_PORTALS = {
-  "AL": { name:"Alabama", region:"Southeast", stateUrl:"https://procurement.staars.alabama.gov/", stateName:"STAARS VSS", localUrl:"https://www.bidnetdirect.com/alabama", localName:"BidNet Direct — Alabama", naspo:"https://www.naspo.org/states/alabama/" },
-  "AK": { name:"Alaska", region:"Pacific Northwest", stateUrl:"https://iris-vss.alaska.gov/", stateName:"IRIS VSS", localUrl:"https://www.demandstar.com/app/agencies/alaska", localName:"DemandStar — Alaska", naspo:"https://www.naspo.org/states/alaska/" },
-  "AZ": { name:"Arizona", region:"Southwest", stateUrl:"https://procure.az.gov/bso/", stateName:"ProcureAZ (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/arizona", localName:"BidNet Direct — Arizona", naspo:"https://www.naspo.org/states/arizona/" },
-  "AR": { name:"Arkansas", region:"South Central", stateUrl:"https://www.ark.org/vendor/index.html", stateName:"Arkansas Vendor Portal", localUrl:"https://www.bidnetdirect.com/arkansas", localName:"BidNet Direct — Arkansas", naspo:"https://www.naspo.org/states/arkansas/" },
-  "CA": { name:"California", region:"Pacific", stateUrl:"https://caleprocure.ca.gov/pages/index.aspx", stateName:"Cal eProcure", localUrl:"https://www.planetbids.com", localName:"PlanetBids — California", naspo:"https://www.naspo.org/states/california/" },
-  "CO": { name:"Colorado", region:"Mountain West", stateUrl:"https://www.colorado.gov/vss", stateName:"Colorado VSS (Periscope)", localUrl:"https://www.bidnetdirect.com/colorado/rocky-mountain-e-purchasing", localName:"Rocky Mountain E-Purchasing (RMEPS)", naspo:"https://www.naspo.org/states/colorado/" },
-  "CT": { name:"Connecticut", region:"New England", stateUrl:"https://das.ct.gov/cr1.aspx?page=161", stateName:"CT DAS Procurement", localUrl:"https://www.bidnetdirect.com/connecticut", localName:"BidNet Direct — Connecticut", naspo:"https://www.naspo.org/states/connecticut/" },
-  "DE": { name:"Delaware", region:"Mid-Atlantic", stateUrl:"https://denotificationservices.bbcportal.com/", stateName:"DE Notification Services (Periscope)", localUrl:"https://www.bidnetdirect.com/delaware", localName:"BidNet Direct — Delaware", naspo:"https://www.naspo.org/states/delaware/" },
-  "DC": { name:"Washington, DC", region:"Mid-Atlantic", stateUrl:"https://ocp.dc.gov/page/vendor-registration-electronic-solicitations-ocp", stateName:"OCP DC — Office of Contracting & Procurement", localUrl:"https://www.bidnetdirect.com/district-of-columbia", localName:"BidNet Direct — DC", naspo:"https://www.naspo.org/states/district-of-columbia/" },
-  "FL": { name:"Florida", region:"Southeast", stateUrl:"https://vendor.myfloridamarketplace.com/", stateName:"MyFloridaMarketPlace (Ariba)", localUrl:"https://network.demandstar.com", localName:"DemandStar — Florida", naspo:"https://www.naspo.org/states/florida/" },
-  "GA": { name:"Georgia", region:"Southeast", stateUrl:"https://doas.ga.gov/state-purchasing/getting-started-supplier", stateName:"GA Procurement Registry (TeamWorks)", localUrl:"https://www.bidnetdirect.com/georgia", localName:"BidNet Direct — Georgia", naspo:"https://www.naspo.org/states/georgia/" },
-  "HI": { name:"Hawaii", region:"Pacific", stateUrl:"https://spo.hawaii.gov/", stateName:"Hawaii State Procurement Office", localUrl:"https://www.demandstar.com/app/agencies/hawaii", localName:"DemandStar — Hawaii", naspo:"https://www.naspo.org/states/hawaii/" },
-  "ID": { name:"Idaho", region:"Mountain West", stateUrl:"https://purchasing.idaho.gov/", stateName:"ID Division of Purchasing", localUrl:"https://www.bidnetdirect.com/idaho", localName:"BidNet Direct — Idaho", naspo:"https://www.naspo.org/states/idaho/" },
-  "IL": { name:"Illinois", region:"Midwest", stateUrl:"https://www.bidbuy.illinois.gov/bso/", stateName:"BidBuy Illinois (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/illinois", localName:"BidNet Direct — Illinois", naspo:"https://www.naspo.org/states/illinois/" },
-  "IN": { name:"Indiana", region:"Midwest", stateUrl:"https://www.in.gov/idoa/procurement/supplier-resource-center/", stateName:"IN Supplier Portal (PeopleSoft)", localUrl:"https://www.bidnetdirect.com/indiana", localName:"BidNet Direct — Indiana", naspo:"https://www.naspo.org/states/indiana/" },
-  "IA": { name:"Iowa", region:"Midwest", stateUrl:"https://vss.iowa.gov/", stateName:"Iowa VSS (Periscope)", localUrl:"https://www.bidnetdirect.com/iowa", localName:"BidNet Direct — Iowa", naspo:"https://www.naspo.org/states/iowa/" },
-  "KS": { name:"Kansas", region:"Midwest", stateUrl:"https://admin.ks.gov/offices/procurement-and-contracts", stateName:"KS Procurement & Contracts", localUrl:"https://www.bidnetdirect.com/kansas", localName:"BidNet Direct — Kansas", naspo:"https://www.naspo.org/states/kansas/" },
-  "KY": { name:"Kentucky", region:"South Central", stateUrl:"https://vss.ky.gov/vssprod-ext/Advantage4", stateName:"Kentucky VSS (Advantage 4)", localUrl:"https://www.bidnetdirect.com/kentucky", localName:"BidNet Direct — Kentucky", naspo:"https://www.naspo.org/states/kentucky/" },
-  "LA": { name:"Louisiana", region:"South Central", stateUrl:"https://www.doa.la.gov/doa/osp/vendor-resources/", stateName:"LA Office of State Purchasing", localUrl:"https://www.bidnetdirect.com/louisiana", localName:"BidNet Direct — Louisiana", naspo:"https://www.naspo.org/states/louisiana/" },
-  "ME": { name:"Maine", region:"New England", stateUrl:"https://www.maine.gov/purchases/venbid/newven.shtml", stateName:"ME Bureau of General Services", localUrl:"https://www.bidnetdirect.com/maine", localName:"BidNet Direct — Maine", naspo:"https://www.naspo.org/states/maine/" },
-  "MD": { name:"Maryland", region:"Mid-Atlantic", stateUrl:"https://emma.maryland.gov/", stateName:"eMMA — eMaryland Marketplace Advantage", localUrl:"https://emma.maryland.gov", localName:"eMMA (State & Local Combined)", naspo:"https://www.naspo.org/states/maryland/" },
-  "MA": { name:"Massachusetts", region:"New England", stateUrl:"https://www.commbuys.com/", stateName:"COMMBUYS", localUrl:"https://www.commbuys.com", localName:"COMMBUYS (incl. cities & schools)", naspo:"https://www.naspo.org/states/massachusetts/" },
-  "MI": { name:"Michigan", region:"Midwest", stateUrl:"https://www.michigan.gov/micontractconnect/", stateName:"Michigan Buys (SIGMA VSS)", localUrl:"https://www.bidnetdirect.com/michigan", localName:"BidNet Direct — Michigan", naspo:"https://www.naspo.org/states/michigan/" },
-  "MN": { name:"Minnesota", region:"Midwest", stateUrl:"https://supplier.swift.state.mn.us/", stateName:"SWIFT Supplier Portal (PeopleSoft)", localUrl:"https://www.bidnetdirect.com/minnesota", localName:"BidNet Direct — Minnesota", naspo:"https://www.naspo.org/states/minnesota/" },
-  "MS": { name:"Mississippi", region:"Southeast", stateUrl:"https://www.dfa.ms.gov/purchasing-travel-and-fleet/purchasing/", stateName:"MS Office of Purchasing & Travel", localUrl:"https://www.bidnetdirect.com/mississippi", localName:"BidNet Direct — Mississippi", naspo:"https://www.naspo.org/states/mississippi/" },
-  "MO": { name:"Missouri", region:"Midwest", stateUrl:"https://missouribuys.mo.gov/", stateName:"MissouriBUYS (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/missouri", localName:"BidNet Direct — Missouri", naspo:"https://www.naspo.org/states/missouri/" },
-  "MT": { name:"Montana", region:"Mountain West", stateUrl:"https://spb.mt.gov/Vendor-Resources/index", stateName:"MT State Procurement Bureau", localUrl:"https://www.bidnetdirect.com/montana", localName:"BidNet Direct — Montana", naspo:"https://www.naspo.org/states/montana/" },
-  "NE": { name:"Nebraska", region:"Midwest", stateUrl:"https://das.nebraska.gov/materiel/purchasing.html", stateName:"NE Materiel Division VSS", localUrl:"https://www.bidnetdirect.com/nebraska", localName:"BidNet Direct — Nebraska", naspo:"https://www.naspo.org/states/nebraska/" },
-  "NV": { name:"Nevada", region:"Southwest", stateUrl:"https://purchasing.nv.gov/", stateName:"NV Purchasing Division", localUrl:"https://www.bidnetdirect.com/nevada", localName:"BidNet Direct — Nevada", naspo:"https://www.naspo.org/states/nevada/" },
-  "NH": { name:"New Hampshire", region:"New England", stateUrl:"https://das.nh.gov/purchasing/", stateName:"NH Division of Plant & Property", localUrl:"https://www.bidnetdirect.com/new-hampshire", localName:"BidNet Direct — New Hampshire", naspo:"https://www.naspo.org/states/new-hampshire/" },
-  "NJ": { name:"New Jersey", region:"Mid-Atlantic", stateUrl:"https://www.state.nj.us/treasury/purchase", stateName:"NJ Treasury Purchase Bureau", localUrl:"https://www.bidnetdirect.com/new-jersey", localName:"BidNet Direct — New Jersey", naspo:"https://www.naspo.org/states/new-jersey/" },
-  "NM": { name:"New Mexico", region:"Southwest", stateUrl:"https://www.generalservices.state.nm.us/state-purchasing/online-procurement/", stateName:"NM General Services Dept", localUrl:"https://www.bidnetdirect.com/new-mexico", localName:"BidNet Direct — New Mexico", naspo:"https://www.naspo.org/states/new-mexico/" },
-  "NY": { name:"New York", region:"Mid-Atlantic", stateUrl:"https://www.ogs.ny.gov/procurement", stateName:"NYS OGS Procurement / Contract Reporter", localUrl:"https://www.nyscr.ny.gov", localName:"NYSCR — NY Contract Reporter", naspo:"https://www.naspo.org/states/new-york/" },
-  "NC": { name:"North Carolina", region:"Southeast", stateUrl:"https://evp.nc.gov/", stateName:"eVP NC (eVenture Purchasing)", localUrl:"https://www.ips.state.nc.us", localName:"IPS NC — Interactive Purchasing System", naspo:"https://www.naspo.org/states/north-carolina/" },
-  "ND": { name:"North Dakota", region:"Midwest", stateUrl:"https://www.omb.nd.gov/doing-business-state/bidders", stateName:"ND OMB Procurement", localUrl:"https://www.bidnetdirect.com/north-dakota", localName:"BidNet Direct — North Dakota", naspo:"https://www.naspo.org/states/north-dakota/" },
-  "OH": { name:"Ohio", region:"Midwest", stateUrl:"https://procure.ohio.gov/", stateName:"Ohio Procure (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/ohio", localName:"BidNet Direct — Ohio", naspo:"https://www.naspo.org/states/ohio/" },
-  "OK": { name:"Oklahoma", region:"South Central", stateUrl:"https://www.ok.gov/DCS/Central_Purchasing/", stateName:"OK DCS Central Purchasing", localUrl:"https://www.bidnetdirect.com/oklahoma", localName:"BidNet Direct — Oklahoma", naspo:"https://www.naspo.org/states/oklahoma/" },
-  "OR": { name:"Oregon", region:"Pacific Northwest", stateUrl:"https://oregonbuys.gov/", stateName:"OregonBuys (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/oregon", localName:"BidNet Direct — Oregon", naspo:"https://www.naspo.org/states/oregon/" },
-  "PA": { name:"Pennsylvania", region:"Mid-Atlantic", stateUrl:"https://www.pasupplierportal.state.pa.us/", stateName:"PA Supplier Portal (SAP Ariba)", localUrl:"https://www.bidnetdirect.com/pennsylvania", localName:"BidNet Direct — Pennsylvania", naspo:"https://www.naspo.org/states/pennsylvania/" },
-  "RI": { name:"Rhode Island", region:"New England", stateUrl:"https://www.purchasing.ri.gov/", stateName:"RI Division of Purchases", localUrl:"https://www.bidnetdirect.com/rhode-island", localName:"BidNet Direct — Rhode Island", naspo:"https://www.naspo.org/states/rhode-island/" },
-  "SC": { name:"South Carolina", region:"Southeast", stateUrl:"https://procurement.sc.gov/", stateName:"SC Procurement (Periscope SCBO)", localUrl:"https://www.bidnetdirect.com/south-carolina", localName:"BidNet Direct — South Carolina", naspo:"https://www.naspo.org/states/south-carolina/" },
-  "SD": { name:"South Dakota", region:"Midwest", stateUrl:"https://boa.sd.gov/bfm/purchasing/", stateName:"SD Bureau of Finance & Management", localUrl:"https://www.bidnetdirect.com/south-dakota", localName:"BidNet Direct — South Dakota", naspo:"https://www.naspo.org/states/south-dakota/" },
-  "TN": { name:"Tennessee", region:"Southeast", stateUrl:"https://www.tn.gov/generalservices/topic/vendor-information", stateName:"TN Edison VSS", localUrl:"https://www.bidnetdirect.com/tennessee", localName:"BidNet Direct — Tennessee", naspo:"https://www.naspo.org/states/tennessee/" },
-  "TX": { name:"Texas", region:"South Central", stateUrl:"https://www.txsmartbuy.gov/", stateName:"TxSmartBuy / ESBD", localUrl:"https://esbd.cpa.texas.gov", localName:"ESBD — Electronic State Business Daily", naspo:"https://www.naspo.org/states/texas/" },
-  "UT": { name:"Utah", region:"Mountain West", stateUrl:"https://purchasing.utah.gov/for-vendors/", stateName:"Utah Division of Purchasing", localUrl:"https://www.bidnetdirect.com/utah", localName:"BidNet Direct — Utah", naspo:"https://www.naspo.org/states/utah/" },
-  "VT": { name:"Vermont", region:"New England", stateUrl:"https://bgs.vermont.gov/purchasing", stateName:"VT Dept of Buildings & General Services", localUrl:"https://www.bidnetdirect.com/vermont", localName:"BidNet Direct — Vermont", naspo:"https://www.naspo.org/states/vermont/" },
-  "VA": { name:"Virginia", region:"Mid-Atlantic", stateUrl:"https://www.eva.virginia.gov/", stateName:"eVA — Virginia eProcurement", localUrl:"https://www.eva.virginia.gov", localName:"eVA (State & Local Combined)", naspo:"https://www.naspo.org/states/virginia/" },
-  "WA": { name:"Washington", region:"Pacific Northwest", stateUrl:"https://www.des.wa.gov/sell/how-work-state/register-bid-opportunities", stateName:"WA WEBS (Washington's Electronic Business Solutions)", localUrl:"https://fortress.wa.gov/ga/apps/webs/", localName:"WEBS — WA Local Agencies", naspo:"https://www.naspo.org/states/washington/" },
-  "WV": { name:"West Virginia", region:"Southeast", stateUrl:"https://www.wvoasis.gov/", stateName:"WV OASIS VSS", localUrl:"https://www.bidnetdirect.com/west-virginia", localName:"BidNet Direct — West Virginia", naspo:"https://www.naspo.org/states/west-virginia/" },
-  "WI": { name:"Wisconsin", region:"Midwest", stateUrl:"https://vendornet.wi.gov/", stateName:"VendorNet Wisconsin", localUrl:"https://www.bidnetdirect.com/wisconsin", localName:"BidNet Direct — Wisconsin", naspo:"https://www.naspo.org/states/wisconsin/" },
-  "WY": { name:"Wyoming", region:"Mountain West", stateUrl:"https://www.sao.wyo.gov/budgetdivision/procurement", stateName:"WY Procurement Division", localUrl:"https://www.bidnetdirect.com/wyoming", localName:"BidNet Direct — Wyoming", naspo:"https://www.naspo.org/states/wyoming/" }
+  "AL": { name:"Alabama", region:"Southeast", stateUrl:"https://procurement.staars.alabama.gov/", stateName:"STAARS VSS", localUrl:"https://www.bidnetdirect.com/alabama", localName:"BidNet Direct — Alabama", naspo:"https://www.naspo.org/states/alabama/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "AK": { name:"Alaska", region:"Pacific Northwest", stateUrl:"https://iris-vss.alaska.gov/", stateName:"IRIS VSS", localUrl:"https://www.demandstar.com/app/agencies/alaska", localName:"DemandStar — Alaska", naspo:"https://www.naspo.org/states/alaska/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "AZ": { name:"Arizona", region:"Southwest", stateUrl:"https://procure.az.gov/bso/", stateName:"ProcureAZ (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/arizona", localName:"BidNet Direct — Arizona", naspo:"https://www.naspo.org/states/arizona/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "AR": { name:"Arkansas", region:"South Central", stateUrl:"https://www.ark.org/vendor/index.html", stateName:"Arkansas Vendor Portal", localUrl:"https://www.bidnetdirect.com/arkansas", localName:"BidNet Direct — Arkansas", naspo:"https://www.naspo.org/states/arkansas/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "CA": { name:"California", region:"Pacific", stateUrl:"https://caleprocure.ca.gov/pages/index.aspx", stateName:"Cal eProcure", localUrl:"https://www.planetbids.com", localName:"PlanetBids — California", naspo:"https://www.naspo.org/states/california/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "CO": { name:"Colorado", region:"Mountain West", stateUrl:"https://www.colorado.gov/vss", stateName:"Colorado VSS (Periscope)", localUrl:"https://www.bidnetdirect.com/colorado/rocky-mountain-e-purchasing", localName:"Rocky Mountain E-Purchasing (RMEPS)", naspo:"https://www.naspo.org/states/colorado/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "CT": { name:"Connecticut", region:"New England", stateUrl:"https://das.ct.gov/cr1.aspx?page=161", stateName:"CT DAS Procurement", localUrl:"https://www.bidnetdirect.com/connecticut", localName:"BidNet Direct — Connecticut", naspo:"https://www.naspo.org/states/connecticut/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "DE": { name:"Delaware", region:"Mid-Atlantic", stateUrl:"https://denotificationservices.bbcportal.com/", stateName:"DE Notification Services (Periscope)", localUrl:"https://www.bidnetdirect.com/delaware", localName:"BidNet Direct — Delaware", naspo:"https://www.naspo.org/states/delaware/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "DC": { name:"Washington, DC", region:"Mid-Atlantic", stateUrl:"https://ocp.dc.gov/page/vendor-registration-electronic-solicitations-ocp", stateName:"OCP DC — Office of Contracting & Procurement", localUrl:"https://www.bidnetdirect.com/district-of-columbia", localName:"BidNet Direct — DC", naspo:"https://www.naspo.org/states/district-of-columbia/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "FL": { name:"Florida", region:"Southeast", stateUrl:"https://vendor.myfloridamarketplace.com/", stateName:"MyFloridaMarketPlace (Ariba)", localUrl:"https://network.demandstar.com", localName:"DemandStar — Florida", naspo:"https://www.naspo.org/states/florida/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "GA": { name:"Georgia", region:"Southeast", stateUrl:"https://doas.ga.gov/state-purchasing/getting-started-supplier", stateName:"GA Procurement Registry (TeamWorks)", localUrl:"https://www.bidnetdirect.com/georgia", localName:"BidNet Direct — Georgia", naspo:"https://www.naspo.org/states/georgia/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "HI": { name:"Hawaii", region:"Pacific", stateUrl:"https://spo.hawaii.gov/", stateName:"Hawaii State Procurement Office", localUrl:"https://www.demandstar.com/app/agencies/hawaii", localName:"DemandStar — Hawaii", naspo:"https://www.naspo.org/states/hawaii/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "ID": { name:"Idaho", region:"Mountain West", stateUrl:"https://purchasing.idaho.gov/", stateName:"ID Division of Purchasing", localUrl:"https://www.bidnetdirect.com/idaho", localName:"BidNet Direct — Idaho", naspo:"https://www.naspo.org/states/idaho/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "IL": { name:"Illinois", region:"Midwest", stateUrl:"https://www.bidbuy.illinois.gov/bso/", stateName:"BidBuy Illinois (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/illinois", localName:"BidNet Direct — Illinois", naspo:"https://www.naspo.org/states/illinois/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "IN": { name:"Indiana", region:"Midwest", stateUrl:"https://www.in.gov/idoa/procurement/supplier-resource-center/", stateName:"IN Supplier Portal (PeopleSoft)", localUrl:"https://www.bidnetdirect.com/indiana", localName:"BidNet Direct — Indiana", naspo:"https://www.naspo.org/states/indiana/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "IA": { name:"Iowa", region:"Midwest", stateUrl:"https://vss.iowa.gov/", stateName:"Iowa VSS (Periscope)", localUrl:"https://www.bidnetdirect.com/iowa", localName:"BidNet Direct — Iowa", naspo:"https://www.naspo.org/states/iowa/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "KS": { name:"Kansas", region:"Midwest", stateUrl:"https://admin.ks.gov/offices/procurement-and-contracts", stateName:"KS Procurement & Contracts", localUrl:"https://www.bidnetdirect.com/kansas", localName:"BidNet Direct — Kansas", naspo:"https://www.naspo.org/states/kansas/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "KY": { name:"Kentucky", region:"South Central", stateUrl:"https://vss.ky.gov/vssprod-ext/Advantage4", stateName:"Kentucky VSS (Advantage 4)", localUrl:"https://www.bidnetdirect.com/kentucky", localName:"BidNet Direct — Kentucky", naspo:"https://www.naspo.org/states/kentucky/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "LA": { name:"Louisiana", region:"South Central", stateUrl:"https://www.doa.la.gov/doa/osp/vendor-resources/", stateName:"LA Office of State Purchasing", localUrl:"https://www.bidnetdirect.com/louisiana", localName:"BidNet Direct — Louisiana", naspo:"https://www.naspo.org/states/louisiana/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "ME": { name:"Maine", region:"New England", stateUrl:"https://www.maine.gov/purchases/venbid/newven.shtml", stateName:"ME Bureau of General Services", localUrl:"https://www.bidnetdirect.com/maine", localName:"BidNet Direct — Maine", naspo:"https://www.naspo.org/states/maine/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "MD": { name:"Maryland", region:"Mid-Atlantic", stateUrl:"https://emma.maryland.gov/", stateName:"eMMA — eMaryland Marketplace Advantage", localUrl:"https://emma.maryland.gov", localName:"eMMA (State & Local Combined)", naspo:"https://www.naspo.org/states/maryland/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "MA": { name:"Massachusetts", region:"New England", stateUrl:"https://www.commbuys.com/", stateName:"COMMBUYS", localUrl:"https://www.commbuys.com", localName:"COMMBUYS (incl. cities & schools)", naspo:"https://www.naspo.org/states/massachusetts/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "MI": { name:"Michigan", region:"Midwest", stateUrl:"https://www.michigan.gov/micontractconnect/", stateName:"Michigan Buys (SIGMA VSS)", localUrl:"https://www.bidnetdirect.com/michigan", localName:"BidNet Direct — Michigan", naspo:"https://www.naspo.org/states/michigan/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "MN": { name:"Minnesota", region:"Midwest", stateUrl:"https://supplier.swift.state.mn.us/", stateName:"SWIFT Supplier Portal (PeopleSoft)", localUrl:"https://www.bidnetdirect.com/minnesota", localName:"BidNet Direct — Minnesota", naspo:"https://www.naspo.org/states/minnesota/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "MS": { name:"Mississippi", region:"Southeast", stateUrl:"https://www.dfa.ms.gov/purchasing-travel-and-fleet/purchasing/", stateName:"MS Office of Purchasing & Travel", localUrl:"https://www.bidnetdirect.com/mississippi", localName:"BidNet Direct — Mississippi", naspo:"https://www.naspo.org/states/mississippi/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "MO": { name:"Missouri", region:"Midwest", stateUrl:"https://missouribuys.mo.gov/", stateName:"MissouriBUYS (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/missouri", localName:"BidNet Direct — Missouri", naspo:"https://www.naspo.org/states/missouri/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "MT": { name:"Montana", region:"Mountain West", stateUrl:"https://spb.mt.gov/Vendor-Resources/index", stateName:"MT State Procurement Bureau", localUrl:"https://www.bidnetdirect.com/montana", localName:"BidNet Direct — Montana", naspo:"https://www.naspo.org/states/montana/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "NE": { name:"Nebraska", region:"Midwest", stateUrl:"https://das.nebraska.gov/materiel/purchasing.html", stateName:"NE Materiel Division VSS", localUrl:"https://www.bidnetdirect.com/nebraska", localName:"BidNet Direct — Nebraska", naspo:"https://www.naspo.org/states/nebraska/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "NV": { name:"Nevada", region:"Southwest", stateUrl:"https://purchasing.nv.gov/", stateName:"NV Purchasing Division", localUrl:"https://www.bidnetdirect.com/nevada", localName:"BidNet Direct — Nevada", naspo:"https://www.naspo.org/states/nevada/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "NH": { name:"New Hampshire", region:"New England", stateUrl:"https://das.nh.gov/purchasing/", stateName:"NH Division of Plant & Property", localUrl:"https://www.bidnetdirect.com/new-hampshire", localName:"BidNet Direct — New Hampshire", naspo:"https://www.naspo.org/states/new-hampshire/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "NJ": { name:"New Jersey", region:"Mid-Atlantic", stateUrl:"https://www.state.nj.us/treasury/purchase", stateName:"NJ Treasury Purchase Bureau", localUrl:"https://www.bidnetdirect.com/new-jersey", localName:"BidNet Direct — New Jersey", naspo:"https://www.naspo.org/states/new-jersey/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "NM": { name:"New Mexico", region:"Southwest", stateUrl:"https://www.generalservices.state.nm.us/state-purchasing/online-procurement/", stateName:"NM General Services Dept", localUrl:"https://www.bidnetdirect.com/new-mexico", localName:"BidNet Direct — New Mexico", naspo:"https://www.naspo.org/states/new-mexico/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "NY": { name:"New York", region:"Mid-Atlantic", stateUrl:"https://www.ogs.ny.gov/procurement", stateName:"NYS OGS Procurement / Contract Reporter", localUrl:"https://www.nyscr.ny.gov", localName:"NYSCR — NY Contract Reporter", naspo:"https://www.naspo.org/states/new-york/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "NC": { name:"North Carolina", region:"Southeast", stateUrl:"https://evp.nc.gov/", stateName:"eVP NC (eVenture Purchasing)", localUrl:"https://www.ips.state.nc.us", localName:"IPS NC — Interactive Purchasing System", naspo:"https://www.naspo.org/states/north-carolina/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "ND": { name:"North Dakota", region:"Midwest", stateUrl:"https://www.omb.nd.gov/doing-business-state/bidders", stateName:"ND OMB Procurement", localUrl:"https://www.bidnetdirect.com/north-dakota", localName:"BidNet Direct — North Dakota", naspo:"https://www.naspo.org/states/north-dakota/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "OH": { name:"Ohio", region:"Midwest", stateUrl:"https://procure.ohio.gov/", stateName:"Ohio Procure (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/ohio", localName:"BidNet Direct — Ohio", naspo:"https://www.naspo.org/states/ohio/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "OK": { name:"Oklahoma", region:"South Central", stateUrl:"https://www.ok.gov/DCS/Central_Purchasing/", stateName:"OK DCS Central Purchasing", localUrl:"https://www.bidnetdirect.com/oklahoma", localName:"BidNet Direct — Oklahoma", naspo:"https://www.naspo.org/states/oklahoma/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "OR": { name:"Oregon", region:"Pacific Northwest", stateUrl:"https://oregonbuys.gov/", stateName:"OregonBuys (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/oregon", localName:"BidNet Direct — Oregon", naspo:"https://www.naspo.org/states/oregon/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "PA": { name:"Pennsylvania", region:"Mid-Atlantic", stateUrl:"https://www.pasupplierportal.state.pa.us/", stateName:"PA Supplier Portal (SAP Ariba)", localUrl:"https://www.bidnetdirect.com/pennsylvania", localName:"BidNet Direct — Pennsylvania", naspo:"https://www.naspo.org/states/pennsylvania/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "RI": { name:"Rhode Island", region:"New England", stateUrl:"https://www.purchasing.ri.gov/", stateName:"RI Division of Purchases", localUrl:"https://www.bidnetdirect.com/rhode-island", localName:"BidNet Direct — Rhode Island", naspo:"https://www.naspo.org/states/rhode-island/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "SC": { name:"South Carolina", region:"Southeast", stateUrl:"https://procurement.sc.gov/", stateName:"SC Procurement (Periscope SCBO)", localUrl:"https://www.bidnetdirect.com/south-carolina", localName:"BidNet Direct — South Carolina", naspo:"https://www.naspo.org/states/south-carolina/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "SD": { name:"South Dakota", region:"Midwest", stateUrl:"https://boa.sd.gov/bfm/purchasing/", stateName:"SD Bureau of Finance & Management", localUrl:"https://www.bidnetdirect.com/south-dakota", localName:"BidNet Direct — South Dakota", naspo:"https://www.naspo.org/states/south-dakota/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "TN": { name:"Tennessee", region:"Southeast", stateUrl:"https://www.tn.gov/generalservices/topic/vendor-information", stateName:"TN Edison VSS", localUrl:"https://www.bidnetdirect.com/tennessee", localName:"BidNet Direct — Tennessee", naspo:"https://www.naspo.org/states/tennessee/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "TX": { name:"Texas", region:"South Central", stateUrl:"https://www.txsmartbuy.gov/", stateName:"TxSmartBuy / ESBD", localUrl:"https://esbd.cpa.texas.gov", localName:"ESBD — Electronic State Business Daily", naspo:"https://www.naspo.org/states/texas/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "UT": { name:"Utah", region:"Mountain West", stateUrl:"https://purchasing.utah.gov/for-vendors/", stateName:"Utah Division of Purchasing", localUrl:"https://www.bidnetdirect.com/utah", localName:"BidNet Direct — Utah", naspo:"https://www.naspo.org/states/utah/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "VT": { name:"Vermont", region:"New England", stateUrl:"https://bgs.vermont.gov/purchasing", stateName:"VT Dept of Buildings & General Services", localUrl:"https://www.bidnetdirect.com/vermont", localName:"BidNet Direct — Vermont", naspo:"https://www.naspo.org/states/vermont/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "VA": { name:"Virginia", region:"Mid-Atlantic", stateUrl:"https://www.eva.virginia.gov/", stateName:"eVA — Virginia eProcurement", localUrl:"https://www.eva.virginia.gov", localName:"eVA (State & Local Combined)", naspo:"https://www.naspo.org/states/virginia/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "WA": { name:"Washington", region:"Pacific Northwest", stateUrl:"https://www.des.wa.gov/sell/how-work-state/register-bid-opportunities", stateName:"WA WEBS (Washington's Electronic Business Solutions)", localUrl:"https://fortress.wa.gov/ga/apps/webs/", localName:"WEBS — WA Local Agencies", naspo:"https://www.naspo.org/states/washington/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "WV": { name:"West Virginia", region:"Southeast", stateUrl:"https://www.wvoasis.gov/", stateName:"WV OASIS VSS", localUrl:"https://www.bidnetdirect.com/west-virginia", localName:"BidNet Direct — West Virginia", naspo:"https://www.naspo.org/states/west-virginia/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "WI": { name:"Wisconsin", region:"Midwest", stateUrl:"https://vendornet.wi.gov/", stateName:"VendorNet Wisconsin", localUrl:"https://www.bidnetdirect.com/wisconsin", localName:"BidNet Direct — Wisconsin", naspo:"https://www.naspo.org/states/wisconsin/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
+  "WY": { name:"Wyoming", region:"Mountain West", stateUrl:"https://www.sao.wyo.gov/budgetdivision/procurement", stateName:"WY Procurement Division", localUrl:"https://www.bidnetdirect.com/wyoming", localName:"BidNet Direct — Wyoming", naspo:"https://www.naspo.org/states/wyoming/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" }
 };
 
 const SD_STATE_ORDER = [
@@ -23666,16 +23666,62 @@ function sdEscapeAttr(s){
 }
 
 function sdOpenExternal(url) {
-  // Electron: prefer the existing credential-boundary IPC; fall back to
-  // window.open for renderer-only contexts (web preview / tests).
-  if (window.sd && window.sd.openExternal) {
-    try { window.sd.openExternal(url); return; } catch (e) {}
+  // Validate: only allow http and https URLs
+  let parsed;
+  try {
+    parsed = new URL(url);
+  } catch(e) {
+    console.error('[sdOpenExternal] Invalid URL:', url);
+    if (typeof toast === 'function') toast('Invalid URL — cannot open', 'err');
+    return;
   }
+  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+    console.error('[sdOpenExternal] Blocked non-http URL:', url);
+    if (typeof toast === 'function') toast('Blocked: only http/https links can be opened', 'err');
+    return;
+  }
+
+  // Electron path: window.sd.shell.openExternal (IPC bridge)
   if (window.sd && window.sd.shell && window.sd.shell.openExternal) {
-    try { window.sd.shell.openExternal(url); return; } catch (e) {}
+    Promise.resolve()
+      .then(() => window.sd.shell.openExternal(url))
+      .catch(err => {
+        console.error('[sdOpenExternal] Electron IPC failed, falling back:', err && err.message || err);
+        _sdOpenFallback(url);
+      });
+    return;
   }
-  try { window.open(url, '_blank', 'noopener,noreferrer'); }
-  catch (e) {}
+
+  // Electron path: window.require('electron') direct
+  if (typeof window.require === 'function') {
+    try {
+      const { shell } = window.require('electron');
+      Promise.resolve()
+        .then(() => shell.openExternal(url))
+        .catch(err => {
+          console.error('[sdOpenExternal] electron.shell failed, falling back:', err && err.message || err);
+          _sdOpenFallback(url);
+        });
+      return;
+    } catch(e) {
+      console.error('[sdOpenExternal] window.require(electron) threw, falling back:', e && e.message);
+    }
+  }
+
+  // Browser fallback
+  _sdOpenFallback(url);
+}
+
+function _sdOpenFallback(url) {
+  try {
+    const w = window.open(url, '_blank', 'noopener,noreferrer');
+    if (!w) {
+      if (typeof toast === 'function') toast('Popup blocked — check your browser settings', 'err');
+    }
+  } catch(e) {
+    console.error('[_sdOpenFallback] window.open failed:', e && e.message);
+    if (typeof toast === 'function') toast('Could not open link — copy URL manually', 'err');
+  }
 }
 
 function sdRenderStatePortal(abbr) {
@@ -23759,13 +23805,35 @@ function sdRenderStatePortal(abbr) {
         <div class="sl-upload-title">Downloaded a solicitation file?</div>
         <div class="sl-upload-sub">Upload the PDF, Word doc, or ZIP to SourceDeck to start your compliance matrix, proposal outline, or capture analysis.</div>
       </div>
-      <button class="sl-upload-btn" onclick="document.getElementById('sl-file-input') && document.getElementById('sl-file-input').click()">
-        Upload Solicitation →
+      <button class="sl-upload-btn" onclick="sdOpenSolicitationIntake()">
+        Open Solicitation Intake →
       </button>
     </div>
   `;
   panel.style.display = 'block';
   try { panel.scrollIntoView({behavior:'smooth', block:'nearest'}); } catch (e) {}
+}
+
+// CHANGE 5 — Upload handoff (Option A: real canonical ingestion fn).
+// pwSolOpenFilePicker is the existing native multi-file solicitation
+// picker — verified at sourcedeck.html line 2749 (the existing Upload
+// Solicitation Files button uses the same call). It opens its OWN
+// native picker through the credential boundary, so we cannot pass a
+// pre-selected File object; instead we route the user to the canonical
+// Solicitation Intake surface and trigger the picker there.
+function sdOpenSolicitationIntake() {
+  if (typeof window.openTab === 'function') {
+    try { window.openTab('execution'); } catch (e) {}
+  }
+  setTimeout(function(){
+    if (typeof window.pwSolOpenFilePicker === 'function') {
+      try { window.pwSolOpenFilePicker(); } catch (e) {
+        if (typeof toast === 'function') toast('Could not open Solicitation Intake — please navigate manually', 'err');
+      }
+    } else {
+      if (typeof toast === 'function') toast('Solicitation Intake not available — please reload SourceDeck', 'err');
+    }
+  }, 100);
 }
 
 function sdInitStateLocal() {
@@ -23781,51 +23849,47 @@ function sdInitStateLocal() {
     });
   }
 
-  // File input handler — routes the chosen file into the canonical
-  // multi-file solicitation import path when available, falls back to a
-  // toast for non-Electron contexts.
-  const fi = document.getElementById('sl-file-input');
-  if (fi && !fi.dataset.init) {
-    fi.dataset.init = '1';
-    fi.addEventListener('change', function(e) {
-      const file = e.target.files && e.target.files[0];
-      if (!file) return;
-      try {
-        if (window.toast) window.toast('"' + file.name + '" ready — routing to Proposal Workspace.', 'ok');
-        if (typeof window.ingestSolicitationFile === 'function') {
-          window.ingestSolicitationFile(file);
-        } else if (typeof window.pwSolOpenFilePicker === 'function') {
-          // Canonical SourceDeck path uses the native picker (filtered by
-          // accept= on the hidden input). Trigger it so the user can
-          // re-select the file through the credential-boundary IPC.
-          window.pwSolOpenFilePicker();
-        }
-      } catch (err) {
-        if (window.toast) window.toast('Could not route upload: ' + (err && err.message || 'unknown error'), 'warn');
-      }
-      this.value = '';
-    });
-  }
+  // CHANGE 5 — Hidden file input is kept for legacy DOM compatibility but
+  // no longer carries a change handler. The State & Local upload button
+  // now invokes sdOpenSolicitationIntake() which routes through the
+  // canonical pwSolOpenFilePicker path. No fake ingestion function is
+  // ever referenced.
 }
 
 function sdSwitchOppMode(mode) {
-  const statelocalPanel = document.getElementById('sl-statelocal-panel');
-  const samContent      = document.getElementById('sl-sam-content');
-  const modeBar         = document.getElementById('opp-mode-bar');
-  if (!statelocalPanel || !samContent || !modeBar) return;
+  const samContent    = document.getElementById('sl-sam-content');
+  const slPanel       = document.getElementById('sl-statelocal-panel');
+  const modeBar       = document.getElementById('opp-mode-bar');
+  const btnFederal    = document.getElementById('sl-mode-federal');
+  const btnStateLocal = document.getElementById('sl-mode-statelocal');
 
-  // Repaint mode buttons.
-  modeBar.querySelectorAll('.sl-mode-btn').forEach(b => b.classList.remove('active'));
-  const activeBtn = document.getElementById(mode === 'statelocal' ? 'sl-mode-statelocal' : 'sl-mode-federal');
-  if (activeBtn) activeBtn.classList.add('active');
+  // All four elements must exist — if any are missing, report and bail
+  if (!samContent || !slPanel || !modeBar || !btnFederal || !btnStateLocal) {
+    const missing = [
+      !samContent    && '#sl-sam-content',
+      !slPanel       && '#sl-statelocal-panel',
+      !modeBar       && '#opp-mode-bar',
+      !btnFederal    && '#sl-mode-federal',
+      !btnStateLocal && '#sl-mode-statelocal',
+    ].filter(Boolean);
+    console.error('[sdSwitchOppMode] Missing DOM elements:', missing.join(', '));
+    if (typeof toast === 'function') toast('UI error — please reload SourceDeck', 'err');
+    return;
+  }
+
+  btnFederal.classList.remove('active');
+  btnStateLocal.classList.remove('active');
 
   if (mode === 'statelocal') {
-    statelocalPanel.style.display = 'block';
+    btnStateLocal.classList.add('active');
     samContent.style.display = 'none';
+    slPanel.style.display    = 'block';
     sdInitStateLocal();
   } else {
-    statelocalPanel.style.display = 'none';
+    // Default: federal
+    btnFederal.classList.add('active');
     samContent.style.display = '';
+    slPanel.style.display    = 'none';
   }
 }
 
