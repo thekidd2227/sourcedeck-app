@@ -35,6 +35,7 @@
     "build:mac": "electron-builder --mac",
     "build:win": "electron-builder --win",
     "build:all": "electron-builder --mac --win",
+    "refresh:buyer-trial": "bash scripts/refresh-buyer-trial-package.sh",
     "release": "electron-builder --mac --win --publish always",
     "release:check": "node scripts/release-check.js",
     "distribution:check": "node scripts/distribution-readiness.js",
