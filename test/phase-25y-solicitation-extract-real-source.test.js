@@ -13,14 +13,14 @@ function test(n, fn){ try { fn(); passed++; console.log('  ✅ ' + n); } catch (
 console.log('\n=== Phase 25Y — Extract from real source ===\n');
 
 test('Extract combines pasted text + fetched/imported linked source', () => {
-  const fn = HTML.slice(HTML.indexOf('window.gcSolExtract = async function'), HTML.indexOf('window.gcSolExtract = async function') + 3000);
+  const fn = HTML.slice(HTML.indexOf('window.gcSolExtract = async function'), HTML.indexOf('window.gcSolExtract = async function') + 5000);
   assert.ok(/gcW25CollectSourceText\(\)/.test(fn), 'pulls linked source text');
   assert.ok(/extractFromText\(text\)/.test(fn), 'runs extractor over combined text');
   assert.ok(/before extraction/.test(fn), 'asks for source when none present');
 });
 
 test('extraction tags the active solicitation + marks it real', () => {
-  const fn = HTML.slice(HTML.indexOf('window.gcSolExtract = async function'), HTML.indexOf('window.gcSolExtract = async function') + 3000);
+  const fn = HTML.slice(HTML.indexOf('window.gcSolExtract = async function'), HTML.indexOf('window.gcSolExtract = async function') + 5000);
   assert.ok(/state\.solId =/.test(fn), 'stamps solId');
   assert.ok(/state\.real = true/.test(fn), 'marks extraction as real');
 });

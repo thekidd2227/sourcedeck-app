@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
 <title>SourceDeck</title>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400;1,600&family=Syne:wght@400;600;700;800&family=Instrument+Sans:wght@400;500;600&family=Inter+Tight:wght@650&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -38,6 +38,7 @@
   /* typography */
   --sd-font-display:'Cormorant Garamond',Georgia,serif;
   --sd-font-body:'Instrument Sans',sans-serif;
+  --sd-font-workspace-title:'Inter Tight','Instrument Sans',sans-serif;
   --sd-font-mono:'IBM Plex Mono','Azeret Mono',monospace;
   /* Phase 24D — workspace-title tech voice for operational screens that
      should feel like a GovCon command platform rather than editorial.
@@ -427,63 +428,6 @@ html,body{height:100%;overflow:hidden;font-family:'Instrument Sans',sans-serif;b
 .doc-surface .doc-label{font-family:'IBM Plex Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:0.14em;color:#6B5C3E;margin-bottom:6px}
 .doc-surface .doc-title{font-family:'Cormorant Garamond',serif;font-style:italic;font-size:22px;color:#1A1208;line-height:1.2;margin-bottom:12px}
 .doc-surface .doc-body{font-family:'Instrument Sans',sans-serif;font-size:13px;line-height:1.75;color:#3A2E1C}
-
-/* ── STATE & LOCAL PROCUREMENT PANEL */
-.sl-mode-bar{display:flex;gap:0;border:1px solid var(--border);border-radius:var(--r2);overflow:hidden;width:fit-content;margin-bottom:20px}
-.sl-mode-btn{padding:8px 18px;font-family:'IBM Plex Mono',monospace;font-size:9px;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;background:transparent;border:none;color:var(--muted);transition:all 0.18s ease;position:relative}
-.sl-mode-btn.active{background:var(--panel3);color:var(--gold2)}
-.sl-mode-btn.active::after{content:'';position:absolute;bottom:0;left:10%;right:10%;height:2px;background:var(--gold);border-radius:2px}
-
-.sl-section-hdr{display:flex;align-items:center;gap:10px;margin-bottom:16px}
-.sl-section-label{font-family:'IBM Plex Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:0.14em;color:var(--muted)}
-.sl-section-label::before{content:'';display:inline-block;width:16px;height:1px;background:var(--gold);opacity:0.6;margin-right:8px;vertical-align:middle}
-
-.sl-select-row{display:flex;align-items:center;gap:12px;margin-bottom:20px;flex-wrap:wrap}
-.sl-select-wrap{position:relative;flex:1;max-width:320px}
-.sl-select-wrap::after{content:'';position:absolute;right:12px;top:50%;transform:translateY(-50%);width:0;height:0;border-left:4px solid transparent;border-right:4px solid transparent;border-top:5px solid var(--muted);pointer-events:none}
-#sl-state-select{width:100%;padding:10px 36px 10px 12px;background:var(--panel);border:1px solid var(--border);border-radius:var(--r2);color:var(--text);font-family:'Instrument Sans',sans-serif;font-size:13px;appearance:none;outline:none;cursor:pointer;transition:all 0.18s ease}
-#sl-state-select:focus{border-color:rgba(201,148,26,0.45);background:var(--panel3)}
-#sl-state-select option{background:var(--panel);color:var(--text)}
-.sl-select-hint{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);letter-spacing:0.04em}
-
-#sl-portal-panel{display:none;margin-top:4px}
-
-.sl-state-header{display:flex;align-items:center;gap:14px;margin-bottom:18px;padding-bottom:14px;border-bottom:1px solid var(--border)}
-.sl-state-abbr{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--gold),var(--gold2));color:#000;font-family:'Syne',sans-serif;font-weight:800;font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;box-shadow:0 2px 14px rgba(201,148,26,0.3)}
-.sl-state-name{font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:20px;color:var(--text);line-height:1}
-.sl-state-region{font-family:'IBM Plex Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:0.12em;color:var(--muted);margin-top:4px}
-
-.sl-portal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px}
-@media(max-width:860px){.sl-portal-grid{grid-template-columns:1fr}}
-
-.sl-portal-card{background:var(--panel3);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;display:flex;flex-direction:column;gap:10px;position:relative;transition:all 0.2s ease}
-.sl-portal-card:hover{border-color:rgba(201,148,26,0.25);box-shadow:0 0 20px rgba(201,148,26,0.04) inset}
-.sl-card-state{border-top:3px solid var(--gold)}
-.sl-card-local{border-top:3px solid var(--signal)}
-
-.sl-card-eyebrow{display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:8px;text-transform:uppercase;letter-spacing:0.12em;color:var(--gold)}
-.sl-card-local .sl-card-eyebrow{color:#60A5FA}
-.sl-card-title{font-family:'Syne',sans-serif;font-weight:700;font-size:13px;color:var(--text);line-height:1.3}
-.sl-card-desc{font-size:11px;color:var(--sub);line-height:1.6;flex:1}
-.sl-card-url{font-family:'IBM Plex Mono',monospace;font-size:9px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;background:var(--panel2);padding:5px 8px;border-radius:5px}
-
-.sl-card-actions{display:flex;gap:7px;flex-wrap:wrap}
-.sl-btn-primary{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:var(--r2);background:var(--gold);color:#000;font-family:'Instrument Sans',sans-serif;font-size:11px;font-weight:700;border:none;cursor:pointer;transition:all 0.18s ease;box-shadow:0 1px 10px rgba(201,148,26,0.22)}
-.sl-btn-primary:hover{background:var(--gold2);transform:translateY(-1px);box-shadow:0 2px 16px rgba(201,148,26,0.35)}
-.sl-btn-local{background:var(--signal);color:#fff;box-shadow:0 1px 10px rgba(27,77,110,0.25)}
-.sl-btn-local:hover{background:#2260A0;box-shadow:0 2px 16px rgba(27,77,110,0.4)}
-.sl-btn-secondary{display:inline-flex;align-items:center;padding:8px 12px;border-radius:var(--r2);background:transparent;border:1px solid var(--border);color:var(--muted);font-family:'IBM Plex Mono',monospace;font-size:8px;letter-spacing:0.06em;cursor:pointer;transition:all 0.18s ease;text-transform:uppercase}
-.sl-btn-secondary:hover{border-color:rgba(201,148,26,0.3);color:var(--gold2)}
-
-.sl-workflow-tip{display:flex;align-items:center;gap:5px;font-family:'IBM Plex Mono',monospace;font-size:8px;color:var(--dim);letter-spacing:0.04em;margin-top:2px}
-
-.sl-upload-prompt{display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,rgba(201,148,26,0.07),rgba(27,77,110,0.05));border:1px solid rgba(201,148,26,0.16);border-radius:var(--r);padding:16px 20px;flex-wrap:wrap}
-.sl-upload-icon{width:40px;height:40px;border-radius:10px;background:var(--goldl);border:1px solid rgba(201,148,26,0.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;color:var(--gold)}
-.sl-upload-body{flex:1;min-width:160px}
-.sl-upload-title{font-family:'Syne',sans-serif;font-weight:700;font-size:12px;color:var(--text);margin-bottom:3px}
-.sl-upload-sub{font-size:10px;color:var(--muted);line-height:1.5}
-.sl-upload-btn{padding:9px 16px;border-radius:var(--r2);background:var(--panel3);border:1px solid var(--border);color:var(--gold2);font-family:'IBM Plex Mono',monospace;font-size:9px;letter-spacing:0.06em;cursor:pointer;white-space:nowrap;transition:all 0.18s ease;text-transform:uppercase}
-.sl-upload-btn:hover{background:var(--goldl);border-color:rgba(201,148,26,0.3)}
 
 /* TOAST */
 #tc{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:7px}
@@ -891,7 +835,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
    No existing class is overridden globally. Every Phase 23 guard test
    and every Phase 22B-22F guard test remains green. */
 .workspace-title-tech{
-  font-family:'Instrument Sans',sans-serif;
+  font-family:var(--sd-font-workspace-title);
   font-style:normal;
   font-weight:650;
   font-size:26px;
@@ -905,7 +849,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
    pane reads as tech-forward, not editorial. */
 .brief-head.workspace-title-tech,
 .workspace-title-tech.brief-head{
-  font-family:'Instrument Sans',sans-serif!important;
+  font-family:var(--sd-font-workspace-title)!important;
   font-style:normal!important;
   font-weight:650!important;
   font-size:26px!important;
@@ -928,7 +872,7 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 #tab-pipeline .pane-title .brief-head,
 #tab-delivery .pane-title .brief-head,
 #tab-settings .pane-title .brief-head{
-  font-family:'Instrument Sans',sans-serif;
+  font-family:var(--sd-font-workspace-title);
   font-style:normal;
   font-weight:650;
   font-size:26px;
@@ -2540,109 +2484,17 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
             <span id="gc-tab-sam-key-status" data-gc-sam-key-status="true" style="font:600 10px/1.4 'Azeret Mono',monospace;letter-spacing:0.06em;padding:4px 10px;border-radius:980px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted)">SAM.gov key: checking…</span>
           </div>
 
-          <!-- STATE & LOCAL SOURCE TOGGLE (additive — does not replace SAM.gov search) -->
-          <input type="file" id="sl-file-input" style="display:none" accept=".pdf,.doc,.docx,.zip,.txt,.xlsx">
-
-          <div class="sl-mode-bar" id="opp-mode-bar">
-            <button class="sl-mode-btn active" id="sl-mode-federal" onclick="sdSwitchOppMode('federal')">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-              SAM.gov Federal
-            </button>
-            <button class="sl-mode-btn" id="sl-mode-statelocal" onclick="sdSwitchOppMode('statelocal')">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="display:inline-block;vertical-align:middle;margin-right:4px"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-              State &amp; Local
-            </button>
+          <!-- Phase 25AL — Federal / State & Local procurement source toggle.
+               Federal remains the default and keeps the existing SAM.gov + Web
+               Opportunity Intel surfaces intact. State & Local is a portal
+               directory only; SourceDeck never logs into portals, submits bids,
+               scrapes restricted pages, or bypasses buyer systems. -->
+          <div id="sl-opportunity-source-toggle" data-sl-opportunity-source-toggle="true" role="tablist" aria-label="Opportunity source" style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px">
+            <button type="button" class="sl-opp-mode-btn active" data-sl-opp-mode="federal" aria-selected="true" onclick="sdSwitchOppMode('federal')" style="padding:6px 12px;border-radius:6px;background:rgba(176,138,60,0.14);border:1px solid rgba(176,138,60,0.45);color:var(--text);cursor:pointer;font-size:11.5px">Federal (SAM.gov)</button>
+            <button type="button" class="sl-opp-mode-btn" data-sl-opp-mode="state-local" aria-selected="false" onclick="sdSwitchOppMode('state-local')" style="padding:6px 12px;border-radius:6px;background:rgba(255,255,255,0.03);border:1px solid var(--border);color:var(--sub);cursor:pointer;font-size:11.5px">State &amp; Local</button>
           </div>
 
-          <!-- STATE & LOCAL PANEL -->
-          <div id="sl-statelocal-panel" style="display:none">
-            <div class="sl-section-hdr">
-              <span class="sl-section-label">Select a state to open its official procurement portal</span>
-            </div>
-            <div class="sl-select-row">
-              <div class="sl-select-wrap">
-                <select id="sl-state-select">
-                  <option value="">— Choose a state or territory —</option>
-                  <optgroup label="─── Mid-Atlantic ───">
-                    <option value="DC">Washington, DC</option>
-                    <option value="MD">Maryland</option>
-                    <option value="DE">Delaware</option>
-                    <option value="NJ">New Jersey</option>
-                    <option value="NY">New York</option>
-                    <option value="PA">Pennsylvania</option>
-                    <option value="VA">Virginia</option>
-                  </optgroup>
-                  <optgroup label="─── New England ───">
-                    <option value="CT">Connecticut</option>
-                    <option value="MA">Massachusetts</option>
-                    <option value="ME">Maine</option>
-                    <option value="NH">New Hampshire</option>
-                    <option value="RI">Rhode Island</option>
-                    <option value="VT">Vermont</option>
-                  </optgroup>
-                  <optgroup label="─── Southeast ───">
-                    <option value="AL">Alabama</option>
-                    <option value="FL">Florida</option>
-                    <option value="GA">Georgia</option>
-                    <option value="MS">Mississippi</option>
-                    <option value="NC">North Carolina</option>
-                    <option value="SC">South Carolina</option>
-                    <option value="TN">Tennessee</option>
-                    <option value="WV">West Virginia</option>
-                  </optgroup>
-                  <optgroup label="─── South Central ───">
-                    <option value="AR">Arkansas</option>
-                    <option value="KY">Kentucky</option>
-                    <option value="LA">Louisiana</option>
-                    <option value="OK">Oklahoma</option>
-                    <option value="TX">Texas</option>
-                  </optgroup>
-                  <optgroup label="─── Midwest ───">
-                    <option value="IL">Illinois</option>
-                    <option value="IN">Indiana</option>
-                    <option value="IA">Iowa</option>
-                    <option value="KS">Kansas</option>
-                    <option value="MI">Michigan</option>
-                    <option value="MN">Minnesota</option>
-                    <option value="MO">Missouri</option>
-                    <option value="NE">Nebraska</option>
-                    <option value="ND">North Dakota</option>
-                    <option value="OH">Ohio</option>
-                    <option value="SD">South Dakota</option>
-                    <option value="WI">Wisconsin</option>
-                  </optgroup>
-                  <optgroup label="─── Mountain West ───">
-                    <option value="CO">Colorado</option>
-                    <option value="ID">Idaho</option>
-                    <option value="MT">Montana</option>
-                    <option value="UT">Utah</option>
-                    <option value="WY">Wyoming</option>
-                  </optgroup>
-                  <optgroup label="─── Southwest ───">
-                    <option value="AZ">Arizona</option>
-                    <option value="NM">New Mexico</option>
-                    <option value="NV">Nevada</option>
-                  </optgroup>
-                  <optgroup label="─── Pacific Northwest ───">
-                    <option value="AK">Alaska</option>
-                    <option value="OR">Oregon</option>
-                    <option value="WA">Washington</option>
-                  </optgroup>
-                  <optgroup label="─── Pacific ───">
-                    <option value="CA">California</option>
-                    <option value="HI">Hawaii</option>
-                  </optgroup>
-                </select>
-              </div>
-              <span class="sl-select-hint">Opens the official state procurement portal in your browser</span>
-            </div>
-            <!-- Portal cards render here -->
-            <div id="sl-portal-panel"></div>
-          </div>
-          <!-- END STATE & LOCAL PANEL -->
-
-          <!-- SAM.gov content wrapper — toggled by sdSwitchOppMode() -->
-          <div id="sl-sam-content">
+          <div id="sl-sam-content" data-sl-sam-content="true">
           <div id="gc-tab-sam-key-missing" data-gc-sam-key-missing="true" style="display:none;font-size:11px;color:var(--text);line-height:1.55;background:rgba(255,176,32,0.06);border:1px solid rgba(255,176,32,0.30);border-radius:6px;padding:9px 12px;margin-bottom:12px">
             <strong style="color:#ffb020">SAM.gov key missing.</strong> Add it in Setup or Settings → API Keys to enable in-app search. SourceDeck never displays the raw key.
           </div>
@@ -2839,7 +2691,76 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
 
             <div style="margin-top:12px;font-size:10px;color:var(--muted);line-height:1.55">Supplemental intel only · model-suggested results are unverified until matched in SAM.gov · no auto-run · no portal scraping · no login bypass · no send/submit/upload.</div>
           </div><!-- /gc-find-mode-web -->
-          </div><!-- /sl-sam-content (State & Local toggle wrapper) -->
+          </div><!-- /sl-sam-content -->
+
+          <div id="sl-statelocal-panel" data-sl-statelocal-panel="true" style="display:none">
+            <div style="display:grid;grid-template-columns:minmax(230px,320px) 1fr;gap:14px;align-items:start;margin-bottom:12px">
+              <div class="form-group" style="margin:0">
+                <label class="label" for="sl-state-select">State / District</label>
+                <select class="select" id="sl-state-select" data-sl-state-select="true" onchange="sdRenderStatePortal(this.value)" style="width:100%">
+                  <option value="AL">Alabama</option>
+                  <option value="AK">Alaska</option>
+                  <option value="AZ">Arizona</option>
+                  <option value="AR">Arkansas</option>
+                  <option value="CA">California</option>
+                  <option value="CO">Colorado</option>
+                  <option value="CT">Connecticut</option>
+                  <option value="DE">Delaware</option>
+                  <option value="DC">District of Columbia</option>
+                  <option value="FL">Florida</option>
+                  <option value="GA">Georgia</option>
+                  <option value="HI">Hawaii</option>
+                  <option value="ID">Idaho</option>
+                  <option value="IL">Illinois</option>
+                  <option value="IN">Indiana</option>
+                  <option value="IA">Iowa</option>
+                  <option value="KS">Kansas</option>
+                  <option value="KY">Kentucky</option>
+                  <option value="LA">Louisiana</option>
+                  <option value="ME">Maine</option>
+                  <option value="MD">Maryland</option>
+                  <option value="MA">Massachusetts</option>
+                  <option value="MI">Michigan</option>
+                  <option value="MN">Minnesota</option>
+                  <option value="MS">Mississippi</option>
+                  <option value="MO">Missouri</option>
+                  <option value="MT">Montana</option>
+                  <option value="NE">Nebraska</option>
+                  <option value="NV">Nevada</option>
+                  <option value="NH">New Hampshire</option>
+                  <option value="NJ">New Jersey</option>
+                  <option value="NM">New Mexico</option>
+                  <option value="NY">New York</option>
+                  <option value="NC">North Carolina</option>
+                  <option value="ND">North Dakota</option>
+                  <option value="OH">Ohio</option>
+                  <option value="OK">Oklahoma</option>
+                  <option value="OR">Oregon</option>
+                  <option value="PA">Pennsylvania</option>
+                  <option value="RI">Rhode Island</option>
+                  <option value="SC">South Carolina</option>
+                  <option value="SD">South Dakota</option>
+                  <option value="TN">Tennessee</option>
+                  <option value="TX">Texas</option>
+                  <option value="UT">Utah</option>
+                  <option value="VT">Vermont</option>
+                  <option value="VA" selected>Virginia</option>
+                  <option value="WA">Washington</option>
+                  <option value="WV">West Virginia</option>
+                  <option value="WI">Wisconsin</option>
+                  <option value="WY">Wyoming</option>
+                </select>
+                <div style="font-size:10.5px;color:var(--muted);line-height:1.55;margin-top:7px">Portal links are seeded starting points. Verify each opportunity on the buyer's official site before capture, pricing, or submission.</div>
+              </div>
+              <div id="sl-portal-render" data-sl-portal-render="true" style="background:var(--panel2,#0f1e32);border:1px solid var(--border);border-radius:8px;padding:12px 14px;min-height:130px"></div>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
+              <button type="button" class="btn btn-gold" id="sl-upload-solicitation-btn" data-sl-action="upload-solicitation" onclick="if (typeof window.gcSolUploadActive === 'function') window.gcSolUploadActive(); else if (window.toast) window.toast('Solicitation upload is not available yet.', 'warn');" title="Upload local state or local solicitation files through the SourceDeck extraction pipeline">📎 Upload Solicitation Files</button>
+              <button type="button" class="btn btn-ghost" id="sl-open-state-portal-btn" data-sl-action="open-state-portal" onclick="sdOpenSelectedStatePortal('state')">↗ Open State Portal</button>
+              <button type="button" class="btn btn-ghost" id="sl-open-local-portal-btn" data-sl-action="open-local-portal" onclick="sdOpenSelectedStatePortal('local')">↗ Open Local Directory</button>
+            </div>
+            <div style="font-size:10px;color:var(--muted);line-height:1.55">State &amp; Local directory only · no credentialed scraping · no portal upload · no bid submission · local files enter through SourceDeck's existing solicitation extraction workflow.</div>
+          </div><!-- /sl-statelocal-panel -->
         </section>
 
         <!-- Phase 25R — NAICS Finder modal. Opens from the Find
@@ -18645,6 +18566,199 @@ document.addEventListener('DOMContentLoaded',()=>{
 </script>
 
 <script>
+/* Phase 25AL — State & Local procurement portal directory hardening.
+   This module is intentionally renderer-only and scoped to the Find
+   Opportunities tab. It wraps the existing Federal/SAM.gov content in the
+   explicit #sl-sam-content container, renders official portal starting
+   points, and hands all local solicitation files to the existing SourceDeck
+   upload/import pipeline via gcSolUploadActive(). */
+(function(){
+  'use strict';
+
+  var DEFAULT_OPP_MODE = 'federal';
+  var LAST_OPP_MODE_KEY = 'sd.govcon.findOppMode';
+  var VERIFY_DATE = '2026-06-23';
+
+  function $(id){ return document.getElementById(id); }
+  function esc(s){ return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+  function safeUrl(u){
+    var s = String(u == null ? '' : u).trim();
+    if (!s || /^javascript\s*:/i.test(s)) return '';
+    if (!/^https?:\/\//i.test(s)) return '';
+    return s;
+  }
+
+  window.SD_STATE_PORTALS = [
+    { code: 'AL', name: 'Alabama', stateUrl: 'https://www.alabamainteractive.org/stateprocurement/', localUrl: 'https://www.alabamaleague.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'AK', name: 'Alaska', stateUrl: 'https://aws.state.ak.us/OnlinePublicNotices/', localUrl: 'https://www.akml.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'AZ', name: 'Arizona', stateUrl: 'https://app.az.gov/', localUrl: 'https://www.azleague.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'AR', name: 'Arkansas', stateUrl: 'https://www.arkansas.gov/dfa/procurement/', localUrl: 'https://www.arml.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'CA', name: 'California', stateUrl: 'https://caleprocure.ca.gov/', localUrl: 'https://www.cacities.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'CO', name: 'Colorado', stateUrl: 'https://www.colorado.gov/vss', localUrl: 'https://www.cml.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'CT', name: 'Connecticut', stateUrl: 'https://portal.ct.gov/das/ctsource', localUrl: 'https://www.ccm-ct.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'DE', name: 'Delaware', stateUrl: 'https://mmp.delaware.gov/', localUrl: 'https://www.delawareleagueoflocalgovernments.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'DC', name: 'District of Columbia', stateUrl: 'https://ocp.dc.gov/', localUrl: 'https://dccouncil.gov/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'FL', name: 'Florida', stateUrl: 'https://vendor.myfloridamarketplace.com/', localUrl: 'https://www.floridaleagueofcities.com/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'GA', name: 'Georgia', stateUrl: 'https://ssl.doas.state.ga.us/gpr/', localUrl: 'https://www.gacities.com/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'HI', name: 'Hawaii', stateUrl: 'https://hands.ehawaii.gov/hands/', localUrl: 'https://www.hicounties.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'ID', name: 'Idaho', stateUrl: 'https://purchasing.idaho.gov/', localUrl: 'https://www.idahocities.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'IL', name: 'Illinois', stateUrl: 'https://www.bidbuy.illinois.gov/', localUrl: 'https://www.iml.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'IN', name: 'Indiana', stateUrl: 'https://www.in.gov/idoa/procurement/', localUrl: 'https://www.citiesandtowns.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'IA', name: 'Iowa', stateUrl: 'https://bidopportunities.iowa.gov/', localUrl: 'https://iowaleague.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'KS', name: 'Kansas', stateUrl: 'https://admin.ks.gov/offices/procurement-contracts', localUrl: 'https://www.lkm.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'KY', name: 'Kentucky', stateUrl: 'https://vss.ky.gov/', localUrl: 'https://www.klc.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'LA', name: 'Louisiana', stateUrl: 'https://wwwcfprd.doa.louisiana.gov/osp/lapac/pubMain.cfm', localUrl: 'https://lma.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'ME', name: 'Maine', stateUrl: 'https://www.maine.gov/dafs/bbm/procurementservices', localUrl: 'https://www.memun.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'MD', name: 'Maryland', stateUrl: 'https://emma.maryland.gov/', localUrl: 'https://www.mdmunicipal.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'MA', name: 'Massachusetts', stateUrl: 'https://www.commbuys.com/', localUrl: 'https://www.mma.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'MI', name: 'Michigan', stateUrl: 'https://www.michigan.gov/dtmb/procurement', localUrl: 'https://mml.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'MN', name: 'Minnesota', stateUrl: 'https://mn.gov/admin/osp/', localUrl: 'https://www.lmc.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'MS', name: 'Mississippi', stateUrl: 'https://www.ms.gov/dfa/purchasing/', localUrl: 'https://www.mmlonline.com/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'MO', name: 'Missouri', stateUrl: 'https://oa.mo.gov/purchasing', localUrl: 'https://www.mocities.com/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'MT', name: 'Montana', stateUrl: 'https://spb.mt.gov/', localUrl: 'https://mtleague.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'NE', name: 'Nebraska', stateUrl: 'https://das.nebraska.gov/materiel/purchasing.html', localUrl: 'https://www.lonm.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'NV', name: 'Nevada', stateUrl: 'https://purchasing.nv.gov/', localUrl: 'https://www.nvleague.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'NH', name: 'New Hampshire', stateUrl: 'https://das.nh.gov/purchasing/', localUrl: 'https://www.nhmunicipal.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'NJ', name: 'New Jersey', stateUrl: 'https://www.njstart.gov/', localUrl: 'https://www.njlm.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'NM', name: 'New Mexico', stateUrl: 'https://www.generalservices.state.nm.us/state-purchasing/', localUrl: 'https://www.nmml.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'NY', name: 'New York', stateUrl: 'https://www.ogs.ny.gov/procurement/', localUrl: 'https://www.nycom.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'NC', name: 'North Carolina', stateUrl: 'https://www.ips.state.nc.us/', localUrl: 'https://www.nclm.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'ND', name: 'North Dakota', stateUrl: 'https://www.omb.nd.gov/doing-business-state/procurement', localUrl: 'https://www.ndlc.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'OH', name: 'Ohio', stateUrl: 'https://procure.ohio.gov/', localUrl: 'https://www.omlohio.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'OK', name: 'Oklahoma', stateUrl: 'https://oklahoma.gov/omes/services/purchasing.html', localUrl: 'https://www.oml.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'OR', name: 'Oregon', stateUrl: 'https://oregonbuys.gov/', localUrl: 'https://www.orcities.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'PA', name: 'Pennsylvania', stateUrl: 'https://www.emarketplace.state.pa.us/', localUrl: 'https://www.pml.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'RI', name: 'Rhode Island', stateUrl: 'https://ridop.ri.gov/', localUrl: 'https://www.rileague.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'SC', name: 'South Carolina', stateUrl: 'https://procurement.sc.gov/', localUrl: 'https://www.masc.sc/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'SD', name: 'South Dakota', stateUrl: 'https://boa.sd.gov/central-services/procurement-management/', localUrl: 'https://sdmunicipalleague.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'TN', name: 'Tennessee', stateUrl: 'https://www.tn.gov/generalservices/procurement.html', localUrl: 'https://www.tml1.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'TX', name: 'Texas', stateUrl: 'https://www.txsmartbuy.com/', localUrl: 'https://www.tml.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'UT', name: 'Utah', stateUrl: 'https://purchasing.utah.gov/', localUrl: 'https://www.ulct.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'VT', name: 'Vermont', stateUrl: 'https://bgs.vermont.gov/purchasing-contracting', localUrl: 'https://www.vlct.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'VA', name: 'Virginia', stateUrl: 'https://eva.virginia.gov/', localUrl: 'https://www.vml.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'WA', name: 'Washington', stateUrl: 'https://pr-webs-vendor.des.wa.gov/', localUrl: 'https://wacities.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'WV', name: 'West Virginia', stateUrl: 'https://www.state.wv.us/admin/purchase/', localUrl: 'https://www.wvml.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'WI', name: 'Wisconsin', stateUrl: 'https://vendornet.wi.gov/', localUrl: 'https://www.lwm-info.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' },
+    { code: 'WY', name: 'Wyoming', stateUrl: 'https://ai.wyo.gov/divisions/general-services/procurement', localUrl: 'https://www.wyomuni.org/', lastVerified: '2026-06-23', verificationStatus: 'unverified-seed' }
+  ];
+
+  function portalByCode(code){
+    var want = String(code || '').toUpperCase();
+    var list = window.SD_STATE_PORTALS || [];
+    for (var i = 0; i < list.length; i++){
+      if (String(list[i].code || '').toUpperCase() === want) return list[i];
+    }
+    return list[0] || null;
+  }
+
+  function setOppModeButtonState(mode){
+    var buttons = Array.prototype.slice.call(document.querySelectorAll('[data-sl-opp-mode]'));
+    for (var i = 0; i < buttons.length; i++){
+      var match = buttons[i].getAttribute('data-sl-opp-mode') === mode;
+      buttons[i].setAttribute('aria-selected', match ? 'true' : 'false');
+      if (match){
+        buttons[i].classList.add('active');
+        buttons[i].style.background = 'rgba(176,138,60,0.14)';
+        buttons[i].style.borderColor = 'rgba(176,138,60,0.45)';
+        buttons[i].style.color = 'var(--text)';
+      } else {
+        buttons[i].classList.remove('active');
+        buttons[i].style.background = 'rgba(255,255,255,0.03)';
+        buttons[i].style.borderColor = 'var(--border)';
+        buttons[i].style.color = 'var(--sub)';
+      }
+    }
+  }
+
+  window.sdSwitchOppMode = function(mode){
+    var next = (mode === 'state-local') ? 'state-local' : DEFAULT_OPP_MODE;
+    var sam = document.getElementById('sl-sam-content');
+    var panel = document.getElementById('sl-statelocal-panel');
+    if (!sam || !panel){
+      if (window.toast){ try { window.toast('Opportunity source panel is unavailable.', 'warn'); } catch (e) {} }
+      return false;
+    }
+    sam.style.display = (next === 'state-local') ? 'none' : '';
+    panel.style.display = (next === 'state-local') ? '' : 'none';
+    setOppModeButtonState(next);
+    try { localStorage.setItem(LAST_OPP_MODE_KEY, next); } catch (e) {}
+    if (next === 'state-local'){
+      var sel = document.getElementById('sl-state-select');
+      window.sdRenderStatePortal(sel && sel.value ? sel.value : 'VA');
+    }
+    return true;
+  };
+
+  window.sdRenderStatePortal = function(code){
+    var host = document.getElementById('sl-portal-render');
+    if (!host) return false;
+    var p = portalByCode(code);
+    if (!p){
+      host.innerHTML = '<div style="font-size:11px;color:var(--muted)">No portal entry is available for this selection.</div>';
+      return false;
+    }
+    var stateUrl = safeUrl(p.stateUrl);
+    var localUrl = safeUrl(p.localUrl);
+    host.innerHTML = '' +
+      '<div style="display:flex;justify-content:space-between;gap:8px;align-items:flex-start;flex-wrap:wrap;margin-bottom:8px">' +
+        '<div><div style="font:700 10px/1 &quot;Azeret Mono&quot;,monospace;letter-spacing:0.12em;text-transform:uppercase;color:var(--gold2);margin-bottom:4px">State &amp; Local Portal</div>' +
+        '<div data-sl-portal-name="true" style="font-family:&quot;Syne&quot;,sans-serif;font-weight:700;font-size:14px;color:var(--text)">' + esc(p.name) + '</div></div>' +
+        '<span style="font-size:9px;padding:3px 7px;border-radius:980px;background:rgba(255,255,255,0.04);border:1px solid var(--border);color:var(--muted);font-family:&quot;IBM Plex Mono&quot;,monospace">' + esc(p.verificationStatus || 'unverified') + ' · ' + esc(p.lastVerified || VERIFY_DATE) + '</span>' +
+      '</div>' +
+      '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px">' +
+        '<div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px">State procurement</div><button type="button" class="btn btn-ghost" data-sl-state-url="' + esc(stateUrl) + '" onclick="sdOpenExternal(this.getAttribute(\'data-sl-state-url\'))" style="padding:5px 9px;font-size:10.5px;max-width:100%;overflow-wrap:anywhere">' + esc(stateUrl || 'Unavailable') + '</button></div>' +
+        '<div><div style="font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:0.08em;margin-bottom:3px">Local / municipal directory</div><button type="button" class="btn btn-ghost" data-sl-local-url="' + esc(localUrl) + '" onclick="sdOpenExternal(this.getAttribute(\'data-sl-local-url\'))" style="padding:5px 9px;font-size:10.5px;max-width:100%;overflow-wrap:anywhere">' + esc(localUrl || 'Unavailable') + '</button></div>' +
+      '</div>';
+    return true;
+  };
+
+  window.sdOpenSelectedStatePortal = function(kind){
+    var sel = document.getElementById('sl-state-select');
+    var p = portalByCode(sel && sel.value ? sel.value : 'VA');
+    if (!p) return false;
+    return window.sdOpenExternal(kind === 'local' ? p.localUrl : p.stateUrl);
+  };
+
+  window.sdOpenExternal = function(url){
+    var safe = safeUrl(url);
+    if (!safe){
+      if (window.toast){ try { window.toast('Blocked unsafe external URL.', 'warn'); } catch (e) {} }
+      return Promise.resolve(false);
+    }
+    function browserFallback(){
+      try {
+        if (typeof window.open === 'function'){
+          window.open(safe, '_blank', 'noopener,noreferrer');
+          return true;
+        }
+      } catch (e) {}
+      return false;
+    }
+    try {
+      if (window.sd && window.sd.shell && typeof window.sd.shell.openExternal === 'function'){
+        return Promise.resolve(window.sd.shell.openExternal(safe)).then(function(){ return true; }, function(){ return browserFallback(); });
+      }
+    } catch (e) {
+      return Promise.resolve(browserFallback());
+    }
+    return Promise.resolve(browserFallback());
+  };
+
+  function boot(){
+    var mode = DEFAULT_OPP_MODE;
+    try { mode = localStorage.getItem(LAST_OPP_MODE_KEY) || DEFAULT_OPP_MODE; } catch (e) {}
+    window.sdRenderStatePortal('VA');
+    window.sdSwitchOppMode(mode);
+  }
+  if (document.readyState === 'loading'){
+    document.addEventListener('DOMContentLoaded', boot);
+  } else {
+    setTimeout(boot, 0);
+  }
+})();
+</script>
+
+<script>
 /* Phase 25N — GovCon tab-page switcher + Find Opportunities helpers.
 
    Replaces the Phase 25F "Jump to" scroll-pill navigation with real
@@ -18704,10 +18818,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     }
     // Per-tab refresh hooks.
     if (id === 'find-opportunities'){
+      if (typeof window.sdSwitchOppMode === 'function'){
+        try { window.sdSwitchOppMode((localStorage && localStorage.getItem('sd.govcon.findOppMode')) || 'federal'); } catch (e) { window.sdSwitchOppMode('federal'); }
+      }
       refreshSamKeyStatus();
       refreshSavedPursuitsPreview();
-      // State & Local procurement selector — idempotent, safe if missing.
-      try { if (typeof window.sdInitStateLocal === 'function') window.sdInitStateLocal(); } catch (e) {}
     } else if (id === 'saved-pursuits'){
       renderSavedPursuits();
     }
@@ -23586,321 +23701,6 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Removal phase — the local downloaded-package folder opener is gone; this
   // control no longer has a retrieval action to perform.
 })();
-</script>
-
-<script>
-// ── STATE & LOCAL PROCUREMENT DIRECTORY
-// Additive, fully client-side: no API key, no credential boundary.
-// Each entry exposes the official state procurement portal + the
-// canonical local-government aggregator + an optional NASPO profile.
-const SD_STATE_PORTALS = {
-  "AL": { name:"Alabama", region:"Southeast", stateUrl:"https://procurement.staars.alabama.gov/", stateName:"STAARS VSS", localUrl:"https://www.bidnetdirect.com/alabama", localName:"BidNet Direct — Alabama", naspo:"https://www.naspo.org/states/alabama/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "AK": { name:"Alaska", region:"Pacific Northwest", stateUrl:"https://iris-vss.alaska.gov/", stateName:"IRIS VSS", localUrl:"https://www.demandstar.com/app/agencies/alaska", localName:"DemandStar — Alaska", naspo:"https://www.naspo.org/states/alaska/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "AZ": { name:"Arizona", region:"Southwest", stateUrl:"https://procure.az.gov/bso/", stateName:"ProcureAZ (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/arizona", localName:"BidNet Direct — Arizona", naspo:"https://www.naspo.org/states/arizona/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "AR": { name:"Arkansas", region:"South Central", stateUrl:"https://www.ark.org/vendor/index.html", stateName:"Arkansas Vendor Portal", localUrl:"https://www.bidnetdirect.com/arkansas", localName:"BidNet Direct — Arkansas", naspo:"https://www.naspo.org/states/arkansas/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "CA": { name:"California", region:"Pacific", stateUrl:"https://caleprocure.ca.gov/pages/index.aspx", stateName:"Cal eProcure", localUrl:"https://www.planetbids.com", localName:"PlanetBids — California", naspo:"https://www.naspo.org/states/california/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "CO": { name:"Colorado", region:"Mountain West", stateUrl:"https://www.colorado.gov/vss", stateName:"Colorado VSS (Periscope)", localUrl:"https://www.bidnetdirect.com/colorado/rocky-mountain-e-purchasing", localName:"Rocky Mountain E-Purchasing (RMEPS)", naspo:"https://www.naspo.org/states/colorado/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "CT": { name:"Connecticut", region:"New England", stateUrl:"https://das.ct.gov/cr1.aspx?page=161", stateName:"CT DAS Procurement", localUrl:"https://www.bidnetdirect.com/connecticut", localName:"BidNet Direct — Connecticut", naspo:"https://www.naspo.org/states/connecticut/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "DE": { name:"Delaware", region:"Mid-Atlantic", stateUrl:"https://denotificationservices.bbcportal.com/", stateName:"DE Notification Services (Periscope)", localUrl:"https://www.bidnetdirect.com/delaware", localName:"BidNet Direct — Delaware", naspo:"https://www.naspo.org/states/delaware/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "DC": { name:"Washington, DC", region:"Mid-Atlantic", stateUrl:"https://ocp.dc.gov/page/vendor-registration-electronic-solicitations-ocp", stateName:"OCP DC — Office of Contracting & Procurement", localUrl:"https://www.bidnetdirect.com/district-of-columbia", localName:"BidNet Direct — DC", naspo:"https://www.naspo.org/states/district-of-columbia/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "FL": { name:"Florida", region:"Southeast", stateUrl:"https://vendor.myfloridamarketplace.com/", stateName:"MyFloridaMarketPlace (Ariba)", localUrl:"https://network.demandstar.com", localName:"DemandStar — Florida", naspo:"https://www.naspo.org/states/florida/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "GA": { name:"Georgia", region:"Southeast", stateUrl:"https://doas.ga.gov/state-purchasing/getting-started-supplier", stateName:"GA Procurement Registry (TeamWorks)", localUrl:"https://www.bidnetdirect.com/georgia", localName:"BidNet Direct — Georgia", naspo:"https://www.naspo.org/states/georgia/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "HI": { name:"Hawaii", region:"Pacific", stateUrl:"https://spo.hawaii.gov/", stateName:"Hawaii State Procurement Office", localUrl:"https://www.demandstar.com/app/agencies/hawaii", localName:"DemandStar — Hawaii", naspo:"https://www.naspo.org/states/hawaii/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "ID": { name:"Idaho", region:"Mountain West", stateUrl:"https://purchasing.idaho.gov/", stateName:"ID Division of Purchasing", localUrl:"https://www.bidnetdirect.com/idaho", localName:"BidNet Direct — Idaho", naspo:"https://www.naspo.org/states/idaho/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "IL": { name:"Illinois", region:"Midwest", stateUrl:"https://www.bidbuy.illinois.gov/bso/", stateName:"BidBuy Illinois (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/illinois", localName:"BidNet Direct — Illinois", naspo:"https://www.naspo.org/states/illinois/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "IN": { name:"Indiana", region:"Midwest", stateUrl:"https://www.in.gov/idoa/procurement/supplier-resource-center/", stateName:"IN Supplier Portal (PeopleSoft)", localUrl:"https://www.bidnetdirect.com/indiana", localName:"BidNet Direct — Indiana", naspo:"https://www.naspo.org/states/indiana/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "IA": { name:"Iowa", region:"Midwest", stateUrl:"https://vss.iowa.gov/", stateName:"Iowa VSS (Periscope)", localUrl:"https://www.bidnetdirect.com/iowa", localName:"BidNet Direct — Iowa", naspo:"https://www.naspo.org/states/iowa/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "KS": { name:"Kansas", region:"Midwest", stateUrl:"https://admin.ks.gov/offices/procurement-and-contracts", stateName:"KS Procurement & Contracts", localUrl:"https://www.bidnetdirect.com/kansas", localName:"BidNet Direct — Kansas", naspo:"https://www.naspo.org/states/kansas/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "KY": { name:"Kentucky", region:"South Central", stateUrl:"https://vss.ky.gov/vssprod-ext/Advantage4", stateName:"Kentucky VSS (Advantage 4)", localUrl:"https://www.bidnetdirect.com/kentucky", localName:"BidNet Direct — Kentucky", naspo:"https://www.naspo.org/states/kentucky/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "LA": { name:"Louisiana", region:"South Central", stateUrl:"https://www.doa.la.gov/doa/osp/vendor-resources/", stateName:"LA Office of State Purchasing", localUrl:"https://www.bidnetdirect.com/louisiana", localName:"BidNet Direct — Louisiana", naspo:"https://www.naspo.org/states/louisiana/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "ME": { name:"Maine", region:"New England", stateUrl:"https://www.maine.gov/purchases/venbid/newven.shtml", stateName:"ME Bureau of General Services", localUrl:"https://www.bidnetdirect.com/maine", localName:"BidNet Direct — Maine", naspo:"https://www.naspo.org/states/maine/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "MD": { name:"Maryland", region:"Mid-Atlantic", stateUrl:"https://emma.maryland.gov/", stateName:"eMMA — eMaryland Marketplace Advantage", localUrl:"https://emma.maryland.gov", localName:"eMMA (State & Local Combined)", naspo:"https://www.naspo.org/states/maryland/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "MA": { name:"Massachusetts", region:"New England", stateUrl:"https://www.commbuys.com/", stateName:"COMMBUYS", localUrl:"https://www.commbuys.com", localName:"COMMBUYS (incl. cities & schools)", naspo:"https://www.naspo.org/states/massachusetts/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "MI": { name:"Michigan", region:"Midwest", stateUrl:"https://www.michigan.gov/micontractconnect/", stateName:"Michigan Buys (SIGMA VSS)", localUrl:"https://www.bidnetdirect.com/michigan", localName:"BidNet Direct — Michigan", naspo:"https://www.naspo.org/states/michigan/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "MN": { name:"Minnesota", region:"Midwest", stateUrl:"https://supplier.swift.state.mn.us/", stateName:"SWIFT Supplier Portal (PeopleSoft)", localUrl:"https://www.bidnetdirect.com/minnesota", localName:"BidNet Direct — Minnesota", naspo:"https://www.naspo.org/states/minnesota/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "MS": { name:"Mississippi", region:"Southeast", stateUrl:"https://www.dfa.ms.gov/purchasing-travel-and-fleet/purchasing/", stateName:"MS Office of Purchasing & Travel", localUrl:"https://www.bidnetdirect.com/mississippi", localName:"BidNet Direct — Mississippi", naspo:"https://www.naspo.org/states/mississippi/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "MO": { name:"Missouri", region:"Midwest", stateUrl:"https://missouribuys.mo.gov/", stateName:"MissouriBUYS (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/missouri", localName:"BidNet Direct — Missouri", naspo:"https://www.naspo.org/states/missouri/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "MT": { name:"Montana", region:"Mountain West", stateUrl:"https://spb.mt.gov/Vendor-Resources/index", stateName:"MT State Procurement Bureau", localUrl:"https://www.bidnetdirect.com/montana", localName:"BidNet Direct — Montana", naspo:"https://www.naspo.org/states/montana/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "NE": { name:"Nebraska", region:"Midwest", stateUrl:"https://das.nebraska.gov/materiel/purchasing.html", stateName:"NE Materiel Division VSS", localUrl:"https://www.bidnetdirect.com/nebraska", localName:"BidNet Direct — Nebraska", naspo:"https://www.naspo.org/states/nebraska/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "NV": { name:"Nevada", region:"Southwest", stateUrl:"https://purchasing.nv.gov/", stateName:"NV Purchasing Division", localUrl:"https://www.bidnetdirect.com/nevada", localName:"BidNet Direct — Nevada", naspo:"https://www.naspo.org/states/nevada/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "NH": { name:"New Hampshire", region:"New England", stateUrl:"https://das.nh.gov/purchasing/", stateName:"NH Division of Plant & Property", localUrl:"https://www.bidnetdirect.com/new-hampshire", localName:"BidNet Direct — New Hampshire", naspo:"https://www.naspo.org/states/new-hampshire/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "NJ": { name:"New Jersey", region:"Mid-Atlantic", stateUrl:"https://www.state.nj.us/treasury/purchase", stateName:"NJ Treasury Purchase Bureau", localUrl:"https://www.bidnetdirect.com/new-jersey", localName:"BidNet Direct — New Jersey", naspo:"https://www.naspo.org/states/new-jersey/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "NM": { name:"New Mexico", region:"Southwest", stateUrl:"https://www.generalservices.state.nm.us/state-purchasing/online-procurement/", stateName:"NM General Services Dept", localUrl:"https://www.bidnetdirect.com/new-mexico", localName:"BidNet Direct — New Mexico", naspo:"https://www.naspo.org/states/new-mexico/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "NY": { name:"New York", region:"Mid-Atlantic", stateUrl:"https://www.ogs.ny.gov/procurement", stateName:"NYS OGS Procurement / Contract Reporter", localUrl:"https://www.nyscr.ny.gov", localName:"NYSCR — NY Contract Reporter", naspo:"https://www.naspo.org/states/new-york/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "NC": { name:"North Carolina", region:"Southeast", stateUrl:"https://evp.nc.gov/", stateName:"eVP NC (eVenture Purchasing)", localUrl:"https://www.ips.state.nc.us", localName:"IPS NC — Interactive Purchasing System", naspo:"https://www.naspo.org/states/north-carolina/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "ND": { name:"North Dakota", region:"Midwest", stateUrl:"https://www.omb.nd.gov/doing-business-state/bidders", stateName:"ND OMB Procurement", localUrl:"https://www.bidnetdirect.com/north-dakota", localName:"BidNet Direct — North Dakota", naspo:"https://www.naspo.org/states/north-dakota/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "OH": { name:"Ohio", region:"Midwest", stateUrl:"https://procure.ohio.gov/", stateName:"Ohio Procure (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/ohio", localName:"BidNet Direct — Ohio", naspo:"https://www.naspo.org/states/ohio/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "OK": { name:"Oklahoma", region:"South Central", stateUrl:"https://www.ok.gov/DCS/Central_Purchasing/", stateName:"OK DCS Central Purchasing", localUrl:"https://www.bidnetdirect.com/oklahoma", localName:"BidNet Direct — Oklahoma", naspo:"https://www.naspo.org/states/oklahoma/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "OR": { name:"Oregon", region:"Pacific Northwest", stateUrl:"https://oregonbuys.gov/", stateName:"OregonBuys (Periscope S2G)", localUrl:"https://www.bidnetdirect.com/oregon", localName:"BidNet Direct — Oregon", naspo:"https://www.naspo.org/states/oregon/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "PA": { name:"Pennsylvania", region:"Mid-Atlantic", stateUrl:"https://www.pasupplierportal.state.pa.us/", stateName:"PA Supplier Portal (SAP Ariba)", localUrl:"https://www.bidnetdirect.com/pennsylvania", localName:"BidNet Direct — Pennsylvania", naspo:"https://www.naspo.org/states/pennsylvania/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "RI": { name:"Rhode Island", region:"New England", stateUrl:"https://www.purchasing.ri.gov/", stateName:"RI Division of Purchases", localUrl:"https://www.bidnetdirect.com/rhode-island", localName:"BidNet Direct — Rhode Island", naspo:"https://www.naspo.org/states/rhode-island/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "SC": { name:"South Carolina", region:"Southeast", stateUrl:"https://procurement.sc.gov/", stateName:"SC Procurement (Periscope SCBO)", localUrl:"https://www.bidnetdirect.com/south-carolina", localName:"BidNet Direct — South Carolina", naspo:"https://www.naspo.org/states/south-carolina/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "SD": { name:"South Dakota", region:"Midwest", stateUrl:"https://boa.sd.gov/bfm/purchasing/", stateName:"SD Bureau of Finance & Management", localUrl:"https://www.bidnetdirect.com/south-dakota", localName:"BidNet Direct — South Dakota", naspo:"https://www.naspo.org/states/south-dakota/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "TN": { name:"Tennessee", region:"Southeast", stateUrl:"https://www.tn.gov/generalservices/topic/vendor-information", stateName:"TN Edison VSS", localUrl:"https://www.bidnetdirect.com/tennessee", localName:"BidNet Direct — Tennessee", naspo:"https://www.naspo.org/states/tennessee/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "TX": { name:"Texas", region:"South Central", stateUrl:"https://www.txsmartbuy.gov/", stateName:"TxSmartBuy / ESBD", localUrl:"https://esbd.cpa.texas.gov", localName:"ESBD — Electronic State Business Daily", naspo:"https://www.naspo.org/states/texas/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "UT": { name:"Utah", region:"Mountain West", stateUrl:"https://purchasing.utah.gov/for-vendors/", stateName:"Utah Division of Purchasing", localUrl:"https://www.bidnetdirect.com/utah", localName:"BidNet Direct — Utah", naspo:"https://www.naspo.org/states/utah/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "VT": { name:"Vermont", region:"New England", stateUrl:"https://bgs.vermont.gov/purchasing", stateName:"VT Dept of Buildings & General Services", localUrl:"https://www.bidnetdirect.com/vermont", localName:"BidNet Direct — Vermont", naspo:"https://www.naspo.org/states/vermont/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "VA": { name:"Virginia", region:"Mid-Atlantic", stateUrl:"https://www.eva.virginia.gov/", stateName:"eVA — Virginia eProcurement", localUrl:"https://www.eva.virginia.gov", localName:"eVA (State & Local Combined)", naspo:"https://www.naspo.org/states/virginia/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "WA": { name:"Washington", region:"Pacific Northwest", stateUrl:"https://www.des.wa.gov/sell/how-work-state/register-bid-opportunities", stateName:"WA WEBS (Washington's Electronic Business Solutions)", localUrl:"https://fortress.wa.gov/ga/apps/webs/", localName:"WEBS — WA Local Agencies", naspo:"https://www.naspo.org/states/washington/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "WV": { name:"West Virginia", region:"Southeast", stateUrl:"https://www.wvoasis.gov/", stateName:"WV OASIS VSS", localUrl:"https://www.bidnetdirect.com/west-virginia", localName:"BidNet Direct — West Virginia", naspo:"https://www.naspo.org/states/west-virginia/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "WI": { name:"Wisconsin", region:"Midwest", stateUrl:"https://vendornet.wi.gov/", stateName:"VendorNet Wisconsin", localUrl:"https://www.bidnetdirect.com/wisconsin", localName:"BidNet Direct — Wisconsin", naspo:"https://www.naspo.org/states/wisconsin/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" },
-  "WY": { name:"Wyoming", region:"Mountain West", stateUrl:"https://www.sao.wyo.gov/budgetdivision/procurement", stateName:"WY Procurement Division", localUrl:"https://www.bidnetdirect.com/wyoming", localName:"BidNet Direct — Wyoming", naspo:"https://www.naspo.org/states/wyoming/", lastVerified:"2026-06-23", verificationStatus:"unverified-seed" }
-};
-
-const SD_STATE_ORDER = [
-  ["AL","AK","AZ","AR","CA","CO","CT","DE","DC"],
-  ["FL","GA","HI","ID","IL","IN","IA","KS","KY"],
-  ["LA","ME","MD","MA","MI","MN","MS","MO","MT"],
-  ["NE","NV","NH","NJ","NM","NY","NC","ND","OH"],
-  ["OK","OR","PA","RI","SC","SD","TN","TX","UT"],
-  ["VT","VA","WA","WV","WI","WY"]
-];
-
-function sdEscapeHtml(s){
-  return String(s == null ? '' : s)
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
-    .replace(/"/g,'&quot;').replace(/'/g,'&#39;');
-}
-function sdEscapeAttr(s){
-  return String(s == null ? '' : s).replace(/'/g,"&#39;").replace(/"/g,'&quot;');
-}
-
-function sdOpenExternal(url) {
-  // Validate: only allow http and https URLs
-  let parsed;
-  try {
-    parsed = new URL(url);
-  } catch(e) {
-    console.error('[sdOpenExternal] Invalid URL:', url);
-    if (typeof toast === 'function') toast('Invalid URL — cannot open', 'err');
-    return;
-  }
-  if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
-    console.error('[sdOpenExternal] Blocked non-http URL:', url);
-    if (typeof toast === 'function') toast('Blocked: only http/https links can be opened', 'err');
-    return;
-  }
-
-  // Electron path: window.sd.shell.openExternal (IPC bridge)
-  if (window.sd && window.sd.shell && window.sd.shell.openExternal) {
-    Promise.resolve()
-      .then(() => window.sd.shell.openExternal(url))
-      .catch(err => {
-        console.error('[sdOpenExternal] Electron IPC failed, falling back:', err && err.message || err);
-        _sdOpenFallback(url);
-      });
-    return;
-  }
-
-  // Electron path: window.require('electron') direct
-  if (typeof window.require === 'function') {
-    try {
-      const { shell } = window.require('electron');
-      Promise.resolve()
-        .then(() => shell.openExternal(url))
-        .catch(err => {
-          console.error('[sdOpenExternal] electron.shell failed, falling back:', err && err.message || err);
-          _sdOpenFallback(url);
-        });
-      return;
-    } catch(e) {
-      console.error('[sdOpenExternal] window.require(electron) threw, falling back:', e && e.message);
-    }
-  }
-
-  // Browser fallback
-  _sdOpenFallback(url);
-}
-
-function _sdOpenFallback(url) {
-  try {
-    const w = window.open(url, '_blank', 'noopener,noreferrer');
-    if (!w) {
-      if (typeof toast === 'function') toast('Popup blocked — check your browser settings', 'err');
-    }
-  } catch(e) {
-    console.error('[_sdOpenFallback] window.open failed:', e && e.message);
-    if (typeof toast === 'function') toast('Could not open link — copy URL manually', 'err');
-  }
-}
-
-function sdRenderStatePortal(abbr) {
-  const s = SD_STATE_PORTALS[abbr];
-  if (!s) return;
-  const panel = document.getElementById('sl-portal-panel');
-  if (!panel) return;
-
-  const eAbbr = sdEscapeHtml(abbr);
-  const eName = sdEscapeHtml(s.name);
-  const eRegion = sdEscapeHtml(s.region);
-  const eStateName = sdEscapeHtml(s.stateName);
-  const eLocalName = sdEscapeHtml(s.localName);
-  const eStateUrl = sdEscapeAttr(s.stateUrl);
-  const eLocalUrl = sdEscapeAttr(s.localUrl);
-  const eNaspo    = sdEscapeAttr(s.naspo);
-  const eStateUrlText = sdEscapeHtml(s.stateUrl.replace(/^https?:\/\//,'').replace(/\/$/,''));
-  const eLocalUrlText = sdEscapeHtml(s.localUrl.replace(/^https?:\/\//,'').replace(/\/$/,''));
-
-  panel.innerHTML = `
-    <div class="sl-state-header">
-      <div class="sl-state-abbr">${eAbbr}</div>
-      <div>
-        <div class="sl-state-name">${eName}</div>
-        <div class="sl-state-region">${eRegion}</div>
-      </div>
-    </div>
-
-    <div class="sl-portal-grid">
-
-      <!-- STATE PORTAL CARD -->
-      <div class="sl-portal-card sl-card-state">
-        <div class="sl-card-eyebrow">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="2" x2="12" y2="6"/><path d="M3 10h18"/><path d="M3 18h18"/><path d="M5 6h14l1 4H4l1-4z"/><rect x="3" y="18" width="18" height="3" rx="1"/></svg>
-          State Procurement Portal
-        </div>
-        <div class="sl-card-title">${eStateName}</div>
-        <div class="sl-card-desc">The official state government vendor registration and solicitation portal. Register here to bid on ${eName} state agency contracts (RFPs, IFBs, RFQs).</div>
-        <div class="sl-card-url">${eStateUrlText}</div>
-        <div class="sl-card-actions">
-          <button class="sl-btn-primary" onclick="sdOpenExternal('${eStateUrl}')">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Open State Portal
-          </button>
-          <button class="sl-btn-secondary" onclick="sdOpenExternal('${eNaspo}')">NASPO Profile</button>
-        </div>
-        <div class="sl-workflow-tip">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Search → find solicitation → download file → upload to SourceDeck
-        </div>
-      </div>
-
-      <!-- LOCAL AGGREGATOR CARD -->
-      <div class="sl-portal-card sl-card-local">
-        <div class="sl-card-eyebrow">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-          Local Government Aggregator
-        </div>
-        <div class="sl-card-title">${eLocalName}</div>
-        <div class="sl-card-desc">City, county, school district, transit authority, and special district bids for ${eName}. One registration unlocks bids from dozens of local agencies.</div>
-        <div class="sl-card-url">${eLocalUrlText}</div>
-        <div class="sl-card-actions">
-          <button class="sl-btn-primary sl-btn-local" onclick="sdOpenExternal('${eLocalUrl}')">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
-            Open Local Portal
-          </button>
-        </div>
-        <div class="sl-workflow-tip">
-          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
-          Covers cities, counties, schools & special districts
-        </div>
-      </div>
-
-    </div>
-
-    <div class="sl-upload-prompt">
-      <div class="sl-upload-icon">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      </div>
-      <div class="sl-upload-body">
-        <div class="sl-upload-title">Downloaded a solicitation file?</div>
-        <div class="sl-upload-sub">Upload the PDF, Word doc, or ZIP to SourceDeck to start your compliance matrix, proposal outline, or capture analysis.</div>
-      </div>
-      <button class="sl-upload-btn" onclick="sdOpenSolicitationIntake()">
-        Open Solicitation Intake →
-      </button>
-    </div>
-  `;
-  panel.style.display = 'block';
-  try { panel.scrollIntoView({behavior:'smooth', block:'nearest'}); } catch (e) {}
-}
-
-// CHANGE 5 — Upload handoff (Option A: real canonical ingestion fn).
-// pwSolOpenFilePicker is the existing native multi-file solicitation
-// picker — verified at sourcedeck.html line 2749 (the existing Upload
-// Solicitation Files button uses the same call). It opens its OWN
-// native picker through the credential boundary, so we cannot pass a
-// pre-selected File object; instead we route the user to the canonical
-// Solicitation Intake surface and trigger the picker there.
-function sdOpenSolicitationIntake() {
-  if (typeof window.openTab === 'function') {
-    try { window.openTab('execution'); } catch (e) {}
-  }
-  setTimeout(function(){
-    if (typeof window.pwSolOpenFilePicker === 'function') {
-      try { window.pwSolOpenFilePicker(); } catch (e) {
-        if (typeof toast === 'function') toast('Could not open Solicitation Intake — please navigate manually', 'err');
-      }
-    } else {
-      if (typeof toast === 'function') toast('Solicitation Intake not available — please reload SourceDeck', 'err');
-    }
-  }, 100);
-}
-
-function sdInitStateLocal() {
-  const sel = document.getElementById('sl-state-select');
-  if (sel && !sel.dataset.init) {
-    sel.dataset.init = '1';
-    sel.addEventListener('change', function() {
-      if (this.value) sdRenderStatePortal(this.value);
-      else {
-        const p = document.getElementById('sl-portal-panel');
-        if (p) { p.innerHTML = ''; p.style.display = 'none'; }
-      }
-    });
-  }
-
-  // CHANGE 5 — Hidden file input is kept for legacy DOM compatibility but
-  // no longer carries a change handler. The State & Local upload button
-  // now invokes sdOpenSolicitationIntake() which routes through the
-  // canonical pwSolOpenFilePicker path. No fake ingestion function is
-  // ever referenced.
-}
-
-function sdSwitchOppMode(mode) {
-  const samContent    = document.getElementById('sl-sam-content');
-  const slPanel       = document.getElementById('sl-statelocal-panel');
-  const modeBar       = document.getElementById('opp-mode-bar');
-  const btnFederal    = document.getElementById('sl-mode-federal');
-  const btnStateLocal = document.getElementById('sl-mode-statelocal');
-
-  // All four elements must exist — if any are missing, report and bail
-  if (!samContent || !slPanel || !modeBar || !btnFederal || !btnStateLocal) {
-    const missing = [
-      !samContent    && '#sl-sam-content',
-      !slPanel       && '#sl-statelocal-panel',
-      !modeBar       && '#opp-mode-bar',
-      !btnFederal    && '#sl-mode-federal',
-      !btnStateLocal && '#sl-mode-statelocal',
-    ].filter(Boolean);
-    console.error('[sdSwitchOppMode] Missing DOM elements:', missing.join(', '));
-    if (typeof toast === 'function') toast('UI error — please reload SourceDeck', 'err');
-    return;
-  }
-
-  btnFederal.classList.remove('active');
-  btnStateLocal.classList.remove('active');
-
-  if (mode === 'statelocal') {
-    btnStateLocal.classList.add('active');
-    samContent.style.display = 'none';
-    slPanel.style.display    = 'block';
-    sdInitStateLocal();
-  } else {
-    // Default: federal
-    btnFederal.classList.add('active');
-    samContent.style.display = '';
-    slPanel.style.display    = 'none';
-  }
-}
-
-// Auto-init the state/local listeners as soon as the markup is in the
-// DOM so the dropdown works on first interaction even before the user
-// toggles modes.
-if (document.readyState === 'loading'){
-  document.addEventListener('DOMContentLoaded', sdInitStateLocal);
-} else {
-  sdInitStateLocal();
-}
 </script>
 </body>
 </html>

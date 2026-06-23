@@ -1,262 +1,235 @@
+/**
+ * Phase 25AL — State & Local procurement portal panel regression tests.
+ *
+ * Static + isolated renderer-script assertions. These tests guard the hardening
+ * requirements that prevent a repeat of undefined upload handlers, brittle DOM
+ * sibling guessing, duplicate Vermont dropdown entries, unsafe external links,
+ * and unverified portal data without metadata.
+ *
+ * Run: node test/state-local-procurement-panel.test.js
+ */
 'use strict';
-
-// State & Local procurement panel — regression tests for the hardening
-// applied in the post-merge closeout. Pure node:assert; no test framework.
-// Mirrors the existing repo style (test/govcon-core.test.js / etc.).
-// No live network. No real URLs opened. No filesystem writes.
-//
-// Strategy: extract the SD_STATE_PORTALS object and the sdOpenExternal /
-// sdSwitchOppMode / sdRenderStatePortal functions from sourcedeck.html
-// using vm.createContext so each test runs against the actual installed
-// implementation rather than a copy.
 
 const assert = require('assert');
 const fs = require('fs');
 const path = require('path');
 const vm = require('vm');
 
-const HTML = fs.readFileSync(path.join(__dirname, '..', 'sourcedeck.html'), 'utf8');
+const ROOT = path.resolve(__dirname, '..');
+const HTML = fs.readFileSync(path.join(ROOT, 'sourcedeck.html'), 'utf8');
 
-// ── Helpers ────────────────────────────────────────────────────────
-function extractScript(markerStart, markerEnd){
-  const i = HTML.indexOf(markerStart);
-  if (i < 0) throw new Error('marker not found: ' + markerStart);
-  const j = HTML.indexOf(markerEnd, i);
-  if (j < 0) throw new Error('end marker not found: ' + markerEnd);
-  return HTML.slice(i, j + markerEnd.length);
-}
-
-function fakeEl(tag){
-  const el = {
-    tagName: (tag || 'div').toUpperCase(),
-    _innerHTML: '',
-    _classes: new Set(),
-    style: {},
-    dataset: {},
-    addEventListener: function(){},
-    scrollIntoView: function(){},
-    classList: {
-      add: (c) => el._classes.add(c),
-      remove: (c) => el._classes.delete(c),
-      contains: (c) => el._classes.has(c)
-    },
-    querySelectorAll: function(){ return []; }
-  };
-  Object.defineProperty(el, 'innerHTML', {
-    get(){ return el._innerHTML; },
-    set(v){ el._innerHTML = String(v); }
-  });
-  return el;
-}
-
-function buildSandbox(elements){
-  const els = elements || {};
-  const calls = { open: [], samShell: [], requireShell: [] };
-  const sandbox = {
-    document: {
-      getElementById: (id) => els[id] || null,
-      querySelector: () => null,
-      querySelectorAll: () => [],
-      addEventListener: function(){},
-      readyState: 'complete'
-    },
-    window: {},
-    URL: globalThis.URL,
-    console: { error: function(){}, log: function(){} },
-    Promise: Promise,
-    setTimeout: (fn) => { try { fn(); } catch (e) {} },
-    toast: function(){},
-    calls
-  };
-  sandbox.window.open = (url, target, features) => {
-    calls.open.push({ url, target, features });
-    return { focus: function(){} };
-  };
-  vm.createContext(sandbox);
-  return sandbox;
-}
-
-function loadSlBlock(sandbox){
-  // The State & Local script block lives in its own <script> tag at the
-  // end of the file. Extract from the opening comment marker.
-  const start = HTML.indexOf('// ── STATE & LOCAL PROCUREMENT DIRECTORY');
-  const end = HTML.indexOf('</script>', start);
-  if (start < 0 || end < 0) throw new Error('State & Local script block not found');
-  const code = HTML.slice(start, end);
-  // Expose the functions on a sandbox-visible global so tests can call them.
-  vm.runInContext(code + '\nthis.sdOpenExternal = sdOpenExternal; this.sdSwitchOppMode = sdSwitchOppMode; this.sdRenderStatePortal = sdRenderStatePortal; this.SD_STATE_PORTALS = SD_STATE_PORTALS;', sandbox);
-  return sandbox;
-}
-
-let pass = 0, fail = 0;
-function test(name, fn){
-  try { fn(); console.log('  ✓ ' + name); pass++; }
-  catch (e) { console.error('  ✗ ' + name + '\n    ' + (e && e.message || e)); fail++; }
-}
-
-console.log('State & Local procurement panel');
-
-// TEST 1 — Mode toggle: federal
-test('mode toggle → federal sets samContent visible, slPanel hidden, federal active', () => {
-  const els = {
-    'sl-sam-content': fakeEl(),
-    'sl-statelocal-panel': fakeEl(),
-    'opp-mode-bar': fakeEl(),
-    'sl-mode-federal': fakeEl(),
-    'sl-mode-statelocal': fakeEl()
-  };
-  const sb = buildSandbox(els);
-  loadSlBlock(sb);
-  sb.window.sdSwitchOppMode = sb.sdSwitchOppMode;
-  sb.sdSwitchOppMode('federal');
-  assert.strictEqual(els['sl-sam-content'].style.display, '', 'samContent visible');
-  assert.strictEqual(els['sl-statelocal-panel'].style.display, 'none', 'slPanel hidden');
-  assert.ok(els['sl-mode-federal'].classList.contains('active'), 'federal active');
-  assert.ok(!els['sl-mode-statelocal'].classList.contains('active'), 'statelocal not active');
-});
-
-// TEST 2 — Mode toggle: statelocal
-test('mode toggle → statelocal hides samContent, shows slPanel, statelocal active', () => {
-  const els = {
-    'sl-sam-content': fakeEl(),
-    'sl-statelocal-panel': fakeEl(),
-    'opp-mode-bar': fakeEl(),
-    'sl-mode-federal': fakeEl(),
-    'sl-mode-statelocal': fakeEl()
-  };
-  const sb = buildSandbox(els);
-  loadSlBlock(sb);
-  sb.sdSwitchOppMode('statelocal');
-  assert.strictEqual(els['sl-sam-content'].style.display, 'none', 'samContent hidden');
-  assert.strictEqual(els['sl-statelocal-panel'].style.display, 'block', 'slPanel visible');
-  assert.ok(els['sl-mode-statelocal'].classList.contains('active'), 'statelocal active');
-  assert.ok(!els['sl-mode-federal'].classList.contains('active'), 'federal not active');
-});
-
-// TEST 3 — Missing DOM element does not throw
-test('mode toggle returns silently + toasts when DOM elements missing', () => {
-  const els = {
-    // omit sl-sam-content intentionally
-    'sl-statelocal-panel': fakeEl(),
-    'opp-mode-bar': fakeEl(),
-    'sl-mode-federal': fakeEl(),
-    'sl-mode-statelocal': fakeEl()
-  };
-  let toasted = false;
-  const sb = buildSandbox(els);
-  sb.toast = function(){ toasted = true; };
-  loadSlBlock(sb);
-  // Must not throw.
-  let threw = false;
-  try { sb.sdSwitchOppMode('statelocal'); } catch (e) { threw = true; }
-  assert.ok(!threw, 'sdSwitchOppMode did not throw on missing DOM');
-  // toast may or may not be visible to the sandbox depending on scope; we
-  // mainly assert no exception was raised.
-});
-
-// TEST 4 — Portal rendering for 5 representative states
-test('portal renderer paints stateUrl, localUrl, name for DC/VA/MD/TX/CA', () => {
-  ['DC','VA','MD','TX','CA'].forEach(abbr => {
-    const panel = fakeEl();
-    const sb = buildSandbox({ 'sl-portal-panel': panel });
-    loadSlBlock(sb);
-    sb.sdRenderStatePortal(abbr);
-    const html = panel.innerHTML;
-    const rec = sb.SD_STATE_PORTALS[abbr];
-    assert.ok(html.includes(rec.stateUrl), abbr + ' includes stateUrl');
-    assert.ok(html.includes(rec.localUrl), abbr + ' includes localUrl');
-    assert.ok(html.includes(rec.name), abbr + ' includes state name');
-  });
-});
-
-// TEST 5 — sdOpenExternal rejects javascript: URLs
-test('sdOpenExternal blocks javascript: URL', () => {
-  const sb = buildSandbox({});
-  loadSlBlock(sb);
-  sb.sdOpenExternal('javascript:alert(1)');
-  assert.strictEqual(sb.calls.open.length, 0, 'window.open was NOT called');
-});
-
-// TEST 6 — sdOpenExternal allows https in non-Electron context
-test('sdOpenExternal calls window.open(_blank, noopener,noreferrer) for https in browser', () => {
-  const sb = buildSandbox({});
-  loadSlBlock(sb);
-  sb.sdOpenExternal('https://emma.maryland.gov/');
-  assert.strictEqual(sb.calls.open.length, 1);
-  assert.strictEqual(sb.calls.open[0].url, 'https://emma.maryland.gov/');
-  assert.strictEqual(sb.calls.open[0].target, '_blank');
-  assert.strictEqual(sb.calls.open[0].features, 'noopener,noreferrer');
-});
-
-// TEST 7 — Electron IPC path is preferred when available
-test('sdOpenExternal calls window.sd.shell.openExternal when Electron IPC present', async () => {
-  const sb = buildSandbox({});
-  loadSlBlock(sb);
-  let ipcCalled = null;
-  sb.window.sd = { shell: { openExternal: (url) => { ipcCalled = url; return Promise.resolve(); } } };
-  sb.sdOpenExternal('https://procurement.staars.alabama.gov/');
-  // Allow microtask to drain.
-  await new Promise(r => setImmediate(r));
-  assert.strictEqual(ipcCalled, 'https://procurement.staars.alabama.gov/');
-  assert.strictEqual(sb.calls.open.length, 0, 'window.open NOT called');
-});
-
-// TEST 8 — Electron IPC failure falls back to window.open
-test('sdOpenExternal falls back to window.open when Electron IPC rejects', async () => {
-  const sb = buildSandbox({});
-  loadSlBlock(sb);
-  sb.window.sd = { shell: { openExternal: () => Promise.reject(new Error('IPC error')) } };
-  sb.sdOpenExternal('https://oregonbuys.gov/');
-  await new Promise(r => setImmediate(r));
-  await new Promise(r => setImmediate(r));
-  assert.strictEqual(sb.calls.open.length, 1, 'fallback called');
-  assert.strictEqual(sb.calls.open[0].url, 'https://oregonbuys.gov/');
-});
-
-// TEST 9 — No undefined ingestion function called
-test('upload handoff never calls ingestSolicitationFile (not defined in file)', () => {
-  const defined = /function\s+ingestSolicitationFile|const\s+ingestSolicitationFile|let\s+ingestSolicitationFile|window\.ingestSolicitationFile\s*=/.test(HTML);
-  const called  = /ingestSolicitationFile\s*\(/.test(HTML);
-  if (called && !defined) {
-    assert.fail('ingestSolicitationFile is called but never defined');
+let passed = 0;
+let failed = 0;
+function test(name, fn) {
+  try {
+    const result = fn();
+    if (result && typeof result.then === 'function') {
+      return result.then(() => {
+        passed++;
+        console.log('  ✅ ' + name);
+      }, (e) => {
+        failed++;
+        console.log('  ❌ ' + name + ': ' + e.message);
+      });
+    }
+    passed++;
+    console.log('  ✅ ' + name);
+    return Promise.resolve();
+  } catch (e) {
+    failed++;
+    console.log('  ❌ ' + name + ': ' + e.message);
+    return Promise.resolve();
   }
-  // pwSolOpenFilePicker IS the real canonical fn — make sure we reference it
-  assert.ok(/pwSolOpenFilePicker/.test(HTML), 'pwSolOpenFilePicker is referenced (real ingestion path)');
-});
+}
 
-// TEST 10 — Vermont appears exactly once
-test('Vermont (value="VT") appears exactly once in the dropdown', () => {
-  // Restrict to <option> rows so SD_STATE_PORTALS / SD_STATE_ORDER refs
-  // are excluded.
-  const optMatches = HTML.match(/<option\s+value="VT"[^>]*>Vermont<\/option>/g) || [];
-  assert.strictEqual(optMatches.length, 1, 'exactly one VT <option> row');
-});
+function extractPhase25ALScript() {
+  const m = HTML.match(/<script>\s*\/\* Phase 25AL[\s\S]*?<\/script>/);
+  assert.ok(m, 'Phase 25AL script block missing');
+  return m[0].replace(/^<script>/, '').replace(/<\/script>$/, '');
+}
 
-// TEST 11 — lastVerified + verificationStatus on all entries
-test('all 51 SD_STATE_PORTALS entries carry valid lastVerified + verificationStatus', () => {
-  const m = HTML.match(/SD_STATE_PORTALS\s*=\s*(\{[\s\S]*?\n\});/);
-  assert.ok(m, 'SD_STATE_PORTALS block found');
-  const x = eval('(' + m[1] + ')'); // eslint-disable-line no-eval
-  const entries = Object.entries(x);
-  assert.strictEqual(entries.length, 51, 'entry count is 51 (50 states + DC)');
-  entries.forEach(([k, v]) => {
-    assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(v.lastVerified || ''), k + ' lastVerified is ISO date');
-    assert.ok(typeof v.verificationStatus === 'string' && v.verificationStatus.length > 0,
-      k + ' verificationStatus is non-empty string');
+function makeElement(id) {
+  return {
+    id,
+    style: {},
+    attributes: {},
+    classList: {
+      values: new Set(),
+      add(v) { this.values.add(v); },
+      remove(v) { this.values.delete(v); },
+      contains(v) { return this.values.has(v); }
+    },
+    setAttribute(k, v) { this.attributes[k] = String(v); },
+    getAttribute(k) { return this.attributes[k] || ''; },
+    innerHTML: '',
+    value: ''
+  };
+}
+
+function bootRenderer(options = {}) {
+  const elements = {};
+  const buttons = [makeElement('sl-mode-federal'), makeElement('sl-mode-state-local')];
+  buttons[0].attributes['data-sl-opp-mode'] = 'federal';
+  buttons[1].attributes['data-sl-opp-mode'] = 'state-local';
+  if (!options.missingPanels) {
+    elements['sl-sam-content'] = makeElement('sl-sam-content');
+    elements['sl-statelocal-panel'] = makeElement('sl-statelocal-panel');
+    elements['sl-state-select'] = makeElement('sl-state-select');
+    elements['sl-state-select'].value = 'VA';
+    elements['sl-portal-render'] = makeElement('sl-portal-render');
+  }
+  const localStore = {};
+  const toastCalls = [];
+  const openCalls = [];
+  const context = {
+    window: {},
+    document: {
+      readyState: 'complete',
+      getElementById(id) { return elements[id] || null; },
+      querySelectorAll(selector) { return selector === '[data-sl-opp-mode]' ? buttons : []; },
+      addEventListener() {}
+    },
+    localStorage: {
+      getItem(k) { return Object.prototype.hasOwnProperty.call(localStore, k) ? localStore[k] : null; },
+      setItem(k, v) { localStore[k] = String(v); }
+    },
+    setTimeout(fn) { fn(); },
+    Promise,
+    console
+  };
+  context.window = context;
+  context.window.toast = function(message, level) { toastCalls.push({ message, level }); };
+  context.window.open = function(url, target, features) { openCalls.push({ url, target, features }); return { closed: false }; };
+  vm.createContext(context);
+  vm.runInContext(extractPhase25ALScript(), context, { filename: 'phase25al.js' });
+  return { context, elements, buttons, localStore, toastCalls, openCalls };
+}
+
+function getSelectBody() {
+  const m = HTML.match(/<select[^>]*id="sl-state-select"[\s\S]*?<\/select>/);
+  assert.ok(m, 'State dropdown missing');
+  return m[0];
+}
+
+function getSwitchFunctionText() {
+  const m = HTML.match(/window\.sdSwitchOppMode\s*=\s*function\(mode\)\{[\s\S]*?\n  \};/);
+  assert.ok(m, 'sdSwitchOppMode function missing');
+  return m[0];
+}
+
+console.log('\n=== Phase 25AL — State & Local procurement panel ===\n');
+
+const tests = [];
+
+tests.push(test('Federal mode toggle shows #sl-sam-content and hides #sl-statelocal-panel', () => {
+  const { context, elements } = bootRenderer();
+  context.sdSwitchOppMode('federal');
+  assert.strictEqual(elements['sl-sam-content'].style.display, '', 'Federal mode should show SAM/Federal content');
+  assert.strictEqual(elements['sl-statelocal-panel'].style.display, 'none', 'Federal mode should hide State & Local panel');
+}));
+
+tests.push(test('State & Local mode toggle hides #sl-sam-content and shows #sl-statelocal-panel', () => {
+  const { context, elements } = bootRenderer();
+  context.sdSwitchOppMode('state-local');
+  assert.strictEqual(elements['sl-sam-content'].style.display, 'none', 'State & Local mode should hide SAM/Federal content');
+  assert.strictEqual(elements['sl-statelocal-panel'].style.display, '', 'State & Local mode should show panel');
+}));
+
+tests.push(test('Missing DOM elements are handled gracefully with a warning toast and false return', () => {
+  const { context, toastCalls } = bootRenderer({ missingPanels: true });
+  const ok = context.sdSwitchOppMode('state-local');
+  assert.strictEqual(ok, false, 'missing panels should return false');
+  assert.ok(toastCalls.some(t => /unavailable/i.test(t.message)), 'missing panels should produce a warning toast');
+}));
+
+tests.push(test('Portal renderer paints stateUrl, localUrl, and name for DC/VA/MD/TX/CA', () => {
+  const { context, elements } = bootRenderer();
+  for (const code of ['DC', 'VA', 'MD', 'TX', 'CA']) {
+    assert.strictEqual(context.sdRenderStatePortal(code), true, code + ' should render');
+    const entry = context.SD_STATE_PORTALS.find(p => p.code === code);
+    const rendered = elements['sl-portal-render'].innerHTML;
+    assert.ok(rendered.includes(entry.name), code + ' name missing from render');
+    assert.ok(rendered.includes(entry.stateUrl), code + ' stateUrl missing from render');
+    assert.ok(rendered.includes(entry.localUrl), code + ' localUrl missing from render');
+  }
+}));
+
+tests.push(test('sdOpenExternal blocks javascript: URLs', async () => {
+  const { context, openCalls, toastCalls } = bootRenderer();
+  const ok = await context.sdOpenExternal('javascript:alert(1)');
+  assert.strictEqual(ok, false, 'unsafe javascript URL should be blocked');
+  assert.strictEqual(openCalls.length, 0, 'window.open must not be called for javascript URL');
+  assert.ok(toastCalls.some(t => /blocked unsafe/i.test(t.message)), 'blocked unsafe URL should warn');
+}));
+
+tests.push(test('sdOpenExternal uses window.open(_blank, noopener,noreferrer) in browser fallback', async () => {
+  const { context, openCalls } = bootRenderer();
+  const ok = await context.sdOpenExternal('https://example.com/procurement');
+  assert.strictEqual(ok, true, 'browser fallback should return true');
+  assert.deepStrictEqual(openCalls[0], {
+    url: 'https://example.com/procurement',
+    target: '_blank',
+    features: 'noopener,noreferrer'
   });
-});
+}));
 
-// TEST 12 — sdSwitchOppMode uses only explicit IDs, no DOM-sibling guessing
-test('sdSwitchOppMode contains explicit getElementById calls and no sibling guessing', () => {
-  const m = HTML.match(/function sdSwitchOppMode[\s\S]*?\n\}/);
-  assert.ok(m, 'sdSwitchOppMode found');
-  const body = m[0];
-  assert.ok(!body.includes('previousElementSibling'), 'no previousElementSibling');
-  assert.ok(!body.includes('nextElementSibling'),     'no nextElementSibling');
-  assert.ok(!body.includes('data-sl-hidden'),         'no data-sl-hidden');
-  assert.ok(/getElementById\(\s*['"]sl-sam-content['"]\s*\)/.test(body),
-    'getElementById("sl-sam-content") present');
-});
+tests.push(test('sdOpenExternal calls window.sd.shell.openExternal when Electron IPC is present', async () => {
+  const { context, openCalls } = bootRenderer();
+  const ipcCalls = [];
+  context.sd = { shell: { openExternal(url) { ipcCalls.push(url); return Promise.resolve(true); } } };
+  const ok = await context.sdOpenExternal('https://example.com/state');
+  assert.strictEqual(ok, true, 'Electron IPC open should resolve true');
+  assert.deepStrictEqual(ipcCalls, ['https://example.com/state']);
+  assert.strictEqual(openCalls.length, 0, 'browser fallback should not run on successful IPC open');
+}));
 
-console.log('\n=== ' + (fail ? 'FAIL' : 'PASS') + ' — ' + pass + ' passed, ' + fail + ' failed ===');
-if (fail) process.exit(1);
+tests.push(test('sdOpenExternal falls back to window.open when Electron IPC rejects', async () => {
+  const { context, openCalls } = bootRenderer();
+  context.sd = { shell: { openExternal() { return Promise.reject(new Error('ipc failed')); } } };
+  const ok = await context.sdOpenExternal('https://example.com/local');
+  assert.strictEqual(ok, true, 'rejected IPC should still fall back to browser open');
+  assert.strictEqual(openCalls.length, 1, 'browser fallback should run once');
+  assert.strictEqual(openCalls[0].features, 'noopener,noreferrer');
+}));
+
+tests.push(test('Upload handoff uses gcSolUploadActive and never ingestSolicitationFile', () => {
+  assert.ok(/id="sl-upload-solicitation-btn"[\s\S]*gcSolUploadActive\(\)/.test(HTML), 'State & Local upload button must call gcSolUploadActive()');
+  const panel = HTML.match(/<div id="sl-statelocal-panel"[\s\S]*?<\/div><!-- \/sl-statelocal-panel -->/)[0];
+  assert.ok(!/ingestSolicitationFile/.test(panel), 'State & Local panel must not call undefined ingestSolicitationFile');
+}));
+
+tests.push(test('Vermont value="VT" appears exactly once in the state dropdown', () => {
+  const select = getSelectBody();
+  const vtMatches = select.match(/<option\s+value="VT"/g) || [];
+  assert.strictEqual(vtMatches.length, 1, 'Vermont option must appear exactly once in dropdown');
+}));
+
+tests.push(test('All 51 SD_STATE_PORTALS entries include lastVerified and verificationStatus', () => {
+  const { context } = bootRenderer();
+  const portals = context.SD_STATE_PORTALS;
+  assert.strictEqual(portals.length, 51, 'portal array must contain 50 states + DC');
+  for (const p of portals) {
+    assert.ok(p.code && /^[A-Z]{2}$/.test(p.code), 'invalid state code for ' + JSON.stringify(p));
+    assert.ok(p.name, 'portal entry missing name for ' + p.code);
+    assert.ok(/^https?:\/\//.test(p.stateUrl), 'portal entry missing valid stateUrl for ' + p.code);
+    assert.ok(/^https?:\/\//.test(p.localUrl), 'portal entry missing valid localUrl for ' + p.code);
+    assert.ok(/^\d{4}-\d{2}-\d{2}$/.test(p.lastVerified), 'portal entry missing date lastVerified for ' + p.code);
+    assert.strictEqual(p.verificationStatus, 'unverified-seed', 'portal entry verificationStatus should be unverified-seed for ' + p.code);
+  }
+}));
+
+tests.push(test('sdSwitchOppMode uses explicit getElementById calls and no DOM sibling guessing', () => {
+  const fn = getSwitchFunctionText();
+  assert.ok(/document\.getElementById\('sl-sam-content'\)/.test(fn), 'sdSwitchOppMode must explicitly read #sl-sam-content');
+  assert.ok(/document\.getElementById\('sl-statelocal-panel'\)/.test(fn), 'sdSwitchOppMode must explicitly read #sl-statelocal-panel');
+  assert.ok(!/previousElementSibling|nextElementSibling|parentElement|children\s*\[|nextSibling|previousSibling/.test(fn), 'sdSwitchOppMode must not guess DOM siblings');
+}));
+
+tests.push(test('Find Opportunities tab restores persisted source mode on tab switch', () => {
+  assert.ok(/id === 'find-opportunities'[\s\S]*sdSwitchOppMode[\s\S]*sd\.govcon\.findOppMode/.test(HTML), 'gcTabSwitch must restore the Federal/State & Local source mode');
+}));
+
+Promise.all(tests).then(() => {
+  console.log(`\n=== ${failed === 0 ? 'PASS' : 'FAIL'} — ${passed}/${passed + failed} Phase 25AL checks ===\n`);
+  process.exit(failed ? 1 : 0);
+});

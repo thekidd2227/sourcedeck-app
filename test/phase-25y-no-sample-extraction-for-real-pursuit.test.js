@@ -20,7 +20,7 @@ test('selecting a pursuit resets demo/foreign extraction before showing it', () 
 });
 
 test('extraction never emits sections without real source text', () => {
-  const fn = HTML.slice(HTML.indexOf('window.gcSolExtract = async function'), HTML.indexOf('window.gcSolExtract = async function') + 2200);
+  const fn = HTML.slice(HTML.indexOf('window.gcSolExtract = async function'), HTML.indexOf('window.gcSolExtract = async function') + 5000);
   assert.ok(/if \(!text\.trim\(\)\)/.test(fn), 'guards on empty source text');
   assert.ok(/return;/.test(fn), 'returns without generating sections when empty');
 });
@@ -31,7 +31,7 @@ test('SAMPLE/Demo-Only strings only live inside the explicit demo loader', () =>
   // any "Sample — Demo Only" literal.
   const ex = HTML.slice(HTML.indexOf('function extractFromText('), HTML.indexOf('function extractFromText(') + 2600);
   assert.ok(!/Sample — Demo Only/.test(ex), 'extractor emits no demo strings');
-  const solExtract = HTML.slice(HTML.indexOf('window.gcSolExtract = function'), HTML.indexOf('window.gcSolExtract = function') + 1700);
+  const solExtract = HTML.slice(HTML.indexOf('window.gcSolExtract = async function'), HTML.indexOf('window.gcSolExtract = async function') + 5000);
   assert.ok(!/Sample — Demo Only/.test(solExtract), 'gcSolExtract emits no demo strings');
 });
 

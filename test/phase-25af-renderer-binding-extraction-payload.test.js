@@ -66,6 +66,8 @@ function fnSource(name) {
     fnSource('_sal25RecordBlock'),
     fnSource('_sal25SafeText'),
     fnSource('_sal25SafeList'),
+    fnSource('_sdLooksUnreadableExtractionText'),
+    fnSource('_sdCleanRequiredFormsForDisplay'),
     fnSource('mapPackageExtraction'),
     fnSource('renderPanels'),
     fnSource('renderMatrix'),

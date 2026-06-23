@@ -42,10 +42,14 @@ test('Solicitation Center section exists', () => {
   assert.ok(/data-section="govcon-solicitation-workspace"/.test(HTML), 'data-section anchor missing');
 });
 
-// 2. Package/upload intake exists; linked opportunity selector is intentionally removed.
-test('Package/upload intake exists and linked opportunity selector is removed', () => {
+// 2. Package/upload intake exists; linked opportunity selector is present and wired.
+// Phase 25V restored gc-sol-opp-select so saved/pursuing opportunities can feed
+// the Solicitation Center. The forbidden behavior is package auto-download, not
+// the buyer-controlled saved pursuit selector.
+test('Package/upload intake exists and linked opportunity selector is wired', () => {
   assert.ok(!/Download Solicitation Package|Download SAM\.gov Package/.test(HTML), 'package download action must be removed');
-  assert.ok(!/id="gc-sol-opp-select"/.test(HTML), 'gc-sol-opp-select should remain removed from Solicitation Center');
+  assert.ok(/id="gc-sol-opp-select"/.test(HTML), 'gc-sol-opp-select should remain present for saved-pursuit linkage');
+  assert.ok(/onchange="gcSolSelect\(this\.value\)"/.test(HTML), 'gc-sol-opp-select must call gcSolSelect(this.value)');
   assert.ok(/id="gc-sol-summary-upload-btn"/.test(HTML), 'Solicitation Summary upload action missing');
   assert.ok(/data-gc-tab="solicitation-attachments"/.test(HTML), 'Solicitation Attachments tab button missing');
   assert.ok(/data-gc-tab-page="solicitation-attachments"/.test(HTML), 'Solicitation Attachments tab page missing');
