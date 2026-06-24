@@ -223,6 +223,53 @@ IPC/contract change).
   or coupled (Phase 25N tab-switcher, provider-backed Web/Awards intel,
   Solicitation Workspace) and will need a seam plan rather than a verbatim move.
 
+## Phase 7 — Renderer strangler (✅ fifth slice)
+
+Same rule as Phases 3–6 (one contained slice, browser-safe `<script src>`, no
+IPC/contract change). Phase 6's file-viewer slice was manually smoke-tested in
+the packaged app (open/close/repeat + attachment UI) and confirmed PASS before
+this phase started.
+
+- **Phase 25H assessment:** the **"Today's Work Plan integration"** block was
+  inspected and found **safe** — it is a read-only mirror. It was extracted.
+- **Selected slice:** Phase 25H Today's Work Plan integration —
+  `window.calRenderTodayWorkPlan`.
+- **Why it was safe:** UI / local read-only state only. It reads today's events
+  from the optional `window.__sdCalendar.getState()` renderer global, falling
+  back to `localStorage 'sd.calendar.v1'` (read-only — never writes, never
+  changes the data shape), and renders them into the Daily Operating Rhythm
+  pane's `#do-checklist` host. It makes **no** IPC/preload, provider, upload,
+  extraction, parsing, persistence-write, credential/license, or GovCon
+  scoring/compliance/business-rule calls. Fully characterizable with a VM/DOM
+  harness (no real services).
+- **Abort boundaries respected:** confirmed before editing that the block calls
+  no IPC/provider/service, mutates no pursuit/package/extraction data, writes no
+  storage, and changes no workflow semantics or stored-data shape. None of the
+  documented STOP conditions were hit, so no fallback was needed.
+- **New module path:** `app/renderer/features/todays-work-plan/todays-work-plan.js`
+- **Packaging guard updated:** added to
+  `test/architecture-packaging-runtime-modules.test.js` (`REQUIRED_RUNTIME_FILES`)
+  and `scripts/release-check.js` (`REQUIRED_ASAR_FILES`), pinned identically to
+  the first four renderer modules; locked by
+  `test/architecture-renderer-strangler-phase-7.test.js` and the slice inventory
+  in `test/architecture-renderer-strangler.test.js`.
+- **Behavior-preservation rule:** the IIFE moved verbatim; same
+  `window.calRenderTodayWorkPlan` surface, same `__sdCalendar`→`sd.calendar.v1`
+  read order, same today-date filter, sort, escaping, empty-state copy + Calendar
+  link, and the same guarded no-op when `#do-checklist` is absent. The existing
+  `test/phase-25h-calendar-daily-rhythm-integration.test.js` keeps all behavior
+  assertions; only its block loader was repointed to the module (the Daily Ops
+  pane markup assertion still reads HTML). `sourcedeck.html` dropped
+  23,268 → 23,204 lines; the `#do-checklist` host and the Calendar module
+  (`window.__sdCalendar`) stay in HTML.
+- **Recommended next slice category:** the easy local-only slices are now
+  exhausted. The remaining inline blocks are large or coupled (Phase 25H
+  **Calendar module** itself ~130+ lines with ICS import; Phase 25N Find
+  Opportunities tab-switcher; provider-backed Web/Awards intel; Solicitation
+  Workspace). The next phase should pick a deliberate seam (e.g. the Calendar
+  module if its persistence stays read/write-through the same keys) rather than
+  a verbatim move, and budget for more test repointing.
+
 ## Phase 3.5 — Packaging smoke guard (✅)
 
 `app/**` is now a **required packaged runtime boundary**, not an optional

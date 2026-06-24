@@ -43,6 +43,7 @@ const REQUIRED_ASAR_FILES = [
   '/app/renderer/features/pilot-tracker/pilot-tracker.js',
   '/app/renderer/features/navigation/section-scroll.js',
   '/app/renderer/features/file-viewer/file-viewer.js',
+  '/app/renderer/features/todays-work-plan/todays-work-plan.js',
 ];
 
 function info(msg)  { console.log('[release-check] ' + msg); }

@@ -21,13 +21,19 @@ const path = require('node:path');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 const HTML = fs.readFileSync(path.join(REPO_ROOT, 'sourcedeck.html'), 'utf8');
+// Phase 7 renderer strangler: the Today's Work Plan integration logic was moved
+// out of an inline <script> in sourcedeck.html into a dedicated module. The
+// script-body behavior assertions below now read the module file; the Daily Ops
+// pane MARKUP assertion still reads sourcedeck.html.
+const WORK_PLAN_MODULE = fs.readFileSync(
+  path.join(REPO_ROOT, 'app/renderer/features/todays-work-plan/todays-work-plan.js'),
+  'utf8'
+);
 
 function getTodayWorkPlanBlock() {
   const startMarker = '/* Phase 25H — Today\'s Work Plan integration';
-  const startIdx = HTML.indexOf(startMarker);
-  assert.ok(startIdx !== -1, 'Phase 25H Today\'s Work Plan script block missing');
-  const endIdx = HTML.indexOf('</script>', startIdx);
-  return HTML.slice(startIdx, endIdx);
+  assert.ok(WORK_PLAN_MODULE.indexOf(startMarker) !== -1, 'Phase 25H Today\'s Work Plan module marker missing');
+  return WORK_PLAN_MODULE;
 }
 
 test('Today\'s Work Plan script block exists', () => {
