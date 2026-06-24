@@ -32,6 +32,7 @@ console.log('── GovCon release smoke (static) ──');
 
 const preload   = read('preload.js') || '';
 const mainjs    = read('main.js') || '';
+const featureIpc = read('app/main/ipc/register-feature-ipc.js') || '';
 const apijs     = read('api/index.js') || '';
 const html      = read('sourcedeck.html') || '';
 const exportSvc = read('services/govcon/export.js') || '';
@@ -48,15 +49,17 @@ for (const m of [
 check('preload exposes credentials.status/set/remove',
   /credentials:\s*\{[\s\S]*status[\s\S]*set[\s\S]*remove/.test(preload));
 
-// ── 2. Required IPC handlers exist (main.js) ──────────────────────────
+// ── 2. Required IPC handlers exist (composition root + feature IPC) ───
 console.log('\n[ipc handlers]');
+check('main.js delegates IPC registration through the composition root',
+  /registerFeatureIpc/.test(read('app/main/bootstrap.js') || '') && !/ipcMain\.handle\(/.test(mainjs));
 for (const h of [
   'govcon:sam-search', 'govcon:opportunities-favorite', 'govcon:deadlines-extract',
   'govcon:subcontractors-source', 'govcon:incumbent-research',
   'govcon:solicitation-analyze', 'govcon:clarifications-generate',
   'govcon:proposal-workspace', 'govcon:exports-create',
   'credentials:status', 'credentials:set', 'credentials:remove'
-]) check('ipcMain handles ' + h, mainjs.includes("'" + h + "'") || mainjs.includes('"' + h + '"'));
+]) check('feature IPC handles ' + h, featureIpc.includes("'" + h + "'") || featureIpc.includes('"' + h + '"'));
 
 // ── 3. api.govcon / app-api methods exist ─────────────────────────────
 console.log('\n[app-api surface]');
