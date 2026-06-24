@@ -66,6 +66,7 @@
       "sourcedeck.html",
       "sourcedeck-mark.svg",
       "chartnav-integration.js",
+      "app/**/*",
       "services/**/*",
       "api/**/*"
     ],
