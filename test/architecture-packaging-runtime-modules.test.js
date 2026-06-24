@@ -41,6 +41,7 @@ const REQUIRED_RUNTIME_FILES = [
   'app/renderer/features/find-opportunities/state-local-procurement.js',
   'app/renderer/features/pilot-tracker/pilot-tracker.js',
   'app/renderer/features/navigation/section-scroll.js',
+  'app/renderer/features/file-viewer/file-viewer.js',
 ];
 
 // A build.files entry covers app/** if it is the catch-all "**/*" or any glob

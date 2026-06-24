@@ -185,6 +185,44 @@ IPC/contract change).
   the central Phase 25N tab-switcher and the provider-backed Web/Awards intel
   and Solicitation Workspace blocks until the small slices are exhausted.
 
+## Phase 6 — Renderer strangler (✅ fourth slice)
+
+Same rule as Phases 3–5 (one contained slice, browser-safe `<script src>`, no
+IPC/contract change).
+
+- **Selected slice:** the **right-side file-viewer open/close helper**
+  (Phase 25AD) — `window.sdRightFileViewerOpen` / `window.sdRightFileViewerClose`.
+- **Why it was safe:** a self-contained IIFE that does **only** UI show/hide:
+  toggles `hidden`/`aria-hidden`, the `.is-open` class, and `data-open`, and on
+  close resets the title/meta/body to their default placeholder and removes the
+  `data-current-*` UI-state attributes. It performs **no** upload, extraction,
+  parsing, persistence, IPC, preload-bridge, storage, package-download, or
+  GovCon business logic. Its consumers (`gcACPreviewFile` in the Saved
+  Pursuits / Attachments code) stay in `sourcedeck.html` and keep calling the
+  same globals.
+- **Abort boundaries respected:** the block was confirmed isolated to open/close
+  UI behavior before editing — it owns no business rules, touches no
+  upload/extraction/parsing/persistence/IPC, and needed no viewer redesign or
+  workflow change. None of the documented STOP conditions were hit.
+- **New module path:** `app/renderer/features/file-viewer/file-viewer.js`
+- **Packaging guard updated:** added to
+  `test/architecture-packaging-runtime-modules.test.js` (`REQUIRED_RUNTIME_FILES`)
+  and `scripts/release-check.js` (`REQUIRED_ASAR_FILES`), pinned the same way as
+  the first three renderer modules; locked by
+  `test/architecture-renderer-strangler-phase-6.test.js` and the slice inventory
+  in `test/architecture-renderer-strangler.test.js`.
+- **Behavior-preservation rule:** the IIFE moved verbatim; same window surface,
+  same DOM/display/class/text effects, same early-return when the viewer element
+  is absent, same guarded sub-element updates, and the unused (dormant)
+  `sd-right-file-viewer-open-local` button reference preserved as-is — not
+  "fixed." `sourcedeck.html` dropped 23,307 → 23,268 lines; the viewer `<aside>`
+  markup and CSS stay in HTML (tablet/touch layout untouched).
+- **Recommended next slice category:** small candidates are nearly exhausted;
+  the Phase 25H "Today's Work Plan" calendar-integration helper (~64 lines) is a
+  reasonable next local-only target. After that, the remaining blocks are large
+  or coupled (Phase 25N tab-switcher, provider-backed Web/Awards intel,
+  Solicitation Workspace) and will need a seam plan rather than a verbatim move.
+
 ## Phase 3.5 — Packaging smoke guard (✅)
 
 `app/**` is now a **required packaged runtime boundary**, not an optional

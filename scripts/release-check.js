@@ -42,6 +42,7 @@ const REQUIRED_ASAR_FILES = [
   '/app/renderer/features/find-opportunities/state-local-procurement.js',
   '/app/renderer/features/pilot-tracker/pilot-tracker.js',
   '/app/renderer/features/navigation/section-scroll.js',
+  '/app/renderer/features/file-viewer/file-viewer.js',
 ];
 
 function info(msg)  { console.log('[release-check] ' + msg); }
