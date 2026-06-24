@@ -24,6 +24,13 @@ const path = require('node:path');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 const HTML = fs.readFileSync(path.join(REPO_ROOT, 'sourcedeck.html'), 'utf8');
+// Phase 5 renderer strangler: the gcScrollTo smooth-scroll handler moved out of
+// an inline <script> into a dedicated module. The handler assertions below read
+// the module file; the GovCon-pane section MARKUP assertions still read HTML.
+const SECTION_SCROLL_MODULE = fs.readFileSync(
+  path.join(REPO_ROOT, 'app/renderer/features/navigation/section-scroll.js'),
+  'utf8'
+);
 
 test('Phase 25N — GovCon tab nav supersedes the Phase 25F section-nav pill bar', () => {
   // The Phase 25F <nav id="gc-section-nav"> is retired; Phase 25N
@@ -92,11 +99,11 @@ test('gcScrollTo() smooth-scroll handler is defined globally', () => {
   // The handler must exist as window.gcScrollTo, accept (event, id),
   // and use scrollIntoView with the smooth-behavior option. No fetch,
   // no network call.
-  assert.match(HTML, /window\.gcScrollTo\s*=\s*function\(\s*ev\s*,\s*targetId\s*\)/);
-  assert.match(HTML, /scrollIntoView\(\s*\{\s*behavior:\s*['"]smooth['"]/);
+  assert.match(SECTION_SCROLL_MODULE, /window\.gcScrollTo\s*=\s*function\(\s*ev\s*,\s*targetId\s*\)/);
+  assert.match(SECTION_SCROLL_MODULE, /scrollIntoView\(\s*\{\s*behavior:\s*['"]smooth['"]/);
   // Guard against any future re-implementation that introduces a
   // network call.
-  const fn = HTML.match(/window\.gcScrollTo\s*=\s*function[\s\S]*?\n\s*\};/);
+  const fn = SECTION_SCROLL_MODULE.match(/window\.gcScrollTo\s*=\s*function[\s\S]*?\n\s*\};/);
   assert.ok(fn, 'gcScrollTo function block not isolatable');
   assert.doesNotMatch(fn[0], /\bfetch\s*\(/);
   assert.doesNotMatch(fn[0], /XMLHttpRequest/);

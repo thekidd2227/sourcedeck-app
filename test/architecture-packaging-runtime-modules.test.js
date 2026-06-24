@@ -40,6 +40,7 @@ const REQUIRED_RUNTIME_FILES = [
   'app/main/ipc/sanitizers.js',
   'app/renderer/features/find-opportunities/state-local-procurement.js',
   'app/renderer/features/pilot-tracker/pilot-tracker.js',
+  'app/renderer/features/navigation/section-scroll.js',
 ];
 
 // A build.files entry covers app/** if it is the catch-all "**/*" or any glob

@@ -183,6 +183,7 @@ tests.push(test('all extracted renderer slices exist and are referenced by HTML'
   const EXTRACTED_SLICES = [
     'app/renderer/features/find-opportunities/state-local-procurement.js', // Phase 3
     'app/renderer/features/pilot-tracker/pilot-tracker.js',                // Phase 4
+    'app/renderer/features/navigation/section-scroll.js',                  // Phase 5
   ];
   for (const rel of EXTRACTED_SLICES) {
     assert.ok(fs.existsSync(path.join(ROOT, rel)), 'extracted slice missing on disk: ' + rel);

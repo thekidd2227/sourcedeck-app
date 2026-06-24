@@ -152,6 +152,39 @@ slice, browser-safe `<script src>`, no IPC/contract change).
   Phase 25N tab-switcher and the provider-backed Web/Awards intel panels until
   the smaller slices are done.
 
+## Phase 5 — Renderer strangler (✅ third slice)
+
+Same rule as Phases 3–4 (one contained slice, browser-safe `<script src>`, no
+IPC/contract change).
+
+- **Selected slice:** the **GovCon section-navigation helper** (Phase 25F) —
+  smooth-scroll to a section + active-pill highlighting.
+- **Why it was safe:** explicitly "pure browser code; no network." It is a
+  single self-contained IIFE exposing one markup-invoked global
+  (`window.gcScrollTo`); `pills`/`setActive` are internal. No credential,
+  license, payment, provider, upload, extraction, storage, preload-bridge, or
+  GovCon business-rule dependency — it only calls `scrollIntoView` and sets
+  inline pill styles. Trivially testable in a minimal DOM harness.
+- **New module path:** `app/renderer/features/navigation/section-scroll.js`
+- **Packaging guard updated:** added to
+  `test/architecture-packaging-runtime-modules.test.js` (`REQUIRED_RUNTIME_FILES`)
+  and `scripts/release-check.js` (`REQUIRED_ASAR_FILES`), pinned the same way as
+  the State & Local and Pilot Tracker modules; locked by
+  `test/architecture-renderer-strangler-phase-5.test.js` and the slice inventory
+  in `test/architecture-renderer-strangler.test.js`.
+- **Behavior-preservation rule:** the IIFE moved verbatim; same
+  `window.gcScrollTo` surface, same active/inactive pill colors, same
+  smooth-scroll + missing-target no-op semantics. `sourcedeck.html` dropped
+  23,344 → 23,307 lines; the dashboard handler that calls
+  `gcScrollTo(event,'gc-sam-pipeline')` stays in HTML. (The `.gc-section-pill`
+  highlighting is currently dormant — there are no pill elements in markup —
+  and that pre-existing state is preserved exactly, not "fixed.")
+- **Recommended next slice category:** continue with small, local-only
+  utility/DOM helpers — e.g. the Phase 25AD right-side file-viewer open/close
+  helpers (`window.sdRightFileViewerOpen/Close`, pure show/hide). Keep avoiding
+  the central Phase 25N tab-switcher and the provider-backed Web/Awards intel
+  and Solicitation Workspace blocks until the small slices are exhausted.
+
 ## Phase 3.5 — Packaging smoke guard (✅)
 
 `app/**` is now a **required packaged runtime boundary**, not an optional
