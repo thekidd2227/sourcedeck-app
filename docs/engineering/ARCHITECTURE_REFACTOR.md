@@ -116,6 +116,35 @@ zero `ipcMain.handle`). The behavioral suite
 `test/state-local-procurement-panel.test.js` is unchanged except its two
 loaders now read the module file instead of the inline block.
 
+## Phase 3.5 — Packaging smoke guard (✅)
+
+`app/**` is now a **required packaged runtime boundary**, not an optional
+source folder. `main.js` `require()`s `app/main/**` at boot and
+`sourcedeck.html` loads `app/renderer/features/**` via `<script src>`, so if
+`app/**` is excluded from the asar the packaged app crashes at launch —
+exactly what happened when `build.files` (an explicit allowlist) shipped
+without `app/**`.
+
+This boundary is guarded so it cannot silently regress again:
+
+- **`test/architecture-packaging-runtime-modules.test.js`** asserts (1)
+  `build.files` contains a rule that admits `app/**`, (2) every required
+  runtime module exists in the repo, and (3) if a packaged
+  `dist/mac/SourceDeck.app/.../app.asar` exists, those same files are inside
+  it (via the local `@electron/asar` dep). When no asar is present the asar
+  inspection **skips with a non-failing message** — CI may run `npm test`
+  before packaging. It runs in the `npm test` chain.
+- **`scripts/release-check.js`** now fails fast at gate time if `build.files`
+  does not admit `app/**`, and its `REQUIRED_ASAR_FILES` list pins the
+  `app/main/**` + `app/renderer/**` runtime modules so a packaged asar
+  missing any of them blocks the release.
+
+Required runtime modules under the boundary: `app/main/bootstrap.js`,
+`app/main/window/create-main-window.js`, `app/main/startup/privacy-scrub.js`,
+`app/main/startup/updater.js`, `app/main/ipc/register-core-ipc.js`,
+`app/main/ipc/register-feature-ipc.js`, `app/main/ipc/sanitizers.js`,
+`app/renderer/features/find-opportunities/state-local-procurement.js`.
+
 ## Constraints that still apply
 
 - **No new dependencies.** No new npm packages, no bundler, no

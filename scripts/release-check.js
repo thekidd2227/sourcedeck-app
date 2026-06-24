@@ -25,6 +25,21 @@ const REQUIRED_ASAR_FILES = [
   // main.js added the require. Now pinned so a future regression
   // fails fast at gate time, not at the buyer's launch dialog.
   '/api/index.js',
+  // Phase 3.5: app/** is a required packaged runtime boundary. Phase 1/2
+  // moved the main-process composition root + IPC registrars here (require()'d
+  // by main.js at boot) and Phase 3 extracted the first renderer slice
+  // (loaded by sourcedeck.html via <script src>). build.files is an explicit
+  // allowlist that once omitted app/**, shipping an asar with zero app/
+  // entries — a guaranteed boot crash. Pinned so that regression fails at the
+  // gate, not at the buyer's launch dialog.
+  '/app/main/bootstrap.js',
+  '/app/main/window/create-main-window.js',
+  '/app/main/startup/privacy-scrub.js',
+  '/app/main/startup/updater.js',
+  '/app/main/ipc/register-core-ipc.js',
+  '/app/main/ipc/register-feature-ipc.js',
+  '/app/main/ipc/sanitizers.js',
+  '/app/renderer/features/find-opportunities/state-local-procurement.js',
 ];
 
 function info(msg)  { console.log('[release-check] ' + msg); }
@@ -38,6 +53,17 @@ function fail(msg)  { console.error('[release-check] FAIL: ' + msg); process.exi
 // _arcg_help) are explicitly allow-listed.
 const pkg = JSON.parse(fs.readFileSync(path.join(REPO, 'package.json'), 'utf8'));
 const SHIPPED_FILES = (pkg.build && pkg.build.files) || [];
+
+// Phase 3.5 packaging allowlist guard: build.files is an explicit allowlist,
+// so any top-level runtime dir that isn't listed is silently excluded from the
+// asar. app/** carries load-bearing main-process + renderer modules; assert a
+// rule that admits it before doing anything else.
+if (!SHIPPED_FILES.some((f) => f === '**/*' || /^app\//.test(String(f)))) {
+  fail('build.files must include "app/**/*" (or "**/*") so app/main/** and ' +
+       'app/renderer/** ship in the packaged asar. Current build.files: ' +
+       JSON.stringify(SHIPPED_FILES));
+}
+info('packaging allowlist: ✓ build.files admits app/** (required runtime boundary).');
 
 const PRIVACY_BLOCKLIST = [
   { pattern: /ARCG\s+Systems/g,            reason: 'Owner brand: "ARCG Systems"' },
