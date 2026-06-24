@@ -131,6 +131,19 @@ for (const ch of RELEASE_CRITICAL_CHANNELS) {
      !new RegExp(`ipcMain\\.handle\\(\\s*['"]${ch.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}['"]`).test(mainSrc));
 }
 
+// ── 4b. The refresh script's post-build IPC guard scans the registrar ──
+// refresh-buyer-trial-package.sh verifies the Fetch Links IPC handler
+// after the build. It must scan the modular registrar — the same Phase 2
+// migration that broke the smoke also broke this grep (it targeted
+// main.js, which no longer hosts the handler).
+const refreshSrc = fs.readFileSync(path.join(ROOT, 'scripts/refresh-buyer-trial-package.sh'), 'utf8');
+ok('refresh script greps govcon:sam-fetch-links from the feature registrar',
+   /grep -q "govcon:sam-fetch-links" app\/main\/ipc\/register-feature-ipc\.js/.test(refreshSrc));
+ok('refresh script does NOT grep govcon:sam-fetch-links from main.js (stale target removed)',
+   !/grep -q "govcon:sam-fetch-links" main\.js/.test(refreshSrc));
+ok('refresh-guarded channel govcon:sam-fetch-links is registered at runtime',
+   registered.includes('govcon:sam-fetch-links'));
+
 // ── 5. preload exposes a renderer→main path for each channel ───────────
 const preloadSrc = fs.readFileSync(path.join(ROOT, 'preload.js'), 'utf8');
 for (const ch of RELEASE_CRITICAL_CHANNELS) {

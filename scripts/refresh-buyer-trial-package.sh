@@ -60,7 +60,10 @@ test -d "$BUILT_APP" || { echo "ERROR: SourceDeck.app was not built" >&2; exit 1
 BUILT_ASAR="$BUILT_APP/Contents/Resources/app.asar"
 test -f "$BUILT_ASAR" || { echo "ERROR: built app.asar missing" >&2; exit 1; }
 
-grep -q "govcon:sam-fetch-links" main.js || { echo "ERROR: Fetch Links IPC missing" >&2; exit 1; }
+# Phase 2 migrated IPC registration out of main.js into the composition
+# root's feature registrar; scan that file, not main.js (see
+# docs/engineering/incident-govcon-ipc-release-smoke-drift.md).
+grep -q "govcon:sam-fetch-links" app/main/ipc/register-feature-ipc.js || { echo "ERROR: Fetch Links IPC missing (expected in app/main/ipc/register-feature-ipc.js)" >&2; exit 1; }
 grep -q "Fetch Links" sourcedeck.html || { echo "ERROR: Fetch Links UI missing" >&2; exit 1; }
 grep -q "Upload Solicitation Files" sourcedeck.html || { echo "ERROR: manual upload missing" >&2; exit 1; }
 

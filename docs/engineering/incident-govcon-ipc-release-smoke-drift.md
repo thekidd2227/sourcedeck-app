@@ -68,6 +68,21 @@ Pre-existing regression tests already prove this at runtime:
 register) and `test/architecture-ipc-channel-inventory.test.js` (exact 96-channel set,
 no duplicates).
 
+### Second occurrence — same root cause in the refresh script
+
+The first `refresh:buyer-trial` re-run cleared the smoke gate and **successfully
+packaged** the macOS app (electron-builder, `dist/mac/SourceDeck.app/Contents/Resources/app.asar`
+produced), then aborted at a post-build guard in
+`scripts/refresh-buyer-trial-package.sh:63`:
+
+```
+grep -q "govcon:sam-fetch-links" main.js || { echo "ERROR: Fetch Links IPC missing"; exit 1; }
+```
+
+`govcon:sam-fetch-links` was migrated to `register-feature-ipc.js:74` in Phase 2 and no
+longer appears in `main.js` (0 hits) — the identical stale-scan defect, in the refresh
+script's own release guard. Fixed to scan the modular registrar.
+
 ## Fix
 
 1. **Smoke detector aligned with the modular architecture** (commit `5990363`,
@@ -101,8 +116,11 @@ are unchanged.
 
 ## Files changed
 
-- `scripts/govcon-release-smoke.mjs` — detector aligned with composition root (commit `5990363`).
-- `test/govcon-release-smoke-detection.test.js` — **new** anti-drift regression guard.
+- `scripts/govcon-release-smoke.mjs` — smoke detector aligned with composition root (commit `5990363`).
+- `scripts/refresh-buyer-trial-package.sh` — post-build Fetch Links IPC guard re-pointed
+  from `main.js` to `app/main/ipc/register-feature-ipc.js` (same root cause, second site).
+- `test/govcon-release-smoke-detection.test.js` — **new** anti-drift regression guard
+  (covers both the smoke detector and the refresh-script guard).
 - `package.json` — wired the new test into the `test` chain.
 - `docs/engineering/incident-govcon-ipc-release-smoke-drift.md` — this report.
 
