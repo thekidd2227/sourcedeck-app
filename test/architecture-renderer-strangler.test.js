@@ -175,6 +175,22 @@ tests.push(test('app/main/ipc/ still owns IPC registration', () => {
   }
 }));
 
+// Strangler progression — one slice per phase. As each renderer slice is
+// extracted, add it here; every listed slice must be a real module that
+// sourcedeck.html loads via <script src>. This is the running inventory of the
+// one-slice-at-a-time renderer strangler.
+tests.push(test('all extracted renderer slices exist and are referenced by HTML', () => {
+  const EXTRACTED_SLICES = [
+    'app/renderer/features/find-opportunities/state-local-procurement.js', // Phase 3
+    'app/renderer/features/pilot-tracker/pilot-tracker.js',                // Phase 4
+  ];
+  for (const rel of EXTRACTED_SLICES) {
+    assert.ok(fs.existsSync(path.join(ROOT, rel)), 'extracted slice missing on disk: ' + rel);
+    assert.ok(HTML.includes('<script src="' + rel + '"></script>'),
+      'sourcedeck.html must load extracted slice via <script src>: ' + rel);
+  }
+}));
+
 Promise.all(tests).then(() => {
   console.log(`\n=== ${failed === 0 ? 'PASS' : 'FAIL'} — ${passed}/${passed + failed} Phase 3 renderer strangler checks ===\n`);
   process.exit(failed ? 1 : 0);

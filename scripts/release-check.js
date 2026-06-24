@@ -40,6 +40,7 @@ const REQUIRED_ASAR_FILES = [
   '/app/main/ipc/register-feature-ipc.js',
   '/app/main/ipc/sanitizers.js',
   '/app/renderer/features/find-opportunities/state-local-procurement.js',
+  '/app/renderer/features/pilot-tracker/pilot-tracker.js',
 ];
 
 function info(msg)  { console.log('[release-check] ' + msg); }

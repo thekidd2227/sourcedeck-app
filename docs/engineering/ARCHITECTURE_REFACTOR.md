@@ -116,6 +116,42 @@ zero `ipcMain.handle`). The behavioral suite
 `test/state-local-procurement-panel.test.js` is unchanged except its two
 loaders now read the module file instead of the inline block.
 
+## Phase 4 — Renderer strangler (✅ second slice)
+
+The second renderer slice follows the same rule as Phase 3 (one contained
+slice, browser-safe `<script src>`, no IPC/contract change).
+
+- **Selected slice:** the **Pilot Tracker** (Phase 25E.5) — the local-only
+  7-day trial tracker.
+- **Why it was safe:** a fully self-contained IIFE with no dependency on
+  unrelated globals; its only outside calls are the existing
+  `window.sd.storeGet/storeSet` preload bridge (kept as-is, with a
+  `localStorage` fallback). It is explicitly local-only ("nothing here is
+  sent, submitted, or uploaded") — no credential/license/payment/extraction
+  ties. The renderer-facing surface is just two markup-invoked globals
+  (`window.ptOnDayChange`, `window.ptSaveDebounced`); `renderPilotTracker`
+  and friends are internal. The existing `test/phase-25e-pilot-tracker.test.js`
+  only asserts pane **markup**, so it was unaffected by moving the script.
+- **New module path:**
+  `app/renderer/features/pilot-tracker/pilot-tracker.js`
+- **Behavior-preservation rule:** the IIFE moved verbatim; same window
+  surface, same `sd.pilotTracker.v1` storage key, same `pilotTracker` bridge
+  key, same auto-force-STOP-on-open-criticals logic, same boot via
+  `DOMContentLoaded`/`setTimeout`. `sourcedeck.html` dropped 23,515 → 23,344
+  lines; the Pilot Tracker pane markup and its `onchange`/`oninput` handlers
+  stay in HTML.
+- **Guards updated:** the new module is added to the Phase 3.5 packaging
+  guard (`test/architecture-packaging-runtime-modules.test.js`) and to
+  `scripts/release-check.js` `REQUIRED_ASAR_FILES`, and is locked by
+  `test/architecture-renderer-strangler-phase-4.test.js` plus the running
+  slice inventory in `test/architecture-renderer-strangler.test.js`.
+- **Next recommended slice category:** another small, self-contained,
+  storage-or-DOM-only utility panel with no provider/credential/extraction
+  ties — e.g. the Phase 25F GovCon section-navigation helper or the Phase 25AD
+  right-side file-viewer open/close helpers. Continue to **avoid** the large
+  Phase 25N tab-switcher and the provider-backed Web/Awards intel panels until
+  the smaller slices are done.
+
 ## Phase 3.5 — Packaging smoke guard (✅)
 
 `app/**` is now a **required packaged runtime boundary**, not an optional

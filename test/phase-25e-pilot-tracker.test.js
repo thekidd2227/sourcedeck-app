@@ -31,6 +31,14 @@ const path = require('node:path');
 
 const REPO_ROOT = path.resolve(__dirname, '..');
 const HTML = fs.readFileSync(path.join(REPO_ROOT, 'sourcedeck.html'), 'utf8');
+// Phase 4 renderer strangler: the Pilot Tracker script logic was moved out of
+// an inline <script> in sourcedeck.html into a dedicated module. Assertions
+// about that logic (storage keys, setupComplete read) now read the module
+// file; the pane MARKUP assertions below still read sourcedeck.html.
+const PILOT_MODULE = fs.readFileSync(
+  path.join(REPO_ROOT, 'app/renderer/features/pilot-tracker/pilot-tracker.js'),
+  'utf8'
+);
 
 function extractDeliveryPane() {
   const start = HTML.indexOf('<div class="tab-pane" id="tab-delivery">');
@@ -150,12 +158,12 @@ test('pre-Phase-25E.5 client-services workflow copy is gone from the pane', () =
 
 test('Pilot Tracker uses electron-store namespace "pilotTracker"', () => {
   assert.match(
-    HTML,
+    PILOT_MODULE,
     /BRIDGE_KEY\s*=\s*['"]pilotTracker['"]/,
     'BRIDGE_KEY must equal "pilotTracker"'
   );
   assert.match(
-    HTML,
+    PILOT_MODULE,
     /STORE_KEY\s*=\s*['"]sd\.pilotTracker\.v1['"]/,
     'localStorage fallback key must be sd.pilotTracker.v1'
   );
@@ -163,7 +171,7 @@ test('Pilot Tracker uses electron-store namespace "pilotTracker"', () => {
 
 test('Pilot Tracker reads Phase 24K Setup Wizard completion flag (read-only)', () => {
   assert.match(
-    HTML,
+    PILOT_MODULE,
     /localStorage\.getItem\(['"]sd\.govcon\.setupComplete['"]\)/,
     'Pilot Tracker must surface the Phase 24K setupComplete flag'
   );
