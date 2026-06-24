@@ -146,10 +146,12 @@ test('preload still exposes window.sd.airtable.{list,create,update,delete}', () 
 });
 
 test('main.js airtable handlers route through appApi (regression)', () => {
-  const main = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
+  // Phase 2: the airtable IPC handlers moved to
+  // app/main/ipc/register-feature-ipc.js. Behavioral assertion unchanged.
+  const feature = fs.readFileSync(path.join(ROOT, 'app/main/ipc/register-feature-ipc.js'), 'utf8');
   for (const ch of ['airtable:list', 'airtable:create', 'airtable:update', 'airtable:delete']) {
     const re = new RegExp(`ipcMain\\.handle\\('${ch.replace(/[\.\-:]/g, '\\$&')}'\\s*,[\\s\\S]{0,200}?appApi\\.airtable\\.`);
-    assert.ok(re.test(main), `IPC handler "${ch}" must route through appApi.airtable.*`);
+    assert.ok(re.test(feature), `IPC handler "${ch}" must route through appApi.airtable.*`);
   }
 });
 

@@ -26,7 +26,13 @@ const fileUtils = require('../services/govcon/solicitation-file-utils');
 
 const ROOT = path.join(__dirname, '..');
 const html = fs.readFileSync(path.join(ROOT, 'sourcedeck.html'), 'utf8');
-const mainJs = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8');
+// Phase 2: govcon:open-external-safe + govcon:select-and-extract-solicitation
+// + open-external handlers live in app/main/ipc/register-feature-ipc.js.
+// Negative-content assertions (no .minimize/.hide) still hold across both
+// main.js and the registrar; positive-content assertions (sliced by IPC
+// channel name) need to see the registrar source.
+const mainJs = fs.readFileSync(path.join(ROOT, 'main.js'), 'utf8')
+  + '\n' + fs.readFileSync(path.join(ROOT, 'app/main/ipc/register-feature-ipc.js'), 'utf8');
 const preloadJs = fs.readFileSync(path.join(ROOT, 'preload.js'), 'utf8');
 
 let passed = 0;

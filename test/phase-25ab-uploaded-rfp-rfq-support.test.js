@@ -2,7 +2,10 @@ const assert = require('assert');
 const fs = require('fs');
 const { acceptedUploadTypes } = require('../services/govcon/solicitation-package-extract');
 const html = fs.readFileSync('sourcedeck.html', 'utf8');
-const main = fs.readFileSync('main.js', 'utf8');
+// Phase 2: native picker (govcon:select-and-extract-solicitation handler)
+// moved to app/main/ipc/register-feature-ipc.js with the extension list intact.
+const main = fs.readFileSync('main.js', 'utf8')
+  + '\n' + fs.readFileSync('app/main/ipc/register-feature-ipc.js', 'utf8');
 const types = acceptedUploadTypes();
 
 ['.pdf', '.docx', '.xlsx', '.csv', '.txt', '.xml', '.zip'].forEach((ext) => {

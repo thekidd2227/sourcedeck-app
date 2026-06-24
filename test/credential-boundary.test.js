@@ -241,7 +241,13 @@ test('preload: exposes credentials/airtable/enrichment/ai surfaces but no raw ke
 });
 
 test('main.js: all govcon IPC handlers route through appApi', () => {
-  const main = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
+  // Phase 2: IPC registrations live in app/main/ipc/register-feature-ipc.js
+  // (with core handlers in register-core-ipc.js). The behavioral assertion
+  // is unchanged: every govcon/credentials/airtable/enrichment/ai channel
+  // must route through the createAppApi adapter (api/index.js).
+  const main = ['main.js', 'app/main/ipc/register-core-ipc.js', 'app/main/ipc/register-feature-ipc.js']
+    .map(p => fs.readFileSync(path.join(__dirname, '..', p), 'utf8'))
+    .join('\n');
   const govconChannels = [
     'govcon:targeting-get', 'govcon:targeting-set', 'govcon:targeting-reset',
     'govcon:sam-search',    'govcon:compliance-matrix', 'govcon:pre-rfp-evaluate',
@@ -264,9 +270,13 @@ test('main.js: all govcon IPC handlers route through appApi', () => {
 });
 
 test('main.js: no longer imports services/govcon/* directly', () => {
-  const main = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
-  assert.ok(!/require\(['"]\.\/services\/govcon\/[^'"]+['"]\)/.test(main),
-    'main.js should not import services/govcon/* directly; use createAppApi instead');
+  // Phase 2: the IPC registrars also must not import services/govcon/*
+  // directly; everything routes through createAppApi.
+  const sources = ['main.js', 'app/main/ipc/register-core-ipc.js', 'app/main/ipc/register-feature-ipc.js']
+    .map(p => fs.readFileSync(path.join(__dirname, '..', p), 'utf8'))
+    .join('\n');
+  assert.ok(!/require\(['"]\.\/services\/govcon\/[^'"]+['"]\)/.test(sources),
+    'main.js and ipc registrars should not import services/govcon/* directly; use createAppApi instead');
 });
 
 // ── runner ──────────────────────────────────────────────────────────

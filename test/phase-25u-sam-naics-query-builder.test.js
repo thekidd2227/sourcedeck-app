@@ -15,7 +15,10 @@
 const fs = require('fs');
 const path = require('path');
 
-const mainSrc = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
+// Phase 2: sanitizeSamFilters + helpers moved out of main.js into
+// app/main/ipc/sanitizers.js. Behavioral assertions still hold; we just
+// read the canonical sanitizer source from its new home.
+const mainSrc = fs.readFileSync(path.join(__dirname, '..', 'app/main/ipc/sanitizers.js'), 'utf8');
 const samSrc  = fs.readFileSync(path.join(__dirname, '..', 'services', 'govcon', 'sam-search.js'), 'utf8');
 
 function assert(c, m){ if(!c){ console.error('  ✗ ' + m); process.exitCode = 1; } else { console.log('  ✓ ' + m); } }

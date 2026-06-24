@@ -507,11 +507,16 @@ test('admin token persistence routes through safeStorage (storeKey/getKey), not 
 test('main.js wires safeStorage-backed key IPC the renderer relies on', function () {
   const fs = require('fs');
   const path = require('path');
+  // Phase 2: the safeStorage destructure stays in main.js (it constructs the
+  // credential adapter), but the key-IPC handlers moved into
+  // app/main/ipc/register-core-ipc.js. The behavioral assertion is unchanged.
   const main = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf-8');
+  const core = fs.readFileSync(path.join(__dirname, '..', 'app/main/ipc/register-core-ipc.js'), 'utf-8');
+  const src  = main + '\n' + core;
   assert.ok(/safeStorage/.test(main), 'main.js must import safeStorage');
-  assert.ok(/ipcMain\.handle\(['\"]store-key['\"]/.test(main), 'store-key handler required');
-  assert.ok(/ipcMain\.handle\(['\"]get-key['\"]/.test(main), 'get-key handler required');
-  assert.ok(/ipcMain\.handle\(['\"]delete-key['\"]/.test(main), 'delete-key handler required');
+  assert.ok(/ipcMain\.handle\(['\"]store-key['\"]/.test(src), 'store-key handler required');
+  assert.ok(/ipcMain\.handle\(['\"]get-key['\"]/.test(src), 'get-key handler required');
+  assert.ok(/ipcMain\.handle\(['\"]delete-key['\"]/.test(src), 'delete-key handler required');
 });
 
 test('package.json includes chartnav-integration.js in build.files', function () {

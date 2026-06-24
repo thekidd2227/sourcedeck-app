@@ -1,21 +1,23 @@
 // app/main/bootstrap.js
 //
-// Phase 1 composition root for the main process.
+// Composition root for the main process.
 //
 // `main.js` becomes a thin entry point that:
 //   1. Imports electron + electron-store + electron-updater + the
 //      shared-services + app-api boundary.
 //   2. Calls `bootstrap(...)` from this module to wire startup-time
 //      concerns: privacy scrub, autoUpdater configuration, primary
-//      window creation, IPC registrar scaffolds.
-//   3. Continues to host the literal `ipcMain.handle(...)` registrations
-//      because ~11 static-analysis tests pin them to main.js. Those
-//      registrations will migrate into `register-core-ipc.js` /
-//      `register-feature-ipc.js` in Phase 2 (see ADR-0001).
+//      window creation, IPC registration (core + feature).
+//   3. Drives the Electron app lifecycle (whenReady / activate /
+//      window-all-closed).
 //
-// This module owns nothing the renderer can see. Every IPC channel
-// name and behavior is preserved byte-for-byte. The strangler approach
-// keeps every Phase 1 change reversible.
+// Phase 2: IPC registration migrated out of main.js into
+// `register-core-ipc.js` + `register-feature-ipc.js`. The deps bag is
+// forwarded verbatim so handler bodies see the same dependencies the
+// inline versions did. Channel names, argument shapes, and return
+// shapes are preserved byte-for-byte. See ADR-0001.
+//
+// This module owns nothing the renderer can see.
 
 'use strict';
 
@@ -26,29 +28,52 @@ const { registerCoreIpc }      = require('./ipc/register-core-ipc');
 const { registerFeatureIpc }   = require('./ipc/register-feature-ipc');
 
 // deps:
-//   electron         — { app, BrowserWindow, ipcMain, shell, safeStorage, dialog }
-//   autoUpdater      — from electron-updater
-//   store            — electron-store instance (sourcedeck-data)
-//   credentials      — safeStorage-backed credential adapter
-//   appApi           — createAppApi(...) result
-//   audit / context  — shared-service singletons (passed through for IPC use)
+//   electron                 — { app, BrowserWindow, ipcMain, shell, safeStorage, dialog }
+//   autoUpdater              — from electron-updater
+//   store                    — electron-store instance (sourcedeck-data)
+//   credentials              — safeStorage-backed credential adapter
+//   appApi                   — createAppApi(...) result
+//   audit / context          — shared-service singletons
+//   AUDIT_TYPES              — audit-log type constants
+//   licensing                — license-service instance
+//   loadConfig               — IBM-readiness config loader
+//   getAiProviderStatus      — IBM-readiness AI status fn
+//   getStorageProviderStatus — IBM-readiness storage status fn
+//   createAiProvider         — IBM-readiness AI factory
+//   createStorage            — IBM-readiness storage factory
+//   validateUpload           — upload-validation entry point
 //
 // Returns:
 //   {
 //     runScrub,            // function() — re-runs the first-run privacy scrub
 //     createWindow,        // function() — creates the primary BrowserWindow and tracks it
 //     getMainWindow,       // function() → BrowserWindow | null
-//     onWindowClosed,      // function() — clears the tracked window reference
-//     triggerUpdateCheck   // function() — invoked once 5 s after createWindow on packaged builds
+//     triggerUpdateCheck,  // function() — invoked once 5 s after createWindow on packaged builds
+//     ipcChannels          // { core: [...], feature: [...] } — channels registered by Phase 2
 //   }
 function bootstrap(deps){
   if (!deps || !deps.electron) {
     throw new Error('bootstrap: deps.electron is required');
   }
-  const { electron, autoUpdater, store } = deps;
-  const { BrowserWindow, shell } = electron;
+  const {
+    electron,
+    autoUpdater,
+    store,
+    appApi,
+    audit,
+    AUDIT_TYPES,
+    context,
+    licensing,
+    loadConfig,
+    getAiProviderStatus,
+    getStorageProviderStatus,
+    createAiProvider,
+    createStorage,
+    validateUpload
+  } = deps;
+  const { app, BrowserWindow, ipcMain, shell, safeStorage, dialog } = electron;
 
-  // Singleton window reference. We expose getter + setter so the
+  // Singleton window reference. Exposed as getter + setter so the
   // autoUpdater can post to `webContents.send('update-ready')` and so
   // `app.on('activate')` can re-create the window when none exists.
   let mainWindow = null;
@@ -86,15 +111,47 @@ function bootstrap(deps){
     return win;
   }
 
-  // Phase 1 IPC registrars — currently no-op scaffolds. See ADR-0001.
-  registerCoreIpc({ phase: 1, deps });
-  registerFeatureIpc({ phase: 1, deps });
+  // ─── Phase 2 IPC registration ──────────────────────────────────────
+  // Core: storage-key, store-get/set, ai/storage provider-status,
+  // context, guard-sensitive-action, validate-upload, ai-generate,
+  // storage-test-put, audit-summary, license:*
+  const coreRegResult = registerCoreIpc({
+    ipcMain,
+    safeStorage,
+    store,
+    audit,
+    AUDIT_TYPES,
+    context,
+    licensing,
+    loadConfig,
+    getAiProviderStatus,
+    getStorageProviderStatus,
+    createAiProvider,
+    createStorage,
+    validateUpload
+  });
+
+  // Feature: govcon:*, open-external, audit:list, credentials:*,
+  // airtable:*, enrichment:*, ai:*. The feature registrar pulls
+  // userDataPath via a lazy getter so the platform-neutral handlers
+  // never need to know about the Electron `app` object.
+  const featureRegResult = registerFeatureIpc({
+    ipcMain,
+    shell,
+    dialog,
+    appApi,
+    getUserDataPath: () => app.getPath('userData')
+  });
 
   return {
     runScrub,
     createWindow,
     getMainWindow,
     triggerUpdateCheck: triggerNotifyCheck,
+    ipcChannels: {
+      core:    coreRegResult.registered.slice(),
+      feature: featureRegResult.registered.slice()
+    },
     // expose the setter only so legacy main.js code (or tests) can clear
     // the ref when needed — not part of the rolling Phase 2 API.
     _setMainWindow: setMainWindow

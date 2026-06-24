@@ -485,10 +485,14 @@ test('preload exposes no raw API call surface, only IPC invocations', () => {
 });
 
 test('main.js never logs a SAM API key value to audit metadata', () => {
-  const main = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
-  // The SAM IPC handler must not push the api key into audit metadata.
-  // Easy check: the handler block should not reference SAM_API_KEY in metadata.
-  const samBlock = main.match(/govcon:sam-search[\s\S]*?\}\)\;/);
+  // Phase 2: the sam-search IPC handler lives in
+  // app/main/ipc/register-feature-ipc.js. The behavioral assertion is
+  // unchanged — the handler block must not reference SAM_API_KEY in
+  // metadata or handle apiKey directly.
+  const main    = fs.readFileSync(path.join(__dirname, '..', 'main.js'), 'utf8');
+  const feature = fs.readFileSync(path.join(__dirname, '..', 'app/main/ipc/register-feature-ipc.js'), 'utf8');
+  const src     = main + '\n' + feature;
+  const samBlock = src.match(/govcon:sam-search[\s\S]*?\}\)\;/);
   assert.ok(samBlock, 'sam-search ipc block exists');
   assert.ok(!/SAM_API_KEY/i.test(samBlock[0]), 'sam-search ipc must not reference SAM_API_KEY in metadata');
   assert.ok(!/apiKey/i.test(samBlock[0].replace(/\/\/.*/g, '')), 'sam-search ipc must not handle apiKey directly');
