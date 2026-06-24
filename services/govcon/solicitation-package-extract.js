@@ -642,17 +642,91 @@ function sectionRegex(letter) {
 // ---------------------------------------------------------------------------
 
 const FALLBACK_BUCKETS = {
-  instructions: /\b(instructions? to offerors?|submission (?:instructions?|method)|proposal (?:shall|must|due|format)|offerors? (?:shall|must|are required to)|quoters? (?:shall|must)|page limit|page limitation|font size|margins?|how to submit|submit (?:your |the )?(?:proposal|quote|offer)|volumes?\b|due (?:date|no later than)|email (?:your |the )?(?:proposal|quote)|via (?:email|portal|sam\.gov|piee|ebuy))/i,
-  evaluation: /\b(evaluation factors?|basis for award|best value|trade-?off|LPTA|lowest price technically acceptable|award will be made|will be evaluated|the government will evaluate|technical (?:approach|merit) will|past performance will be evaluated|evaluation criteria)\b/i,
-  scope: /\b(contractor shall|the contractor (?:shall|must|will|is required)|statement of work|performance work statement|\bPWS\b|\bSOW\b|\bSOO\b|scope of work|period of performance|place of performance|tasks?(?: include| shall)|services? (?:shall|include|to be performed)|deliverables?)\b/i,
-  forms: /\b(SF\s*\d+|standard form \d+|representations? and certifications?|certification|attachment\b|exhibit\b|QASP|wage determination|pricing (?:sheet|schedule|template)|amendment \d+|fill in and return|complete and return)\b/i,
+  instructions: /\b(instructions? to offerors?|FAR\s*52\.212-1|52\.212-1|FAR\s*52\.215-1|52\.215-1|submission (?:instructions?|method)|proposal (?:shall|must|due|format)|offerors? (?:shall|must|are required to)|quoters? (?:shall|must)|page limit|page limitation|font size|margins?|how to submit|submit (?:your |the )?(?:proposal|quote|offer)|volumes?\b|due (?:date|no later than)|email (?:your |the )?(?:proposal|quote)|via (?:email|portal|sam\.gov|piee|ebuy))/i,
+  evaluation: /\b(FAR\s*52\.212-2|52\.212-2|evaluation factors?|basis for award|best value|trade-?off|LPTA|lowest price technically acceptable|award will be made|will be evaluated|the government will evaluate|technical (?:capability|approach|merit) (?:is|will)|past performance (?:will be )?(?:considered|evaluated)|evaluation criteria)\b/i,
+  scope: /\b(contractor shall|the contractor (?:shall|must|will|is required)|statement of work|performance work statement|performance requirements summary|\bPWS\b|\bSOW\b|\bSOO\b|statement of objectives|scope of work|period of performance|tasks?(?: include| shall)|services? (?:shall|include|to be performed)|provide all labor|deliverables?)\b/i,
+  forms: /\b(FAR\s*52\.212-3|52\.212-3|SF\s*\d+|standard form \d+|representations? and certifications?|certification|attachment\b|exhibit\b|QASP|wage determination|pricing (?:sheet|schedule|template)|amendment \d+|fill in and return|complete and return)\b/i,
   deadlines: /\b(due (?:date|by|no later than)|deadline|closing date|response date|offers? due|proposals? due|quotes? due|questions? (?:are )?due|site visit|no later than \d|submit(?:ted)? by)\b/i,
   risks: /\b(shall|must|mandatory|is required|are required|site visit|security clearance|background check|insurance|bonding|bond required|past performance|page limit|limitation on subcontracting|key personnel|wage determination|invoic)\b/i
 };
 
-function scanFallbackBuckets(sourceBlocks) {
+const FAR_FALLBACK_BLOCKS = [
+  { bucket: 'instructions', section: 'L', heading: /^(?:addendum\s+to\s+)?(?:FAR\s*)?52\.212-1\b|^(?:addendum\s+to\s+)?(?:FAR\s*)?52\.215-1\b|^instructions?\s+to\s+(?:offerors?|quoters?)\b|^quote\s+submission\s+instructions?\b/i },
+  { bucket: 'evaluation', section: 'M', heading: /^(?:addendum\s+to\s+)?(?:FAR\s*)?52\.212-2\b|^evaluation\s+(?:factors?|criteria)\b|^basis\s+for\s+award\b|^award\s+decision\b/i },
+  { bucket: 'scope', section: 'C', heading: /^performance\s+requirements\s+summary\b|^performance\s+work\s+statement\b|^statement\s+of\s+work\b|^statement\s+of\s+objectives\b|^scope\s+of\s+work\b|^description\s*\/\s*specifications?\b|^services?\s+to\s+be\s+performed\b/i },
+  { bucket: 'forms', section: 'J', heading: /^list\s+of\s+(?:attachments|documents|exhibits)\b|^(?:attachments?|exhibits?|appendix|appendices)\b|^required\s+forms?\b|^pricing\s+(?:sheet|schedule|template)\b|^wage\s+determination\b/i },
+  { bucket: 'forms', section: 'K', heading: /^(?:FAR\s*)?52\.212-3\b|^offeror\s+representations?\s+and\s+certifications?\b|^representations?\s+and\s+certifications?\b/i },
+  { bucket: 'risks', section: 'H', heading: /^special\s+(?:contract\s+)?requirements\b|^security\s+requirements\b|^insurance\s+requirements\b|^limitations?\s+on\s+subcontracting\b/i },
+  { bucket: 'risks', section: 'I', heading: /^contract\s+clauses\b|^(?:FAR|DFARS)\s+clauses?\b|^(?:FAR|DFARS)\s+52\.\d{3}/i }
+];
+
+const FAR_BLOCK_STOP_RE = /^(?:SECTION\s+[A-M]\b|[A-M]\s*[.\-]\s+|PART\s+[IVX]+\b|(?:addendum\s+to\s+)?(?:FAR\s*)?52\.212-[1-5]\b|(?:addendum\s+to\s+)?(?:FAR\s*)?52\.215-1\b|performance\s+requirements\s+summary\b|performance\s+work\s+statement\b|statement\s+of\s+work\b|statement\s+of\s+objectives\b|scope\s+of\s+work\b|evaluation\s+(?:factors?|criteria)\b|basis\s+for\s+award\b|instructions?\s+to\s+(?:offerors?|quoters?)\b|list\s+of\s+(?:attachments|documents|exhibits)\b|attachments?\b|exhibits?\b|required\s+forms?\b|representations?\s+and\s+certifications?\b|contract\s+clauses\b|(?:FAR|DFARS)\s+clauses?\b|special\s+(?:contract\s+)?requirements\b)/i;
+
+function pushFallbackItem(buckets, seen, key, item) {
+  if (!buckets[key] || !item || !item.text) return;
+  const clean = cleanExtractedText(item.text || '').trim();
+  if (!clean || looksLikeRawMarkup(clean)) return;
+  const dedupe = clean.toLowerCase();
+  if (seen[key].has(dedupe)) return;
+  seen[key].add(dedupe);
+  buckets[key].push({
+    text: clean.slice(0, 3000),
+    sourceFile: item.sourceFile || '',
+    sourceLocation: item.sourceLocation || ''
+  });
+}
+
+function scanFarFallbackBlocks(sourceBlocks) {
   const buckets = { instructions: [], evaluation: [], scope: [], forms: [], deadlines: [], risks: [] };
+  const sectionBlocks = {};
   const seen = { instructions: new Set(), evaluation: new Set(), scope: new Set(), forms: new Set(), deadlines: new Set(), risks: new Set() };
+
+  for (const block of sourceBlocks || []) {
+    const lines = cleanExtractedText(block.text || '').split(/\r?\n/).map(line => line.replace(/\s+/g, ' ').trim());
+    let location = block.location || block.fileName || '';
+    for (let i = 0; i < lines.length; i += 1) {
+      const line = lines[i];
+      const sheetHint = /^\[Sheet:\s*([^\]]+)\]/.exec(line);
+      if (sheetHint) { location = (block.fileName || '') + ' › ' + sheetHint[1].trim(); continue; }
+      if (line.length < 4 || looksLikeRawMarkup(line)) continue;
+      const def = FAR_FALLBACK_BLOCKS.find(d => d.heading.test(line));
+      if (!def) continue;
+
+      const captured = [line];
+      for (let j = i + 1; j < Math.min(lines.length, i + 35); j += 1) {
+        const next = lines[j];
+        if (!next) {
+          if (captured.length > 1) break;
+          continue;
+        }
+        if (looksLikeRawMarkup(next)) continue;
+        if (FAR_BLOCK_STOP_RE.test(next)) break;
+        captured.push(next);
+        if (captured.join('\n').length >= 3000) break;
+      }
+
+      const text = captured.join('\n').trim();
+      pushFallbackItem(buckets, seen, def.bucket, { text, sourceFile: block.fileName || '', sourceLocation: location });
+      if (def.section && !sectionBlocks[def.section]) {
+        sectionBlocks[def.section] = { text, sourceFile: block.fileName || '', sourceLocation: location, bucket: def.bucket };
+      }
+    }
+  }
+
+  return { buckets, sectionBlocks };
+}
+
+function scanFallbackBuckets(sourceBlocks) {
+  const farBlocks = scanFarFallbackBlocks(sourceBlocks);
+  const buckets = farBlocks.buckets;
+  const seen = {
+    instructions: new Set(buckets.instructions.map(it => String(it.text || '').toLowerCase())),
+    evaluation: new Set(buckets.evaluation.map(it => String(it.text || '').toLowerCase())),
+    scope: new Set(buckets.scope.map(it => String(it.text || '').toLowerCase())),
+    forms: new Set(buckets.forms.map(it => String(it.text || '').toLowerCase())),
+    deadlines: new Set(buckets.deadlines.map(it => String(it.text || '').toLowerCase())),
+    risks: new Set(buckets.risks.map(it => String(it.text || '').toLowerCase()))
+  };
   for (const block of sourceBlocks || []) {
     const lines = cleanExtractedText(block.text || '').split(/\r?\n/);
     let location = block.location || block.fileName || '';
@@ -664,14 +738,12 @@ function scanFallbackBuckets(sourceBlocks) {
       if (line.length < 8 || looksLikeRawMarkup(line)) continue;
       for (const key of Object.keys(FALLBACK_BUCKETS)) {
         if (!FALLBACK_BUCKETS[key].test(line)) continue;
-        const dedupe = line.toLowerCase();
-        if (seen[key].has(dedupe)) continue;
-        seen[key].add(dedupe);
-        buckets[key].push({ text: line.slice(0, 600), sourceFile: block.fileName || '', sourceLocation: location });
+        pushFallbackItem(buckets, seen, key, { text: line.slice(0, 600), sourceFile: block.fileName || '', sourceLocation: location });
         if (buckets[key].length >= 60) break;
       }
     }
   }
+  buckets._sectionBlocks = farBlocks.sectionBlocks;
   return buckets;
 }
 
@@ -717,6 +789,7 @@ function classifySections(text, sourceBlocks) {
   // when the formal UCF headers are absent or weak.
   const blocks = (sourceBlocks && sourceBlocks.length) ? sourceBlocks : (src ? [{ fileName: '', location: '', text: src }] : []);
   const buckets = scanFallbackBuckets(blocks);
+  const farSectionBlocks = buckets._sectionBlocks || {};
   const fallbackMap = { C: buckets.scope, L: buckets.instructions, M: buckets.evaluation };
 
   const sections = {};
@@ -727,7 +800,13 @@ function classifySections(text, sourceBlocks) {
     let sourceFile = '';
     let sourceLocation = '';
 
-    if (!textValue && fallbackMap[letter] && fallbackMap[letter].length) {
+    if (!textValue && farSectionBlocks[letter] && farSectionBlocks[letter].text) {
+      textValue = farSectionBlocks[letter].text;
+      source = 'far-aware-fallback';
+      confidence = 'fallback';
+      sourceFile = farSectionBlocks[letter].sourceFile || '';
+      sourceLocation = farSectionBlocks[letter].sourceLocation || '';
+    } else if (!textValue && fallbackMap[letter] && fallbackMap[letter].length) {
       const items = fallbackMap[letter];
       textValue = items.map(it => it.text).join('\n');
       source = 'fallback-requirements';
