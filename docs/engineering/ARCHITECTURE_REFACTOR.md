@@ -62,6 +62,60 @@ require) while each registration still pushes onto an internal
 out of `main.js` without weakening the security/architecture
 assertions in `test/credential-boundary.test.js`.
 
+## Phase 3 — Renderer strangler (started ✅ first slice)
+
+Phases 1–2 strangled the **main process**. Phase 3 begins the same
+treatment for the **renderer**: `sourcedeck.html` is ~23.5k lines and
+mixes markup with dozens of inline `<script>` feature blocks. We extract
+**one contained feature slice per commit** into a dedicated module under
+`app/renderer/features/<feature>/`, with **no bundler, no framework, and
+no IPC contract change**. See
+[ADR-0002](../architecture/ADR-0002-renderer-strangler.md) for the rule.
+
+**Strangler rule (renderer):**
+
+- Extract exactly **one** contained slice at a time. Never attempt a full
+  `sourcedeck.html` decomposition in a single change.
+- Modules are **browser-safe global-attachment** scripts loaded with a
+  relative `<script src>` (same mechanism as `services/*.js` and
+  `chartnav-integration.js`). No `import`, no `require` of app code, no
+  build step.
+- **Preserve the renderer-facing surface exactly.** Window-global function
+  names called from `onclick=` markup (e.g. `sdSwitchOppMode`,
+  `sdRenderStatePortal`, `sdOpenExternal`) are a public contract — do not
+  rename them.
+- **Markup stays in HTML.** Only JS logic moves. DOM ids, CSS classes,
+  copy, tab values, `localStorage` keys, and IPC/preload calls are
+  unchanged.
+- A renderer module **must not** `require('electron')` or use `ipcRenderer`
+  directly — it reaches the main process only through the `window.sd.*`
+  preload bridge.
+- `app/**` must be in `build.files` so renderer modules ship in the packaged
+  app (added in the packaging fix that also repaired the Phase 1/2
+  main-process bundling gap).
+
+### First slice (this phase)
+
+| Slice | From | To |
+| --- | --- | --- |
+| Find Opportunities → State & Local procurement panel | `sourcedeck.html` inline Phase 25AL `<script>` (192 lines) | `app/renderer/features/find-opportunities/state-local-procurement.js` |
+
+The IIFE moved **verbatim** (byte-identical logic), still attaches
+`window.SD_STATE_PORTALS` + `sdSwitchOppMode` / `sdRenderStatePortal` /
+`sdOpenSelectedStatePortal` / `sdOpenExternal`, and `sourcedeck.html` now
+loads it via
+`<script src="app/renderer/features/find-opportunities/state-local-procurement.js"></script>`.
+`sourcedeck.html` dropped from 23,706 → 23,515 lines. The tab-restore hook
+(`gcTabSwitch`, Phase 25N block) stays in HTML and still calls
+`window.sdSwitchOppMode`.
+
+Locked by `test/architecture-renderer-strangler.test.js` (module exists,
+HTML references it and no longer holds the moved bodies, surface intact,
+50 states + DC, unsafe URLs blocked, no electron import, `main.js` still
+zero `ipcMain.handle`). The behavioral suite
+`test/state-local-procurement-panel.test.js` is unchanged except its two
+loaders now read the module file instead of the inline block.
+
 ## Constraints that still apply
 
 - **No new dependencies.** No new npm packages, no bundler, no

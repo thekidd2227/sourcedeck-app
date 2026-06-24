@@ -17,6 +17,13 @@ const vm = require('vm');
 
 const ROOT = path.resolve(__dirname, '..');
 const HTML = fs.readFileSync(path.join(ROOT, 'sourcedeck.html'), 'utf8');
+// Phase 3 renderer strangler: the State & Local renderer slice now lives in a
+// dedicated module instead of an inline <script> in sourcedeck.html. The
+// behavioral assertions below are unchanged; only the source of the renderer
+// code moved, so the loaders read the module file. Markup-based assertions
+// (dropdown, upload button, tab-restore hook) still read from HTML.
+const MODULE_PATH = path.join(ROOT, 'app/renderer/features/find-opportunities/state-local-procurement.js');
+const MODULE_SRC = fs.readFileSync(MODULE_PATH, 'utf8');
 
 let passed = 0;
 let failed = 0;
@@ -43,9 +50,8 @@ function test(name, fn) {
 }
 
 function extractPhase25ALScript() {
-  const m = HTML.match(/<script>\s*\/\* Phase 25AL[\s\S]*?<\/script>/);
-  assert.ok(m, 'Phase 25AL script block missing');
-  return m[0].replace(/^<script>/, '').replace(/<\/script>$/, '');
+  assert.ok(/\/\* Phase 25AL/.test(MODULE_SRC), 'Phase 25AL module marker missing');
+  return MODULE_SRC;
 }
 
 function makeElement(id) {
@@ -112,7 +118,7 @@ function getSelectBody() {
 }
 
 function getSwitchFunctionText() {
-  const m = HTML.match(/window\.sdSwitchOppMode\s*=\s*function\(mode\)\{[\s\S]*?\n  \};/);
+  const m = MODULE_SRC.match(/window\.sdSwitchOppMode\s*=\s*function\(mode\)\{[\s\S]*?\n  \};/);
   assert.ok(m, 'sdSwitchOppMode function missing');
   return m[0];
 }
