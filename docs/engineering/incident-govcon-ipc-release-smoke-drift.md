@@ -83,6 +83,14 @@ grep -q "govcon:sam-fetch-links" main.js || { echo "ERROR: Fetch Links IPC missi
 longer appears in `main.js` (0 hits) — the identical stale-scan defect, in the refresh
 script's own release guard. Fixed to scan the modular registrar.
 
+### Third occurrence — same root cause in the outreach-os audit
+
+`scripts/govcon-outreach-os-audit.mjs` section C ("IPC handlers") scanned `main.js` for
+17 migrated channels (deadlines/subcontractors/incumbent/solicitation/clarifications/
+communications/exports/outreach-*/primes-*/credentials-*) and failed 17/17 for the same
+reason. Not part of the `refresh:buyer-trial` chain, but the same defect; found by
+sweeping for sibling scanners and fixed to read the registrar.
+
 ## Fix
 
 1. **Smoke detector aligned with the modular architecture** (commit `5990363`,
@@ -119,6 +127,8 @@ are unchanged.
 - `scripts/govcon-release-smoke.mjs` — smoke detector aligned with composition root (commit `5990363`).
 - `scripts/refresh-buyer-trial-package.sh` — post-build Fetch Links IPC guard re-pointed
   from `main.js` to `app/main/ipc/register-feature-ipc.js` (same root cause, second site).
+- `scripts/govcon-outreach-os-audit.mjs` — section-C IPC handler scan re-pointed from
+  `main.js` to the feature registrar (same root cause, third site).
 - `test/govcon-release-smoke-detection.test.js` — **new** anti-drift regression guard
   (covers both the smoke detector and the refresh-script guard).
 - `package.json` — wired the new test into the `test` chain.

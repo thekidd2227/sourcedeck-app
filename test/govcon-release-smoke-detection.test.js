@@ -144,6 +144,17 @@ ok('refresh script does NOT grep govcon:sam-fetch-links from main.js (stale targ
 ok('refresh-guarded channel govcon:sam-fetch-links is registered at runtime',
    registered.includes('govcon:sam-fetch-links'));
 
+// ── 4c. The outreach-os audit scans the registrar for IPC handlers ─────
+// scripts/govcon-outreach-os-audit.mjs section C had the same stale-scan
+// defect (it checked main.js for migrated channels). It must read the
+// feature registrar and assert main.js no longer hosts inline handles.
+const outreachAuditSrc = fs.readFileSync(path.join(ROOT, 'scripts/govcon-outreach-os-audit.mjs'), 'utf8');
+ok('outreach-os audit reads app/main/ipc/register-feature-ipc.js',
+   /read\(\s*['"]app\/main\/ipc\/register-feature-ipc\.js['"]\s*\)/.test(outreachAuditSrc));
+ok('outreach-os audit section-C IPC loop scans featureIpc, not mainjs',
+   /check\('ipc ' \+ ch, featureIpc\.includes/.test(outreachAuditSrc) &&
+   !/check\('ipc ' \+ ch, mainjs\.includes/.test(outreachAuditSrc));
+
 // ── 5. preload exposes a renderer→main path for each channel ───────────
 const preloadSrc = fs.readFileSync(path.join(ROOT, 'preload.js'), 'utf8');
 for (const ch of RELEASE_CRITICAL_CHANNELS) {

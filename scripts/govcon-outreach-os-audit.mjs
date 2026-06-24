@@ -28,6 +28,10 @@ const decomment = (s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/<!--[\s\S]*
 const html    = read('sourcedeck.html');
 const preload = read('preload.js');
 const mainjs  = read('main.js');
+// Phase 2 migrated IPC registration out of main.js into the composition
+// root's feature registrar; section C scans that file (see
+// docs/engineering/incident-govcon-ipc-release-smoke-drift.md).
+const featureIpc = read('app/main/ipc/register-feature-ipc.js');
 const apijs   = read('api/index.js');
 
 console.log('── GovCon Outreach OS integration audit ──');
@@ -56,8 +60,12 @@ check('primes methods (find/findLive/draft/memo)',
 check('credentials.status/set/remove (presence-only)',
   /credentials:\s*\{[\s\S]*?status[\s\S]*?set[\s\S]*?remove/.test(preload));
 
-// ── C. IPC handlers (main.js) ─────────────────────────────────────────
+// ── C. IPC handlers (composition root: register-feature-ipc.js) ───────
 console.log('\n[C. IPC handlers]');
+// main.js delegates registration to the composition root; assert the
+// delegation contract holds, then scan the feature registrar source.
+check('main.js delegates IPC registration (no inline ipcMain.handle)',
+  !/ipcMain\.handle\(/.test(mainjs));
 for (const ch of [
   'govcon:deadlines-extract', 'govcon:subcontractors-source', 'govcon:incumbent-research',
   'govcon:solicitation-analyze', 'govcon:clarifications-generate', 'govcon:communications-draft-email',
@@ -65,7 +73,7 @@ for (const ch of [
   'govcon:outreach-set-status', 'govcon:primes-find', 'govcon:primes-find-live',
   'govcon:primes-draft', 'govcon:primes-memo',
   'credentials:status', 'credentials:set', 'credentials:remove'
-]) check('ipc ' + ch, mainjs.includes("'" + ch + "'") || mainjs.includes('"' + ch + '"'));
+]) check('ipc ' + ch, featureIpc.includes("'" + ch + "'") || featureIpc.includes('"' + ch + '"'));
 
 // ── D. API adapter methods (api/index.js) ─────────────────────────────
 console.log('\n[D. app-api surface]');
