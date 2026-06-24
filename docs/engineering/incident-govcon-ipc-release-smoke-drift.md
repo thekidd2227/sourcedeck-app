@@ -135,6 +135,24 @@ are unchanged.
 `npm test` (full suite) exit 0 · `troubleshooting:scan` exit 0 · `release:check` exit 0
 (dev-env unsigned warning only) · `distribution:check` exit 0 (presence-only).
 
+## Rebuild outcome — buyer-trial package regenerated (exit 0)
+
+`npm run refresh:buyer-trial` completed past the previous GovCon smoke failure and
+through the full gate chain (license → smoke 48/0 → troubleshooting 0 critical/high →
+release-check → distribution → `pack:mac`), packaged the app, installed it, verified the
+installed `app.asar` SHA-256 equals the fresh build, and launched the app
+("PASS: SourceDeck started successfully").
+
+- **Built commit:** `feb3534`
+- **Installed app:** `~/Desktop/SourceDeck Buyer Trial Package/02 App/SourceDeck.app`
+- **Buyer ZIP:** `~/Desktop/SourceDeck Buyer Trial Package.zip` (98 MB)
+- **app.asar SHA-256:** `f2a6fef4367b281555cc902ec910473d918620212fdb2ccaa4ec8f4b1fa8f67a`
+- **Package audit:** no `.env`, no test fixtures, no `.git`, no secret-shaped key/token
+  values in the packaged source (1490 asar entries, allowlist-limited); packaged
+  `app/main/ipc/register-feature-ipc.js` matches HEAD byte-for-byte; packaged `main.js`
+  hosts 0 `ipcMain.handle(...)`. App bundle id `app.sourcedeck.lcc`. Ad-hoc signed
+  (Developer ID not configured in this environment — expected for a local buyer trial).
+
 ## Remaining dependency vulnerabilities (not force-fixed — by policy)
 
 `npm audit`: 12 vulnerabilities (1 low, 1 moderate, 10 high), **all** in the build-time
