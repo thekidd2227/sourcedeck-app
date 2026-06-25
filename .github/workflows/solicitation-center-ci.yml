@@ -64,6 +64,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           show-progress: false
+          fetch-depth: 0
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -79,9 +80,13 @@ jobs:
           node --check services/govcon/solicitation-summarize.js
           node --check app/renderer/features/solicitation-center/summarize-and-explain.js
           node --check test/phase-25ar-solicitation-summarize-and-extraction-bugs.test.js
+          node --check test/phase-25as-solicitation-processing-provenance.test.js
 
       - name: Phase 25AR integrity regression
         run: node test/phase-25ar-solicitation-summarize-and-extraction-bugs.test.js
+
+      - name: Phase 25AS processing and provenance regression
+        run: node test/phase-25as-solicitation-processing-provenance.test.js
 
       - name: Phase 25AQ FAR commercial-items extraction
         run: node test/phase-25aq-far-commercial-items-section-extraction.test.js
@@ -99,4 +104,10 @@ jobs:
         run: npm run release:check
 
       - name: Diff hygiene
-        run: git diff --check HEAD^ HEAD
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.pull_request.base.sha }}" ] && [ -n "${{ github.event.pull_request.head.sha }}" ]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}"
+          else
+            git diff --check
+          fi
