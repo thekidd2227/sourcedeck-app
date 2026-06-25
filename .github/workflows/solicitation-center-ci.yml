@@ -1,0 +1,113 @@
+name: Solicitation Center CI
+
+on:
+  pull_request:
+    paths:
+      - 'services/govcon/solicitation-*.js'
+      - 'app/renderer/features/solicitation-center/**'
+      - 'test/phase-25a*-solicitation-*.test.js'
+      - 'test/solicitation-extraction-end-to-end-mapping.test.js'
+      - 'docs/engineering/INCIDENT_REPORT.md'
+      - '.github/workflows/solicitation-center-ci.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+  pull-requests: write
+
+concurrency:
+  group: solicitation-center-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  integrity-diagnostic:
+    name: Phase 25AR diagnostic
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+      - name: Run Phase 25AR with compact failure output
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set +e
+          node test/phase-25ar-solicitation-summarize-and-extraction-bugs.test.js > /tmp/phase25ar.log 2>&1
+          code=$?
+          if [ "$code" -ne 0 ]; then
+            tail -n 35 /tmp/phase25ar.log
+            if [ -n "${{ github.event.pull_request.number }}" ]; then
+              {
+                echo '### Phase 25AR diagnostic failure'
+                echo
+                echo '```text'
+                tail -n 35 /tmp/phase25ar.log
+                echo '```'
+              } > /tmp/phase25ar-comment.md
+              gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/phase25ar-comment.md
+            fi
+          else
+            cat /tmp/phase25ar.log
+          fi
+          exit "$code"
+
+  validate:
+    name: Focused extraction and renderer validation
+    needs: integrity-diagnostic
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+          fetch-depth: 0
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Syntax checks
+        run: |
+          node --check services/govcon/solicitation-summarize.js
+          node --check app/renderer/features/solicitation-center/summarize-and-explain.js
+          node --check test/phase-25ar-solicitation-summarize-and-extraction-bugs.test.js
+          node --check test/phase-25as-solicitation-processing-provenance.test.js
+
+      - name: Phase 25AR integrity regression
+        run: node test/phase-25ar-solicitation-summarize-and-extraction-bugs.test.js
+
+      - name: Phase 25AS processing and provenance regression
+        run: node test/phase-25as-solicitation-processing-provenance.test.js
+
+      - name: Phase 25AQ FAR commercial-items extraction
+        run: node test/phase-25aq-far-commercial-items-section-extraction.test.js
+
+      - name: Phase 25AB Sections A-M extraction
+        run: node test/phase-25ab-extract-sections-a-to-m.test.js
+
+      - name: End-to-end solicitation mapping
+        run: node test/solicitation-extraction-end-to-end-mapping.test.js
+
+      - name: Phase 25AN browser handoff and local extraction
+        run: node test/phase-25an-browser-handoff-local-extraction.test.js
+
+      - name: Release safety gate
+        run: npm run release:check
+
+      - name: Diff hygiene
+        shell: bash
+        run: |
+          if [ -n "${{ github.event.pull_request.base.sha }}" ] && [ -n "${{ github.event.pull_request.head.sha }}" ]; then
+            git diff --check "${{ github.event.pull_request.base.sha }}...${{ github.event.pull_request.head.sha }}"
+          else
+            git diff --check
+          fi

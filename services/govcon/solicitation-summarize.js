@@ -1,517 +1,392 @@
-// services/govcon/solicitation-summarize.js
-//
-// Phase 25AR — Structured "Summarize Solicitation" breakdown.
-//
-// Reads a normalized extraction record (the output of
-// services/govcon/solicitation-import.js#importAndExtract) and returns
-// a deterministic 17-area operator-grade breakdown of the solicitation.
-// No network call. No LLM. No state mutation. The renderer binds to the
-// returned object directly so the breakdown is reproducible from the
-// saved extraction record.
-//
-// Field-level status states are surfaced honestly: each area carries
-// `status ∈ { extracted, not_found, not_applicable, low_confidence,
-// extraction_failed }` plus the source-of-truth field names and
-// participating source files that produced the content. Areas the
-// extractor cannot speak to honestly are marked `not_found` with an
-// explanatory note, never a blank string or null.
-//
-// AI-generated narrative is intentionally NOT mixed into facts. The
-// `analysisNotes` array is the only place a downstream caller may add
-// model-generated narrative; the facts panel must reference only
-// source-quoted content.
-
 'use strict';
 
-const SCHEMA_VERSION = 1;
+// Phase 25AS — authoritative, structured solicitation summary + section explain.
+// This module is deterministic. It never calls an LLM and never mutates the
+// extraction record supplied by the trusted app-API boundary.
+
+const SCHEMA_VERSION = 2;
+const STATUS = Object.freeze({
+  EXTRACTED: 'extracted',
+  NOT_FOUND: 'not_found',
+  NOT_APPLICABLE: 'not_applicable',
+  LOW_CONFIDENCE: 'low_confidence',
+  EXTRACTION_FAILED: 'extraction_failed',
+  PENDING_PROCESSING: 'pending_processing',
+  CONFLICTING_INFORMATION: 'conflicting_information'
+});
 
 const AREA_DEFINITIONS = [
-  { key: 'whats-being-bought',         title: 'What the government is buying' },
-  { key: 'who-is-buying',               title: 'Who is buying it' },
-  { key: 'key-dates',                   title: 'Key dates' },
-  { key: 'eligibility-set-aside',       title: 'Eligibility and set-aside' },
-  { key: 'scope',                       title: 'Scope' },
-  { key: 'place-of-performance',        title: 'Place of performance' },
-  { key: 'period-of-performance',       title: 'Period of performance' },
-  { key: 'contract-pricing-structure',  title: 'Contract and pricing structure' },
-  { key: 'submission-requirements',     title: 'Submission requirements' },
-  { key: 'evaluation-method',           title: 'Evaluation method' },
-  { key: 'mandatory-compliance',        title: 'Mandatory compliance requirements' },
-  { key: 'major-clauses',               title: 'Major clauses' },
-  { key: 'attachments',                 title: 'Attachments' },
-  { key: 'risks-ambiguities',           title: 'Risks and ambiguities' },
-  { key: 'recommended-questions',       title: 'Recommended bidder questions' },
-  { key: 'bid-no-bid',                  title: 'Bid / no-bid considerations' },
-  { key: 'immediate-actions',           title: 'Immediate action checklist' }
+  { key: 'whats-being-bought', title: 'What the government is buying' },
+  { key: 'who-is-buying', title: 'Who is buying it' },
+  { key: 'key-dates', title: 'Key dates' },
+  { key: 'eligibility-set-aside', title: 'Eligibility and set-aside' },
+  { key: 'scope', title: 'Scope' },
+  { key: 'place-of-performance', title: 'Place of performance' },
+  { key: 'period-of-performance', title: 'Period of performance' },
+  { key: 'contract-pricing-structure', title: 'Contract and pricing structure' },
+  { key: 'submission-requirements', title: 'Submission requirements' },
+  { key: 'evaluation-method', title: 'Evaluation method' },
+  { key: 'mandatory-compliance', title: 'Mandatory compliance requirements' },
+  { key: 'major-clauses', title: 'Major clauses' },
+  { key: 'attachments', title: 'Attachments' },
+  { key: 'risks-ambiguities', title: 'Risks and ambiguities' },
+  { key: 'recommended-questions', title: 'Recommended bidder questions' },
+  { key: 'bid-no-bid', title: 'Bid / no-bid considerations' },
+  { key: 'immediate-actions', title: 'Immediate action checklist' }
 ];
 
-// Compact a section field down to a usable string for the summary.
-// Accepts strings, objects with a .text, and arrays of either.
-function flatten(value) {
+function clean(value) {
+  return String(value == null ? '' : value).replace(/\s+/g, ' ').trim();
+}
+
+function firstNonEmpty() {
+  for (const value of arguments) {
+    const s = clean(value);
+    if (s) return s;
+  }
+  return '';
+}
+
+function serializeContact(value) {
+  if (typeof value === 'string') return clean(value);
+  if (!value || typeof value !== 'object') return '';
+  const name = firstNonEmpty(value.name, value.fullName, value.contactName);
+  const title = firstNonEmpty(value.title, value.role);
+  const email = firstNonEmpty(value.email, value.emailAddress);
+  const phone = firstNonEmpty(value.phone, value.phoneNumber, value.telephone);
+  return [name, title, email, phone].filter(Boolean).join(' · ');
+}
+
+function serializePricingRow(value) {
+  if (typeof value === 'string') return clean(value);
+  if (Array.isArray(value)) return value.map(clean).filter(Boolean).join(' | ');
+  if (!value || typeof value !== 'object') return '';
+  const clin = firstNonEmpty(value.clin, value.CLIN, value.lineItem, value.itemNumber);
+  const desc = firstNonEmpty(value.description, value.itemDescription, value.scope, value.text);
+  const qty = firstNonEmpty(value.quantity, value.qty);
+  const unit = firstNonEmpty(value.unit, value.uom, value.unitOfMeasure);
+  const price = firstNonEmpty(value.unitPrice, value.price, value.amount, value.total);
+  const parts = [];
+  if (clin) parts.push(`CLIN ${clin}`);
+  if (desc) parts.push(desc);
+  if (qty) parts.push(`Qty ${qty}`);
+  if (unit) parts.push(unit);
+  if (price) parts.push(`Price ${price}`);
+  return parts.join(' · ');
+}
+
+function serializeComplianceRow(value) {
+  if (typeof value === 'string') return clean(value);
+  if (!value || typeof value !== 'object') return '';
+  const requirement = firstNonEmpty(
+    value.requirementText,
+    value.requirement,
+    value.text,
+    value.description,
+    value.clause,
+    value.item
+  );
+  if (!requirement) return '';
+  const section = firstNonEmpty(value.section, value.sectionLetter, value.sourceSection);
+  const mandatory = value.mandatory === true || /required|shall|must/i.test(requirement);
+  const prefix = [section ? `Section ${section}` : '', mandatory ? 'Mandatory' : ''].filter(Boolean).join(' · ');
+  return prefix ? `${prefix}: ${requirement}` : requirement;
+}
+
+function serializeAttachment(value) {
+  if (typeof value === 'string') return clean(value);
+  if (!value || typeof value !== 'object') return '';
+  const name = firstNonEmpty(value.fileName, value.originalFileName, value.name, value.title, value.text, value.label);
+  const status = firstNonEmpty(value.extractionStatus, value.status);
+  return name ? `${name}${status ? ` (${status})` : ''}` : '';
+}
+
+function serializeDeadline(value) {
+  if (typeof value === 'string') return clean(value);
+  if (!value || typeof value !== 'object') return '';
+  const label = firstNonEmpty(value.label, value.eventType, value.type, value.name);
+  const date = firstNonEmpty(value.date, value.deadline, value.dueDate, value.value, value.text);
+  return label && date ? `${label}: ${date}` : (date || label);
+}
+
+function serializeGeneric(value) {
   if (value == null) return '';
-  if (typeof value === 'string') return value.trim();
-  if (Array.isArray(value)) {
-    return value.map(v => flatten(v)).filter(Boolean).join('\n');
-  }
-  if (typeof value === 'object') {
-    if (typeof value.text === 'string') return value.text.trim();
-    if (typeof value.value === 'string') return value.value.trim();
-    return '';
-  }
-  return String(value).trim();
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') return clean(value);
+  if (Array.isArray(value)) return value.map(serializeGeneric).filter(Boolean).join('\n');
+  return firstNonEmpty(
+    value.text,
+    value.value,
+    value.requirementText,
+    value.requirement,
+    value.description,
+    value.title,
+    value.name,
+    value.fileName
+  );
 }
 
-function collectSourceFiles(value, acc) {
-  if (!value) return;
-  if (Array.isArray(value)) {
-    value.forEach(v => collectSourceFiles(v, acc));
-    return;
+function serializeList(values, serializer, limit) {
+  const input = Array.isArray(values) ? values : (values == null ? [] : [values]);
+  const out = [];
+  const seen = new Set();
+  for (const item of input) {
+    const text = clean((serializer || serializeGeneric)(item));
+    if (!text) continue;
+    const key = text.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(text);
+    if (limit && out.length >= limit) break;
   }
-  if (typeof value === 'object' && value.sourceFile) acc.add(String(value.sourceFile));
+  return out;
 }
 
-function makeArea(definition, content, status, opts) {
+function collectSourceReferences(value, refs, visited) {
+  if (value == null) return refs || new Map();
+  refs = refs || new Map();
+  visited = visited || new Set();
+  if (typeof value !== 'object') return refs;
+  if (visited.has(value)) return refs;
+  visited.add(value);
+  if (Array.isArray(value)) {
+    value.forEach(v => collectSourceReferences(v, refs, visited));
+    return refs;
+  }
+  const sourceFile = firstNonEmpty(value.sourceFile, value.sourceDocument, value.fileName, value.originalFileName, value.safeStoredFileName);
+  const sourceLocation = firstNonEmpty(value.sourceLocation, value.page, value.pageNumber, value.sectionHeading, value.location);
+  const sourceDocumentId = firstNonEmpty(value.sourceDocumentId, value.internalStorageId);
+  if (sourceFile || sourceDocumentId) {
+    refs.set([sourceDocumentId, sourceFile, sourceLocation].join('|'), { sourceDocumentId, sourceFile, sourceLocation });
+  }
+  Object.values(value).forEach(v => collectSourceReferences(v, refs, visited));
+  return refs;
+}
+
+function referencesFor() {
+  const refs = new Map();
+  for (const value of arguments) collectSourceReferences(value, refs);
+  return Array.from(refs.values());
+}
+
+function makeArea(def, content, status, opts) {
   opts = opts || {};
+  const refs = Array.isArray(opts.sourceReferences) ? opts.sourceReferences : [];
   return {
-    key:           definition.key,
-    title:         definition.title,
-    content:       content || '',
-    status:        status || (content ? 'extracted' : 'not_found'),
-    note:          opts.note || '',
-    sourceFields:  Array.isArray(opts.sourceFields) ? opts.sourceFields.slice() : [],
-    sourceFiles:   Array.isArray(opts.sourceFiles) ? opts.sourceFiles.slice() : []
+    key: def.key,
+    title: def.title,
+    content: clean(content),
+    status: status || (clean(content) ? STATUS.EXTRACTED : STATUS.NOT_FOUND),
+    note: clean(opts.note),
+    sourceFields: Array.isArray(opts.sourceFields) ? opts.sourceFields.slice() : [],
+    sourceFiles: Array.from(new Set(refs.map(r => r.sourceFile).filter(Boolean))),
+    sourceReferences: refs
   };
 }
 
-function uniqueFiles(record) {
-  const acc = new Set();
-  if (!record) return [];
-  // metadata.attachmentsIndex carries reliable source file info.
-  (record.metadata && record.metadata.attachmentsIndex || []).forEach(a => {
-    if (a && a.fileName) acc.add(String(a.fileName));
-  });
-  // sections each carry sourceFile.
-  Object.values(record.sections || {}).forEach(s => {
-    if (s && s.sourceFile) acc.add(String(s.sourceFile));
-  });
-  // Aliases carry per-entry sourceFile.
-  ['instructionsToOfferors', 'evaluationCriteria', 'pwsSowRequirements', 'requiredFormsAttachments', 'deadlines', 'risksDealKillers']
-    .forEach(field => collectSourceFiles(record[field], acc));
-  return Array.from(acc);
+function extractionProcessingStatus(record) {
+  const inventory = Array.isArray(record && record.documentInventory) ? record.documentInventory : [];
+  const importInfo = record && record.import || {};
+  if (/pending/i.test(firstNonEmpty(importInfo.batchStatus, importInfo.status))) return STATUS.PENDING_PROCESSING;
+  if (!inventory.length) return STATUS.EXTRACTED;
+  const statuses = inventory.map(d => firstNonEmpty(d.extractionStatus, d.status).toLowerCase());
+  if (statuses.some(s => /pending|processing/.test(s))) return STATUS.PENDING_PROCESSING;
+  if (statuses.every(s => /failed|ocr_required|required_unavailable|unsupported|rejected|metadata-only/.test(s))) return STATUS.EXTRACTION_FAILED;
+  if (statuses.some(s => /failed|ocr_required|required_unavailable|warning|partial|metadata-only/.test(s))) return STATUS.LOW_CONFIDENCE;
+  return STATUS.EXTRACTED;
 }
 
-function pickWhatsBeingBought(record) {
-  const def = AREA_DEFINITIONS[0];
-  const metadata = record.metadata || {};
-  const title = flatten(metadata.title);
-  const scope = flatten(record.pwsSowRequirements) || flatten((record.sections || {}).C && (record.sections || {}).C.text);
-  if (!title && !scope) {
-    return makeArea(def, '', 'not_found', { note: 'Title and scope are missing from the extracted package.' });
-  }
-  const lines = [];
-  if (title) lines.push(title);
-  if (scope) lines.push(scope.split('\n').slice(0, 6).join('\n'));
-  return makeArea(def, lines.join('\n\n'), 'extracted', {
-    sourceFields: ['metadata.title', 'pwsSowRequirements', 'sections.C'],
-    sourceFiles:  [].concat(record.pwsSowRequirements || []).filter(x => x && x.sourceFile).map(x => x.sourceFile)
-  });
+function validateBinding(record, opportunityId) {
+  const requested = clean(opportunityId);
+  if (!requested) return { ok: true, boundOpportunityId: '' };
+  const bound = firstNonEmpty(record && record.import && record.import.opportunityId, record && record.opportunityId);
+  if (!bound) return { ok: false, reason: 'unbound_extraction', requestedOpportunityId: requested };
+  if (bound !== requested) return { ok: false, reason: 'opportunity_mismatch', requestedOpportunityId: requested, boundOpportunityId: bound };
+  return { ok: true, boundOpportunityId: bound };
 }
 
-function pickWhoIsBuying(record) {
-  const def = AREA_DEFINITIONS[1];
-  const metadata = record.metadata || {};
-  const agency   = flatten(metadata.agency);
-  const sub      = flatten(metadata.subAgency);
-  const office   = flatten(metadata.office);
-  const contacts = (metadata.pointOfContact || []).map(flatten).filter(Boolean);
-  const parts = [];
-  if (agency) parts.push(agency);
-  if (sub)    parts.push(`Sub-agency: ${sub}`);
-  if (office) parts.push(`Office: ${office}`);
-  if (contacts.length) parts.push('Contacts:\n  - ' + contacts.slice(0, 6).join('\n  - '));
-  if (!parts.length) {
-    return makeArea(def, '', 'not_found', { note: 'Buyer agency and contacts are missing from the extracted package.' });
-  }
-  return makeArea(def, parts.join('\n'), 'extracted', {
-    sourceFields: ['metadata.agency', 'metadata.subAgency', 'metadata.office', 'metadata.pointOfContact']
-  });
+function sectionText(record, letter) {
+  const section = record && record.sections && record.sections[letter];
+  return section && section.found ? clean(section.text) : '';
 }
 
-function pickKeyDates(record) {
-  const def = AREA_DEFINITIONS[2];
-  const metadata = record.metadata || {};
-  const posted   = flatten(metadata.postedDate);
-  const qa       = flatten(metadata.qaDeadline);
-  const site     = flatten(metadata.siteVisit);
-  const due      = flatten(metadata.responseDeadline);
-  const explicit = (record.deadlines || []).map(flatten).filter(Boolean);
-  const rows = [];
-  if (posted) rows.push(`Posted / issued: ${posted}`);
-  if (qa)     rows.push(`Questions due: ${qa}`);
-  if (site)   rows.push(`Site visit: ${site}`);
-  if (due)    rows.push(`Response due: ${due}`);
-  // Add any extra distinct dates from the explicit deadlines list.
-  for (const d of explicit) {
-    if (!rows.some(r => r.includes(d))) rows.push(`Deadline: ${d}`);
-  }
-  if (!rows.length) {
-    return makeArea(def, '', 'not_found', { note: 'No solicitation dates were extracted from the package.' });
-  }
-  const files = [];
-  collectSourceFiles(record.deadlines, new Set(files));
-  return makeArea(def, rows.join('\n'), 'extracted', {
-    sourceFields: ['metadata.postedDate', 'metadata.responseDeadline', 'metadata.qaDeadline', 'metadata.siteVisit', 'deadlines']
-  });
+function aliasText(record, field, serializer, limit) {
+  return serializeList(record && record[field], serializer || serializeGeneric, limit).join('\n');
 }
 
-function pickEligibilitySetAside(record) {
-  const def = AREA_DEFINITIONS[3];
-  const metadata = record.metadata || {};
-  const setAside = flatten(metadata.setAside);
-  const naics    = flatten(metadata.naics);
-  const psc      = flatten(metadata.classificationCode);
-  const parts = [];
-  if (setAside) parts.push(`Set-aside: ${setAside}`);
-  if (naics)    parts.push(`NAICS: ${naics}`);
-  if (psc)      parts.push(`PSC: ${psc}`);
-  if (!parts.length) {
-    return makeArea(def, '', 'not_found', { note: 'Set-aside and classification are missing from the extracted package.' });
-  }
-  return makeArea(def, parts.join('\n'), 'extracted', {
-    sourceFields: ['metadata.setAside', 'metadata.naics', 'metadata.classificationCode']
-  });
-}
-
-function pickScope(record) {
-  const def = AREA_DEFINITIONS[4];
-  const pws = flatten(record.pwsSowRequirements);
-  const sC  = (record.sections || {}).C;
-  const text = pws || flatten(sC && sC.text);
-  if (!text) {
-    return makeArea(def, '', 'not_found', { note: 'Scope / PWS / SOW content was not detected in the extracted package.' });
-  }
-  return makeArea(def, text.split('\n').slice(0, 12).join('\n'), 'extracted', {
-    sourceFields: ['pwsSowRequirements', 'sections.C']
-  });
-}
-
-function pickPlaceOfPerformance(record) {
-  const def = AREA_DEFINITIONS[5];
-  const value = flatten((record.metadata || {}).placeOfPerformance);
-  if (!value) {
-    return makeArea(def, '', 'not_found', { note: 'Place of performance was not extracted.' });
-  }
-  return makeArea(def, value, 'extracted', { sourceFields: ['metadata.placeOfPerformance'] });
-}
-
-function pickPeriodOfPerformance(record) {
-  const def = AREA_DEFINITIONS[6];
-  const value = flatten((record.metadata || {}).periodOfPerformance);
-  if (!value) {
-    return makeArea(def, '', 'not_found', { note: 'Period of performance was not extracted; check Section F or the cover sheet.' });
-  }
-  return makeArea(def, value, 'extracted', { sourceFields: ['metadata.periodOfPerformance'] });
-}
-
-function pickContractPricingStructure(record) {
-  const def = AREA_DEFINITIONS[7];
-  const metadata = record.metadata || {};
-  const noticeType  = flatten(metadata.noticeType);
-  const pricing     = (metadata.pricingClinTable || []).map(flatten).filter(Boolean);
+function buildAreas(record) {
+  const md = record.metadata || {};
   const sections = record.sections || {};
-  const sB = sections.B && sections.B.found ? flatten(sections.B.text) : '';
-  const parts = [];
-  if (noticeType) parts.push(`Notice type: ${noticeType}`);
-  if (sB)         parts.push(sB.split('\n').slice(0, 4).join('\n'));
-  if (pricing.length) parts.push('Pricing table / CLINs:\n  - ' + pricing.slice(0, 10).join('\n  - '));
-  if (!parts.length) {
-    return makeArea(def, '', 'not_found', { note: 'Pricing / CLIN structure was not detected. The package may be commercial-items (FAR Part 12) and rely on Attachment 1 for pricing.' });
-  }
-  return makeArea(def, parts.join('\n'), 'extracted', {
-    sourceFields: ['metadata.noticeType', 'metadata.pricingClinTable', 'sections.B']
-  });
-}
+  const scope = aliasText(record, 'pwsSowRequirements', serializeGeneric, 20) || sectionText(record, 'C');
+  const instructions = sectionText(record, 'L') || aliasText(record, 'instructionsToOfferors', serializeGeneric, 24);
+  const evaluation = sectionText(record, 'M') || aliasText(record, 'evaluationCriteria', serializeGeneric, 24);
+  const deadlines = serializeList(record.deadlines, serializeDeadline, 20);
+  const contacts = serializeList(md.pointOfContact, serializeContact, 12);
+  const pricing = serializeList(md.pricingClinTable, serializePricingRow, 20);
+  const compliance = serializeList(record.complianceMatrix, serializeComplianceRow, 24);
+  const attachments = serializeList(record.requiredFormsAttachments, serializeAttachment, 30)
+    .concat(serializeList(md.attachmentsIndex, serializeAttachment, 30));
+  const risks = serializeList(record.risksDealKillers, serializeGeneric, 16)
+    .concat(serializeList(md.ambiguityFlags, serializeGeneric, 12));
+  const clauseRows = compliance.filter(x => /\b(?:FAR|DFARS|AFFARS|VAAR|DEAR)\b|\b52\.\d{3}-\d+\b|\b252\.\d{3}-\d+\b/i.test(x));
+  const processing = extractionProcessingStatus(record);
+  const processingNote = processing === STATUS.EXTRACTED ? '' : `Document processing status: ${processing}. Review document inventory and warnings before relying on extracted facts.`;
 
-function pickSubmissionRequirements(record) {
-  const def = AREA_DEFINITIONS[8];
-  const sL = (record.sections || {}).L;
-  const sLText = sL && sL.found ? flatten(sL.text) : '';
-  const aliasText = flatten(record.instructionsToOfferors);
-  const content = sLText || aliasText;
-  if (!content) {
-    return makeArea(def, '', 'not_found', { note: 'Section L / Instructions to Offerors was not detected. Check for FAR 52.212-1 addendum.' });
-  }
-  return makeArea(def, content.split('\n').slice(0, 16).join('\n'), 'extracted', {
-    sourceFields: ['sections.L', 'instructionsToOfferors']
-  });
-}
+  const whatParts = [clean(md.title), scope].filter(Boolean);
+  const whoParts = [clean(md.agency), clean(md.subAgency) && `Sub-agency: ${clean(md.subAgency)}`, clean(md.office) && `Office: ${clean(md.office)}`].filter(Boolean);
+  if (contacts.length) whoParts.push(`Contacts:\n- ${contacts.join('\n- ')}`);
+  const dateRows = [];
+  if (clean(md.postedDate)) dateRows.push(`Posted / issued: ${clean(md.postedDate)}`);
+  if (clean(md.qaDeadline)) dateRows.push(`Questions due: ${clean(md.qaDeadline)}`);
+  if (clean(md.siteVisit)) dateRows.push(`Site visit: ${clean(md.siteVisit)}`);
+  if (clean(md.responseDeadline)) dateRows.push(`Response due: ${clean(md.responseDeadline)}`);
+  deadlines.forEach(d => { if (!dateRows.some(row => row.includes(d))) dateRows.push(d); });
+  const eligibility = [];
+  if (clean(md.setAside)) eligibility.push(`Set-aside: ${clean(md.setAside)}`);
+  if (clean(md.naics)) eligibility.push(`NAICS: ${clean(md.naics)}`);
+  if (clean(md.classificationCode)) eligibility.push(`PSC: ${clean(md.classificationCode)}`);
+  const contract = [];
+  if (clean(md.noticeType)) contract.push(`Notice type: ${clean(md.noticeType)}`);
+  if (sectionText(record, 'B')) contract.push(sectionText(record, 'B'));
+  if (pricing.length) contract.push(`Pricing / CLINs:\n- ${pricing.join('\n- ')}`);
 
-function pickEvaluationMethod(record) {
-  const def = AREA_DEFINITIONS[9];
-  const sM = (record.sections || {}).M;
-  const sMText = sM && sM.found ? flatten(sM.text) : '';
-  const aliasText = flatten(record.evaluationCriteria);
-  const content = sMText || aliasText;
-  if (!content) {
-    return makeArea(def, '', 'not_found', { note: 'Section M / Evaluation Factors was not detected. Check for FAR 52.212-2 addendum.' });
-  }
-  return makeArea(def, content.split('\n').slice(0, 16).join('\n'), 'extracted', {
-    sourceFields: ['sections.M', 'evaluationCriteria']
-  });
-}
-
-function pickMandatoryCompliance(record) {
-  const def = AREA_DEFINITIONS[10];
-  const matrix = Array.isArray(record.complianceMatrix) ? record.complianceMatrix : [];
-  const risks  = (record.metadata || {}).complianceRisks || [];
-  const lines = [];
-  matrix.slice(0, 12).forEach(row => {
-    if (row && row.text) lines.push(`- ${row.text}`);
-    else if (typeof row === 'string') lines.push(`- ${row}`);
-  });
-  risks.slice(0, 6).forEach(r => { if (r && !lines.includes(`- ${r}`)) lines.push(`- ${flatten(r)}`); });
-  if (!lines.length) {
-    return makeArea(def, '', 'not_found', { note: 'Compliance matrix is empty for this package.' });
-  }
-  return makeArea(def, lines.join('\n'), 'extracted', {
-    sourceFields: ['complianceMatrix', 'metadata.complianceRisks']
-  });
-}
-
-function pickMajorClauses(record) {
-  const def = AREA_DEFINITIONS[11];
-  const sI = (record.sections || {}).I;
-  const text = sI && sI.found ? flatten(sI.text) : '';
-  if (!text) {
-    return makeArea(def, '', 'not_found', { note: 'Section I / Contract Clauses block was not detected. Clauses may be incorporated by reference.' });
-  }
-  return makeArea(def, text.split('\n').slice(0, 16).join('\n'), 'extracted', {
-    sourceFields: ['sections.I']
-  });
-}
-
-function pickAttachments(record) {
-  const def = AREA_DEFINITIONS[12];
-  const forms = (record.requiredFormsAttachments || []).map(flatten).filter(Boolean);
-  const idx = (record.metadata && record.metadata.attachmentsIndex) || [];
-  const rows = [];
-  forms.slice(0, 12).forEach(f => rows.push(`- ${f}`));
-  idx.forEach(a => {
-    if (!a || !a.fileName) return;
-    const status = a.extractionStatus ? ` (${a.extractionStatus})` : '';
-    const line = `- ${a.fileName}${status}`;
-    if (!rows.includes(line)) rows.push(line);
-  });
-  if (!rows.length) {
-    return makeArea(def, '', 'not_found', { note: 'No attachments were detected in this package.' });
-  }
-  return makeArea(def, rows.join('\n'), 'extracted', {
-    sourceFields: ['requiredFormsAttachments', 'metadata.attachmentsIndex']
-  });
-}
-
-function pickRisksAmbiguities(record) {
-  const def = AREA_DEFINITIONS[13];
-  const risks = (record.risksDealKillers || []).map(flatten).filter(Boolean);
-  const ambiguities = (record.metadata && record.metadata.ambiguityFlags) || [];
-  const lines = [];
-  risks.slice(0, 8).forEach(r => lines.push(`- ${r}`));
-  ambiguities.slice(0, 6).forEach(a => lines.push(`- Ambiguity: ${flatten(a)}`));
-  if (!lines.length) {
-    return makeArea(def, '', 'not_found', { note: 'No automated risks or ambiguities detected. Operator should still validate the source documents.' });
-  }
-  return makeArea(def, lines.join('\n'), 'extracted', {
-    sourceFields: ['risksDealKillers', 'metadata.ambiguityFlags']
-  });
-}
-
-function pickRecommendedQuestions(record) {
-  const def = AREA_DEFINITIONS[14];
-  // Deterministic question prompts derived from what the extractor MISSED.
-  // We do NOT invent technical questions about the work — those need an
-  // AI provider behind the credential boundary, which is intentionally
-  // out of scope for the deterministic summarize action.
-  const metadata = record.metadata || {};
-  const sections = record.sections || {};
   const questions = [];
-  if (!flatten(metadata.qaDeadline))        questions.push('When is the Q&A deadline? The extracted package does not state one.');
-  if (!flatten(metadata.siteVisit))         questions.push('Is a site visit available, and if so, when?');
-  if (!flatten(metadata.periodOfPerformance)) questions.push('What is the base period of performance and how many option periods are anticipated?');
-  if (!sections.B || !sections.B.found)     questions.push('Is a pricing table (CLIN structure) or Attachment 1 / pricing sheet available?');
-  if (!sections.M || !sections.M.found)     questions.push('Confirm evaluation factors and relative importance (FAR 15.304 / FAR 52.212-2 addendum).');
-  if (!(record.complianceMatrix || []).length) questions.push('Confirm that all submission requirements have been captured for the compliance matrix.');
-  if (!questions.length) {
-    return makeArea(def, '', 'not_applicable', { note: 'No clarification questions were auto-generated — the extracted package appears complete.' });
-  }
-  return makeArea(def, questions.map(q => `- ${q}`).join('\n'), 'extracted', {
-    sourceFields: ['metadata.qaDeadline', 'metadata.siteVisit', 'metadata.periodOfPerformance', 'sections.B', 'sections.M', 'complianceMatrix'],
-    note: 'System-generated analysis based on gaps in the extracted package; verify against the source documents.'
-  });
-}
+  if (!clean(md.qaDeadline)) questions.push('Confirm the deadline for bidder questions.');
+  if (!clean(md.siteVisit)) questions.push('Confirm whether a site visit is offered or required.');
+  if (!clean(md.periodOfPerformance)) questions.push('Confirm the base period, option periods, and transition dates.');
+  if (!pricing.length && !sectionText(record, 'B')) questions.push('Confirm the required pricing format and CLIN schedule.');
+  if (!evaluation) questions.push('Confirm the evaluation factors and their relative importance.');
+  if (!instructions) questions.push('Confirm submission method, format, page limits, and required volumes.');
 
-function pickBidNoBid(record) {
-  const def = AREA_DEFINITIONS[15];
-  const metadata = record.metadata || {};
-  const considerations = [];
-  const setAside = flatten(metadata.setAside);
-  if (setAside) considerations.push(`- Eligibility match: solicitation is set aside as ${setAside}. Confirm the operating profile holds the corresponding certification.`);
-  const naics = flatten(metadata.naics);
-  if (naics)    considerations.push(`- NAICS / size standard fit: the package cites NAICS ${naics}. Confirm the operating profile is registered as eligible under SBA size standards.`);
-  const due = flatten(metadata.responseDeadline);
-  if (due)      considerations.push(`- Response timeline: response is due ${due}. Confirm capture / proposal capacity before commit.`);
-  const risks = (record.risksDealKillers || []).length;
-  if (risks)    considerations.push(`- Risk surface: ${risks} risks / deal-killer signal(s) were detected. Review before commit.`);
-  if (!considerations.length) {
-    return makeArea(def, '', 'not_found', { note: 'No deterministic bid/no-bid signals — eligibility, NAICS, deadline, and risks were not extracted.' });
-  }
-  return makeArea(def, considerations.join('\n'), 'extracted', {
-    sourceFields: ['metadata.setAside', 'metadata.naics', 'metadata.responseDeadline', 'risksDealKillers'],
-    note: 'System-generated analysis; not a substitute for an operator bid/no-bid decision.'
-  });
-}
+  const bidNoBid = [];
+  if (clean(md.setAside)) bidNoBid.push(`Eligibility: verify the bidder qualifies for ${clean(md.setAside)}.`);
+  if (clean(md.naics)) bidNoBid.push(`Size standard: verify eligibility under NAICS ${clean(md.naics)}.`);
+  if (clean(md.responseDeadline)) bidNoBid.push(`Capacity: confirm the team can submit by ${clean(md.responseDeadline)}.`);
+  if (risks.length) bidNoBid.push(`Risk review: ${risks.length} risk or ambiguity signal(s) require operator review.`);
+  if (processing !== STATUS.EXTRACTED) bidNoBid.push(`Extraction reliability: processing is ${processing}; do not make a final bid decision until source documents are reviewed.`);
 
-function pickImmediateActions(record) {
-  const def = AREA_DEFINITIONS[16];
-  const metadata = record.metadata || {};
   const actions = [];
-  const due = flatten(metadata.responseDeadline);
-  if (due)                       actions.push(`- Calendar the response deadline: ${due}.`);
-  if (flatten(metadata.qaDeadline)) actions.push(`- Calendar the questions deadline: ${flatten(metadata.qaDeadline)}.`);
-  if (flatten(metadata.siteVisit))  actions.push(`- Schedule attendance at the site visit: ${flatten(metadata.siteVisit)}.`);
-  const attachments = (record.requiredFormsAttachments || []).length;
-  if (attachments) actions.push(`- Download and verify ${attachments} required form(s) / attachment(s) before proposal kickoff.`);
-  const sM = (record.sections || {}).M;
-  if (!sM || !sM.found) actions.push('- Locate Section M / FAR 52.212-2 addendum to confirm evaluation factors before pricing.');
-  const sL = (record.sections || {}).L;
-  if (!sL || !sL.found) actions.push('- Locate Section L / FAR 52.212-1 addendum to confirm submission instructions.');
-  if (!actions.length) {
-    return makeArea(def, '', 'not_found', { note: 'No immediate actions inferred from the extracted package.' });
-  }
-  return makeArea(def, actions.join('\n'), 'extracted', {
-    sourceFields: ['metadata.responseDeadline', 'metadata.qaDeadline', 'metadata.siteVisit', 'requiredFormsAttachments', 'sections.L', 'sections.M'],
-    note: 'System-generated checklist; operator should add capture / proposal tasks to the workspace.'
-  });
+  if (clean(md.responseDeadline)) actions.push(`Calendar the response deadline: ${clean(md.responseDeadline)}.`);
+  if (clean(md.qaDeadline)) actions.push(`Calendar the questions deadline: ${clean(md.qaDeadline)}.`);
+  if (clean(md.siteVisit)) actions.push(`Calendar the site visit: ${clean(md.siteVisit)}.`);
+  if (attachments.length) actions.push(`Verify all ${attachments.length} detected forms and attachments.`);
+  if (!instructions) actions.push('Locate and verify Section L or FAR 52.212-1 addendum.');
+  if (!evaluation) actions.push('Locate and verify Section M or FAR 52.212-2 addendum.');
+  if (processing !== STATUS.EXTRACTED) actions.push('Resolve failed, partial, or OCR-required document processing before proposal kickoff.');
+
+  return [
+    makeArea(AREA_DEFINITIONS[0], whatParts.join('\n\n'), whatParts.length ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['metadata.title', 'pwsSowRequirements', 'sections.C'], sourceReferences: referencesFor(record.pwsSowRequirements, sections.C), note: processingNote }),
+    makeArea(AREA_DEFINITIONS[1], whoParts.join('\n'), whoParts.length ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['metadata.agency', 'metadata.subAgency', 'metadata.office', 'metadata.pointOfContact'], sourceReferences: referencesFor(md.pointOfContact) }),
+    makeArea(AREA_DEFINITIONS[2], dateRows.join('\n'), dateRows.length ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['metadata.postedDate', 'metadata.qaDeadline', 'metadata.siteVisit', 'metadata.responseDeadline', 'deadlines'], sourceReferences: referencesFor(record.deadlines) }),
+    makeArea(AREA_DEFINITIONS[3], eligibility.join('\n'), eligibility.length ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['metadata.setAside', 'metadata.naics', 'metadata.classificationCode'] }),
+    makeArea(AREA_DEFINITIONS[4], scope, scope ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['pwsSowRequirements', 'sections.C'], sourceReferences: referencesFor(record.pwsSowRequirements, sections.C), note: processingNote }),
+    makeArea(AREA_DEFINITIONS[5], clean(md.placeOfPerformance), clean(md.placeOfPerformance) ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['metadata.placeOfPerformance'] }),
+    makeArea(AREA_DEFINITIONS[6], clean(md.periodOfPerformance), clean(md.periodOfPerformance) ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['metadata.periodOfPerformance', 'sections.F'], sourceReferences: referencesFor(sections.F) }),
+    makeArea(AREA_DEFINITIONS[7], contract.join('\n\n'), contract.length ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['metadata.noticeType', 'metadata.pricingClinTable', 'sections.B'], sourceReferences: referencesFor(md.pricingClinTable, sections.B), note: processingNote }),
+    makeArea(AREA_DEFINITIONS[8], instructions, instructions ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['sections.L', 'instructionsToOfferors'], sourceReferences: referencesFor(sections.L, record.instructionsToOfferors), note: processingNote }),
+    makeArea(AREA_DEFINITIONS[9], evaluation, evaluation ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['sections.M', 'evaluationCriteria'], sourceReferences: referencesFor(sections.M, record.evaluationCriteria), note: processingNote }),
+    makeArea(AREA_DEFINITIONS[10], compliance.length ? `- ${compliance.join('\n- ')}` : '', compliance.length ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['complianceMatrix', 'metadata.complianceRisks'], sourceReferences: referencesFor(record.complianceMatrix, md.complianceRisks), note: processingNote }),
+    makeArea(AREA_DEFINITIONS[11], sectionText(record, 'I') || clauseRows.join('\n'), (sectionText(record, 'I') || clauseRows.length) ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['sections.I', 'complianceMatrix'], sourceReferences: referencesFor(sections.I, record.complianceMatrix) }),
+    makeArea(AREA_DEFINITIONS[12], attachments.length ? `- ${Array.from(new Set(attachments)).join('\n- ')}` : '', attachments.length ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['requiredFormsAttachments', 'metadata.attachmentsIndex', 'documentInventory'], sourceReferences: referencesFor(record.requiredFormsAttachments, md.attachmentsIndex, record.documentInventory), note: processingNote }),
+    makeArea(AREA_DEFINITIONS[13], risks.length ? `- ${Array.from(new Set(risks)).join('\n- ')}` : '', risks.length ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['risksDealKillers', 'metadata.ambiguityFlags', 'warnings'], sourceReferences: referencesFor(record.risksDealKillers, md.ambiguityFlags), note: processingNote }),
+    makeArea(AREA_DEFINITIONS[14], questions.length ? `- ${questions.join('\n- ')}` : '', questions.length ? STATUS.EXTRACTED : STATUS.NOT_APPLICABLE, { sourceFields: ['metadata.qaDeadline', 'metadata.siteVisit', 'metadata.periodOfPerformance', 'sections.B', 'sections.L', 'sections.M'], note: 'System-generated analysis based only on missing or incomplete extracted fields. Verify against the source documents.' }),
+    makeArea(AREA_DEFINITIONS[15], bidNoBid.length ? `- ${bidNoBid.join('\n- ')}` : '', bidNoBid.length ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['metadata.setAside', 'metadata.naics', 'metadata.responseDeadline', 'risksDealKillers', 'documentInventory'], note: 'System-generated analysis; not a substitute for an operator bid/no-bid decision.' }),
+    makeArea(AREA_DEFINITIONS[16], actions.length ? `- ${actions.join('\n- ')}` : '', actions.length ? STATUS.EXTRACTED : STATUS.NOT_FOUND, { sourceFields: ['metadata.responseDeadline', 'metadata.qaDeadline', 'metadata.siteVisit', 'requiredFormsAttachments', 'sections.L', 'sections.M', 'documentInventory'], note: 'System-generated checklist. Verify and assign actions before execution.' })
+  ];
 }
 
 function summarizeSolicitation(input) {
   input = input || {};
-  // When called as summarizeSolicitation({ extraction: <record> }), use the
-  // record verbatim. When called as summarizeSolicitation(<record>), accept
-  // the input itself as the record. But: an explicitly-supplied null
-  // extraction is a refusal signal, not "missing key" — honor it.
   const hasExplicitExtraction = Object.prototype.hasOwnProperty.call(input, 'extraction');
   const record = hasExplicitExtraction ? input.extraction : input;
-  if (!record || typeof record !== 'object' || !Object.keys(record).length || (hasExplicitExtraction && record === null)) {
-    return Object.freeze({
-      ok: false,
-      reason: 'no_extraction',
-      schemaVersion: SCHEMA_VERSION,
-      areas: []
-    });
+  if (!record || typeof record !== 'object' || !Object.keys(record).length) {
+    return Object.freeze({ ok: false, reason: 'no_extraction', schemaVersion: SCHEMA_VERSION, areas: [] });
   }
-  const areas = [
-    pickWhatsBeingBought(record),
-    pickWhoIsBuying(record),
-    pickKeyDates(record),
-    pickEligibilitySetAside(record),
-    pickScope(record),
-    pickPlaceOfPerformance(record),
-    pickPeriodOfPerformance(record),
-    pickContractPricingStructure(record),
-    pickSubmissionRequirements(record),
-    pickEvaluationMethod(record),
-    pickMandatoryCompliance(record),
-    pickMajorClauses(record),
-    pickAttachments(record),
-    pickRisksAmbiguities(record),
-    pickRecommendedQuestions(record),
-    pickBidNoBid(record),
-    pickImmediateActions(record)
-  ];
-  const populated = areas.filter(a => a.status === 'extracted').length;
+  const binding = validateBinding(record, input.opportunityId);
+  if (!binding.ok) return Object.freeze(Object.assign({ ok: false, schemaVersion: SCHEMA_VERSION, areas: [] }, binding));
+  const areas = buildAreas(record);
+  const refs = referencesFor(record.metadata, record.sections, record.instructionsToOfferors, record.evaluationCriteria, record.pwsSowRequirements, record.requiredFormsAttachments, record.deadlines, record.risksDealKillers, record.complianceMatrix, record.documentInventory);
   return Object.freeze({
     ok: true,
     schemaVersion: SCHEMA_VERSION,
-    opportunityId: input.opportunityId || (record.import && record.import.opportunityId) || '',
-    populatedAreas: populated,
-    totalAreas:     areas.length,
-    sourceFiles:    uniqueFiles(record),
-    facts:          'Facts come from the persisted extraction record. System-generated analysis is labelled in the note field of each area.',
-    areas:          areas
+    opportunityId: clean(input.opportunityId) || binding.boundOpportunityId || clean(record.import && record.import.opportunityId),
+    processingStatus: extractionProcessingStatus(record),
+    populatedAreas: areas.filter(a => a.status === STATUS.EXTRACTED).length,
+    totalAreas: areas.length,
+    sourceFiles: Array.from(new Set(refs.map(r => r.sourceFile).filter(Boolean))),
+    sourceReferences: refs,
+    facts: 'Facts come from the supplied normalized extraction record. System-generated analysis is labelled in each area note.',
+    areas
   });
 }
 
-// Per-section "Explain This Section" — deterministic plain-English
-// breakdown of a single section letter or alias key. Reads the same
-// persisted record. No LLM call.
 function explainSection(input) {
   input = input || {};
-  const record = input.extraction || input;
-  const sectionKey = String(input.section || input.key || '').trim().toUpperCase();
-  if (!record || !sectionKey) {
-    return Object.freeze({ ok: false, reason: 'no_section', schemaVersion: SCHEMA_VERSION });
-  }
+  const record = Object.prototype.hasOwnProperty.call(input, 'extraction') ? input.extraction : input;
+  const key = clean(input.section || input.key).toUpperCase();
+  if (!record || typeof record !== 'object' || !key) return Object.freeze({ ok: false, reason: 'no_section', schemaVersion: SCHEMA_VERSION });
+  const binding = validateBinding(record, input.opportunityId);
+  if (!binding.ok) return Object.freeze(Object.assign({ ok: false, schemaVersion: SCHEMA_VERSION, section: key }, binding));
   const sections = record.sections || {};
-  // Letter-based explain (A–M).
-  if (sections[sectionKey] && sections[sectionKey].found) {
-    const s = sections[sectionKey];
+  if (sections[key] && sections[key].found && clean(sections[key].text)) {
+    const s = sections[key];
     return Object.freeze({
-      ok:            true,
+      ok: true,
       schemaVersion: SCHEMA_VERSION,
-      section:       sectionKey,
-      title:         s.title || '',
-      explanation:   s.plainEnglishSummary || `This section contains the following extracted content:\n\n${flatten(s.text)}`,
-      sourceFile:    s.sourceFile || '',
-      confidence:    s.confidence || 'fallback',
-      note:          'Plain-English explanation derived from the persisted extraction record. Verify against the source document before relying on it.'
+      section: key,
+      title: clean(s.title) || `Section ${key}`,
+      explanation: clean(s.text),
+      status: STATUS.EXTRACTED,
+      sourceFile: clean(s.sourceFile),
+      sourceLocation: clean(s.sourceLocation),
+      sourceReferences: referencesFor(s),
+      confidence: clean(s.confidence) || 'review_required',
+      note: 'This is a plain-language display of extracted section content. The original section remains visible for source verification.'
     });
   }
-  // Alias-key explain.
   const aliasMap = {
-    INSTRUCTIONS: 'instructionsToOfferors',
-    EVALUATION:   'evaluationCriteria',
-    PWS:          'pwsSowRequirements',
-    SCOPE:        'pwsSowRequirements',
-    FORMS:        'requiredFormsAttachments',
-    DEADLINES:    'deadlines',
-    RISKS:        'risksDealKillers',
-    MATRIX:       'complianceMatrix'
+    INSTRUCTIONS: ['instructionsToOfferors', serializeGeneric],
+    EVALUATION: ['evaluationCriteria', serializeGeneric],
+    PWS: ['pwsSowRequirements', serializeGeneric],
+    SCOPE: ['pwsSowRequirements', serializeGeneric],
+    FORMS: ['requiredFormsAttachments', serializeAttachment],
+    DEADLINES: ['deadlines', serializeDeadline],
+    RISKS: ['risksDealKillers', serializeGeneric],
+    MATRIX: ['complianceMatrix', serializeComplianceRow]
   };
-  const aliasField = aliasMap[sectionKey];
-  if (aliasField && record[aliasField]) {
-    return Object.freeze({
-      ok:            true,
-      schemaVersion: SCHEMA_VERSION,
-      section:       sectionKey,
-      title:         aliasField,
-      explanation:   flatten(record[aliasField]),
-      confidence:    'alias',
-      note:          'Plain-English explanation derived from the persisted alias field. Verify against the source document before relying on it.'
-    });
+  const pair = aliasMap[key];
+  if (pair) {
+    const explanation = aliasText(record, pair[0], pair[1], 50);
+    if (explanation) {
+      return Object.freeze({
+        ok: true,
+        schemaVersion: SCHEMA_VERSION,
+        section: key,
+        title: pair[0],
+        explanation,
+        status: STATUS.EXTRACTED,
+        sourceReferences: referencesFor(record[pair[0]]),
+        confidence: 'review_required',
+        note: 'Explanation derived from the normalized extraction field. The original extracted content remains visible.'
+      });
+    }
+    return Object.freeze({ ok: true, schemaVersion: SCHEMA_VERSION, section: key, title: pair[0], explanation: '', status: STATUS.NOT_FOUND, note: `${key} content was not detected in the extracted package.` });
   }
-  // Not present — be honest.
-  if (sections[sectionKey]) {
-    return Object.freeze({
-      ok:            true,
-      schemaVersion: SCHEMA_VERSION,
-      section:       sectionKey,
-      title:         sections[sectionKey].title || '',
-      explanation:   '',
-      status:        'not_found',
-      note:          `Section ${sectionKey} was not detected in the extracted package. There is nothing to explain. Check the source document.`
-    });
+  if (sections[key]) {
+    return Object.freeze({ ok: true, schemaVersion: SCHEMA_VERSION, section: key, title: clean(sections[key].title), explanation: '', status: STATUS.NOT_FOUND, note: `Section ${key} was not detected in the extracted package.` });
   }
-  return Object.freeze({
-    ok:     false,
-    reason: 'unknown_section',
-    schemaVersion: SCHEMA_VERSION,
-    section: sectionKey
-  });
+  return Object.freeze({ ok: false, reason: 'unknown_section', schemaVersion: SCHEMA_VERSION, section: key });
 }
 
 module.exports = {
   summarizeSolicitation,
   explainSection,
   AREA_DEFINITIONS,
-  SCHEMA_VERSION
+  SCHEMA_VERSION,
+  STATUS,
+  _validateBinding: validateBinding,
+  _serializeContact: serializeContact,
+  _serializePricingRow: serializePricingRow,
+  _serializeComplianceRow: serializeComplianceRow,
+  _serializeAttachment: serializeAttachment,
+  _extractionProcessingStatus: extractionProcessingStatus
 };
