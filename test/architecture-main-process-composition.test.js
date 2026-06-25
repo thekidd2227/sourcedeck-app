@@ -112,6 +112,8 @@ const EXPECTED_FEATURE_CHANNELS = [
   'govcon:deadlines-extract', 'govcon:deadlines-approve',
   'govcon:subcontractors-source', 'govcon:incumbent-research',
   'govcon:solicitation-analyze',
+  'govcon:solicitation-explain-section',
+  'govcon:solicitation-summarize',
   'govcon:clarifications-generate', 'govcon:relationship-strategy',
   'govcon:communications-draft-email',
   'govcon:exports-create',
@@ -190,8 +192,8 @@ try {
      fakeFeat.handled.length === feat.registered.length);
 
   const totalChannels = core.registered.length + feat.registered.length;
-  ok('total IPC channel count is 96 (full pre-Phase-2 set preserved)',
-     totalChannels === 96,
+  ok('total IPC channel count is 98 (Phase 2 baseline 96 + Phase 25AR summarize/explain)',
+     totalChannels === 98,
      `got ${totalChannels}`);
 } catch (err) {
   ok('IPC registrars invokable with deps bag', false, err.message);
@@ -392,7 +394,7 @@ try {
   ok('bootstrap initially has no main window', handle.getMainWindow() === null);
   ok('bootstrap exposes ipcChannels inventory', handle.ipcChannels && Array.isArray(handle.ipcChannels.core) && Array.isArray(handle.ipcChannels.feature));
   ok('bootstrap.ipcChannels.core has 18 entries',    handle.ipcChannels.core.length === 18, String(handle.ipcChannels.core.length));
-  ok('bootstrap.ipcChannels.feature has 78 entries', handle.ipcChannels.feature.length === 78, String(handle.ipcChannels.feature.length));
+  ok('bootstrap.ipcChannels.feature has 80 entries', handle.ipcChannels.feature.length === 80, String(handle.ipcChannels.feature.length));
 } catch (err) {
   ok('bootstrap characterization', false, err.message);
 }

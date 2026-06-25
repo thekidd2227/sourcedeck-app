@@ -203,6 +203,10 @@ function registerFeatureIpc(deps){
   ipcMain.handle('govcon:subcontractors-source',   (_e, input) => appApi.govcon.subcontractors.source(input || {}));
   ipcMain.handle('govcon:incumbent-research',      (_e, input) => appApi.govcon.incumbent.research(input || {}));
   ipcMain.handle('govcon:solicitation-analyze',    (_e, input) => appApi.govcon.solicitation.analyze(input || {}));
+  // Phase 25AR — Summarize Solicitation + per-section explain. Deterministic;
+  // both route through createAppApi and read the persisted extraction record.
+  ipcMain.handle('govcon:solicitation-summarize',  (_e, input) => appApi.govcon.solicitation.summarize(input || {}));
+  ipcMain.handle('govcon:solicitation-explain-section', (_e, input) => appApi.govcon.solicitation.explainSection(input || {}));
   ipcMain.handle('govcon:clarifications-generate', (_e, input) => appApi.govcon.clarifications.generate(input || {}));
   ipcMain.handle('govcon:relationship-strategy',   (_e, input) => appApi.govcon.clarifications.relationshipStrategy(input || {}));
   ipcMain.handle('govcon:communications-draft-email', (_e, input) => appApi.govcon.communications.draftEmail(input || {}));

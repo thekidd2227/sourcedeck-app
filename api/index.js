@@ -65,6 +65,7 @@ const subSourcing    = require('../services/govcon/subcontractor-sourcing');
 const primeFinder    = require('../services/govcon/prime-partner-finder');
 const incumbentSvc   = require('../services/govcon/incumbent-research');
 const solicitationSvc = require('../services/govcon/solicitation-analysis');
+const solicitationSummarizeSvc = require('../services/govcon/solicitation-summarize');
 const clarificationSvc = require('../services/govcon/clarification-strategy');
 const emailCompliance = require('../services/govcon/email-compliance');
 const exportSvc      = require('../services/govcon/export');
@@ -261,6 +262,40 @@ function createAppApi(opts) {
           const result = solicitationSvc.analyzeSolicitation(payload || {});
           if (record) opportunities.patch(record.id, { solicitationAnalysis: result });
           return result;
+        })),
+        // Phase 25AR — Summarize Solicitation. Reads the persisted
+        // extraction record for the supplied opportunity (tenant-isolated
+        // by withOpportunity) and returns a structured 17-area breakdown.
+        // Deterministic; no LLM. Stored back on the opportunity as
+        // `solicitationSummary` so the renderer can reload it without
+        // re-running.
+        summarize: (input) => Promise.resolve(withOpportunity(opportunities, input, (payload, record) => {
+          const extraction = (payload && payload.extraction)
+            || (record && record.solicitationExtraction)
+            || (record && record.solicitation && record.solicitation.extraction)
+            || null;
+          const result = solicitationSummarizeSvc.summarizeSolicitation({
+            extraction,
+            opportunityId: (payload && payload.opportunityId) || (record && record.id) || ''
+          });
+          if (record && result && result.ok) {
+            opportunities.patch(record.id, { solicitationSummary: result });
+          }
+          return result;
+        })),
+        // Phase 25AR — per-section explain. Reads the persisted
+        // extraction for the opportunity and returns a deterministic
+        // plain-English explanation of one section letter or alias key.
+        explainSection: (input) => Promise.resolve(withOpportunity(opportunities, input, (payload, record) => {
+          const extraction = (payload && payload.extraction)
+            || (record && record.solicitationExtraction)
+            || (record && record.solicitation && record.solicitation.extraction)
+            || null;
+          return solicitationSummarizeSvc.explainSection({
+            extraction,
+            section: payload && (payload.section || payload.key),
+            opportunityId: (payload && payload.opportunityId) || (record && record.id) || ''
+          });
         }))
       },
       clarifications: {
