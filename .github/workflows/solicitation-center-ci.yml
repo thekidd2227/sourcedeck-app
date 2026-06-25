@@ -19,13 +19,39 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  integrity-diagnostic:
+    name: Phase 25AR diagnostic
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          show-progress: false
+      - name: Run Phase 25AR with compact failure output
+        shell: bash
+        run: |
+          set +e
+          node test/phase-25ar-solicitation-summarize-and-extraction-bugs.test.js > /tmp/phase25ar.log 2>&1
+          code=$?
+          if [ "$code" -ne 0 ]; then
+            echo "::error title=Phase 25AR regression failed::$(tail -n 35 /tmp/phase25ar.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g')"
+            tail -n 35 /tmp/phase25ar.log
+          else
+            cat /tmp/phase25ar.log
+          fi
+          exit "$code"
+
   validate:
     name: Focused extraction and renderer validation
+    needs: integrity-diagnostic
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          show-progress: false
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
