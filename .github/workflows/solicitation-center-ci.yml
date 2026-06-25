@@ -1,0 +1,56 @@
+name: Solicitation Center CI
+
+on:
+  pull_request:
+    paths:
+      - 'services/govcon/solicitation-*.js'
+      - 'app/renderer/features/solicitation-center/**'
+      - 'test/phase-25a*-solicitation-*.test.js'
+      - 'docs/engineering/INCIDENT_REPORT.md'
+      - '.github/workflows/solicitation-center-ci.yml'
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: solicitation-center-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    name: Focused extraction and renderer validation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Syntax checks
+        run: |
+          node --check services/govcon/solicitation-summarize.js
+          node --check app/renderer/features/solicitation-center/summarize-and-explain.js
+          node --check test/phase-25ar-solicitation-summarize-and-extraction-bugs.test.js
+
+      - name: Focused Solicitation Center tests
+        run: |
+          node test/phase-25ar-solicitation-summarize-and-extraction-bugs.test.js
+          node test/phase-25aq-far-commercial-items-section-extraction.test.js
+          node test/phase-25ab-extract-sections-a-to-m.test.js
+          node test/solicitation-extraction-end-to-end-mapping.test.js
+          node test/phase-25an-browser-handoff-local-extraction.test.js
+
+      - name: Release safety gate
+        run: npm run release:check
+
+      - name: Diff hygiene
+        run: git diff --check HEAD^ HEAD
