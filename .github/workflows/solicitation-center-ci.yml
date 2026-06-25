@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: read
+  pull-requests: write
 
 concurrency:
   group: solicitation-center-${{ github.event.pull_request.number || github.ref }}
@@ -30,13 +31,24 @@ jobs:
           show-progress: false
       - name: Run Phase 25AR with compact failure output
         shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set +e
           node test/phase-25ar-solicitation-summarize-and-extraction-bugs.test.js > /tmp/phase25ar.log 2>&1
           code=$?
           if [ "$code" -ne 0 ]; then
-            echo "::error title=Phase 25AR regression failed::$(tail -n 35 /tmp/phase25ar.log | tr '\n' ' ' | sed 's/%/%25/g; s/\r/%0D/g')"
             tail -n 35 /tmp/phase25ar.log
+            if [ -n "${{ github.event.pull_request.number }}" ]; then
+              {
+                echo '### Phase 25AR diagnostic failure'
+                echo
+                echo '```text'
+                tail -n 35 /tmp/phase25ar.log
+                echo '```'
+              } > /tmp/phase25ar-comment.md
+              gh pr comment "${{ github.event.pull_request.number }}" --body-file /tmp/phase25ar-comment.md
+            fi
           else
             cat /tmp/phase25ar.log
           fi
