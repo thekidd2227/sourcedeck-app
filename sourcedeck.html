@@ -3417,6 +3417,8 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
                 <button type="button" class="btn btn-gold" id="gc-sol-summary-upload-btn" onclick="gcSolUploadActive()">⬆ Upload Solicitation Files</button>
                 <button type="button" class="btn btn-gold" id="gc-sol-extract-btn" data-sd-action-id="sol-extract" onclick="gcSolExtract()">Extract Requirements</button>
                 <button type="button" class="btn btn-ghost" id="gc-sol-explain-btn" data-sd-action-id="sol-explain" onclick="gcSolExplainPlainEnglish()">Explain Package in Plain English</button>
+                <!-- Phase 25AR — Structured 17-area Summarize Solicitation. Deterministic, reads the persisted extraction record. -->
+                <button type="button" class="btn btn-gold" id="gc-sol-summarize-btn" data-sd-action-id="sol-summarize" onclick="gcSolSummarizeSolicitation()" title="Generate a 17-area operator-grade breakdown of the loaded solicitation">📋 Summarize Solicitation</button>
                 <button type="button" class="btn btn-ghost" id="gc-sol-matrix-btn" data-sd-action-id="sol-matrix" onclick="gcSolBuildMatrix()">Build Compliance Matrix</button>
                 <button type="button" class="btn btn-ghost" onclick="gcSolCreateProposalOutline()">Create Proposal Outline</button>
                 <button type="button" class="btn btn-ghost" onclick="gcSolMarkReviewed()">Mark Requirement Reviewed</button>
@@ -3435,15 +3437,15 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               <div id="gc-sol-summary"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No solicitation loaded yet. Use Upload Solicitation Files to import multiple documents from your computer. Extracted results will appear here automatically.</div></div>
             </div>
             <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
-              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Section L — Instructions to Offerors</div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px"><div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text)">Section L — Instructions to Offerors</div><button type="button" class="btn btn-ghost" style="font-size:9px;padding:2px 8px" onclick="gcSolExplainSection('L', 'gc-sol-section-l')" title="Plain-English explanation of Section L from the persisted extraction record">Explain</button></div>
               <div id="gc-sol-section-l"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No Section L instructions extracted yet. Draft extraction — verify against source document.</div></div>
             </div>
             <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
-              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Section M — Evaluation Criteria</div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px"><div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text)">Section M — Evaluation Criteria</div><button type="button" class="btn btn-ghost" style="font-size:9px;padding:2px 8px" onclick="gcSolExplainSection('M', 'gc-sol-section-m')" title="Plain-English explanation of Section M from the persisted extraction record">Explain</button></div>
               <div id="gc-sol-section-m"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No Section M evaluation criteria extracted yet. Draft extraction — verify against source document.</div></div>
             </div>
             <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
-              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">PWS / SOW Requirements</div>
+              <div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:6px"><div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text)">PWS / SOW Requirements</div><button type="button" class="btn btn-ghost" style="font-size:9px;padding:2px 8px" onclick="gcSolExplainSection('PWS', 'gc-sol-pws')" title="Plain-English explanation of the scope / PWS / SOW from the persisted extraction record">Explain</button></div>
               <div id="gc-sol-pws"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No PWS / SOW requirements extracted yet. Draft extraction — verify against source document.</div></div>
             </div>
             <div class="gc-sol-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px">
@@ -3458,6 +3460,17 @@ img,video,canvas,svg,iframe{max-width:100%;height:auto}
               <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:15px;color:var(--text);margin-bottom:6px">Risks / Deal Killers</div>
               <div id="gc-sol-risks"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">No risks or deal killers extracted yet. Draft extraction — verify against source document.</div></div>
             </div>
+          </div>
+
+          <!-- Phase 25AR — Structured 17-area Summarize Solicitation breakdown.
+               Empty by default. Populates when the user clicks "Summarize Solicitation".
+               Reads the persisted extraction record; deterministic; no LLM. -->
+          <div class="gc-sol-panel" id="gc-sol-summarize-panel" style="background:var(--panel2);border:1px solid var(--border);border-radius:var(--r2);padding:12px 14px;margin-bottom:14px;display:none">
+            <div style="display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+              <div style="font-family:'Cormorant Garamond',Georgia,serif;font-style:italic;font-weight:600;font-size:16px;color:var(--text)">Summarize Solicitation — Operator Breakdown</div>
+              <div style="font-size:10px;color:var(--muted)">Facts come from the extraction record. Notes labelled "analysis" are system-generated.</div>
+            </div>
+            <div id="gc-sol-summarize-body"><div class="gc-sol-empty" style="font-size:10.5px;color:var(--muted);line-height:1.55">Loading the structured breakdown…</div></div>
           </div>
 
           <!-- Compliance matrix table -->
@@ -15497,6 +15510,11 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.gcSolExportPlaceholder = function(){
     if (window.toast) try { window.toast('Export Matrix placeholder — internal review export only. SourceDeck does not submit bids.', 'info'); } catch (e) {}
   };
+  // Phase 25AR — Summarize Solicitation + per-section Explain are owned by
+  // app/renderer/features/solicitation-center/summarize-and-explain.js
+  // (loaded earlier in the document via a relative <script src>). They
+  // attach window.gcSolSummarizeSolicitation and window.gcSolExplainSection.
+
   window.gcSolRender = renderAll;
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', renderAll);
@@ -18358,6 +18376,8 @@ document.addEventListener('DOMContentLoaded',()=>{
 <script src="app/renderer/features/navigation/section-scroll.js"></script>
 
 <script src="app/renderer/features/find-opportunities/state-local-procurement.js"></script>
+<!-- Phase 25AR — Solicitation Center summarize + per-section explain. -->
+<script src="app/renderer/features/solicitation-center/summarize-and-explain.js"></script>
 
 <script>
 /* Phase 25N — GovCon tab-page switcher + Find Opportunities helpers.

@@ -107,7 +107,9 @@ contextBridge.exposeInMainWorld('sd', {
       research:  (input)      => ipcRenderer.invoke('govcon:incumbent-research', input)
     },
     solicitation: {
-      analyze:   (input)      => ipcRenderer.invoke('govcon:solicitation-analyze', input)
+      analyze:        (input) => ipcRenderer.invoke('govcon:solicitation-analyze', input),
+      summarize:      (input) => ipcRenderer.invoke('govcon:solicitation-summarize', input),
+      explainSection: (input) => ipcRenderer.invoke('govcon:solicitation-explain-section', input)
     },
     clarifications: {
       generate:  (input)      => ipcRenderer.invoke('govcon:clarifications-generate', input),

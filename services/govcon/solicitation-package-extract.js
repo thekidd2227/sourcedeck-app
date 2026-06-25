@@ -863,14 +863,19 @@ function expandFormCandidates(line) {
   const clean = cleanExtractedText(line).replace(/\s+/g, ' ').trim();
   if (!clean) return [];
   const matches = [];
+  // Phase 25AR — accept em-dash / en-dash / hyphen / colon between the
+  // attachment label and its description so "Attachment 1 — Pricing Sheet"
+  // matches as a single canonical row instead of being split into
+  // "Attachment 1" + "Pricing Sheet". Same for Exhibit/Appendix.
+  const SEP_TAIL = /(?:\s*[—–\-:]\s*[A-Za-z0-9][^\n]{0,80})?/.source;
   const patterns = [
     /\bSF\s*\d{1,4}[A-Z]?(?:\s+(?:cover page|required|signed|completed|form|certification|representation)){0,8}/gi,
     /\bDD\s*Form\s*\d{1,4}[A-Z]?(?:\s+(?:required|signed|completed|form)){0,8}/gi,
     /\bOF\s*\d{1,4}[A-Z]?(?:\s+(?:required|signed|completed|form)){0,8}/gi,
     /\bPast Performance Questionnaire(?:\s+required)?/gi,
-    /\bAttachment\s+[A-Z0-9-]+(?:\s+(?:Wage Determination|Pricing Sheet|QASP|PWS|SOW|required|mandatory)){0,8}/gi,
-    /\bExhibit\s+[A-Z0-9-]+(?:\s+(?:required|mandatory|pricing|technical|schedule)){0,8}/gi,
-    /\bAppendix\s+[A-Z0-9-]+(?:\s+(?:required|mandatory|pricing|technical|schedule)){0,8}/gi,
+    new RegExp(`\\bAttachment\\s+[A-Z0-9-]+${SEP_TAIL}(?:\\s+(?:Wage Determination|Pricing Sheet|QASP|PWS|SOW|required|mandatory)){0,8}`, 'gi'),
+    new RegExp(`\\bExhibit\\s+[A-Z0-9-]+${SEP_TAIL}(?:\\s+(?:required|mandatory|pricing|technical|schedule)){0,8}`, 'gi'),
+    new RegExp(`\\bAppendix\\s+[A-Z0-9-]+${SEP_TAIL}(?:\\s+(?:required|mandatory|pricing|technical|schedule)){0,8}`, 'gi'),
     /\b(?:QASP|wage determination|pricing sheet|price schedule|certification|representation|solicitation provisions?|contract clauses?)\b[^.;\n]{0,120}/gi
   ];
   for (const re of patterns) {
@@ -878,6 +883,29 @@ function expandFormCandidates(line) {
     if (found) matches.push(...found);
   }
   return matches.length ? matches : [clean];
+}
+
+// Phase 25AR — collapse redundant form entries that are strict substrings
+// of a longer accepted entry. Without this, "Attachment 1 — Pricing Sheet"
+// and "Pricing Sheet" both pass uniqueFormItems' lowercase-equality dedup
+// and the renderer shows duplicate clutter on the forms panel.
+function dropSubsumedFormItems(items) {
+  const arr = Array.isArray(items) ? items.slice() : [];
+  // Sort longest first so a long canonical entry "wins" over its substrings.
+  arr.sort((a, b) => (b || '').length - (a || '').length);
+  const out = [];
+  for (const candidate of arr) {
+    const lc = String(candidate || '').toLowerCase();
+    if (!lc) continue;
+    const subsumed = out.some(accepted => {
+      const al = accepted.toLowerCase();
+      // strict containment, not equality
+      return al !== lc && al.includes(lc);
+    });
+    if (subsumed) continue;
+    out.push(candidate);
+  }
+  return out;
 }
 
 function uniqueFormItems(lines, limit) {
@@ -907,7 +935,44 @@ function formItemsFromText(text, files) {
     if (/\b(SF|QASP|wage|pricing|price|attachment|exhibit|amendment|PWS|SOW|determination|certification|representation)\b/i.test(name)) return name;
     return '';
   });
-  return uniqueFormItems(lines.concat(fileItems), 40);
+  // Phase 25AR — dropSubsumedFormItems collapses "Attachment 1" + "Pricing Sheet"
+  // back into "Attachment 1 — Pricing Sheet" when both came from the same source line.
+  return dropSubsumedFormItems(uniqueFormItems(lines.concat(fileItems), 40));
+}
+
+function extractSolicitationNumber(text) {
+  // Phase 25AR — the legacy regex
+  //   /solicitation\s*(?:no\.?|number|#)?\s*[:\-]?\s*([A-Z0-9._\-\/]+)/i
+  // matched the literal SF 1449 header "SOLICITATION/CONTRACT/ORDER FOR
+  // COMMERCIAL ITEMS" before the actual RFQ number line and emitted
+  // "/CONTRACT/ORDER" as the solnum. We try a short ordered list of
+  // higher-precision patterns instead, and validate the candidate before
+  // returning it.
+  const src = String(text || '');
+  const patterns = [
+    // Explicit qualifier: "Solicitation No: X", "Solicitation Number: X"
+    /\bSolicitation\s+(?:No\.?|Number|#)\s*[:\-]\s*([A-Z0-9][A-Z0-9._\-\/]+)/i,
+    // RFQ/RFP/IFB/RFI/Sources Sought number
+    /\b(?:RFQ|RFP|IFB|RFI|Sources?\s+Sought)\s+(?:No\.?|Number|#)\s*[:\-]\s*([A-Z0-9][A-Z0-9._\-\/]+)/i,
+    // Notice ID / Notice Number (used by SAM.gov packages)
+    /\bNotice\s+(?:ID|Number)\s*[:\-]\s*([A-Z0-9][A-Z0-9._\-\/]+)/i,
+    // "Solicitation: X" with explicit colon or dash, no qualifier word — last resort
+    /\bSolicitation\s*[:\-]\s*([A-Z0-9][A-Z0-9._\-\/]{3,})/i
+  ];
+  for (const re of patterns) {
+    const m = src.match(re);
+    if (!m) continue;
+    const candidate = String(m[1] || '').trim().replace(/[.,;]+$/, '');
+    if (!candidate) continue;
+    // Reject UCF header tokens that previously slipped through.
+    if (/^(?:CONTRACT|ORDER|FORM|SOLICITATION|AWARD|COMMERCIAL|ITEMS|NUMBER|NO)$/i.test(candidate)) continue;
+    if (candidate.startsWith('/') || candidate.startsWith('-') || candidate.startsWith('.')) continue;
+    // Must contain at least one digit and be at least 4 chars — common-shape guard.
+    if (!/\d/.test(candidate)) continue;
+    if (candidate.length < 4) continue;
+    return candidate.slice(0, 80);
+  }
+  return '';
 }
 
 function extractMetadata(text, manifest, files) {
@@ -915,7 +980,7 @@ function extractMetadata(text, manifest, files) {
   const requiredForms = formItemsFromText(src, files);
   return {
     title: manifest.title || findFirst(src, /^\s*(?:title|subject)\s*[:\-]\s*(.+)$/im),
-    solicitationNumber: manifest.solicitationNumber || findFirst(src, /solicitation\s*(?:no\.?|number|#)?\s*[:\-]?\s*([A-Z0-9._\-\/]+)/i),
+    solicitationNumber: manifest.solicitationNumber || extractSolicitationNumber(src),
     agency: manifest.agency || findFirst(src, /(?:agency|department)\s*[:\-]\s*([^\n]+)/i),
     noticeId: manifest.noticeId || '',
     setAside: findFirst(src, /(SDVOSB|Service-Disabled Veteran-Owned|WOSB|EDWOSB|HUBZone|8\(a\)|small business set-aside)/i),

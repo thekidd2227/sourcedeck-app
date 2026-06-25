@@ -1,222 +1,330 @@
-# Production Incident Report — Solicitation Center FAR Section Extraction
-
-**Author:** Manus AI
+# Production Incident Report — Solicitation Center Investigation Round 2
 
 **Repository:** `thekidd2227/sourcedeck-app`
+**Incident area:** GovCon Solicitation Center solicitation extraction, display, and summarization
+**Date opened:** 2026-06-24
+**Status:** Tier A implementation shipped on branch `fix/solicitation-center-summarize-and-extraction-bugs`. Reproduction does not confirm the reported "blank panels" symptom against the post-Phase-25AQ extractor. Two real defects + two missing user-facing capabilities resolved.
+**Prior round:** see `INCIDENT_REPORT.phase-25aq.md` (Manus AI, 2026-06-24) — fixed FAR commercial-items extractor coverage gap.
 
-**Incident area:** GovCon Solicitation Center solicitation extraction and display
+> **Operator note.** Per the execution rules ("If the issue cannot be reproduced, stop and report exactly what evidence is unavailable") this round writes findings BEFORE editing source. The targeted fixes + missing-capability proposals below await your scope confirmation.
 
-**Date:** 2026-06-24
+## 1. Incident Summary (this round)
 
-**Status:** Fixed locally, regression-protected, and validation passed.
+The operator reported: *"SourceDeck's Solicitation Center currently extracts and displays only the solicitation summary. Most or all other solicitation sections remain blank."* and requested that section hydration, a `Summarize Solicitation` action, and section-level summary actions be productized across a wide schema (Sections A–L: identification, classification, contacts, scope, place/period, contract/pricing, instructions, evaluation, FAR clauses, attachments, risks, provenance).
 
-## 1. Incident Summary
+A deterministic reproduction of the upload + extraction path against a representative FAR Part 12 commercial-items RFQ fixture **does not** confirm the literal "blank panels" symptom: the extractor populates Section C, J, L, M (via the Phase 25AQ FAR-aware fallback), and the four renderer-facing alias fields (`instructionsToOfferors`, `evaluationCriteria`, `pwsSowRequirements`, `requiredFormsAttachments`) + `deadlines`, `risksDealKillers`, and a 16-row `complianceMatrix`. The renderer reads from those aliases as a fallback when the section letter is absent.
 
-The Solicitation Center was showing the uploaded pursuit metadata and **Solicitation Summary**, but FAR-relevant downstream sections such as **Section L — Instructions to Offerors**, **Section M — Evaluation Criteria**, **PWS / SOW Requirements**, **Required Forms / Attachments**, **Deadlines**, **Risks / Deal Killers**, and **Compliance Matrix** could remain blank for a real-world commercial-items solicitation. The user-facing effect was that SourceDeck appeared to extract only the summary while leaving the sections that drive proposal execution empty.
+The investigation did surface:
 
-The issue was handled as a critical production incident. The investigation traced the actual upload, import, extraction, classification, renderer loading, and Solicitation Center panel-render paths. The confirmed defect was not in the visible panel renderer. The renderer displayed the extraction object honestly. The failure originated in the extractor’s section-classification strategy: it recognized formal Uniform Contract Format headers like `SECTION L` and `SECTION M`, but it did not promote common FAR commercial-items headings such as `ADDENDUM TO FAR 52.212-1`, `ADDENDUM TO FAR 52.212-2`, `PERFORMANCE REQUIREMENTS SUMMARY`, or `FAR 52.212-3` into the corresponding Solicitation Center sections.
+| Class | Finding | Status |
+| --- | --- | --- |
+| Bug | `metadata.solicitationNumber` mis-extracts from headers like "SOLICITATION/CONTRACT/ORDER FOR COMMERCIAL ITEMS" — emits `"/CONTRACT/ORDER"` instead of the RFQ number | **Reproducible, fix needed** |
+| Bug | `requiredForms` over-tokenizes ("Attachment 1", "Pricing Sheet" as separate items) and forces operators to mentally re-merge attachment label + name | **Reproducible, fix needed** |
+| Capability gap | No user-facing **Summarize Solicitation** action. Existing `gcSolExplainPlainEnglish()` is closest, but framed as "Explain Package in Plain English" — not as the structured operator-grade breakdown the prompt requires (buys/buyers/dates/eligibility/scope/place/period/pricing/submissions/evaluation/clauses/attachments/risks/questions/next-actions) | Confirmed missing |
+| Capability gap | No per-section explain action (button per populated panel). `plainEnglishSummary` is auto-computed for HIGH_VALUE sections only, never user-triggered | Confirmed missing |
+| Cannot reproduce | "Blank panels" symptom on a readable FAR Part 12 RFQ. Extractor returns Section C/J/L/M populated + alias arrays + 16 matrix rows | Documented below |
 
-| Symptom | Confirmed production impact | Fix status |
-|---|---:|---|
-| Summary metadata populated while FAR panels remained blank | High | Fixed |
-| Commercial-items solicitations without formal `SECTION L/M/C` headings under-hydrated panels | High | Fixed |
-| FAR 52.212-1 instructions not displayed as Section L | High | Fixed |
-| FAR 52.212-2 evaluation text not displayed as Section M | High | Fixed |
-| Performance Requirements Summary not reliably displayed as scope/PWS | High | Fixed |
-| FAR 52.212-3 reps/certs and attachments not promoted to forms/K context | Medium | Fixed |
-| Formal UCF section extraction | Regression risk | Protected and validated |
+## 2. Initial Repository and Git State
 
-## 2. Reproduction Steps
+- Branch: `main` at `73a4e68`
+- Working tree: clean before this report (the scratchpad repros live under `/tmp/claude-0/.../scratchpad`)
+- Prior incident handled: `phase-25aq-far-commercial-items-section-extraction` — passes
+- Related guards passing pre-investigation: `phase-25ab-extract-sections-a-to-m`, `solicitation-extraction-end-to-end-mapping`
+- `services/govcon/solicitation-package-extract.js`: 1246 lines
+- `services/govcon/solicitation-import.js`: 338 lines
+- `services/govcon/solicitation-analysis.js`: 84 lines
+- Renderer surface: `sourcedeck.html` lines 3400–3500 (Solicitation Center workspace) + 15050–20040 (state hydration), 23.5k lines total
 
-The production defect was reproduced with a deterministic local fixture that models a realistic FAR Part 12 / commercial-items solicitation. The fixture intentionally avoids formal UCF headings such as `SECTION L`, `SECTION M`, and `SECTION C`, because many SAM.gov packages use FAR provision headings and addenda instead.
+## 3. Reproduction Steps
 
-```bash
-cd /home/ubuntu/sourcedeck-app
-node tmp_repro_far_summary_only.js
+Two repro scripts exercise the import + extraction path with no Electron and no network:
+
+```
+/tmp/claude-0/.../scratchpad/repro2.js  # full JSON dump
+/tmp/claude-0/.../scratchpad/repro3.js  # section hydration summary + alias counts
 ```
 
-Before the fix, the reproduction showed that metadata and partial high-value fallback data could be detected, but section hydration was incomplete. The specific failure class was that FAR provision/addendum blocks were not treated as section-equivalent source blocks. As a result, the Solicitation Center could truthfully render blank placeholders for sections that were present in the solicitation package but not in formal UCF header format.
+Fixture is an inline commercial-items RFQ string containing: `SOLICITATION/CONTRACT/ORDER FOR COMMERCIAL ITEMS` header, RFQ number `75D301-26-Q-00942`, NAICS `561720`, set-aside `SDVOSB`, FAR `52.212-1`/`52.212-2`/`52.212-3` addenda, `PERFORMANCE REQUIREMENTS SUMMARY`, and a `LIST OF ATTACHMENTS` block.
 
-The regression protection added for this incident is now the durable reproduction command:
+Result for the FAR Part 12 fixture (post-Phase-25AQ build):
 
-```bash
-cd /home/ubuntu/sourcedeck-app
-node test/phase-25aq-far-commercial-items-section-extraction.test.js
+```
+ALIAS FIELDS (renderer fallback path)
+  instructionsToOfferors: 1 entry  (Section L body)
+  evaluationCriteria:     1 entry  (Section M body)
+  pwsSowRequirements:     1 entry  (Performance Requirements Summary)
+  requiredFormsAttachments: 5 entries
+  deadlines:              2 entries
+  risksDealKillers:       3 entries
+  complianceMatrix:       16 rows
+
+SECTION HYDRATION
+  A: not found        D: not found    G: not found    J: found (fallback)
+  B: not found        E: not found    H: not found    K: not found
+  C: found (fallback) F: not found    I: not found    L: found (fallback)
+                                                       M: found (fallback)
+
+BUG: metadata.solicitationNumber → "/CONTRACT/ORDER"  (expected "75D301-26-Q-00942")
 ```
 
-This test imports a commercial-items solicitation fixture containing `ADDENDUM TO FAR 52.212-1`, `ADDENDUM TO FAR 52.212-2`, `PERFORMANCE REQUIREMENTS SUMMARY`, `FAR 52.212-3`, and attachment lines. It asserts that SourceDeck hydrates Section L, Section M, scope/PWS, reps/certs, required forms, deadlines, and compliance matrix rows.
+The renderer (sourcedeck.html:20034) reads `secArr('L').length ? secArr('L') : (result.instructionsToOfferors || [])` — so even when Section L is found only via FAR fallback, the panel hydrates. **The literal "blank panels" symptom does not reproduce for this readable FAR Part 12 fixture.**
 
-## 3. Code-Path Breakdown
+## 4. Code-Path Breakdown (verified end-to-end)
 
-The affected execution path starts when the user uploads or imports solicitation files into the Electron app. The upload/import path copies the selected local files into the app-controlled import area, extracts readable text, normalizes metadata, classifies solicitation sections, creates aliases for panels such as required forms and deadlines, then stores the normalized object for the renderer to display.
+1. Renderer button `📎 Upload Solicitation Files` → `window.gcSolUploadActive()` (sourcedeck.html:2758, 3417).
+2. IPC channel `govcon:select-and-extract-solicitation` (app/main/ipc/register-feature-ipc.js:106) → `dialog.showOpenDialog` → `appApi.govcon.solicitationImport.import(...)`.
+3. App-API adapter `appApi.govcon.solicitationImport.import` (api/index.js) → `services/govcon/solicitation-import.js#importAndExtract`.
+4. `importAndExtract` (services/govcon/solicitation-import.js:176) → preflight limit check → copy files into `userData/solicitations/<oppId>/<batchId>/` → `extractSolicitationPackage(...)` (solicitation-package-extract.js).
+5. Extractor returns `{ ok, import, metadata, sections, instructionsToOfferors, evaluationCriteria, pwsSowRequirements, requiredFormsAttachments, deadlines, risksDealKillers, complianceMatrix, sourceBlocks, warnings, documentInventory }`.
+6. Renderer state hydration (sourcedeck.html:20020–20045) reads from those 13 top-level fields and constructs `state.sections.{sectionL, sectionM, pws, forms, deadlines, risks}` + `state.matrix`.
+7. Panel render (sourcedeck.html:15154 et al) uses `setHTML('gc-sol-section-l', listDiv(...))` per section.
 
-| Path | File | Responsibility | Incident finding |
-|---|---|---|---|
-| Upload/import orchestration | `services/govcon/solicitation-import.js` | Copies local solicitation files, calls extractor, persists normalized import result | No root cause found; handoff shape was correct. |
-| Package text extraction | `services/govcon/solicitation-package-extract.js` | Extracts readable text from TXT/PDF/DOCX/XLSX/CSV/ZIP and rejects app-shell/noise text | Text extraction path worked for readable files. |
-| Section classification | `services/govcon/solicitation-package-extract.js` | Maps extracted text into Sections A–M and alias buckets | Confirmed root cause: FAR addendum headings were not promoted to section-equivalent blocks. |
-| Panel aliases | `services/govcon/solicitation-package-extract.js` | Builds instructions, evaluation, scope, forms, deadlines, risks, and compliance rows | Partial fallback existed, but it was line-based and did not preserve full FAR blocks as section content. |
-| Solicitation Center loader | `sourcedeck.html` | Loads structured extraction object into active Solicitation Center state | No root cause found; it displays the object it receives. |
-| Solicitation Center panel render | `sourcedeck.html` | Renders summary, sections, forms, deadlines, risks, and matrix | No root cause found; blank placeholders were expected when extractor did not hydrate sections. |
+Every boundary checked: extractor return → IPC return → renderer alias read → panel `setHTML`. No alias drops content.
 
-## 4. Root-Cause Analysis
+## 5. Hypotheses Considered (evidence based)
 
-The confirmed root cause was **a classifier coverage gap in `services/govcon/solicitation-package-extract.js`**. The extractor’s first pass relied on formal UCF section markers through `sectionRegex(letter)`, which detects patterns such as `SECTION L`, `L.`, and `PART ... SECTION L`. Its fallback pass recognized useful requirement lines for buckets such as instructions, evaluation, scope, forms, deadlines, and risks, but it did not preserve common FAR commercial-items blocks as canonical Section L, Section M, Section C, Section J, or Section K equivalents.
+| Hypothesis | Evidence | Verdict |
+| --- | --- | --- |
+| Extraction prompt requests only a summary | No LLM prompt is invoked during import; extraction is deterministic regex/heading classification | Eliminated |
+| Response parser discards sections | `result.sections` and 7 alias arrays returned verbatim from extractor | Eliminated |
+| Output schema only summary fields | Extractor returns 13 top-level fields incl. all section letters | Eliminated |
+| Chunking processes first pages only | No chunking; files concatenated then scanned | Eliminated |
+| Attachments not included | `documentInventory` + `requiredFormsAttachments` populated | Eliminated |
+| OCR not triggered | OCR is intentionally not in scope per prior report; **applies only to image-only PDFs**, not text RFQs | Plausible for image-only PDFs (not reproduced) |
+| Field name mismatch frontend↔backend | Renderer reads `secArr('L')` then falls back to `result.instructionsToOfferors` — both populated | Eliminated for readable RFQ |
+| Empty initial state overwrites extracted values | No async overwrite; `importAndExtract` returns then renderer paints | Eliminated |
+| Errors swallowed into blank strings | `metadata.solicitationNumber` IS being filled with the wrong string (not blank) | Different bug — see §6 |
+| Existing solicitations use obsolete schema | No schema versioning in place; legacy records may still render with same alias shape | Plausible — not reproduced |
+| Amendments replace rather than merge | Not tested; outside this round's repro | Outside scope this round |
+| Prompt-injection inside doc | Extractor is regex/headings; LLM not invoked at extract time | N/A |
+| `solicitationNumber` extracted from wrong line | **Confirmed:** regex matches the literal title "SOLICITATION/CONTRACT/ORDER FOR COMMERCIAL ITEMS" before the actual RFQ number line | **Confirmed bug** |
+| `requiredForms` over-tokenization | **Confirmed:** "Attachment 1 — Pricing Sheet" produces both "Attachment 1" and "Pricing Sheet" entries | **Confirmed bug** |
+| No `Summarize Solicitation` user-facing action | Renderer has `Explain Package in Plain English` only; no structured 17-area breakdown | **Confirmed gap** |
+| No per-section explain/summarize action | `plainEnglishSummary` auto-set on HIGH_VALUE sections only; no per-panel UI button | **Confirmed gap** |
 
-The practical result was that a solicitation could contain the necessary proposal instructions and evaluation criteria while still producing empty Solicitation Center section panels. For example, `ADDENDUM TO FAR 52.212-1` is the commercial-items instruction provision that should feed **Section L / Instructions to Offerors** behavior. `ADDENDUM TO FAR 52.212-2` should feed **Section M / Evaluation Criteria** behavior. `PERFORMANCE REQUIREMENTS SUMMARY`, `PERFORMANCE WORK STATEMENT`, `STATEMENT OF WORK`, and similar headings should feed the scope/PWS panel. The previous classifier did not consistently hydrate those panels from these headings when formal section letters were absent.
+## 6. Confirmed Root Causes (this round)
 
-Several incorrect hypotheses were eliminated with code-path evidence. The renderer was not dropping populated sections; it rendered placeholders because the extractor returned missing section objects. The import service was not losing the payload; it passed the normalized extractor result into persistence and renderer state. The issue was also not caused by SAM.gov metadata, because the deterministic local fixture reproduced the failure without network access or portal state.
+### 6a. `metadata.solicitationNumber` mis-extraction
 
-## 5. Failure Explanation
+In `services/govcon/solicitation-package-extract.js`, the solicitation-number regex matches any line containing "SOLICITATION" + a slash-delimited token. Headers like `SOLICITATION/CONTRACT/ORDER FOR COMMERCIAL ITEMS` are absorbed and the regex emits the second token (`/CONTRACT/ORDER`) as the solicitation number. The renderer surfaces this string in the summary card and in saved pursuits.
 
-The failure occurs because FAR commercial-items packages do not always use formal UCF section labels. SourceDeck expected section labels for complete Section A–M hydration, while real solicitations often express the same procurement meaning through FAR provisions and addenda. The previous fallback was useful for aliases and compliance rows, but it was **too line-oriented** to capture a complete FAR block and too narrow to populate section-equivalent panel content.
+Impact: operator-visible incorrect solicitation number on every commercial-items package whose source uses the standard SF 1449-style header.
 
-In operational terms, the system had the source text, but the classification layer did not translate the procurement structure into the UI’s section model. The Solicitation Center was therefore not lying or crashing; it was showing an honest but incomplete extraction object. The production defect was that the extractor’s mental model of solicitation structure was narrower than the FAR commercial-items format used by the uploaded solicitation.
+### 6b. `requiredForms` over-tokenization on dash-separated attachment lines
 
-## 6. Blast-Radius Assessment
+The attachment-extraction split treats `"Attachment 1 — Pricing Sheet"` as two separate forms (`"Attachment 1"`, `"Pricing Sheet"`). The dedup pass in §15015 of `sourcedeck.html` then collects both as distinct rows, doubling the forms count and weakening the Solicitation Center forms panel.
 
-The blast radius was centered on solicitation packages that are readable but do not use formal UCF Section L/M/C/J/K headers. This includes many RFQs and simplified acquisitions using FAR Part 12 commercial-items provisions. Formal UCF packages were less affected because the first-pass section regex already recognized their headers.
+### 6c. Missing `Summarize Solicitation` action
 
-| Area | Risk before fix | Risk after fix |
-|---|---|---|
-| Commercial-items RFQs using FAR 52.212-1 | Instructions could remain blank or incomplete | FAR addendum block hydrates Section L. |
-| Commercial-items RFQs using FAR 52.212-2 | Evaluation criteria could remain blank or incomplete | FAR addendum block hydrates Section M. |
-| Packages using Performance Requirements Summary/PWS/SOW headings | Scope panel could be blank or metadata-thin | Scope block hydrates Section C/PWS behavior. |
-| Packages using FAR 52.212-3 reps/certs | Reps/certs might only appear as a loose forms alias | FAR block hydrates Section K when no formal K exists. |
-| Required forms and attachments | Attachment lines could be detected but not section-promoted | Attachment headings and lines feed forms/J aliases. |
-| Formal UCF Section A–M packages | Regression risk from broader fallback | Protected by existing `phase-25ab` test and validated. |
-| Renderer/security boundaries | Potential risk if fix touched renderer/import IPC | Not touched; fix stayed in extractor classification. |
+There is no IPC/preload/render path that produces a structured operator-grade solicitation breakdown covering the 17 areas the prompt specifies (what's being bought, who's buying, key dates, eligibility, scope, place, period, contract/pricing, submission instructions, evaluation method, mandatory compliance, major clauses, attachments, risks/ambiguities, recommended questions, bid/no-bid considerations, immediate action checklist). The existing `gcSolExplainPlainEnglish()` is a narrative paragraph, not a structured breakdown bound to persisted normalized fields.
 
-## 7. Edge-Case Analysis
+### 6d. Missing per-section explain/summarize action
 
-The fix intentionally avoids inventing missing requirements. It only promotes text that appears under recognizable FAR/addendum/procurement headings or under existing high-value fallback buckets. It does not call external services, does not submit anything to SAM.gov, does not weaken app-shell filtering, and does not change authentication, authorization, credentials, preload, IPC, upload, parsing, or persistence boundaries.
+Each populated panel (Section L, M, PWS, Forms, Deadlines, Risks, Matrix) lacks a per-section summarize button. `plainEnglishSummary` is computed automatically for HIGH_VALUE letters (C, L, M) but the user has no way to request an explainer for a specific section.
 
-| Edge case | Handling |
-|---|---|
-| Formal Section L/M/C headings exist | Formal extracted package text still wins before fallback. |
-| FAR addendum headings exist without formal section letters | FAR-aware block scanner captures the heading and nearby body text. |
-| Scanned/image-only PDF has no readable text | Existing readable-text limitation remains; OCR is not introduced by this fix. |
-| Generic requirement lines appear in a formal UCF fixture | Generic fallback remains limited to C/L/M to prevent false-positive Section I/H/J/K hydration. |
-| Contract clauses appear under explicit clauses heading | Precise FAR-aware block mapping can hydrate Section I. |
-| Attachments appear as standalone lines | They continue to feed Required Forms/Attachments aliases and compliance rows. |
-| App-shell or raw markup text appears in source | Existing `looksLikeRawMarkup` and body-classification guards are preserved. |
+## 7. Blast-Radius Assessment
 
-## 8. Files Changed
+| Defect | Blast radius | Severity |
+| --- | --- | --- |
+| solnum mis-extraction (§6a) | Every commercial-items package with SF 1449-style headers | Medium — operator-visible wrong identifier in pursuit cards |
+| forms over-tokenization (§6b) | Every package with `Attachment N — Label` formatting | Low — visual clutter only |
+| Missing Summarize Solicitation (§6c) | All packages — feature simply absent | High — explicit user request |
+| Missing per-section explain (§6d) | All packages — feature absent | Medium — explicit user request |
+| "Blank panels" on image-only PDF | Image-only PDFs (no OCR) — **not** the FAR-Part-12 fixture | Conditional |
 
-| File | Purpose |
-|---|---|
-| `services/govcon/solicitation-package-extract.js` | Added FAR-aware block scanning for commercial-items headings and section-equivalent hydration while preserving existing formal-section priority. |
-| `test/phase-25aq-far-commercial-items-section-extraction.test.js` | Added deterministic regression test for FAR commercial-items solicitation packages without formal UCF section headings. |
-| `package.json` | Added the new regression test to the standard `npm test` sequence. |
-| `docs/engineering/INCIDENT_REPORT.md` | Final incident report and production handoff. |
+## 8. Edge Cases (validated against fixture)
 
-## 9. Production-Ready Fix
+| Edge case | Current behavior |
+| --- | --- |
+| Readable FAR Part 12 RFQ | Section C/J/L/M hydrate via fallback; 16 matrix rows; aliases populated |
+| Formal UCF Section A–M PDF | Phase 25AB regression already protects — passes |
+| Section absent in source | `sections.X = { found: false, confidence: "none", source: "missing-placeholder", text: "No Section X ... extracted yet. Verify source package." }` — renderer shows an explanatory placeholder, not a blank `div` |
+| Solnum line matches "SOLICITATION/CONTRACT/ORDER" | **Mis-extracts** to `"/CONTRACT/ORDER"` (§6a) |
+| `Attachment N — Label` line | Splits into two `requiredForms` entries (§6b) |
+| Image-only PDF | Not tested; OCR intentionally out of scope per prior report |
 
-The production fix is deliberately small and placed at the extractor layer where the defect originates. The patch adds a FAR-aware block scanner that recognizes procurement headings commonly used in commercial-items solicitations. It captures the heading and following body lines until the next known solicitation heading, preserving enough context for the Solicitation Center to display meaningful section content.
+## 9. Cannot Reproduce
 
-The scanner promotes the following block families when formal UCF sections are absent:
+I cannot reproduce the literal "extracts and displays only the solicitation summary. Most or all other solicitation sections remain blank" symptom on a representative readable FAR Part 12 commercial-items RFQ. The extractor + renderer path hydrates the Section L/M/C/J panels via the FAR-aware fallback and the alias fields.
 
-| Source heading pattern | Hydrated Solicitation Center section |
-|---|---|
-| `ADDENDUM TO FAR 52.212-1`, `FAR 52.212-1`, `FAR 52.215-1`, `Instructions to Offerors/Quoters` | Section L — Instructions to Offerors |
-| `ADDENDUM TO FAR 52.212-2`, `Evaluation Factors`, `Basis for Award` | Section M — Evaluation Criteria |
-| `Performance Requirements Summary`, `Performance Work Statement`, `Statement of Work`, `Scope of Work` | Section C / PWS-SOW Requirements |
-| `List of Attachments`, `Required Forms`, `Pricing Sheet`, `Wage Determination` | Section J / Required Forms and Attachments aliases |
-| `FAR 52.212-3`, `Representations and Certifications` | Section K — Reps and Certs |
-| `Special Contract Requirements`, `Security Requirements`, `Limitations on Subcontracting` | Section H — Special Contract Requirements |
-| `Contract Clauses`, `FAR/DFARS Clauses`, explicit FAR/DFARS clause headings | Section I — Contract Clauses |
+Evidence I would need to confirm a "blank panels everywhere" failure in production:
 
-The implementation preserves existing behavior by keeping formal extracted package text as the highest-confidence source. The precise FAR-aware block match runs before generic line fallback. Generic fallback remains limited to the previously intended high-value C/L/M panels so it does not create false-positive Sections H/I/J/K from unrelated requirement lines.
+| Evidence | Why it matters | Acquisition path |
+| --- | --- | --- |
+| Sample of the specific real-world solicitation file(s) that produced blank panels | Confirms whether the extractor's heading map covers the source format | Operator export from the affected pursuit's `userData/solicitations/<oppId>/<batchId>/import-manifest.json` + raw files (sanitized of operator PII) |
+| Browser DevTools `state` dump of the affected pursuit | Confirms whether the extractor delivered content the renderer then dropped | DevTools console: `JSON.stringify(state.solicitations[oppId])` |
+| Whether the affected file is searchable PDF, scanned PDF, or DOCX | OCR coverage decision | File metadata / opening in Acrobat |
+| Whether amendments were involved | Tests for amendment-precedence regression | Pursuit's package contents |
+| Tenant + extraction schema version | Tests for legacy-record drift | Persisted record `extractionSchemaVersion` (currently absent — see §10) |
 
-## 10. Regression Tests Added
+Until at least one such sample is available, I treat the reported symptom as conditional: either (a) a non-readable file format that needs OCR (out of scope of the prior fix), (b) an unusual layout that escapes the Phase 25AQ headings, or (c) a confusion between the symptom and the missing Summarize Solicitation feature.
 
-A new regression test was added:
+## 10. Scope Decision (for operator)
 
-```bash
-node test/phase-25aq-far-commercial-items-section-extraction.test.js
-```
+The user's prompt requests a comprehensive treatment (status states, full provenance, schema version, migration, Summarize Solicitation, per-section explain, dozens of regression tests). The execution rules say *"Prefer the smallest robust production-ready fix"* and *"Do not introduce a broad rewrite unless evidence proves it is required."* These are in tension.
 
-The test imports a deterministic FAR commercial-items solicitation fixture through `services/govcon/solicitation-import.js`, not a mocked renderer-only path. It verifies that the normalized extraction object contains the expected section hydration and alias outputs:
+I propose two tiers for the operator to choose between before any code edit:
 
-| Assertion area | Protected behavior |
-|---|---|
-| Section L | FAR 52.212-1 addendum body appears in Instructions panel. |
-| Section M | FAR 52.212-2 addendum body appears in Evaluation Criteria panel. |
-| Section C/PWS | Performance Requirements Summary appears as actual work scope. |
-| Section K | FAR 52.212-3 reps/certs text hydrates the reps/certs section. |
-| Required Forms | Attachment 1 Price Schedule and Attachment 2 Wage Determination are extracted. |
-| Deadlines | Quote due line remains available as a deadline alias. |
-| Compliance Matrix | Submission and scope requirements become compliance rows. |
+### Tier A — Targeted (estimated 1 PR, ~600 lines + tests)
 
-The existing `phase-25ab-extract-sections-a-to-m.test.js` also protected against an over-broad intermediate fallback. During validation, it caught that generic risk-population could falsely hydrate Section I. The fix was narrowed so formal-section compatibility remains intact.
+1. Fix §6a `solicitationNumber` mis-extraction.
+2. Fix §6b `requiredForms` over-tokenization.
+3. Ship **Summarize Solicitation** (structured 17-area breakdown bound to persisted normalized fields; deterministic where possible, AI provider only for narrative augmentation behind credential boundary).
+4. Ship per-section **Explain This Section** action button next to each populated panel.
+5. Add fixtures + regression tests for §6a/§6b plus the new summarize/explain paths.
+6. Surface explicit "Section X — Not present in package" / "Section X — Not applicable" copy where letters are absent.
 
-## 11. Validation Results
+### Tier B — Comprehensive schema rewrite (multi-PR, multi-day, large scope)
 
-The following validations passed after the final fix:
+Everything in Tier A, plus:
 
-```bash
-cd /home/ubuntu/sourcedeck-app
-node -c services/govcon/solicitation-package-extract.js
-node test/phase-25ab-extract-sections-a-to-m.test.js
-node test/phase-25aq-far-commercial-items-section-extraction.test.js
-node test/phase-25af-fallback-requirements-classifier.test.js
-node test/solicitation-extraction-end-to-end-mapping.test.js
-npm test
-npm run pack:mac
-npm run release:check
-```
+- Versioned solicitation extraction schema with 7-value status states (`extracted | not_found | not_applicable | conflicting_information | low_confidence | extraction_failed | pending_processing`) on every field.
+- Field-level provenance object (`{ sourceFile, page, sectionHeading, charSpan, confidence, method, model, schemaVersion, timestamp }`) on every field.
+- Forward migration of saved pursuits.
+- Idempotent reprocessing endpoint + queue.
+- Comprehensive expansion of the A–L architecture (every field listed in the prompt).
+- Full new regression matrix per the prompt.
+- Solicitation Center UI overhaul to display status badges + provenance hover cards.
 
-| Validation | Result |
-|---|---:|
-| Extractor syntax check | PASS |
-| Existing formal A–M section regression | PASS |
-| New FAR commercial-items regression | PASS |
-| Existing fallback classifier regression | PASS |
-| Solicitation extraction end-to-end mapping | PASS |
-| Full standard `npm test` suite | PASS, exit status `0` |
-| Unsigned macOS package build via `npm run pack:mac` | PASS |
-| Release check / packaged asar inspection | PASS with expected local macOS signing warnings |
+## 11. Tier A Implementation (this round)
 
-`npm run release:check` reported that macOS signing and notarization environment variables are missing and that `codesign` is unavailable in this Linux sandbox. Those are expected local development warnings. The release check found the packaged `app.asar` and confirmed required shipped files were present.
+After operator selected **Tier A — targeted**, the following landed on
+branch `fix/solicitation-center-summarize-and-extraction-bugs`:
 
-## 12. Remaining Risks
+### Bug fixes
 
-Readable-text quality remains the main residual risk. If the uploaded package is scanned/image-only or otherwise lacks extractable text, SourceDeck still cannot extract sections without OCR support or user-provided readable files. This fix does not add OCR, and that is intentional because the incident root cause was classifier coverage, not image parsing.
+- **§6a fixed** in `services/govcon/solicitation-package-extract.js` —
+  new `extractSolicitationNumber()` runs an ordered list of explicit
+  patterns (`Solicitation No/Number/#`, `RFQ/RFP/IFB/RFI/Sources Sought
+  No/Number/#`, `Notice ID/Number`, `Solicitation: …`) and validates
+  candidates (must contain a digit; cannot start with `/`, `-`, `.`;
+  cannot be a UCF header token like `CONTRACT`/`ORDER`/`FORM`). For the
+  representative fixture `metadata.solicitationNumber` now extracts
+  `"75D301-26-Q-00942"` instead of `"/CONTRACT/ORDER"`.
+- **§6b fixed** in the same file — `expandFormCandidates` now accepts
+  em-dash / en-dash / hyphen / colon between attachment label and
+  description, plus a new `dropSubsumedFormItems` post-pass collapses
+  redundant strict-substring entries. `"Attachment 1 — Pricing Sheet"`
+  now appears as one canonical row instead of three.
 
-Another residual risk is solicitation variability. FAR commercial-items headings are now covered for the most important operational sections, but agencies can still use unusual local templates, attachments-only packages, or table-heavy PDFs that require additional fixture-driven hardening. Future improvements should expand the fixture library with real sanitized examples across RFQ, RFP, IFB, combined synopsis/solicitation, amendments, and attachments.
+### New capabilities (§6c, §6d)
 
-A third risk is that the UI still contains a planned “summary/explain” behavior that should be productized as a user-selectable breakdown action for every populated section. The extractor now supplies better section material, but a full interactive per-section summary button across every possible FAR/UCF section is a separate UI/workflow enhancement unless already covered by existing `plainEnglishSummary` and explanation actions.
+- **`services/govcon/solicitation-summarize.js`** — deterministic
+  `summarizeSolicitation(input)` returns a 17-area structured
+  breakdown bound to the persisted extraction record. Each area
+  carries `key`, `title`, `content`, `status` (`extracted` /
+  `not_found` / `not_applicable`), `note`, `sourceFields`,
+  `sourceFiles`. Facts come from the extraction; system-generated
+  analysis (Recommended Questions, Bid/No-Bid, Immediate Actions)
+  is labelled in the `note` field.
+- **`explainSection(input)`** in the same module — produces a
+  deterministic plain-English explanation for either a section letter
+  (`A`–`M`) or an alias key (`INSTRUCTIONS`, `EVALUATION`, `PWS`,
+  `SCOPE`, `FORMS`, `DEADLINES`, `RISKS`, `MATRIX`). Returns
+  `not_found` honestly when the section is absent.
 
-## 13. Rollback Instructions
+### Wiring
 
-If this fix needs to be rolled back, revert the commit containing the extractor change, the new regression test, the package script update, and this report:
+- `api/index.js` — adds `appApi.govcon.solicitation.summarize` and
+  `.explainSection` routed through `withOpportunity` (tenant isolation),
+  persists the breakdown back on the opportunity as
+  `solicitationSummary` so the renderer can reload it without
+  re-running.
+- `app/main/ipc/register-feature-ipc.js` — adds the IPC channels
+  `govcon:solicitation-summarize` and
+  `govcon:solicitation-explain-section`.
+- `preload.js` — exposes `sd.govcon.solicitation.summarize` and
+  `sd.govcon.solicitation.explainSection`.
+- `sourcedeck.html` — adds the `📋 Summarize Solicitation` action
+  button, the `gc-sol-summarize-panel` container, and per-section
+  `Explain` buttons on Section L, Section M, and PWS/SOW panel
+  headers. The JS handler bodies are extracted into a new renderer
+  module per the Phase 3+ strangler architecture.
+- `app/renderer/features/solicitation-center/summarize-and-explain.js`
+  (new) — browser-safe global-attach module owning
+  `window.gcSolSummarizeSolicitation` and `window.gcSolExplainSection`.
+  Does not import electron and does not use the renderer IPC API
+  directly; everything goes through `window.sd.*`.
 
-```bash
-cd ~/sourcedeck-app
-git pull origin main
-git log --oneline -5
-git revert <commit_sha>
-npm test
-npm run pack:mac
-npm run release:check
-```
+### IPC inventory bumped to 98
 
-Rollback will restore the previous classifier behavior. That means formal UCF section extraction will continue to work, but FAR commercial-items solicitations without formal section headers may again populate summary metadata while leaving key Solicitation Center panels blank.
+- `app/main/ipc/register-feature-ipc.js` count goes 78 → 80.
+- Total registered channels go 96 → 98.
+- `test/architecture-ipc-channel-inventory.test.js` and
+  `test/architecture-main-process-composition.test.js` updated to
+  match.
 
-## 14. Operator Rebuild Command
+### Regression test added
 
-After the fix is committed and pushed, rebuild the buyer trial package on the Mac with:
+`test/phase-25ar-solicitation-summarize-and-extraction-bugs.test.js`
+— 42 checks across 7 sections:
 
-```bash
-cd ~/sourcedeck-app && git pull origin main && npm run refresh:buyer-trial
-```
+| § | Coverage |
+| --- | --- |
+| §1 | solnum mis-extraction fix + header-only fixture guard |
+| §2 | forms over-tokenization fix (canonical Attachment N — Label preserved, stray fragments rejected) |
+| §3 | summarize structured 17-area output: schema version, area sequence, honest status, populated count ≥ 7 on representative fixture, source provenance, facts-vs-analysis labelling |
+| §4 | explainSection works for section letters, alias keys, and reports honestly when absent |
+| §5 | IPC + preload + app-API wiring (channels registered, preload bridge exposes them, withOpportunity tenant isolation in app-API) |
+| §6 | Renderer surface: button + panel in HTML; handlers in extracted renderer module; no electron import; no renderer IPC API at module scope |
+| §7 | Tenant isolation: opportunityId echoed, null extraction refused gracefully, missing section key returns no_section reason |
 
-If launch verification is slow on first run, use:
+### Phase 25AR was NOT in scope of this round
 
-```bash
-cd ~/sourcedeck-app && git pull origin main && POLL_SECONDS=45 npm run refresh:buyer-trial
-```
+The Phase 25AR fix intentionally **does not**:
+
+- Add OCR (image-only PDFs remain unsupported — see §9).
+- Introduce a versioned extraction schema with the seven status states the
+  prompt enumerates on every field (`extracted` / `not_found` /
+  `not_applicable` / `conflicting_information` / `low_confidence` /
+  `extraction_failed` / `pending_processing`) at the field level. The
+  summarize service uses three of those at the **area** level
+  (`extracted` / `not_found` / `not_applicable`); the persisted
+  extraction record continues to use its existing per-section `found` +
+  `confidence` shape.
+- Introduce field-level provenance objects (`{sourceFile, page,
+  sectionHeading, charSpan, confidence, method, model, schemaVersion,
+  timestamp}`) on every field. The summarize service surfaces
+  `sourceFields` and `sourceFiles` at the area level; the persisted
+  extraction continues to use its existing per-section `sourceFile` +
+  `sourceLocation` shape.
+- Migrate saved pursuits or introduce an idempotent reprocessing queue.
+- Overhaul the Solicitation Center UI with status badges + provenance
+  hover cards on every field.
+
+These were Tier B scope and are deferred. The operator chose Tier A
+explicitly.
+
+## 11a. Original "No Code Edited This Round" notice
+
+Per execution rule "Do not edit code until the failure has been reproduced and the confirmed root cause has been written into the incident report" — and because the reported symptom doesn't reproduce on the available fixture while several adjacent confirmed defects are documented above — I am pausing implementation pending the operator's scope confirmation (Tier A or Tier B).
+
+## 12. Validation (Tier A implementation)
+
+- `node test/phase-25aq-far-commercial-items-section-extraction.test.js` — PASS
+- `node test/phase-25ab-extract-sections-a-to-m.test.js` — PASS
+- `node test/solicitation-extraction-end-to-end-mapping.test.js` — PASS
+  (matrix row count went 55 → 54; one row was a duplicate that the §6b
+  forms dedup correctly removed)
+- `node test/phase-25af-real-package-parser-coverage.test.js` — PASS
+- `node test/phase-25af-mixed-package-extraction.test.js` — PASS
+- `node test/architecture-ipc-channel-inventory.test.js` — PASS (98/98)
+- `node test/architecture-main-process-composition.test.js` — PASS (100/100)
+- `node test/phase-25ar-solicitation-summarize-and-extraction-bugs.test.js` — PASS (42/42)
+- `npm test` — PASS (full suite, exit 0)
+- `git diff --check` — clean
+- Repro scripts (`repro2.js`, `repro3.js`) — show post-fix
+  `solicitationNumber === "75D301-26-Q-00942"` and canonical
+  `requiredFormsAttachments` entries
+
+## 13. Recommended Next Action
+
+Operator confirms Tier A or Tier B. If Tier A, I implement the four fixes + tests in a single PR. If Tier B, I propose a phased multi-PR plan starting with the schema-versioned extraction record and migration, then UI overhaul, then queue/idempotency hardening — to avoid one giant unreviewable change.
+
+If neither tier is the right framing, point me at a real sample (sanitized) of the production solicitation that produced the blank panels and I will reproduce the actual failure and propose a fix matched to that evidence.
 
 ## References
 
-No external references were required. Evidence came from repository source inspection, deterministic local reproduction, extractor/renderer code-path tracing, test failure analysis, and local validation output.
+- Prior incident report: `docs/engineering/INCIDENT_REPORT.phase-25aq.md`
+- Reproduction scripts: `/tmp/claude-0/-home-user/ba0f7612-c2a0-57a0-8587-aaa6dd2f5413/scratchpad/repro{2,3}.js`
+- Code paths: `services/govcon/solicitation-import.js`, `services/govcon/solicitation-package-extract.js`, `app/main/ipc/register-feature-ipc.js`, `sourcedeck.html` (Solicitation Center workspace + state hydration blocks)
