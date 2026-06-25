@@ -190,8 +190,8 @@ function extractionProcessingStatus(record) {
   if (!inventory.length) return STATUS.EXTRACTED;
   const statuses = inventory.map(d => firstNonEmpty(d.extractionStatus, d.status).toLowerCase());
   if (statuses.some(s => /pending|processing/.test(s))) return STATUS.PENDING_PROCESSING;
-  if (statuses.every(s => /failed|ocr_required|required_unavailable|unsupported|rejected/.test(s))) return STATUS.EXTRACTION_FAILED;
-  if (statuses.some(s => /failed|ocr_required|required_unavailable|warning|partial/.test(s))) return STATUS.LOW_CONFIDENCE;
+  if (statuses.every(s => /failed|ocr_required|required_unavailable|unsupported|rejected|metadata-only/.test(s))) return STATUS.EXTRACTION_FAILED;
+  if (statuses.some(s => /failed|ocr_required|required_unavailable|warning|partial|metadata-only/.test(s))) return STATUS.LOW_CONFIDENCE;
   return STATUS.EXTRACTED;
 }
 
@@ -304,7 +304,7 @@ function summarizeSolicitation(input) {
   const binding = validateBinding(record, input.opportunityId);
   if (!binding.ok) return Object.freeze(Object.assign({ ok: false, schemaVersion: SCHEMA_VERSION, areas: [] }, binding));
   const areas = buildAreas(record);
-  const refs = referencesFor(record.sections, record.instructionsToOfferors, record.evaluationCriteria, record.pwsSowRequirements, record.requiredFormsAttachments, record.deadlines, record.risksDealKillers, record.complianceMatrix, record.documentInventory);
+  const refs = referencesFor(record.metadata, record.sections, record.instructionsToOfferors, record.evaluationCriteria, record.pwsSowRequirements, record.requiredFormsAttachments, record.deadlines, record.risksDealKillers, record.complianceMatrix, record.documentInventory);
   return Object.freeze({
     ok: true,
     schemaVersion: SCHEMA_VERSION,
