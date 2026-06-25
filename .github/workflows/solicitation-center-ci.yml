@@ -55,10 +55,10 @@ jobs:
           exit "$code"
 
   validate:
-    name: Focused extraction and renderer validation
+    name: Full and focused Solicitation Center validation
     needs: integrity-diagnostic
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -99,6 +99,9 @@ jobs:
 
       - name: Phase 25AN browser handoff and local extraction
         run: node test/phase-25an-browser-handoff-local-extraction.test.js
+
+      - name: Full repository test suite
+        run: npm test
 
       - name: Release safety gate
         run: npm run release:check
