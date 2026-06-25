@@ -6,6 +6,7 @@ on:
       - 'services/govcon/solicitation-*.js'
       - 'app/renderer/features/solicitation-center/**'
       - 'test/phase-25a*-solicitation-*.test.js'
+      - 'test/solicitation-extraction-end-to-end-mapping.test.js'
       - 'docs/engineering/INCIDENT_REPORT.md'
       - '.github/workflows/solicitation-center-ci.yml'
   workflow_dispatch: {}
@@ -41,13 +42,20 @@ jobs:
           node --check app/renderer/features/solicitation-center/summarize-and-explain.js
           node --check test/phase-25ar-solicitation-summarize-and-extraction-bugs.test.js
 
-      - name: Focused Solicitation Center tests
-        run: |
-          node test/phase-25ar-solicitation-summarize-and-extraction-bugs.test.js
-          node test/phase-25aq-far-commercial-items-section-extraction.test.js
-          node test/phase-25ab-extract-sections-a-to-m.test.js
-          node test/solicitation-extraction-end-to-end-mapping.test.js
-          node test/phase-25an-browser-handoff-local-extraction.test.js
+      - name: Phase 25AR integrity regression
+        run: node test/phase-25ar-solicitation-summarize-and-extraction-bugs.test.js
+
+      - name: Phase 25AQ FAR commercial-items extraction
+        run: node test/phase-25aq-far-commercial-items-section-extraction.test.js
+
+      - name: Phase 25AB Sections A-M extraction
+        run: node test/phase-25ab-extract-sections-a-to-m.test.js
+
+      - name: End-to-end solicitation mapping
+        run: node test/solicitation-extraction-end-to-end-mapping.test.js
+
+      - name: Phase 25AN browser handoff and local extraction
+        run: node test/phase-25an-browser-handoff-local-extraction.test.js
 
       - name: Release safety gate
         run: npm run release:check
